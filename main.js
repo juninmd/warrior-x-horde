@@ -19,13 +19,6 @@ startButton.style.padding = "20px 40px";
 startButton.style.fontSize = "20px";
 document.body.appendChild(startButton);
 
-let enemies = [];
-let barrels = [];
-let currentWave = 1;
-let enemiesSpawned = 0;
-let boss = null;
-let reinforcements = [];
-
 const resetWarior = () => {
   return {
     x: canvas.width / 2 - 64,
@@ -54,6 +47,19 @@ const resetWarior = () => {
   };
 };
 
+// ======== STATE ========
+let warrior = resetWarior();
+
+let enemies = [];
+let barrels = [];
+let currentWave = 1;
+let enemiesSpawned = 0;
+let boss = null;
+let reinforcements = [];
+const bossAppearEnemiesCount = 100;
+const superCannonDamage = warrior.bulletDamage * 20;
+let supperCannonCount = 20 * currentWave;
+
 startButton.addEventListener("click", () => {
   startButton.style.display = "none";
   gameStarted = true;
@@ -75,7 +81,6 @@ startButton.addEventListener("click", () => {
 
 document.addEventListener("keydown", handleKeyDown);
 document.addEventListener("keyup", handleKeyUp);
-const supperCannonCount = 5;
 document.addEventListener("keydown", (e) => {
   if (e.key === 'm') {
     toggleMusic();
@@ -115,10 +120,6 @@ function toggleMusic() {
   Object.values(sounds).forEach(s => s.volume = isMusicMuted ? 0 : 0.5);
   sounds.gameMusic.volume = isMusicMuted ? 0 : 0.4;
 }
-
-// ======== STATE ========
-let warrior = resetWarior();
-
 
 // ======== INPUT ========
 let keys = {};
@@ -163,10 +164,10 @@ function shoot() {
   }
 }
 
-const superCannonDamage = 5;
 
 // ======== SUPER CANNON ========
 function activateSuperCannon() {
+  warrior.kills = 0;
   warrior.superCannonActive = setInterval(() => {
     const beamX = warrior.x + warrior.width / 2 - 10;
 
@@ -215,25 +216,26 @@ function drawSuperCannonEffect() {
 }
 
 // ======== SPAWNERS ========
-const bossAppearEnemiesCount = 10;
 function spawnEnemy() {
   if (!gameStarted) return;
+
   for (let i = 0; i < Math.min(3, bossAppearEnemiesCount - enemiesSpawned); i++) {
     enemies.push({
       x: Math.random() * (canvas.width - 50),
-      y: 0,
+      y: -Math.random() * 100 - 50, // inimigo nasce entre -50 e -150
       width: 50,
       height: 50,
       speed: 0.1 + (currentWave / 5) * 0.1,
-      hp: 0 + currentWave,
+      hp: currentWave,
       damageEffect: 0
     });
     enemiesSpawned++;
   }
+
   if (enemiesSpawned >= bossAppearEnemiesCount && !boss) {
     boss = {
       x: canvas.width / 2 - 120,
-      y: 0,
+      y: -Math.random() * 100 - 50, // inimigo nasce entre -50 e -150
       width: 240,
       height: 120,
       speed: 0.1, // reduzido para 1/3
@@ -254,11 +256,11 @@ function spawnBarrel() {
   if (!gameStarted) return;
 
   if (reinforcements.length < warrior.maxReinforcements) {
-    barrels.push({ x: Math.random() * (canvas.width - 30), y: 0, width: 30, height: 30, speed: 0.3, type: "reinforcement", hp: 1 });
+    barrels.push({ x: Math.random() * (canvas.width - 30), y: -Math.random() * 100 - 50, width: 30, height: 30, speed: 0.3, type: "reinforcement", hp: 1 });
   }
 
   let type = Math.random() < 0.5 ? "buff" : "nerf";
-  barrels.push({ x: Math.random() * (canvas.width - 30), y: 0, width: 30, height: 30, speed: 1, type });
+  barrels.push({ x: Math.random() * (canvas.width - 30), y: -Math.random() * 100 - 50, width: 30, height: 30, speed: 1, type });
 }
 
 // ======== COLLISIONS ======== People / Bullet
@@ -377,14 +379,22 @@ function checkCollisions() {
       if (barrel.type === "buff") {
         let rand = Math.random();
 
-        if (rand < 0.22) {
+        // Calcula chance dinâmica de cura
+        const maxHp = 10; // ou o máximo de HP que você usa no jogo
+        const hpRatio = warrior.hp / maxHp;
+        const healChance = 0.25 + (1 - hpRatio) * 0.25; // varia entre 25% e 50%
+        const shieldChance = 0.25;
+        const damageChance = 0.25;
+        const fireRateChance = 1 - (healChance + shieldChance + damageChance);
+
+        if (rand < shieldChance) {
           warrior.shield += 1;
           sounds.buff_damage.play();
-        } else if (rand < 0.33) {
+        } else if (rand < shieldChance + damageChance) {
           warrior.bulletDamage++;
           warrior.buffs.damage++;
           sounds.buff_damage.play();
-        } else if (rand < 0.66) {
+        } else if (rand < shieldChance + damageChance + fireRateChance) {
           warrior.fireRate = Math.max(100, warrior.fireRate - 100);
           warrior.buffs.firerate++;
           sounds.buff_firerate.play();
@@ -395,6 +405,7 @@ function checkCollisions() {
         }
       } else if (barrel.type === "nerf") {
         let rand = Math.random();
+
         if (rand < 0.33) {
           warrior.bulletDamage = Math.max(1, warrior.bulletDamage - 1);
         } else if (rand < 0.66) {
@@ -404,6 +415,7 @@ function checkCollisions() {
         }
         sounds.nerf.play();
       }
+
 
       if (barrel.type !== "reinforcement") {
         barrels.splice(i, 1);
@@ -576,7 +588,7 @@ function draw() {
     ctx.filter = "none";
     ctx.fillStyle = "white";
     ctx.textAlign = "center";
-    ctx.fillText("BOSS", boss.x + boss.width / 2, boss.y + 20);
+    ctx.fillText("CHEFE", boss.x + boss.width / 2, boss.y + 20);
     ctx.fillText(`HP: ${boss.hp}`, boss.x + boss.width / 2, boss.y + 40);
     ctx.fillStyle = "orange";
     boss.bullets.forEach(bullet => ctx.fillRect(bullet.x, bullet.y, 5, 10));
@@ -682,7 +694,7 @@ function drawBossHealthBar() {
 
     ctx.fillStyle = "white";
     ctx.font = "16px Arial";
-    ctx.fillText("BOSS", x + barWidth / 2 - 30, y + 15);
+    ctx.fillText("CHEFE", x + barWidth / 2 - 30, y + 15);
   }
 }
 
@@ -785,4 +797,4 @@ function gameLoop() {
 }
 
 setInterval(spawnEnemy, 100);
-setInterval(spawnBarrel, 1400);
+setInterval(spawnBarrel, 5000);
