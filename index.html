@@ -2,33 +2,69 @@
 <html lang="pt-BR">
 
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Warrior vs Horde</title>
   <style>
     body {
       margin: 0;
-      background-color: #111;
+      padding: 0;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
+      background-color: #111;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
     }
 
     canvas {
-      background: #222;
-      border: 2px solid #fff;
+      border: 2px solid #333;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+    }
+
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    .game-container {
+      position: relative;
+    }
+
+    .controls {
+      position: absolute;
+      bottom: -40px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      color: #aaa;
+      font-size: 14px;
     }
   </style>
 </head>
 
 <body>
-  <canvas id="gameCanvas"></canvas>
+  <div class="game-container">
+    <canvas id="gameCanvas"></canvas>
+    <div class="controls">
+      Use as setas ou mouse para mover, espaço ou clique para atirar, C para super tiro, M para mutar
+    </div>
+  </div>
 
   <!-- Sprite do herói -->
   <img id="warriorSprite" src="hero.png" style="display: none;" />
 
-  <script src="main.js"></script>
+  <!-- Carregar os módulos JavaScript -->
+  <script type="module" src="./game.js"></script>
 </body>
 
 </html>
