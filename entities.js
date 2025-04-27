@@ -1,5 +1,7 @@
+// @ts-check
 // entities.js - Classes e funções para entidades do jogo
 import { sounds } from './audio.js';
+import { canvas, gameState } from './game.js';
 
 // Constantes
 const PLAYER_WIDTH = 64;
@@ -7,10 +9,6 @@ const PLAYER_HEIGHT = 64;
 const BULLET_WIDTH = 5;
 const BULLET_HEIGHT = 10;
 const SUPER_CANNON_COOLDOWN = 10000;  // 10 segundos de cooldown
-
-// Imagem do jogador
-export const warriorSprite = new Image();
-warriorSprite.src = "hero.png"; // 3 frames, 64x64 each, top-down soldier
 
 // Criar jogador principal
 function createPlayer() {
@@ -24,6 +22,7 @@ function createPlayer() {
     speed: 2,
     bulletSpeed: 4,
     bulletDamage: 1,
+    superCannonDamageMultiply: 5,
     fireRate: 600,
     lastShotTime: 0,
     hp: 10,
@@ -43,7 +42,7 @@ function createPlayer() {
   };
 }
 
-// Criar jogador reforço (similar ao principal mas com atributos diferentes)
+// Ajustar a criação de reforços para garantir que sejam criados corretamente
 function createReinforcement(offsetX, mainPlayer) {
   return {
     type: 'ally',
@@ -77,7 +76,10 @@ function createEnemy(wave) {
     height: 50,
     speed: 0.1 + (wave / 5) * 0.1,
     hp: wave,
-    damageEffect: 0
+    damageEffect: 0,
+    frameIndex: 0,
+    frameTimer: 0,
+    frameInterval: 120,
   };
 }
 
@@ -94,13 +96,31 @@ function createBoss(wave) {
     maxHp: (1 + wave * 10) * 3,
     damageEffect: 0,
     lastShot: Date.now(),
-    bulletDelay: 1500,
-    damage: 5
+    bulletDelay: Math.max(1000 - wave * 100, 100), // Reduz 100ms por wave, mínimo de 100ms
+    damage: 5,
+    frameIndex: 0,
+    frameTimer: 0,
+    frameInterval: 120,
   };
 }
 
+
 // Criar barril
 function createBarrel(type) {
+  const BarrelAttributes = {
+    BUFF: { speed: 0.6, hp: 5 },
+    REINFORCEMENT: { speed: 0.3, hp: 10 },
+    NERF: { speed: 2.0, hp: 5 },
+    HEALTH: { speed: 2.0, hp: 1 },
+    SHIELD: { speed: 1, hp: 1 }
+  };
+
+  const attributes = BarrelAttributes[type.toUpperCase()];
+  if (!attributes) {
+    console.error(`Tipo de barril inválido: ${type}`);
+    throw new Error(`Tipo de barril inválido: ${type}`);
+  }
+
   return {
     type: 'barrel',
     barrelType: type,
@@ -108,8 +128,8 @@ function createBarrel(type) {
     y: -Math.random() * 100 - 50,
     width: 30,
     height: 30,
-    speed: type === 'reinforcement' ? 0.3 : 1,
-    hp: type === 'reinforcement' ? 1 : 1
+    speed: attributes.speed,
+    hp: attributes.hp
   };
 }
 

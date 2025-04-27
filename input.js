@@ -1,5 +1,8 @@
+// @ts-check
 // input.js - Gerenciamento de entrada do usuário
 import { createBullet, activateSuperCannon } from './entities.js';
+import { toggleAudio } from './audio.js';
+import { canvas } from './game.js';
 
 // Estado das teclas pressionadas
 let keys = {};
@@ -79,7 +82,7 @@ function processShooting(entities) {
   });
 }
 
-// Lidar com tecla pressionada
+// Garantir que o super canhão seja ativado corretamente
 function handleKeyDown(e, entities) {
   keys[e.key] = true;
 
@@ -95,6 +98,8 @@ function handleKeyDown(e, entities) {
       activateSuperCannon(mainPlayer);
     }
   }
+
+  // Tecla Espaço para atirar
   if (e.key === ' ') {
     processShooting(entities);
   }
@@ -129,10 +134,7 @@ function handleMouseClick(e, entities) {
 
 // Função para mutar/desmutar o áudio (importada de audio.js)
 function toggleMusic() {
-  // Esta função é importada de audio.js
-  if (typeof window.toggleAudio === 'function') {
-    window.toggleAudio();
-  }
+  toggleAudio();
 }
 
 export { setupInput, processMovement, processShooting };

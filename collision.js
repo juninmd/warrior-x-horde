@@ -1,9 +1,9 @@
+// @ts-check
+
 // collision.js - Sistema de colisões
 import { sounds } from './audio.js';
 import { applyDamage, createReinforcement } from './entities.js';
-
-// Constante de super canhão
-const SUPER_CANNON_DAMAGE = 20;
+import { canvas } from './game.js';
 
 // Verificar colisões entre todas as entidades
 function checkCollisions(entities, gameState, handleEntityDeath) {
@@ -24,9 +24,9 @@ function checkCollisions(entities, gameState, handleEntityDeath) {
   checkBarrelCollisions(entities, gameState);
 }
 
-// Verificar colisões do super canhão
+// Adicionar dano do super canhão aos barris
 function checkSuperCannonCollisions(entities, gameState, handleEntityDeath) {
-  const { allies, enemies, boss } = entities;
+  const { allies, enemies, boss, barrels } = entities;
 
   if (allies.length === 0) return;
 
@@ -41,7 +41,7 @@ function checkSuperCannonCollisions(entities, gameState, handleEntityDeath) {
     boss.x < beamX + beamWidth) {
 
     // Aplicar dano ao chefe
-    boss.hp -= SUPER_CANNON_DAMAGE;
+    boss.hp -= mainPlayer.bulletDamage * mainPlayer.superCannonDamageMultiply;
     boss.damageEffect = 5;
 
     // Verificar se o chefe morreu
@@ -59,7 +59,7 @@ function checkSuperCannonCollisions(entities, gameState, handleEntityDeath) {
       enemy.x < beamX + beamWidth) {
 
       // Aplicar dano ao inimigo
-      enemy.hp -= SUPER_CANNON_DAMAGE;
+      enemy.hp -= mainPlayer.bulletDamage * mainPlayer.superCannonDamageMultiply;
       enemy.damageEffect = 5;
 
       // Verificar se o inimigo morreu
@@ -67,6 +67,33 @@ function checkSuperCannonCollisions(entities, gameState, handleEntityDeath) {
         handleEntityDeath(enemy, i, 'enemy');
       }
     }
+  }
+
+  // Colisão com barris
+  for (let i = barrels.length - 1; i >= 0; i--) {
+    const barrel = barrels[i];
+
+    if (barrel.y < mainPlayer.y &&
+      barrel.x + barrel.width > beamX &&
+      barrel.x < beamX + beamWidth) {
+
+      // Aplicar dano ao barril
+      barrel.hp -= mainPlayer.bulletDamage * mainPlayer.superCannonDamageMultiply;
+
+      // Verificar se o barril foi destruído
+      if (barrel.hp <= 0) {
+        barrels.splice(i, 1);
+
+        // Aplicar efeito do barril, se necessário
+        if (barrel.barrelType === 'reinforcement' && allies.length < gameState.maxReinforcements) {
+          const offsetX = allies.length % 2 === 0 ? -30 * allies.length : 30 * allies.length;
+          entities.allies.push(createReinforcement(offsetX, allies[0]));
+          sounds.buff_damage.play();
+        } else {
+          processBarrelEffect(allies[0], barrel);
+        }
+      }}
+
   }
 }
 
@@ -141,7 +168,8 @@ function checkBulletCollisions(entities, gameState, handleEntityDeath) {
         for (let j = entities.barrels.length - 1; j >= 0; j--) {
           const barrel = entities.barrels[j];
 
-          if (barrel.barrelType === 'reinforcement' && isColliding(bullet, barrel)) {
+          if (isColliding(bullet, barrel)) {
+
             // Remover bala
             bullets.splice(i, 1);
             barrel.hp -= bullet.damage;
@@ -151,11 +179,15 @@ function checkBulletCollisions(entities, gameState, handleEntityDeath) {
               entities.barrels.splice(j, 1);
 
               // Verificar limite de reforços
-              if (allies.length < 6) {
+              if (barrel.barrelType === 'reinforcement' && allies.length < gameState.maxReinforcements) {
                 // Calcular offset para o reforço
                 const offsetX = allies.length % 2 === 0 ? -30 * allies.length : 30 * allies.length;
                 entities.allies.push(createReinforcement(offsetX, allies[0]));
                 sounds.buff_damage.play();
+              } else {
+                if (allies.length === 0) return;
+                const mainPlayer = allies[0];
+                processBarrelEffect(mainPlayer, barrel);
               }
             }
             break;
@@ -168,7 +200,7 @@ function checkBulletCollisions(entities, gameState, handleEntityDeath) {
 
 // Verificar colisões diretas entre entidades
 function checkDirectCollisions(entities, gameState, handleEntityDeath) {
-  const { allies, enemies, boss } = entities;
+  const { allies, enemies, boss, barrels } = entities;
 
   // Verificar colisão entre aliados e inimigos
   for (let i = allies.length - 1; i >= 0; i--) {
@@ -196,6 +228,20 @@ function checkDirectCollisions(entities, gameState, handleEntityDeath) {
         handleEntityDeath(ally, i, 'ally');
       }
     }
+
+    for (let i = barrels.length - 1; i >= 0; i--) {
+      const barrel = barrels[i];
+
+      if (isColliding(ally, barrel)) {
+        barrels.splice(i, 1);
+
+        // Aplicar dano ao aliado
+        if (applyDamage(ally, 1)) {
+          handleEntityDeath(ally, i, 'ally');
+        }
+      }
+    }
+
   }
 
   // Verificar inimigos que saíram da tela
@@ -215,35 +261,9 @@ function checkDirectCollisions(entities, gameState, handleEntityDeath) {
   }
 }
 
-// Verificar colisões com barris
-function checkBarrelCollisions(entities, gameState) {
-  const { allies, barrels } = entities;
-
-  // Ignorar se não há aliados
-  if (allies.length === 0) return;
-
-  const mainPlayer = allies[0];
-
-  // Verificar cada barril
-  for (let i = barrels.length - 1; i >= 0; i--) {
-    const barrel = barrels[i];
-
-    // Ignorar barris de reforço (tratados em checkBulletCollisions)
-    if (barrel.barrelType === 'reinforcement') continue;
-
-    // Verificar colisão com jogador principal
-    if (isColliding(mainPlayer, barrel)) {
-      // Processar efeito do barril
-      processBarrelEffect(mainPlayer, barrel);
-
-      // Remover barril
-      barrels.splice(i, 1);
-    }
-  }
-}
-
-// Processar efeito do barril
+// Certificar que os efeitos dos barris estão sendo aplicados corretamente
 function processBarrelEffect(player, barrel) {
+
   if (barrel.barrelType === 'buff') {
     // Escolha aleatória de buff
     const rand = Math.random();
@@ -263,9 +283,6 @@ function processBarrelEffect(player, barrel) {
     } else if (rand < shieldChance + damageChance + fireRateChance) {
       player.fireRate = Math.max(100, player.fireRate - 100);
       sounds.buff_firerate.play();
-    } else {
-      player.hp += 1;
-      sounds.buff_health.play();
     }
   }
   else if (barrel.barrelType === 'nerf') {
@@ -280,6 +297,43 @@ function processBarrelEffect(player, barrel) {
       player.hp = Math.max(1, player.hp - 1);
     }
     sounds.nerf.play();
+  }
+  else if (barrel.barrelType === 'health') {
+    player.hp += 1;
+    sounds.buff_health.play();
+  }
+}
+
+// Corrigir a lógica para adicionar reforços ao destruir barris de reforço
+function checkBarrelCollisions(entities, gameState) {
+  const { allies, barrels } = entities;
+
+  // Ignorar se não há aliados
+  if (allies.length === 0) return;
+
+  const mainPlayer = allies[0];
+
+  // Verificar cada barril
+  for (let i = barrels.length - 1; i >= 0; i--) {
+    const barrel = barrels[i];
+
+    // Verificar colisão com jogador principal
+    if (isColliding(mainPlayer, barrel)) {
+      // Processar efeito do barril
+      if (barrel.barrelType === 'reinforcement') {
+        // Adicionar reforço se o limite não foi atingido
+        if (allies.length < gameState.maxAllies) {
+          const offsetX = allies.length % 2 === 0 ? -30 * allies.length : 30 * allies.length;
+          allies.push(createReinforcement(offsetX, mainPlayer));
+          sounds.buff_damage.play();
+        }
+      } else {
+        processBarrelEffect(mainPlayer, barrel);
+      }
+
+      // Remover barril
+      barrels.splice(i, 1);
+    }
   }
 }
 
