@@ -65,7 +65,7 @@ function createReinforcement(offsetX, mainPlayer) {
     damageEffect: 0
   };
 }
-
+const zombieSpeedBase = 0.1;
 // Criar inimigo
 function createEnemy(wave) {
   return {
@@ -74,7 +74,7 @@ function createEnemy(wave) {
     y: -Math.random() * 100 - 50,
     width: 50,
     height: 50,
-    speed: 0.1 + (wave / 5) * 0.1,
+    speed: zombieSpeedBase + (wave / 5) * zombieSpeedBase,
     hp: wave,
     damageEffect: 0,
     frameIndex: 0,

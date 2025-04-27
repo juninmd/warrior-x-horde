@@ -11,6 +11,7 @@ setupAudio();
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
+const spawnRate = 1000; // Taxa de spawn inicial em ms
 // Estado global do jogo
 let gameState = {
   isStarted: false,
@@ -25,7 +26,7 @@ let gameState = {
   zombieSprintCooldown: 0, // Cooldown global para controlar sprints em massa
   highScore: localStorage.getItem('highScore') || 0,
   score: 0,
-  spawnRate: 100, // Taxa inicial de spawn em ms
+  spawnRate: spawnRate, // Taxa inicial de spawn em ms
   lastSpawnTime: 0, // Último momento que um inimigo foi spawnado
   difficultyMultiplier: 1.0, // Multiplicador de dificuldade que aumenta com as ondas
   waveStartTime: 0, // Tempo em que a onda atual começou
@@ -74,7 +75,7 @@ function initGame() {
   gameState.enemiesSpawned = 0;
   gameState.enemiesKilled = 0;
   gameState.score = 0;
-  gameState.spawnRate = 2000;
+  gameState.spawnRate = spawnRate;
   gameState.difficultyMultiplier = 1.0;
   gameState.enemiesRequiredForBoss = 20;
   gameState.waveStartTime = Date.now();
@@ -150,7 +151,7 @@ function advanceToNextWave() {
   gameState.waveStartTime = Date.now();
   gameState.difficultyMultiplier += 0.5; // Aumenta a dificuldade
   gameState.enemiesRequiredForBoss = Math.min(20 + gameState.currentWave * 5, 100); // Aumenta o requisito de inimigos
-  gameState.spawnRate = Math.max(2000 - (gameState.currentWave * 100), 500); // Spawn mais rápido, mínimo 500ms
+  gameState.spawnRate = Math.max(spawnRate - (gameState.currentWave * 100), 500); // Spawn mais rápido, mínimo 500ms
 
   // Mensagem de nova onda
   console.log(`Onda ${gameState.currentWave} iniciada!`);
@@ -280,26 +281,27 @@ function spawnBarrel() {
 
 // Atualizar a tela final para exibir o score máximo e o score atual
 function updateGameOverScreen() {
-  const gameOverScreen = document.getElementById('gameOverScreen');
-  if (!gameOverScreen) {
-    const screen = document.createElement('div');
-    screen.id = 'gameOverScreen';
-    screen.style.position = 'absolute';
-    screen.style.top = '50%';
-    screen.style.left = '50%';
-    screen.style.transform = 'translate(-50%, -50%)';
-    screen.style.textAlign = 'center';
-    screen.style.color = 'white';
-    screen.innerHTML = `
-      <h1>Game Over</h1>
-      <p>Score Atual: ${gameState.score}</p>
-      <p>Score Máximo: ${gameState.highScore}</p>
-      <button id="restartButton" style="padding: 10px 20px; font-size: 16px;">Reiniciar</button>
+  if (gameState.isGameOver || gameState.allies[0].hp <= 0) {
+    const gameOverScreen = document.createElement('div');
+    gameOverScreen.id = 'gameOverScreen';
+    gameOverScreen.className = 'fixed inset-0 bg-gray-900 bg-opacity-90 flex flex-col items-center justify-center text-white';
+
+    gameOverScreen.innerHTML = `
+      <h1 class='text-4xl font-bold mb-4'>Game Over</h1>
+      <p class='text-lg mb-2'>Score Atual: ${gameState.score}</p>
+      <p class='text-lg mb-4'>Recorde: ${gameState.highScore}</p>
+      <button id='restartButton' class='bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'>Reiniciar</button>
+      <a id='shareButton' href='https://twitter.com/intent/tweet?text=Eu%20acabei%20de%20fazer%20${gameState.score}%20pontos%20no%20Warrior%20X%20Horde!%20Jogue%20agora%20em%20https://warrior-x-horde.netlify.app'
+       target='_blank'
+       class='bg-blue-400 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mt-4 inline-block'>
+      Compartilhar no Twitter
+      </a>
     `;
-    document.body.appendChild(screen);
+
+    document.body.appendChild(gameOverScreen);
 
     document.getElementById('restartButton').addEventListener('click', () => {
-      screen.remove();
+      gameOverScreen.remove();
       initGame();
     });
   }

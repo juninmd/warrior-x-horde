@@ -17,25 +17,6 @@ function setupInput(entities, canvas) {
   // Adicionar suporte para dispositivos móveis
   setupTouchInput(entities, canvas);
 
-  // Adicionar suporte para eventos de toque nos botões móveis
-  document.getElementById("moveLeft").addEventListener("touchstart", () => {
-    keys["ArrowLeft"] = true;
-  });
-  document.getElementById("moveLeft").addEventListener("touchend", () => {
-    keys["ArrowLeft"] = false;
-  });
-
-  document.getElementById("moveRight").addEventListener("touchstart", () => {
-    keys["ArrowRight"] = true;
-  });
-  document.getElementById("moveRight").addEventListener("touchend", () => {
-    keys["ArrowRight"] = false;
-  });
-
-  document.getElementById("shoot").addEventListener("touchstart", () => {
-    processShooting(entities);
-  });
-
   document.getElementById("superCannon").addEventListener("touchstart", () => {
     if (entities.allies.length > 0) {
       const mainPlayer = entities.allies[0];
