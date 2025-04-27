@@ -13,6 +13,37 @@ function setupInput(entities, canvas) {
   document.addEventListener("keyup", (e) => handleKeyUp(e));
   canvas.addEventListener("mousemove", (e) => handleMouseMove(e, entities, canvas));
   canvas.addEventListener("mousedown", (e) => handleMouseClick(e, entities));
+
+  // Adicionar suporte para dispositivos móveis
+  setupTouchInput(entities, canvas);
+
+  // Adicionar suporte para eventos de toque nos botões móveis
+  document.getElementById("moveLeft").addEventListener("touchstart", () => {
+    keys["ArrowLeft"] = true;
+  });
+  document.getElementById("moveLeft").addEventListener("touchend", () => {
+    keys["ArrowLeft"] = false;
+  });
+
+  document.getElementById("moveRight").addEventListener("touchstart", () => {
+    keys["ArrowRight"] = true;
+  });
+  document.getElementById("moveRight").addEventListener("touchend", () => {
+    keys["ArrowRight"] = false;
+  });
+
+  document.getElementById("shoot").addEventListener("touchstart", () => {
+    processShooting(entities);
+  });
+
+  document.getElementById("superCannon").addEventListener("touchstart", () => {
+    if (entities.allies.length > 0) {
+      const mainPlayer = entities.allies[0];
+      if (mainPlayer.kills >= 20 && mainPlayer.superCannonReady) {
+        activateSuperCannon(mainPlayer);
+      }
+    }
+  });
 }
 
 // Processar movimento com base nas teclas pressionadas
@@ -135,6 +166,48 @@ function handleMouseClick(e, entities) {
 // Função para mutar/desmutar o áudio (importada de audio.js)
 function toggleMusic() {
   toggleAudio();
+}
+
+// Adicionar suporte para toque em dispositivos móveis
+function setupTouchInput(entities, canvas) {
+  let touchStartTime = 0;
+
+  canvas.addEventListener("touchstart", (e) => {
+    e.preventDefault();
+    touchStartTime = Date.now();
+  });
+
+  canvas.addEventListener("touchend", (e) => {
+    e.preventDefault();
+    const touchDuration = Date.now() - touchStartTime;
+
+    if (touchDuration > 500) {
+      // Toque longo ativa o super canhão
+      if (entities.allies.length > 0) {
+        const mainPlayer = entities.allies[0];
+        if (mainPlayer.kills >= 20 && mainPlayer.superCannonReady) {
+          activateSuperCannon(mainPlayer);
+        }
+      }
+    } else {
+      // Toque curto dispara
+      processShooting(entities);
+    }
+  });
+
+  canvas.addEventListener("touchmove", (e) => {
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const touchX = e.touches[0].clientX - rect.left;
+
+    if (entities.allies.length > 0) {
+      const mainPlayer = entities.allies[0];
+      mainPlayer.x = Math.max(0, Math.min(canvas.width - mainPlayer.width, touchX - mainPlayer.width / 2));
+
+      // Atualizar posição dos aliados/reforços
+      updateAlliesPosition(entities.allies);
+    }
+  });
 }
 
 export { setupInput, processMovement, processShooting };

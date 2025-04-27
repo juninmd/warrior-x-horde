@@ -4,59 +4,73 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Warrior vs Horde</title>
+  <title>Warrior x Horde</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body {
-      margin: 0;
-      padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      background-color: #111;
-      overflow: hidden;
-      font-family: Arial, sans-serif;
+    /* Tornar o canvas responsivo */
+    #gameCanvas {
+      width: 100%;
+      height: auto;
+      max-width: 680px;
+      max-height: 1000px;
     }
 
-    canvas {
-      border: 2px solid #333;
-      box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+    /* Ajustar os botões para dispositivos móveis */
+    .mobile-controls button {
+      width: 60px;
+      height: 60px;
+      font-size: 18px;
     }
 
-    button {
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: background-color 0.3s;
+    /* Ajustar o tamanho do canvas para desktop e mobile */
+    @media (min-width: 1024px) {
+      #gameCanvas {
+        width: 90%;
+        height: auto;
+        max-width: 1400px;
+        max-height: 1200px;
+      }
     }
 
-    button:hover {
-      background-color: #45a049;
-    }
-
-    .game-container {
-      position: relative;
-    }
-
-    .controls {
-      position: absolute;
-      bottom: -40px;
-      left: 0;
-      right: 0;
-      text-align: center;
-      color: #aaa;
-      font-size: 14px;
+    @media (max-width: 1023px) {
+      #gameCanvas {
+        width: 100%;
+        height: auto;
+        max-width: 480px;
+        max-height: 600px;
+      }
     }
   </style>
 </head>
 
-<body>
-  <div class="game-container">
-    <canvas id="gameCanvas"></canvas>
-    <div class="controls">
-      Use as setas ou mouse para mover, espaço ou clique para atirar, C para super tiro, M para mutar
+<body class="bg-gray-900 text-white flex flex-col items-center justify-center h-screen">
+  <div class="flex flex-col h-screen">
+    <!-- Logo principal com tamanho reduzido -->
+    <div class="text-center mb-2">
+      <h1 class="text-4xl font-bold text-white">Warrior x Horde</h1>
+    </div>
+
+    <!-- Informações dos botões com estilo aprimorado -->
+    <div class="text-center text-gray-300 mb-2 text-sm">
+      <p>🎮 Use as setas ou mouse para mover</p>
+      <p>🔥 Espaço ou clique para atirar</p>
+      <p>💥 C para super tiro | 🔇 M para mutar</p>
+    </div>
+
+    <!-- Canvas do jogo com altura reduzida -->
+    <div class="flex-grow flex justify-center items-center">
+      <canvas id="gameCanvas" class="border-4 border-gray-700 shadow-lg" width="400" height="1000"></canvas>
+    </div>
+
+    <!-- Botão do super canhão reposicionado -->
+    <div class="fixed bottom-20 right-4">
+      <button id="superCannon" class="bg-red-600 text-white p-3 rounded-full shadow-lg">Super</button>
+    </div>
+
+    <!-- Publicidade no rodapé -->
+    <div class="bg-gray-800 p-4 text-center">
+      <p class="text-gray-400">Publicidade</p>
+      <!-- Código do Google Adsense pode ser inserido aqui -->
     </div>
   </div>
 

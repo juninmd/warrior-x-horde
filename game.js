@@ -10,8 +10,6 @@ setupAudio();
 // Configuração do canvas
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
-canvas.width = 480;
-canvas.height = 800;
 
 // Estado global do jogo
 let gameState = {
@@ -280,6 +278,33 @@ function spawnBarrel() {
   entities.barrels.push(createBarrel(type));
 }
 
+// Atualizar a tela final para exibir o score máximo e o score atual
+function updateGameOverScreen() {
+  const gameOverScreen = document.getElementById('gameOverScreen');
+  if (!gameOverScreen) {
+    const screen = document.createElement('div');
+    screen.id = 'gameOverScreen';
+    screen.style.position = 'absolute';
+    screen.style.top = '50%';
+    screen.style.left = '50%';
+    screen.style.transform = 'translate(-50%, -50%)';
+    screen.style.textAlign = 'center';
+    screen.style.color = 'white';
+    screen.innerHTML = `
+      <h1>Game Over</h1>
+      <p>Score Atual: ${gameState.score}</p>
+      <p>Score Máximo: ${gameState.highScore}</p>
+      <button id="restartButton" style="padding: 10px 20px; font-size: 16px;">Reiniciar</button>
+    `;
+    document.body.appendChild(screen);
+
+    document.getElementById('restartButton').addEventListener('click', () => {
+      screen.remove();
+      initGame();
+    });
+  }
+}
+
 // Game over
 function triggerGameOver() {
   gameState.isGameOver = true;
@@ -297,6 +322,8 @@ function triggerGameOver() {
 
   startButton.innerText = "Reiniciar Jogo";
   startButton.style.display = "block";
+
+  updateGameOverScreen();
 }
 
 // Loop principal do jogo
