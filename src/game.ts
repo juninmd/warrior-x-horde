@@ -29,9 +29,9 @@ let gameState: GameState = {
   enemiesKilled: 0,
   enemiesKilledWave: 0,
   enemiesRequiredForBoss: 50, // Quantidade de inimigos mortos necessária para o boss aparecer
-  bossSpawnCooldown: 3000, // Cooldown para o boss aparecer após requisitos serem atendidos
+  bossSpawnCooldown: 0, // Cooldown para o boss aparecer após requisitos serem atendidos
   maxBossSpawnCooldown: 10000, // 10 segundos de cooldown
-  zombieSprintChance: 0.2, // 20% de chance de um zumbi realizar um sprint
+  zombieSprintChance: 0.3, // 30% de chance de um zumbi realizar um sprint
   zombieSprintCooldown: 0, // Cooldown global para controlar sprints em massa
   highScore: Number(localStorage.getItem('highScore')) || 0,
   score: 0,
@@ -53,7 +53,7 @@ let gameState: GameState = {
   superCannonCooldown: 20000, // Cooldown do super canhão
   superCannonActive: false, // Se o super canhão está ativo
   superCannonTimer: 0, // Timer do super canhão
-  superCannonDuration: 5000, // Duração do super canhão em ms,
+  superCannonDuration: 4000, // Duração do super canhão em ms,
   superCannonDamageMultiply: 5,
   superCannonLastUsed: 0, // Último momento que o super canhão foi usadoF
   superCannonReady: false // Se o super canhão está pronto para uso
