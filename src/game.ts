@@ -18,7 +18,7 @@ const startButton = Object.assign(document.createElement("button"), {
 });
 document.body.appendChild(startButton);
 
-const spawnRate = 1000; // Taxa de spawn inicial em ms
+const spawnRate = 700; // Taxa de spawn inicial em ms
 
 // Estado global do jogo
 let gameState: GameState = {
@@ -28,8 +28,8 @@ let gameState: GameState = {
   enemiesSpawned: 0,
   enemiesKilled: 0,
   enemiesKilledWave: 0,
-  enemiesRequiredForBoss: 20, // Quantidade de inimigos mortos necessária para o boss aparecer
-  bossSpawnCooldown: 0, // Cooldown para o boss aparecer após requisitos serem atendidos
+  enemiesRequiredForBoss: 50, // Quantidade de inimigos mortos necessária para o boss aparecer
+  bossSpawnCooldown: 3000, // Cooldown para o boss aparecer após requisitos serem atendidos
   maxBossSpawnCooldown: 10000, // 10 segundos de cooldown
   zombieSprintChance: 0.2, // 20% de chance de um zumbi realizar um sprint
   zombieSprintCooldown: 0, // Cooldown global para controlar sprints em massa
@@ -49,8 +49,8 @@ let gameState: GameState = {
     SHIELD: 'shield'
   },
   showBossWarning: false,
-  maxAllies: 20, // Máximo de aliados permitidos
-  superCannonCooldown: 10000, // Cooldown do super canhão
+  maxAllies: 30, // Máximo de aliados permitidos
+  superCannonCooldown: 20000, // Cooldown do super canhão
   superCannonActive: false, // Se o super canhão está ativo
   superCannonTimer: 0, // Timer do super canhão
   superCannonDuration: 5000, // Duração do super canhão em ms,
