@@ -3,6 +3,7 @@ import * as path from 'path';
 
 export default defineConfig({
   root: '.',
+  publicDir: 'public',
   build: {
     outDir: 'dist',
     rollupOptions: {
