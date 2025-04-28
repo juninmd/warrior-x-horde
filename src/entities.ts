@@ -153,7 +153,9 @@ function activateSuperCannon(): boolean {
 
   gameState.superCannonActive = true;
   gameState.superCannonTimer = Date.now();
-  gameState.superCannonLastUsed = Date.now();
+  const x = new Date();
+  x.setSeconds(x.getSeconds() + 5);
+  gameState.superCannonLastUsed = x.getTime();
   gameState.superCannonReady = false;
 
   sounds.superCannon.play();
