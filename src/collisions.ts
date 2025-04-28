@@ -141,15 +141,15 @@ function processBarrelEffect(barrel: Barrel, player: Player, entities: Entities,
       break;
     case 'buff':
       const rand = Math.random();
-      if (rand < 0.25) player.shield += 1;
-      else if (rand < 0.5) player.bulletDamage += 1;
-      else if (rand < 0.75) player.fireRate += Math.max(100, player.fireRate - 100);
+      if (rand < 0.25) player.shield += 5;
+      else if (rand < 0.5) player.bulletDamage += 5;
+      else if (rand < 0.75) player.fireRate -= Math.max(10, player.fireRate - 100);
       sounds.buff_damage.play();
       break;
     case 'nerf':
       const nerfRand = Math.random();
       if (nerfRand < 0.33) player.bulletDamage -= Math.max(1, player.bulletDamage - 1);
-      else if (nerfRand < 0.66) player.fireRate -= 100;
+      else if (nerfRand < 0.66) player.fireRate += 100;
       else player.hp = Math.max(1, player.hp - 1);
       sounds.nerf.play();
       break;
