@@ -1,7 +1,8 @@
-// @ts-check
+// Converted to TypeScript
 // entities.js - Classes e funções para entidades do jogo
-import { sounds } from './audio.js';
-import { canvas, gameState } from './game.js';
+import { sounds } from './audio';
+import { canvas, gameState } from './game'; // Ensure canvas is typed as HTMLCanvasElement
+import { Player, Enemy, Boss, Barrel, Bullet, Entities, GameState } from './types';
 
 // Constantes
 const PLAYER_WIDTH = 64;
@@ -11,47 +12,41 @@ const BULLET_HEIGHT = 10;
 const SUPER_CANNON_COOLDOWN = 10000;  // 10 segundos de cooldown
 
 // Criar jogador principal
-function createPlayer() {
+function createPlayer(): Player {
   return {
+    offsetX: 0,
+    offsetY: 0,
     type: 'ally',
     isMainPlayer: true,
-    x: canvas.width / 2 - PLAYER_WIDTH / 2,
-    y: canvas.height - 100,
+    x: (canvas as HTMLCanvasElement)?.width / 2 - PLAYER_WIDTH / 2 || 0,
+    y: (canvas as HTMLCanvasElement)?.height - 100 || 0,
     width: PLAYER_WIDTH,
     height: PLAYER_HEIGHT,
     speed: 2,
     bulletSpeed: 4,
     bulletDamage: 1,
-    superCannonDamageMultiply: 5,
     fireRate: 600,
     lastShotTime: 0,
     hp: 10,
     shield: 0,
-    kills: 0,
-    totalKills: 0,
     frameIndex: 0,
     frameTimer: 0,
     frameInterval: 120,
     damageEffect: 0,
-    superCannonActive: false,
-    superCannonTimer: 0,
-    superCannonDuration: 3000,
-    superCannonCooldown: SUPER_CANNON_COOLDOWN,
-    superCannonLastUsed: 0,
-    superCannonReady: true
   };
 }
 
 // Ajustar a criação de reforços para garantir que sejam criados corretamente
-function createReinforcement(offsetX, mainPlayer) {
+function createReinforcement(offsetX: number, mainPlayer: Player): Player {
   return {
     type: 'ally',
     isMainPlayer: false,
+    offsetX: offsetX,
+    offsetY: 0,
     x: mainPlayer.x + offsetX,
     y: mainPlayer.y,
     width: PLAYER_WIDTH,
     height: PLAYER_HEIGHT,
-    offsetX: offsetX,
     speed: mainPlayer.speed,
     bulletSpeed: mainPlayer.bulletSpeed,
     bulletDamage: mainPlayer.bulletDamage,
@@ -62,15 +57,14 @@ function createReinforcement(offsetX, mainPlayer) {
     frameIndex: 0,
     frameTimer: 0,
     frameInterval: 120,
-    damageEffect: 0
+    damageEffect: 0,
   };
 }
 const zombieSpeedBase = 0.1;
 // Criar inimigo
-function createEnemy(wave) {
+function createEnemy(wave: number): Enemy {
   return {
-    type: 'enemy',
-    x: Math.random() * (canvas.width - 50),
+    x: Math.random() * ((canvas as HTMLCanvasElement)?.width - 50 || 0),
     y: -Math.random() * 100 - 50,
     width: 50,
     height: 50,
@@ -80,14 +74,19 @@ function createEnemy(wave) {
     frameIndex: 0,
     frameTimer: 0,
     frameInterval: 120,
+    zombieType: 'normal',
+    isZombie: true,
+    sprintCooldown: 0,
+    sprintDuration: 0,
+    baseSpeed: 2
   };
 }
 
 // Criar chefe
-function createBoss(wave) {
+function createBoss(wave: number): Boss {
   return {
     type: 'boss',
-    x: canvas.width / 2 - 120,
+    x: (canvas as HTMLCanvasElement)?.width / 2 - 120 || 0,
     y: -Math.random() * 100 - 50,
     width: 240,
     height: 120,
@@ -98,43 +97,44 @@ function createBoss(wave) {
     lastShot: Date.now(),
     bulletDelay: Math.max(1000 - wave * 100, 100), // Reduz 100ms por wave, mínimo de 100ms
     damage: 5,
+    bulletSpeed: 2,
+    bulletDamage: 5,
     frameIndex: 0,
     frameTimer: 0,
     frameInterval: 120,
   };
 }
 
-
 // Criar barril
-function createBarrel(type) {
+function createBarrel(type: 'buff' | 'nerf' | 'reinforcement' | 'health' | 'shield'): Barrel {
   const BarrelAttributes = {
-    BUFF: { speed: 0.6, hp: 5 },
-    REINFORCEMENT: { speed: 0.3, hp: 10 },
-    NERF: { speed: 2.0, hp: 5 },
-    HEALTH: { speed: 2.0, hp: 1 },
-    SHIELD: { speed: 1, hp: 1 }
+    buff: { speed: 1.0, hp: 5 }, // Increased speed for better visibility
+    nerf: { speed: 0.8, hp: 10 },
+    reinforcement: { speed: 1.0, hp: 5 },
+    health: { speed: 1.5, hp: 1 },
+    shield: { speed: 1.2, hp: 1 }
   };
-
-  const attributes = BarrelAttributes[type.toUpperCase()];
+  const barrelKey = type.toLowerCase() as keyof typeof BarrelAttributes;
+  const attributes = BarrelAttributes[barrelKey];
   if (!attributes) {
     console.error(`Tipo de barril inválido: ${type}`);
     throw new Error(`Tipo de barril inválido: ${type}`);
   }
 
   return {
-    type: 'barrel',
-    barrelType: type,
-    x: Math.random() * (canvas.width - 30),
+    x: Math.random() * ((canvas as HTMLCanvasElement)?.width - 30 || 0),
     y: -Math.random() * 100 - 50,
+    barrelType: type,
     width: 30,
     height: 30,
+    type: 'barrel',
     speed: attributes.speed,
     hp: attributes.hp
   };
 }
 
 // Criar bala
-function createBullet(entity, isEnemy = false) {
+function createBullet(entity: Player | Boss, isEnemy = false): Bullet {
   return {
     type: 'bullet',
     isEnemy: isEnemy,
@@ -143,26 +143,25 @@ function createBullet(entity, isEnemy = false) {
     width: BULLET_WIDTH,
     height: BULLET_HEIGHT,
     speed: entity.bulletSpeed || 2,
-    damage: entity.bulletDamage || (isEnemy ? entity.damage || 5 : 1)
+    damage: entity.bulletDamage || (isEnemy ? entity.bulletDamage || 5 : 1)
   };
 }
 
 // Ativar super canhão
-function activateSuperCannon(player) {
-  if (!player.superCannonReady) return false;
+function activateSuperCannon(): boolean {
+  if (!gameState.superCannonReady) return false;
 
-  player.superCannonActive = true;
-  player.superCannonTimer = Date.now();
-  player.superCannonLastUsed = Date.now();
-  player.superCannonReady = false;
-  player.kills = 0; // Reset kills
+  gameState.superCannonActive = true;
+  gameState.superCannonTimer = Date.now();
+  gameState.superCannonLastUsed = Date.now();
+  gameState.superCannonReady = false;
 
   sounds.superCannon.play();
   return true;
 }
 
 // Atualizar entidades
-function updateEntities(entities, gameState) {
+function updateEntities(entities: Entities, gameState: GameState): void {
   const now = Date.now();
 
   // Atualizar aliados
@@ -171,13 +170,13 @@ function updateEntities(entities, gameState) {
     if (ally.damageEffect > 0) ally.damageEffect--;
 
     // Verificar cooldown do super canhão para o jogador principal
-    if (ally.isMainPlayer && !ally.superCannonReady && now - ally.superCannonLastUsed >= ally.superCannonCooldown) {
-      ally.superCannonReady = true;
+    if (ally.isMainPlayer && !gameState.superCannonReady && now - gameState.superCannonLastUsed >= gameState.superCannonCooldown) {
+      gameState.superCannonReady = true;
     }
 
     // Desativar super canhão após duração
-    if (ally.isMainPlayer && ally.superCannonActive && now - ally.superCannonTimer > ally.superCannonDuration) {
-      ally.superCannonActive = false;
+    if (ally.isMainPlayer && gameState.superCannonActive && now - gameState.superCannonTimer > gameState.superCannonDuration) {
+      gameState.superCannonActive = false;
     }
   });
 
@@ -219,14 +218,14 @@ function updateEntities(entities, gameState) {
   }
 
   // Atualizar barris
-  entities.barrels = entities.barrels.filter(barrel => {
+  entities.barrels.forEach(barrel => {
     barrel.y += barrel.speed;
     return barrel.y <= canvas.height;
   });
 }
 
 // Aplicar dano
-function applyDamage(entity, damage) {
+function applyDamage(entity: Player, damage: number): boolean {
   if (entity.shield > 0) {
     entity.shield--;
   } else {

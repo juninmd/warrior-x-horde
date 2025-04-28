@@ -1,11 +1,30 @@
 // @ts-check
 // renderer.js - Funções de renderização aprimoradas
-import { barrelSprites, warriorSprite, zombieSprites } from './sprites.js';
 import { playAmbientSounds } from './audio.js';
 import { gameState } from './game.js';
+import { barrelSprites, warriorSprite, zombieSprites } from './sprites.js';
+import { Entities, GameState, Player, Enemy, Boss, Barrel, Bullet } from './types';
+
+// Define types for visual effects
+interface BloodSplatEffect {
+  x: number;
+  y: number;
+  radius: number;
+  lifetime: number;
+}
+
+interface ExplosionEffect {
+  x: number;
+  y: number;
+  radius: number;
+}
 
 // Efeitos visuais
-const effects = {
+const effects: {
+  bloodSplats: BloodSplatEffect[];
+  warnings: any[]; // Assuming warnings are not yet typed
+  explosions: ExplosionEffect[];
+} = {
   bloodSplats: [],
   warnings: [],
   explosions: []
@@ -23,7 +42,7 @@ const COLORS = {
 };
 
 // Renderizar o jogo completo
-function renderGame(ctx, entities) {
+function renderGame(ctx: CanvasRenderingContext2D, entities: Entities): void {
   const { allies, enemies, barrels, boss, bullets } = entities;
 
   // Limpar tela
@@ -36,7 +55,7 @@ function renderGame(ctx, entities) {
   updateVisualEffects(ctx);
 
   // Desenhar super canhão (atrás de tudo)
-  if (allies.length > 0 && allies[0].superCannonActive) {
+  if (allies.length > 0 && gameState.superCannonActive) {
     drawSuperCannonEffect(ctx, allies[0]);
   }
 
@@ -65,14 +84,14 @@ function renderGame(ctx, entities) {
 }
 
 // Desenhar fundo com estrada vertical e ponte
-function drawBackground(ctx) {
+function drawBackground(ctx: CanvasRenderingContext2D): void {
   ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
   // Desenhar estrada vertical
   drawVerticalRoad(ctx);
 }
 
-function drawVerticalRoad(ctx) {
+function drawVerticalRoad(ctx: CanvasRenderingContext2D): void {
   const roadWidth = ctx.canvas.width;
   const roadX = (ctx.canvas.width - roadWidth) / 1;
 
@@ -91,50 +110,74 @@ function drawVerticalRoad(ctx) {
   }
 }
 
-// Desenhar barris com sprites
-function drawBarrels(ctx, barrels) {
+// Substituir ctx.drawImage por blocos coloridos
+function drawBarrels(ctx: CanvasRenderingContext2D, barrels: Barrel[]): void {
   barrels.forEach(barrel => {
     const sprite = barrelSprites[barrel.barrelType];
-
-    switch (barrel.barrelType) {
-      case "reinforcement":
-        ctx.fillStyle = COLORS.text;
-        ctx.fillText(`HP: ${barrel.hp} | ${barrel.barrelType}`, barrel.x + barrel.width / 2, barrel.y + 40);
-        ctx.drawImage(sprite, barrel.x, barrel.y, barrel.width, barrel.height);
-        ctx.fillStyle = "rgba(0, 255, 0, 0.5)";
-        break;
-      default:
-        ctx.fillStyle = COLORS.text;
-        ctx.fillText(`HP: ${barrel.hp} | ${barrel.barrelType}`, barrel.x + barrel.width / 2, barrel.y + 40);
-        ctx.drawImage(sprite, barrel.x, barrel.y, barrel.width, barrel.height);
-        ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
-        break;
+    if (!sprite) {
+      throw new Error(`Sprite not found for barrel type: ${barrel.barrelType}`);
     }
-
+    ctx.fillStyle = barrel.barrelType === "reinforcement" ? "green" : "red";
+    // ctx.fillRect(barrel.x, barrel.y, barrel.width, barrel.height);
+    ctx.fillStyle = COLORS.text;
+    ctx.drawImage(sprite, barrel.x, barrel.y, barrel.width, barrel.height);
+    ctx.fillText(`HP: ${barrel.hp} | ${barrel.barrelType}`, barrel.x + barrel.width / 2, barrel.y + 40);
   });
 }
 
-// Desenhar inimigos com sprites
-function drawEnemies(ctx, enemies) {
+function drawEnemies(ctx: CanvasRenderingContext2D, enemies: Enemy[]): void {
   enemies.forEach(enemy => {
-    const sprite = zombieSprites[enemy.zombieType] || zombieSprites.normal;
+    ctx.fillStyle = enemy.isSprinting ? "yellow" : "blue";
+
+    const sprite = zombieSprites[enemy.zombieType as keyof typeof zombieSprites] || zombieSprites.normal;
 
     // Desenhar sprite do inimigo
     ctx.drawImage(sprite, enemy.frameIndex * enemy.width, 0, enemy.width, enemy.height, enemy.x, enemy.y, enemy.width, enemy.height);
 
-    // HP do inimigo
+    // ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
     ctx.fillStyle = COLORS.text;
     ctx.fillText(`HP: ${enemy.hp}`, enemy.x + 5, enemy.y + 20);
+  });
+}
 
-    // Efeito visual para sprinting
-    if (enemy.isSprinting) {
-      drawSprintEffect(ctx, enemy);
+function drawBoss(ctx: CanvasRenderingContext2D, boss: Boss | null): void {
+  if (!boss) return;
+
+  ctx.fillStyle = "darkred";
+  ctx.fillRect(boss.x, boss.y, boss.width, boss.height);
+  ctx.fillStyle = COLORS.text;
+  ctx.fillText(`HP: ${boss.hp}`, boss.x + boss.width / 2, boss.y - 10);
+  drawBossHealthBar(ctx, boss);
+}
+
+function drawAllies(ctx: CanvasRenderingContext2D, allies: Player[]): void {
+  allies.forEach(ally => {
+    ctx.fillStyle = "purple";
+
+    //    ctx.fillRect(ally.x, ally.y, ally.width, ally.height);
+
+    // Desenhar sprite do jogador
+    ctx.drawImage(warriorSprite, ally.frameIndex * ally.width, 0, ally.width, ally.height, ally.x, ally.y, ally.width, ally.height);
+
+    if (ally.shield > 0) {
+      ctx.beginPath();
+      ctx.arc(ally.x + ally.width / 2, ally.y + ally.height / 2, 40, 0, Math.PI * 2);
+      ctx.strokeStyle = COLORS.shield;
+      ctx.lineWidth = 4;
+      ctx.stroke();
     }
   });
 }
 
+function drawBullets(ctx: CanvasRenderingContext2D, bullets: Bullet[]): void {
+  bullets.forEach(bullet => {
+    ctx.fillStyle = bullet.isEnemy ? COLORS.enemyBullet : COLORS.bullet;
+    ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+  });
+}
+
 // Atualizar efeitos visuais
-function updateVisualEffects(ctx) {
+function updateVisualEffects(ctx: CanvasRenderingContext2D): void {
   effects.bloodSplats.forEach(effect => {
     ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
     ctx.beginPath();
@@ -146,17 +189,8 @@ function updateVisualEffects(ctx) {
   effects.bloodSplats = effects.bloodSplats.filter(effect => effect.lifetime > 0);
 }
 
-// Desenhar efeito de sprint
-function drawSprintEffect(ctx, enemy) {
-  ctx.strokeStyle = "rgba(255, 255, 0, 0.5)";
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.arc(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, enemy.width, 0, Math.PI * 2);
-  ctx.stroke();
-}
-
 // Desenhar efeitos visuais
-function drawVisualEffects(ctx) {
+function drawVisualEffects(ctx: CanvasRenderingContext2D): void {
   effects.explosions.forEach(explosion => {
     ctx.fillStyle = "rgba(255, 165, 0, 0.5)";
     ctx.beginPath();
@@ -165,22 +199,8 @@ function drawVisualEffects(ctx) {
   });
 }
 
-// Desenhar chefe
-function drawBoss(ctx, boss) {
-  ctx.fillStyle = COLORS.boss;
-
-  ctx.drawImage(zombieSprites.tank, boss.frameIndex * boss.width, 0, boss.width, boss.height, boss.x, boss.y, boss.width, boss.height);
-
-  // HP do chefe
-  ctx.fillStyle = COLORS.text;
-  ctx.fillText(`HP: ${boss.hp}`, boss.x + boss.width / 2, boss.y - 10);
-
-  // Barra de vida do chefe
-  drawBossHealthBar(ctx, boss);
-}
-
 // Desenhar barra de vida do chefe
-function drawBossHealthBar(ctx, boss) {
+function drawBossHealthBar(ctx: CanvasRenderingContext2D, boss: Boss): void {
   const barWidth = ctx.canvas.width - 40;
   const barHeight = 20;
   const x = 20;
@@ -206,39 +226,8 @@ function drawBossHealthBar(ctx, boss) {
   ctx.fillText("CHEFE", x + barWidth / 2, y + 15);
 }
 
-// Desenhar aliados (jogador e reforços)
-function drawAllies(ctx, allies) {
-  allies.forEach(ally => {
-    if (ally.damageEffect) {
-      ctx.filter = "brightness(150%) hue-rotate(-50deg)";
-    }
-
-    // Desenhar sprite do jogador
-    ctx.drawImage(warriorSprite, ally.frameIndex * 64, 0, 64, 64, ally.x, ally.y, 64, 64);
-
-    ctx.filter = "none";
-
-    // Desenhar escudo se tiver
-    if (ally.shield > 0) {
-      ctx.beginPath();
-      ctx.arc(ally.x + ally.width / 2, ally.y + ally.height / 2, 40, 0, Math.PI * 2);
-      ctx.strokeStyle = COLORS.shield;
-      ctx.lineWidth = 4;
-      ctx.stroke();
-    }
-  });
-}
-
-// Desenhar balas
-function drawBullets(ctx, bullets) {
-  bullets.forEach(bullet => {
-    ctx.fillStyle = bullet.isEnemy ? COLORS.enemyBullet : COLORS.bullet;
-    ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
-  });
-}
-
 // Desenhar efeito do super canhão
-function drawSuperCannonEffect(ctx, player) {
+function drawSuperCannonEffect(ctx: CanvasRenderingContext2D, player: Player): void {
   const beamWidth = 20;
   const beamX = player.x + player.width / 2 - beamWidth / 2;
   const beamHeight = player.y;
@@ -258,8 +247,23 @@ function drawSuperCannonEffect(ctx, player) {
   ctx.strokeRect(beamX, 0, beamWidth, beamHeight);
 }
 
-// Atualizar a função drawUI para exibir o high score corretamente
-function drawUI(ctx, entities, gameState) {
+// Fix the `remainingTime` error by ensuring it is properly scoped
+function getSuperCannonStatus(): string {
+  if (gameState.superCannonActive) {
+    const remainingTime = Math.max(0, Math.ceil((gameState.superCannonTimer + gameState.superCannonDuration - Date.now()) / 1000));
+    return `Ativo (${remainingTime}s)`;
+  } else if (gameState.superCannonReady) {
+    return 'Pronto (C)';
+  } else if (!gameState.superCannonReady) {
+    const cooldownRemaining = Math.ceil((gameState.superCannonLastUsed + gameState.superCannonCooldown - Date.now()) / 1000);
+    return `Cooldown: ${cooldownRemaining}s`;
+  } else {
+    return `Aguardando...`;
+  }
+}
+
+// Ensure `player` is properly referenced in the `drawUI` function
+function drawUI(ctx: CanvasRenderingContext2D, entities: Entities, gameState: GameState): void {
   const { allies } = entities;
   const mainPlayer = allies.length > 0 ? allies[0] : null;
 
@@ -282,7 +286,7 @@ function drawUI(ctx, entities, gameState) {
   ctx.fillText(`Escudo: ${mainPlayer.shield}`, ctx.canvas.width - 10, ctx.canvas.height - 70);
 
   // Status do super canhão
-  const superCannonStatus = getSuperCannonStatus(mainPlayer);
+  const superCannonStatus = getSuperCannonStatus();
   ctx.fillText(`Super Tiro: ${superCannonStatus}`, ctx.canvas.width - 10, ctx.canvas.height - 90);
 
   // Reforços
@@ -290,30 +294,14 @@ function drawUI(ctx, entities, gameState) {
 
   // Estatísticas no canto inferior esquerdo
   ctx.textAlign = "left";
-  ctx.fillText(`Kills (Wave): ${mainPlayer.kills}`, 10, ctx.canvas.height - 10);
-  ctx.fillText(`Total Kills: ${mainPlayer.totalKills}`, 10, ctx.canvas.height - 30);
-  ctx.fillText(`Wave: ${gameState.currentWave}`, 10, ctx.canvas.height - 50);
-  ctx.fillText(`Score: ${gameState.score}`, 10, ctx.canvas.height - 70);
-  ctx.fillText(`High Score: ${gameState.highScore}`, 10, ctx.canvas.height - 90); // Exibir high score
-}
-
-// Obter status do super canhão para exibição
-function getSuperCannonStatus(player) {
-  if (player.superCannonActive) {
-    const remainingTime = Math.max(0, Math.ceil((player.superCannonTimer + player.superCannonDuration - Date.now()) / 1000));
-    return `Ativo (${remainingTime}s)`;
-  } else if (player.superCannonReady && player.kills >= 20) {
-    return 'Pronto (C)';
-  } else if (!player.superCannonReady) {
-    const cooldownRemaining = Math.ceil((player.superCannonLastUsed + player.superCannonCooldown - Date.now()) / 1000);
-    return `Cooldown: ${cooldownRemaining}s`;
-  } else {
-    return `${player.kills}/20`;
-  }
+  ctx.fillText(`Total Kills: ${gameState.enemiesKilled}`, 10, ctx.canvas.height - 10);
+  ctx.fillText(`Wave: ${gameState.currentWave}`, 10, ctx.canvas.height - 30);
+  ctx.fillText(`Score: ${gameState.score}`, 10, ctx.canvas.height - 50);
+  ctx.fillText(`High Score: ${gameState.highScore}`, 10, ctx.canvas.height - 70);
 }
 
 // Atualizar a função drawGameOver para salvar o high score
-function drawGameOver(ctx, gameState) {
+function drawGameOver(ctx: CanvasRenderingContext2D, gameState: GameState): void {
   ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
   ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
@@ -332,7 +320,7 @@ function drawGameOver(ctx, gameState) {
   // Salvar high score no localStorage
   if (gameState.score > gameState.highScore) {
     gameState.highScore = gameState.score;
-    localStorage.setItem('highScore', gameState.highScore);
+    localStorage.setItem('highScore', gameState.highScore.toString());
   }
 }
 

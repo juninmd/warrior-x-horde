@@ -1,30 +1,39 @@
 // @ts-check
-// game.js - Arquivo principal do jogo com melhorias no sistema de spawn
+// game.ts - Arquivo principal do jogo com melhorias no sistema de spawn
 import { createPlayer, createEnemy, createBoss, createBarrel, updateEntities } from './entities.js';
-import { renderGame, drawUI } from './renderer.js';
-import { setupInput } from './input.js';
-import { setupAudio, sounds } from './audio.js';
-import { checkCollisions } from './collision.js';
-setupAudio();
+import { renderGame, drawUI } from './renderer';
+import { processMovement, setupInput } from './input.js';
+import { preloadSounds, sounds } from './audio';
+import { checkCollisions } from './collisions';
+import { Entities, GameState, Enemy } from './types';
+
+preloadSounds();
 
 // Configuração do canvas
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
+const canvas = document.getElementById("gameCanvas") as HTMLCanvasElement;
+const ctx = canvas.getContext("2d")!;
+const startButton = Object.assign(document.createElement("button"), {
+  innerText: "Iniciar Jogo",
+  style: "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 20px 40px; font-size: 20px;",
+});
+document.body.appendChild(startButton);
 
 const spawnRate = 1000; // Taxa de spawn inicial em ms
+
 // Estado global do jogo
-let gameState = {
+let gameState: GameState = {
   isStarted: false,
   isGameOver: false,
   currentWave: 1,
   enemiesSpawned: 0,
   enemiesKilled: 0,
+  enemiesKilledWave: 0,
   enemiesRequiredForBoss: 20, // Quantidade de inimigos mortos necessária para o boss aparecer
   bossSpawnCooldown: 0, // Cooldown para o boss aparecer após requisitos serem atendidos
   maxBossSpawnCooldown: 10000, // 10 segundos de cooldown
   zombieSprintChance: 0.2, // 20% de chance de um zumbi realizar um sprint
   zombieSprintCooldown: 0, // Cooldown global para controlar sprints em massa
-  highScore: localStorage.getItem('highScore') || 0,
+  highScore: Number(localStorage.getItem('highScore')) || 0,
   score: 0,
   spawnRate: spawnRate, // Taxa inicial de spawn em ms
   lastSpawnTime: 0, // Último momento que um inimigo foi spawnado
@@ -38,16 +47,20 @@ let gameState = {
     BUFF: 'buff',
     HEALTH: 'health',
     SHIELD: 'shield'
-  }
+  },
+  showBossWarning: false,
+  maxAllies: 20, // Máximo de aliados permitidos
+  superCannonCooldown: 10000, // Cooldown do super canhão
+  superCannonActive: false, // Se o super canhão está ativo
+  superCannonTimer: 0, // Timer do super canhão
+  superCannonDuration: 5000, // Duração do super canhão em ms,
+  superCannonDamageMultiply: 5,
+  superCannonLastUsed: 0, // Último momento que o super canhão foi usadoF
+  superCannonReady: false // Se o super canhão está pronto para uso
 };
 
-// Garantir que o high score seja carregado corretamente do localStorage
-if (!gameState.highScore) {
-  gameState.highScore = parseInt(localStorage.getItem('highScore')) || 0;
-}
-
 // Entidades do jogo
-let entities = {
+let entities: Entities = {
   allies: [], // Jogador principal e reforços em um único array
   enemies: [],
   barrels: [],
@@ -55,80 +68,39 @@ let entities = {
   bullets: [] // Todas as balas em um único array
 };
 
-// Configuração do botão de início
-const startButton = document.createElement("button");
-startButton.innerText = "Iniciar Jogo";
-startButton.style.position = "absolute";
-startButton.style.top = "50%";
-startButton.style.left = "50%";
-startButton.style.transform = "translate(-50%, -50%)";
-startButton.style.padding = "20px 40px";
-startButton.style.fontSize = "20px";
-document.body.appendChild(startButton);
-
 // Inicialização do jogo
-function initGame() {
+function initGame(): void {
+  Object.assign(gameState, {
+    isStarted: true, isGameOver: false, currentWave: 1, enemiesSpawned: 0, enemiesKilled: 0, score: 0,
+    spawnRate, difficultyMultiplier: 1.0, enemiesRequiredForBoss: 20, waveStartTime: Date.now(), lastSpawnTime: Date.now()
+  });
+  Object.assign(entities, { allies: [createPlayer()], enemies: [], barrels: [], bullets: [], boss: null });
+  sounds.gameStart.play(); sounds.gameMusic.play();
   startButton.style.display = "none";
-  gameState.isStarted = true;
-  gameState.isGameOver = false;
-  gameState.currentWave = 1;
-  gameState.enemiesSpawned = 0;
-  gameState.enemiesKilled = 0;
-  gameState.score = 0;
-  gameState.spawnRate = spawnRate;
-  gameState.difficultyMultiplier = 1.0;
-  gameState.enemiesRequiredForBoss = 20;
-  gameState.waveStartTime = Date.now();
-  gameState.lastSpawnTime = Date.now();
-
-  // Criar jogador principal
-  entities.allies = [createPlayer()];
-  entities.enemies = [];
-  entities.barrels = [];
-  entities.bullets = [];
-  entities.boss = null;
-
-  sounds.gameStart.play();
-  sounds.gameMusic.play();
-
   gameLoop();
 }
 
 // Manipulação de entidades que morrem
-function handleEntityDeath(entity, index, type) {
+function handleEntityDeath(entity: any, index: number | null, type: string): void {
+  const { allies, enemies } = entities;
   if (type === 'ally') {
-    entities.allies.splice(index, 1);
-    if (entities.allies.length === 0) {
-      triggerGameOver();
-    }
+    allies.splice(index!, 1);
+    if (!allies.length) triggerGameOver();
   } else if (type === 'enemy') {
-    entities.enemies.splice(index, 1);
-    gameState.score += 100 * gameState.currentWave;
+    enemies.splice(index!, 1);
+    gameState.score += 1 * gameState.currentWave;
     gameState.enemiesKilled++;
-
-    // Se for o jogador principal que matou
-    if (entities.allies.length > 0) {
-      entities.allies[0].kills++;
-      entities.allies[0].totalKills++;
-    }
-
-    // Verificar se é hora de preparar o boss
     checkBossSpawnConditions();
   } else if (type === 'boss') {
     entities.boss = null;
-    gameState.score += 5000 * gameState.currentWave;
-    gameState.enemiesKilled = 0;
-    gameState.enemiesSpawned = 0;
+    Object.assign(gameState, { score: gameState.score + 5 * gameState.currentWave, enemiesSpawned: 0 });
     advanceToNextWave();
-    sounds.bossMusic.pause();
-    sounds.gameMusic.play();
-    sounds.bossDeath.play();
-    sounds.waveComplete.play();
+    sounds.bossMusic.pause(); sounds.gameMusic.play(); sounds.bossDeath.play(); sounds.waveComplete.play();
   }
 }
 
 // Verifica condições para spawnar o boss
-function checkBossSpawnConditions() {
+function checkBossSpawnConditions(): void {
   // Se já temos um boss, não fazemos nada
   if (entities.boss) return;
 
@@ -146,7 +118,7 @@ function checkBossSpawnConditions() {
 }
 
 // Avançar para a próxima onda
-function advanceToNextWave() {
+function advanceToNextWave(): void {
   gameState.currentWave++;
   gameState.waveStartTime = Date.now();
   gameState.difficultyMultiplier += 0.5; // Aumenta a dificuldade
@@ -158,11 +130,9 @@ function advanceToNextWave() {
 }
 
 // Sistema de zumbis aprimorado
-function createZombie() {
-  // Cria um inimigo baseado na onda atual
-  const zombie = createEnemy(gameState.currentWave);
+function createZombie(): Enemy {
+  const zombie: Enemy = createEnemy(gameState.currentWave);
 
-  // Adiciona comportamentos especiais de zumbi
   zombie.isZombie = true;
   zombie.moveStyle = getRandomZombieMovement();
   zombie.canSprint = Math.random() < gameState.zombieSprintChance;
@@ -174,7 +144,7 @@ function createZombie() {
 }
 
 // Estilos de movimento zumbi
-function getRandomZombieMovement() {
+function getRandomZombieMovement(): string {
   const styles = ["shambler", "runner", "crawler", "lurker"];
   const randomIndex = Math.floor(Math.random() * styles.length);
   return styles[randomIndex];
@@ -221,7 +191,7 @@ function spawnEnemies() {
 }
 
 // Spawner de boss
-function spawnBoss() {
+function spawnBoss(): void {
   if (!gameState.isStarted || entities.boss) return;
 
   entities.boss = createBoss(gameState.currentWave);
@@ -234,7 +204,7 @@ function spawnBoss() {
 }
 
 // Desencadeia sprint em zumbis aleatórios se o cooldown permitir
-function triggerZombieSprints() {
+function triggerZombieSprints(): void {
   if (gameState.zombieSprintCooldown <= 0 && Math.random() < 0.1) { // 10% de chance por loop
     // Coloca em cooldown para evitar muitos sprints consecutivos
     gameState.zombieSprintCooldown = 5000; // 5 segundos
@@ -254,7 +224,7 @@ function triggerZombieSprints() {
 }
 
 // Spawner de barris
-function spawnBarrel() {
+function spawnBarrel(): void {
   if (!gameState.isStarted) return;
 
   // Escolhe tipo de barril baseado em probabilidade
@@ -272,16 +242,16 @@ function spawnBarrel() {
   }
 
   // Limite de reforços
-  if (type === gameState.BarrelTypes.REINFORCEMENT && entities.allies.length >= gameState.maxAllies) {
+  if (type === gameState.BarrelTypes.REINFORCEMENT && entities.allies.length >= gameState.maxReinforcements) {
     type = Math.random() < 0.5 ? gameState.BarrelTypes.BUFF : gameState.BarrelTypes.NERF;
   }
 
-  entities.barrels.push(createBarrel(type));
+  entities.barrels.push(createBarrel(type as 'reinforcement' | 'nerf' | 'buff' | 'health' | 'shield'));
 }
 
 // Atualizar a tela final para exibir o score máximo e o score atual
-function updateGameOverScreen() {
-  if (gameState.isGameOver || gameState.allies[0].hp <= 0) {
+function updateGameOverScreen(): void {
+  if (gameState.isGameOver || entities.allies[0].hp <= 0) {
     const gameOverScreen = document.createElement('div');
     gameOverScreen.id = 'gameOverScreen';
     gameOverScreen.className = 'fixed inset-0 bg-gray-900 bg-opacity-90 flex flex-col items-center justify-center text-white';
@@ -300,7 +270,7 @@ function updateGameOverScreen() {
 
     document.body.appendChild(gameOverScreen);
 
-    document.getElementById('restartButton').addEventListener('click', () => {
+    document.getElementById('restartButton')!.addEventListener('click', () => {
       gameOverScreen.remove();
       initGame();
     });
@@ -308,12 +278,12 @@ function updateGameOverScreen() {
 }
 
 // Game over
-function triggerGameOver() {
+function triggerGameOver(): void {
   gameState.isGameOver = true;
   gameState.isStarted = false;
 
   // Atualizar high score
-  if (gameState.score > Number(gameState.highScore)) {
+  if (gameState.score > gameState.highScore) {
     gameState.highScore = gameState.score;
     localStorage.setItem('highScore', gameState.highScore.toString());
   }
@@ -329,23 +299,15 @@ function triggerGameOver() {
 }
 
 // Loop principal do jogo
-function gameLoop() {
+function gameLoop(): void {
   if (gameState.isGameOver) return;
-
-  // Sistema de spawn baseado em tempo
   spawnEnemies();
-
-  // Gerencia sprints de zumbis
   triggerZombieSprints();
-
-  // Atualização
   updateEntities(entities, gameState);
+  processMovement(entities);
   checkCollisions(entities, gameState, handleEntityDeath);
-
-  // Renderização
   renderGame(ctx, entities);
   drawUI(ctx, entities, gameState);
-
   requestAnimationFrame(gameLoop);
 }
 

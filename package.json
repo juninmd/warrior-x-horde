@@ -1,0 +1,23 @@
+{
+  "name": "warrior-x-horder",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^22.15.2",
+    "cpx": "^1.5.0",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "vite": "^6.3.3"
+  },
+  "packageManager": "pnpm@8.14.3+sha1.872b21adeaae4e71acd5c551ba848d927d6aa446"
+}
