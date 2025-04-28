@@ -2,22 +2,41 @@
 // input.js - Gerenciamento de entrada do usuário
 import { createBullet, activateSuperCannon } from './entities';
 import { toggleAudio } from './audio';
-import { canvas, gameState } from './game';
+import { canvas } from './game';
 import { Entities, Player } from './types';
 
 const keys: Record<string, boolean> = {};
+let isMobile = /Mobi|Android/i.test(navigator.userAgent);
+let autoShootInterval: number | null = null;
 
 function setupInput(entities: Entities, canvas: HTMLCanvasElement): void {
   canvas.addEventListener("mousemove", (e: MouseEvent) => handleMouseMove(e, entities, canvas));
   canvas.addEventListener("mousedown", (e: MouseEvent) => handleMouseClick(e, entities));
+  canvas.addEventListener("click", (e: MouseEvent) => handleMouseClick(e, entities));
+
   document.getElementById("superCannon")?.addEventListener("touchstart", () => {
-    if (entities.allies.length > 0) {
-      gameState.superCannonActive = true;
-    }
+    activateSuperCannon();
+  });
+
+  document.getElementById("superCannon")?.addEventListener("click", () => {
+    activateSuperCannon();
   });
 
   window.addEventListener("keydown", (e: KeyboardEvent) => handleKeyDown(e, entities));
   window.addEventListener("keyup", (e: KeyboardEvent) => handleKeyUp(e));
+
+  if (isMobile) {
+    startAutoShooting(entities);
+    canvas.addEventListener("touchstart", (e: TouchEvent) => handleTouchMove(e, entities, canvas));
+  }
+}
+
+function startAutoShooting(entities: Entities): void {
+  if (autoShootInterval === null) {
+    autoShootInterval = window.setInterval(() => {
+      processShooting(entities);
+    }, 100); // Atira automaticamente a cada 100ms
+  }
 }
 
 function processMovement(entities: Entities): void {
@@ -125,9 +144,31 @@ function handleMouseMove(e: MouseEvent, entities: Entities, canvas: HTMLCanvasEl
 }
 
 function handleMouseClick(e: MouseEvent, entities: Entities): void {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const x = (e.clientX - rect.left) * scaleX;
+  const y = (e.clientY - rect.top) * scaleY;
+
   if (entities.allies.length > 0) {
     const mainPlayer = entities.allies[0];
-    mainPlayer.lastShotTime = Date.now();
+    mainPlayer.x = x - mainPlayer.width / 2;
+    mainPlayer.y = y - mainPlayer.height / 2;
+  }
+}
+
+function handleTouchMove(e: TouchEvent, entities: Entities, canvas: HTMLCanvasElement): void {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const touch = e.touches[0];
+  const x = (touch.clientX - rect.left) * scaleX;
+  const y = (touch.clientY - rect.top) * scaleY;
+
+  if (entities.allies.length > 0) {
+    const mainPlayer = entities.allies[0];
+    mainPlayer.x = x - mainPlayer.width / 2;
+    mainPlayer.y = y - mainPlayer.height / 2;
   }
 }
 
