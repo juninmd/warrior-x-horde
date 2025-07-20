@@ -1,20 +1,38 @@
 
 import { Entities } from '../types';
-import { processShooting } from '../input';
-
-let autoShootInterval: number | null = null;
-
-function startAutoShooting(entities: Entities): void {
-  if (autoShootInterval === null) {
-    autoShootInterval = window.setInterval(() => {
-      processShooting(entities);
-    }, 100); // Atira automaticamente a cada 100ms
-  }
-}
+import { setShooting } from '../input';
+import { gameState } from '../gameState';
+import { handleShopClick } from '../ui/shopUI';
 
 export function setupMobileInput(entities: Entities, canvas: HTMLCanvasElement): void {
-  startAutoShooting(entities);
-  canvas.addEventListener("touchstart", (e: TouchEvent) => handleTouchMove(e, entities, canvas));
+  canvas.addEventListener("touchstart", (e: TouchEvent) => {
+    if (gameState.isShopOpen) {
+      handleShopClick(e as unknown as MouseEvent, entities, gameState);
+    } else {
+      handleTouchStart(e, entities, canvas);
+    }
+  });
+  canvas.addEventListener("touchmove", (e: TouchEvent) => handleTouchMove(e, entities, canvas));
+  canvas.addEventListener("touchend", () => handleTouchEnd());
+
+  // Add a button for mobile to open/close the shop
+  const shopButton = Object.assign(document.createElement("button"), {
+    innerText: "Shop",
+    style: "position: absolute; bottom: 20px; left: 20px; padding: 10px 20px; font-size: 16px; z-index: 100;",
+  });
+  document.body.appendChild(shopButton);
+
+  shopButton.addEventListener("click", () => {
+    gameState.isShopOpen = !gameState.isShopOpen;
+  });
+}
+
+function handleTouchStart(e: TouchEvent, entities: Entities, canvas: HTMLCanvasElement): void {
+  setShooting(true);
+  if (entities.allies.length > 0) {
+    entities.allies[0].animationState = 'shooting';
+  }
+  handleTouchMove(e, entities, canvas);
 }
 
 function handleTouchMove(e: TouchEvent, entities: Entities, canvas: HTMLCanvasElement): void {
@@ -29,5 +47,12 @@ function handleTouchMove(e: TouchEvent, entities: Entities, canvas: HTMLCanvasEl
     const mainPlayer = entities.allies[0];
     mainPlayer.x = x - mainPlayer.width / 2;
     mainPlayer.y = y - mainPlayer.height / 2;
+  }
+}
+
+function handleTouchEnd(): void {
+  setShooting(false);
+  if (entities.allies.length > 0) {
+    entities.allies[0].animationState = 'idle';
   }
 }

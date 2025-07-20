@@ -3,8 +3,14 @@ import { activateSuperCannon } from './abilities';
 import { setupMobileInput } from './input/mobileInput';
 import { setupDesktopInput } from './input/desktopInput';
 import { Entities } from './types';
+import { gameState } from './gameState';
+import { handleShopClick } from './ui/shopUI';
 
 export const keys: Record<string, boolean> = {};
+export let isShooting = false;
+export function setShooting(value: boolean) {
+  isShooting = value;
+}
 let isMobile = /Mobi|Android/i.test(navigator.userAgent);
 
 export function setupInput(entities: Entities, canvas: HTMLCanvasElement): void {
@@ -23,15 +29,3 @@ export function setupInput(entities: Entities, canvas: HTMLCanvasElement): void 
   }
 }
 
-export function processShooting(entities: Entities): void {
-  if (entities.allies.length === 0) return;
-
-  const now = Date.now();
-
-  entities.allies.forEach(ally => {
-    if (now - ally.lastShotTime >= ally.fireRate) {
-      entities.bullets.push(createBullet(ally, false));
-      ally.lastShotTime = now;
-    }
-  });
-}

@@ -27,16 +27,17 @@ export function createPlayer(): Player {
     frameTimer: 0,
     frameInterval: 120,
     damageEffect: 0,
+    animationState: 'idle',
   };
 }
 
-export function createReinforcement(offsetX: number, mainPlayer: Player): Player {
+export function createReinforcement(allyCount: number, mainPlayer: Player): Player {
   return {
     type: 'ally',
     isMainPlayer: false,
-    offsetX: offsetX,
+    offsetX: 0,
     offsetY: 0,
-    x: mainPlayer.x + offsetX,
+    x: mainPlayer.x,
     y: mainPlayer.y,
     width: PLAYER_WIDTH,
     height: PLAYER_HEIGHT,
@@ -45,11 +46,12 @@ export function createReinforcement(offsetX: number, mainPlayer: Player): Player
     bulletDamage: mainPlayer.bulletDamage,
     fireRate: mainPlayer.fireRate,
     lastShotTime: 0,
-    hp: 3, // Reforços são mais fracos
+    hp: 5, // Reforços são mais duráveis
     shield: 0,
     frameIndex: 0,
     frameTimer: 0,
     frameInterval: 120,
     damageEffect: 0,
+    animationState: 'idle',
   };
 }

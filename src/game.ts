@@ -3,7 +3,7 @@ import { createPlayer } from './entities';
 import { updateEntities } from './entityUpdater';
 import { renderGame } from './renderer';
 import { drawUI } from './ui';
-import { setupInput } from './input';
+import { setupInput, isShooting } from './input';
 import { processMovement } from './movement';
 import { sounds } from './audio';
 import { preloadSounds } from './audioManager';
@@ -13,6 +13,7 @@ import { gameState } from './gameState';
 import { spawnEnemies, spawnBarrel, triggerZombieSprints } from './spawner';
 import { initGame } from './gameSetup';
 import { handleEntityDeath, updateBossSpawn } from './gameManager';
+import { updateBuffs, drawBuffs } from './buffs';
 
 preloadSounds();
 
@@ -28,19 +29,38 @@ export let entities: Entities = {
   allies: [], enemies: [], barrels: [], boss: null, bullets: []
 };
 
-function gameLoop(): void {
+let lastTime = 0;
+function gameLoop(currentTime: number): void {
   if (gameState.isGameOver) return;
+
+  const deltaTime = currentTime - lastTime;
+  lastTime = currentTime;
+
   spawnEnemies();
   updateBossSpawn();
   triggerZombieSprints(entities.enemies);
-  updateEntities(entities, gameState);
+  updateEntities(entities, gameState, isShooting);
   processMovement(entities);
   checkCollisions(entities, gameState, handleEntityDeath);
+  updateBuffs(deltaTime);
   renderGame(ctx, entities);
   drawUI(ctx, entities, gameState);
+  drawBuffs(ctx);
   requestAnimationFrame(gameLoop);
 }
 
-startButton.addEventListener("click", () => initGame(entities, gameState, gameLoop, startButton));
+import { preloadImages } from './sprites';
+
+startButton.addEventListener("click", async () => {
+  startButton.disabled = true; // Disable button during loading
+  startButton.innerText = "Loading...";
+  try {
+    await preloadImages();
+    initGame(entities, gameState, gameLoop, startButton);
+  } catch (error) {
+    console.error("Failed to load game assets:", error);
+    startButton.innerText = "Error loading game";
+  }
+});
 setupInput(entities, canvas);
 setInterval(spawnBarrel, 5000);

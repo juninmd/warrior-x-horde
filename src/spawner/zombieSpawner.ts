@@ -4,7 +4,26 @@ import { gameState } from '../gameState';
 import { Enemy } from '../types';
 
 export function createZombie(): Enemy {
-  const zombie: Enemy = createEnemy(gameState.currentWave);
+  let zombieType: string;
+  const rand = Math.random();
+
+  if (gameState.currentWave < 3) {
+    zombieType = 'normal';
+  } else if (gameState.currentWave < 6) {
+    if (rand < 0.8) zombieType = 'normal';
+    else zombieType = 'fast';
+  } else if (gameState.currentWave < 10) {
+    if (rand < 0.6) zombieType = 'normal';
+    else if (rand < 0.9) zombieType = 'fast';
+    else zombieType = 'tank';
+  } else {
+    if (rand < 0.5) zombieType = 'normal';
+    else if (rand < 0.75) zombieType = 'fast';
+    else if (rand < 0.9) zombieType = 'tank';
+    else zombieType = 'spitter';
+  }
+
+  const zombie: Enemy = createEnemy(zombieType, gameState.currentWave);
   zombie.isZombie = true;
   zombie.moveStyle = getRandomZombieMovement();
   zombie.canSprint = Math.random() < gameState.zombieSprintChance;

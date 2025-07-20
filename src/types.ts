@@ -27,7 +27,15 @@ export interface GameState {
   superCannonCooldown: number;
   superCannonLastUsed: number;
   superCannonReady: boolean;
+  screenShakeActive: boolean;
+  screenShakeIntensity: number;
+  screenShakeDuration: number;
+  screenShakeTimer: number;
+  superCannonWarningPlayed: boolean;
+  lastFrameTime: number;
   superCannonDamageMultiply: number;
+  coins: number;
+  isShopOpen: boolean;
 }
 
 /**
@@ -93,7 +101,7 @@ export interface Player {
   frameTimer: number;
   frameInterval: number;
   damageEffect: number;
-
+  animationState: 'idle' | 'walking' | 'shooting' | 'dying';
 }
 
 export interface Enemy {
@@ -115,6 +123,12 @@ export interface Enemy {
   sprintDuration: number;
   baseSpeed: number;
   isSprinting?: boolean;
+  attackType?: 'melee' | 'ranged';
+  attackDamage?: number;
+  bulletSpeed?: number;
+  bulletDamage?: number;
+  animationState: 'idle' | 'walking' | 'attacking' | 'dying';
+  isDeadAndAnimating: boolean;
 }
 
 export interface Boss {
@@ -139,7 +153,7 @@ export interface Boss {
 
 export interface Barrel {
   type: 'barrel';
-  barrelType: 'buff' | 'nerf' | 'reinforcement' | 'health' | 'shield';
+  barrelType: 'reinforcement' | 'health' | 'buff_shield' | 'buff_damage' | 'buff_firerate' | 'nerf_damage' | 'nerf_firerate' | 'nerf_health';
   x: number;
   y: number;
   width: number;
@@ -160,6 +174,16 @@ export interface Bullet {
 }
 
 export type EntityType = Player | Enemy | Boss | Barrel | Bullet;
+
+export interface Upgrade {
+  id: string;
+  name: string;
+  description: string;
+  cost: number;
+  level: number;
+  maxLevel: number;
+  applyEffect: (player: Player, gameState: GameState) => void;
+}
 
 export interface Entities {
   allies: Player[];

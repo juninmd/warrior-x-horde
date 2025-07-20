@@ -40,5 +40,13 @@ export let gameState: GameState = {
   superCannonDuration: 4000,
   superCannonDamageMultiply: 5,
   superCannonLastUsed: 0,
-  superCannonReady: false
+  superCannonReady: false,
+  screenShakeActive: false,
+  screenShakeIntensity: 0,
+  screenShakeDuration: 0,
+  screenShakeTimer: 0,
+  superCannonWarningPlayed: false,
+  lastFrameTime: 0,
+  coins: 0,
+  isShopOpen: false
 };

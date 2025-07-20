@@ -1,15 +1,25 @@
 
 import { Entities } from '../types';
-import { keys } from '../input';
+import { keys, setShooting } from '../input';
 import { activateSuperCannon } from '../abilities';
 import { toggleAudio } from '../audioManager';
-import { processShooting } from '../input';
 import { canvas } from '../game';
+import { gameState } from '../gameState';
+import { handleShopClick } from '../ui/shopUI';
+
+let currentEntities: Entities;
 
 export function setupDesktopInput(entities: Entities, canvas: HTMLCanvasElement): void {
+  currentEntities = entities;
   canvas.addEventListener("mousemove", (e: MouseEvent) => handleMouseMove(e, entities, canvas));
   canvas.addEventListener("mousedown", (e: MouseEvent) => handleMouseClick(e, entities));
-  canvas.addEventListener("click", (e: MouseEvent) => handleMouseClick(e, entities));
+  canvas.addEventListener("click", (e: MouseEvent) => {
+    if (gameState.isShopOpen) {
+      handleShopClick(e, entities, gameState);
+    } else {
+      handleMouseClick(e, entities);
+    }
+  });
 
   window.addEventListener("keydown", (e: KeyboardEvent) => handleKeyDown(e, entities));
   window.addEventListener("keyup", (e: KeyboardEvent) => handleKeyUp(e));
@@ -28,12 +38,25 @@ function handleKeyDown(e: KeyboardEvent, entities: Entities): void {
   }
 
   if (e.key === ' ') {
-    processShooting(entities);
+    setShooting(true);
+    if (entities.allies.length > 0) {
+      entities.allies[0].animationState = 'shooting';
+    }
+  }
+
+  if (e.key === 'p') {
+    gameState.isShopOpen = !gameState.isShopOpen;
   }
 }
 
 function handleKeyUp(e: KeyboardEvent): void {
   keys[e.key] = false;
+  if (e.key === ' ') {
+    setShooting(false);
+    if (currentEntities.allies.length > 0) {
+      currentEntities.allies[0].animationState = 'idle';
+    }
+  }
 }
 
 function handleMouseMove(e: MouseEvent, entities: Entities, canvas: HTMLCanvasElement): void {

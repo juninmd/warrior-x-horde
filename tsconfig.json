@@ -2,6 +2,7 @@
   "compilerOptions": {
     "target": "ES6",
     "module": "ESNext",
+    "alwaysStrict": true,
     "strict": true,
     "esModuleInterop": true,
     "outDir": "dist",

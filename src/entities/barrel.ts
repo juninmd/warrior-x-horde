@@ -3,13 +3,16 @@
 import { canvas } from '../game';
 import { Barrel } from '../types';
 
-export function createBarrel(type: 'buff' | 'nerf' | 'reinforcement' | 'health' | 'shield'): Barrel {
+export function createBarrel(type: 'reinforcement' | 'health' | 'buff_shield' | 'buff_damage' | 'buff_firerate' | 'nerf_damage' | 'nerf_firerate' | 'nerf_health'): Barrel {
   const BarrelAttributes = {
-    buff: { speed: 1.0, hp: 5 },
-    nerf: { speed: 0.8, hp: 10 },
     reinforcement: { speed: 1.0, hp: 5 },
     health: { speed: 1.5, hp: 1 },
-    shield: { speed: 1.2, hp: 1 }
+    buff_shield: { speed: 1.0, hp: 5 },
+    buff_damage: { speed: 1.0, hp: 5 },
+    buff_firerate: { speed: 1.0, hp: 5 },
+    nerf_damage: { speed: 0.8, hp: 10 },
+    nerf_firerate: { speed: 0.8, hp: 10 },
+    nerf_health: { speed: 0.8, hp: 10 },
   };
   const attributes = BarrelAttributes[type];
   if (!attributes) throw new Error(`Tipo de barril inválido: ${type}`);

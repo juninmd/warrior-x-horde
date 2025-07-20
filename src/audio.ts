@@ -22,7 +22,8 @@ const music = {
 const playerSounds = {
   playerShoot: new Audio(new URL('/audio/buff_damage.wav', import.meta.url).href),
   playerHit: new Audio(new URL('/audio/nerf.wav', import.meta.url).href),
-  superCannon: new Audio(new URL('/audio/boss_death.mp3', import.meta.url).href),
+  superCannon: new Audio(new URL('/audio/power_up.wav', import.meta.url).href),
+  superCannonWarning: new Audio(new URL('/audio/nerf.wav', import.meta.url).href),
 };
 
 const enemySounds = {
@@ -42,8 +43,7 @@ const itemSounds = {
   buff_damage: new Audio(new URL('/audio/buff_damage.wav', import.meta.url).href),
   buff_health: new Audio(new URL('/audio/buff_health.wav', import.meta.url).href),
   buff_firerate: new Audio(new URL('/audio/buff_firerate.wav', import.meta.url).href),
-  buff_speed: new Audio(new URL('/audio/buff_speed.wav', import.meta.url).href),
-  buff_shield: new Audio(new URL('/audio/buff_shield.wav', import.meta.url).href),
+  
 };
 
 export const sounds: Sounds = {

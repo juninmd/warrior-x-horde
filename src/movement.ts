@@ -40,15 +40,29 @@ function updateAlliesPosition(allies: Player[]): void {
   if (allies.length <= 1) return;
 
   const mainPlayer = allies[0];
+  const spacingX = 40; // Horizontal spacing between reinforcements
+  const spacingY = 30; // Vertical spacing between rows of reinforcements
 
-  // Começando do índice 1 para pular o jogador principal
+  // Starting from index 1 to skip the main player
   for (let i = 1; i < allies.length; i++) {
     const ally = allies[i];
-    const targetX = mainPlayer.x + ally.offsetX;
-    ally.x = Math.max(0, Math.min(canvas.width - ally.width, targetX));
-    ally.y = mainPlayer.y;
+    const row = Math.floor((i - 1) / 2); // Determine the row (0, 1, 2, ...)
+    const side = (i - 1) % 2; // Determine the side (0 for left, 1 for right)
 
-    // Atualizar animação
+    let targetX = mainPlayer.x;
+    let targetY = mainPlayer.y;
+
+    if (side === 0) { // Left side
+      targetX = mainPlayer.x - (row + 1) * spacingX;
+    } else { // Right side
+      targetX = mainPlayer.x + (row + 1) * spacingX;
+    }
+    targetY = mainPlayer.y + (row + 1) * spacingY;
+
+    ally.x = Math.max(0, Math.min(canvas.width - ally.width, targetX));
+    ally.y = Math.max(0, Math.min(canvas.height - ally.height, targetY));
+
+    // Update animation
     if (mainPlayer.frameIndex !== ally.frameIndex) {
       ally.frameIndex = mainPlayer.frameIndex;
     }

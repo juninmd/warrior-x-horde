@@ -9,9 +9,22 @@ export function handleEntityDeath(entity: any, index: number | null, type: strin
     entities.allies.splice(index!, 1);
     if (!entities.allies.length) triggerGameOver();
   } else if (type === 'enemy') {
-    entities.enemies.splice(index!, 1);
+    const enemy = entities.enemies[index!];
+    if (enemy && enemy.isDeadAndAnimating) {
+      // If already animating death, remove after a delay
+      setTimeout(() => {
+        const currentEnemyIndex = entities.enemies.indexOf(enemy);
+        if (currentEnemyIndex !== -1) {
+          entities.enemies.splice(currentEnemyIndex, 1);
+        }
+      }, 500); // Assuming 500ms for death animation
+    } else {
+      // Immediate removal if not animating death
+      entities.enemies.splice(index!, 1);
+    }
     gameState.score += 1 * gameState.currentWave;
     gameState.enemiesKilled++;
+    gameState.coins += 1; // Add 1 coin for each enemy killed
     checkBossSpawnConditions();
   } else if (type === 'boss') {
     entities.boss = null;
