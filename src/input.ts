@@ -1,19 +1,13 @@
-// @ts-check
-// input.js - Gerenciamento de entrada do usuário
-import { createBullet, activateSuperCannon } from './entities';
-import { toggleAudio } from './audio';
-import { canvas } from './game';
-import { Entities, Player } from './types';
+import { createBullet } from './entities';
+import { activateSuperCannon } from './abilities';
+import { setupMobileInput } from './input/mobileInput';
+import { setupDesktopInput } from './input/desktopInput';
+import { Entities } from './types';
 
-const keys: Record<string, boolean> = {};
+export const keys: Record<string, boolean> = {};
 let isMobile = /Mobi|Android/i.test(navigator.userAgent);
-let autoShootInterval: number | null = null;
 
-function setupInput(entities: Entities, canvas: HTMLCanvasElement): void {
-  canvas.addEventListener("mousemove", (e: MouseEvent) => handleMouseMove(e, entities, canvas));
-  canvas.addEventListener("mousedown", (e: MouseEvent) => handleMouseClick(e, entities));
-  canvas.addEventListener("click", (e: MouseEvent) => handleMouseClick(e, entities));
-
+export function setupInput(entities: Entities, canvas: HTMLCanvasElement): void {
   document.getElementById("superCannon")?.addEventListener("touchstart", () => {
     activateSuperCannon();
   });
@@ -22,75 +16,14 @@ function setupInput(entities: Entities, canvas: HTMLCanvasElement): void {
     activateSuperCannon();
   });
 
-  window.addEventListener("keydown", (e: KeyboardEvent) => handleKeyDown(e, entities));
-  window.addEventListener("keyup", (e: KeyboardEvent) => handleKeyUp(e));
-
   if (isMobile) {
-    startAutoShooting(entities);
-    canvas.addEventListener("touchstart", (e: TouchEvent) => handleTouchMove(e, entities, canvas));
-  }
-}
-
-function startAutoShooting(entities: Entities): void {
-  if (autoShootInterval === null) {
-    autoShootInterval = window.setInterval(() => {
-      processShooting(entities);
-    }, 100); // Atira automaticamente a cada 100ms
-  }
-}
-
-function processMovement(entities: Entities): void {
-  if (entities.allies.length === 0) return;
-
-  const mainPlayer = entities.allies[0];
-  let moved = false;
-
-  // Movimento horizontal
-  if (keys["ArrowLeft"] && mainPlayer.x > 0) {
-    mainPlayer.x -= mainPlayer.speed;
-    moved = true;
-  }
-
-  if (keys["ArrowRight"] && mainPlayer.x < canvas.width - mainPlayer.width) {
-    mainPlayer.x += mainPlayer.speed;
-    moved = true;
-  }
-
-  // Animar o sprite se moveu
-  if (moved) {
-    mainPlayer.frameTimer += 16;
-    if (mainPlayer.frameTimer >= mainPlayer.frameInterval) {
-      mainPlayer.frameTimer = 0;
-      mainPlayer.frameIndex = (mainPlayer.frameIndex + 1) % 3;
-    }
+    setupMobileInput(entities, canvas);
   } else {
-    mainPlayer.frameIndex = 1; // Frame parado
-  }
-
-  // Atualizar posição dos aliados/reforços
-  updateAlliesPosition(entities.allies);
-}
-
-function updateAlliesPosition(allies: Player[]): void {
-  if (allies.length <= 1) return;
-
-  const mainPlayer = allies[0];
-
-  // Começando do índice 1 para pular o jogador principal
-  for (let i = 1; i < allies.length; i++) {
-    const ally = allies[i];
-    const targetX = mainPlayer.x + ally.offsetX;
-    ally.x = Math.max(0, Math.min(canvas.width - ally.width, targetX));
-    ally.y = mainPlayer.y;
-
-    // Atualizar animação
-    if (mainPlayer.frameIndex !== ally.frameIndex) {
-      ally.frameIndex = mainPlayer.frameIndex;
-    }
+    setupDesktopInput(entities, canvas);
   }
 }
 
-function processShooting(entities: Entities): void {
+export function processShooting(entities: Entities): void {
   if (entities.allies.length === 0) return;
 
   const now = Date.now();
@@ -102,78 +35,3 @@ function processShooting(entities: Entities): void {
     }
   });
 }
-
-function handleKeyDown(e: KeyboardEvent, entities: Entities): void {
-  keys[e.key] = true;
-
-  // Tecla M para mutar música
-  if (e.key === 'm') {
-    toggleMusic();
-    e.preventDefault(); // Evitar o comportamento padrão do navegador
-  }
-
-  // Tecla C para super canhão
-  if (e.key === 'c' && entities.allies.length > 0) {
-    activateSuperCannon();
-  }
-
-  // Tecla Espaço para atirar
-  if (e.key === ' ') {
-    processShooting(entities);
-  }
-}
-
-function handleKeyUp(e: KeyboardEvent): void {
-  keys[e.key] = false;
-}
-
-function handleMouseMove(e: MouseEvent, entities: Entities, canvas: HTMLCanvasElement): void {
-  const rect = canvas.getBoundingClientRect();
-  const scaleX = canvas.width / rect.width;
-  const scaleY = canvas.height / rect.height;
-  const x = (e.clientX - rect.left) * scaleX;
-  const y = (e.clientY - rect.top) * scaleY;
-
-  if (entities.allies.length > 0) {
-    const mainPlayer = entities.allies[0];
-    if (mainPlayer.width !== undefined && mainPlayer.height !== undefined) {
-      mainPlayer.x = x - mainPlayer.width / 2;
-      mainPlayer.y = y - mainPlayer.height / 2;
-    }
-  }
-}
-
-function handleMouseClick(e: MouseEvent, entities: Entities): void {
-  const rect = canvas.getBoundingClientRect();
-  const scaleX = canvas.width / rect.width;
-  const scaleY = canvas.height / rect.height;
-  const x = (e.clientX - rect.left) * scaleX;
-  const y = (e.clientY - rect.top) * scaleY;
-
-  if (entities.allies.length > 0) {
-    const mainPlayer = entities.allies[0];
-    mainPlayer.x = x - mainPlayer.width / 2;
-    mainPlayer.y = y - mainPlayer.height / 2;
-  }
-}
-
-function handleTouchMove(e: TouchEvent, entities: Entities, canvas: HTMLCanvasElement): void {
-  const rect = canvas.getBoundingClientRect();
-  const scaleX = canvas.width / rect.width;
-  const scaleY = canvas.height / rect.height;
-  const touch = e.touches[0];
-  const x = (touch.clientX - rect.left) * scaleX;
-  const y = (touch.clientY - rect.top) * scaleY;
-
-  if (entities.allies.length > 0) {
-    const mainPlayer = entities.allies[0];
-    mainPlayer.x = x - mainPlayer.width / 2;
-    mainPlayer.y = y - mainPlayer.height / 2;
-  }
-}
-
-function toggleMusic(): void {
-  toggleAudio();
-}
-
-export { setupInput, processMovement, processShooting };

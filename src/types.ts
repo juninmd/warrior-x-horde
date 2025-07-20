@@ -31,6 +31,19 @@ export interface GameState {
 }
 
 /**
+ * Configuração de volumes padrão
+ */
+export const VOLUME_CONFIG = {
+  DEFAULT: 0.5,
+  GAME_MUSIC: 0.4,
+  BOSS_MUSIC: 0.5,
+  AMBIENT_MIN: 0.2,
+  AMBIENT_MAX: 0.4,
+  ZOMBIE_MIN: 0.3,
+  ZOMBIE_MAX: 0.6
+};
+
+/**
  * Interface para definir a estrutura dos sons do jogo
  */
 export interface Sounds {

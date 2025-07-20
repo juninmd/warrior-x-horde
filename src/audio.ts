@@ -1,214 +1,55 @@
-// @ts-check
-// audio.ts - Sistema de áudio aprimorado para comportamentos de zumbis
+import { Sounds, VOLUME_CONFIG } from './types';
 
-import { GameState, Sounds } from './types';
-
-// Configuração de volumes padrão
-const VOLUME_CONFIG = {
-  DEFAULT: 0.5,
-  GAME_MUSIC: 0.4,
-  BOSS_MUSIC: 0.5,
-  AMBIENT_MIN: 0.2,
-  AMBIENT_MAX: 0.4,
-  ZOMBIE_MIN: 0.3,
-  ZOMBIE_MAX: 0.6
-};
-
-/**
- * Cria e configura um elemento de áudio com opção de loop
- */
 function createLoopedAudio(src: string, volume: number): HTMLAudioElement {
   const audio = new Audio(src);
   audio.loop = true;
   audio.volume = volume;
-  // Adiciona preload para melhorar desempenho
   audio.preload = 'auto';
   return audio;
 }
 
-// Estado global do sistema de áudio
-let isMusicMuted = false;
-let initialVolumesSet = false;
-const initialVolumes = new Map<HTMLAudioElement, number>();
-
-/**
- * Sons do jogo com caminhos corretos
- */
-export const sounds: Sounds = {
+const gameSounds = {
   gameStart: new Audio(new URL('/audio/game_start.mp3', import.meta.url).href),
   gameOver: new Audio(new URL('/audio/game_over.wav', import.meta.url).href),
+  waveComplete: new Audio(new URL('/audio/wave_complete.wav', import.meta.url).href),
+};
+
+const music = {
   gameMusic: createLoopedAudio(new URL('/audio/music.mp3', import.meta.url).href, VOLUME_CONFIG.GAME_MUSIC),
   bossMusic: createLoopedAudio(new URL('/audio/music_boss.mp3', import.meta.url).href, VOLUME_CONFIG.BOSS_MUSIC),
+};
+
+const playerSounds = {
   playerShoot: new Audio(new URL('/audio/buff_damage.wav', import.meta.url).href),
+  playerHit: new Audio(new URL('/audio/nerf.wav', import.meta.url).href),
+  superCannon: new Audio(new URL('/audio/boss_death.mp3', import.meta.url).href),
+};
+
+const enemySounds = {
+  enemyHit: new Audio(new URL('/audio/buff_health.wav', import.meta.url).href),
+  bossHit: new Audio(new URL('/audio/buff_firerate.wav', import.meta.url).href),
+  bossDeath: new Audio(new URL('/audio/boss_death.mp3', import.meta.url).href),
+  bossWarning: new Audio(new URL('/audio/nerf.mp3', import.meta.url).href),
+  bossPhaseChange: new Audio(new URL('/audio/nerf.wav', import.meta.url).href),
+  bossSpawn: new Audio(new URL('/audio/nerf.wav', import.meta.url).href),
+  zombieGroan: new Audio(new URL('/audio/nerf.wav', import.meta.url).href),
+  zombieSprint: new Audio(new URL('/audio/nerf.wav', import.meta.url).href),
+};
+
+const itemSounds = {
+  barrelPickup: new Audio(new URL('/audio/power_up.wav', import.meta.url).href),
   nerf: new Audio(new URL('/audio/nerf.wav', import.meta.url).href),
   buff_damage: new Audio(new URL('/audio/buff_damage.wav', import.meta.url).href),
   buff_health: new Audio(new URL('/audio/buff_health.wav', import.meta.url).href),
   buff_firerate: new Audio(new URL('/audio/buff_firerate.wav', import.meta.url).href),
   buff_speed: new Audio(new URL('/audio/buff_speed.wav', import.meta.url).href),
   buff_shield: new Audio(new URL('/audio/buff_shield.wav', import.meta.url).href),
-  playerHit: new Audio(new URL('/audio/nerf.wav', import.meta.url).href),
-  enemyHit: new Audio(new URL('/audio/buff_health.wav', import.meta.url).href),
-  barrelPickup: new Audio(new URL('/audio/power_up.wav', import.meta.url).href),
-  bossHit: new Audio(new URL('/audio/buff_firerate.wav', import.meta.url).href),
-  bossDeath: new Audio(new URL('/audio/boss_death.mp3', import.meta.url).href),
-  waveComplete: new Audio(new URL('/audio/wave_complete.wav', import.meta.url).href),
-  bossWarning: new Audio(new URL('/audio/nerf.mp3', import.meta.url).href),
-  bossPhaseChange: new Audio(new URL('/audio/nerf.wav', import.meta.url).href),
-  bossSpawn: new Audio(new URL('/audio/nerf.wav', import.meta.url).href),
-  zombieGroan: new Audio(new URL('/audio/nerf.wav', import.meta.url).href),
-  zombieSprint: new Audio(new URL('/audio/nerf.wav', import.meta.url).href),
-  superCannon: new Audio(new URL('/audio/boss_death.mp3', import.meta.url).href),
 };
 
-/**
- * Pré-carrega todos os sons para evitar atrasos durante o jogo
- */
-export function preloadSounds(): void {
-  // Salva os volumes iniciais se ainda não foram salvos
-  if (!initialVolumesSet) {
-    Object.values(sounds).forEach(sound => {
-      initialVolumes.set(sound, sound.volume);
-    });
-    initialVolumesSet = true;
-  }
-
-  // Carrega todos os sons
-  Object.values(sounds).forEach(sound => {
-    // Configura para preload automático
-    sound.preload = 'auto';
-
-    // Tenta carregar o áudio
-    try {
-      sound.load();
-    } catch (error) {
-      console.error("Erro ao pré-carregar som:", error);
-    }
-  });
-}
-
-/**
- * Reproduz um som com volume aleatório dentro de um intervalo
- */
-export function playSoundWithRandomVolume(
-  sound: HTMLAudioElement,
-  minVolume: number,
-  maxVolume: number
-): void {
-  // Não toque se o áudio estiver mudo
-  if (isMusicMuted) return;
-
-  // Clona o áudio para permitir sobreposição de sons
-  const soundClone = sound.cloneNode(true) as HTMLAudioElement;
-  soundClone.volume = minVolume + Math.random() * (maxVolume - minVolume);
-
-  // Reproduz com tratamento de erro melhorado
-  soundClone.play().catch(error => {
-    console.warn(`Não foi possível reproduzir o som: ${error.message}`);
-  });
-}
-
-/**
- * Reproduz sons ambientes baseados no estado do jogo
- */
-export function playAmbientSounds(gameState: GameState): void {
-  // Não reproduz sons ambientes se o áudio estiver mudo
-  if (isMusicMuted) return;
-
-  // Som de alerta quando o boss está prestes a aparecer
-  if (gameState.bossSpawnCooldown > 0 &&
-    gameState.bossSpawnCooldown < gameState.maxBossSpawnCooldown * 0.5 &&
-    Math.random() < 0.05) {
-    playSoundWithRandomVolume(
-      sounds.bossWarning,
-      VOLUME_CONFIG.AMBIENT_MIN,
-      VOLUME_CONFIG.AMBIENT_MAX
-    );
-  }
-  // Sons ocasionais de zumbis em ondas mais avançadas
-  else if (gameState.currentWave > 3 && Math.random() < 0.03) {
-    playSoundWithRandomVolume(
-      sounds.zombieGroan,
-      VOLUME_CONFIG.ZOMBIE_MIN,
-      VOLUME_CONFIG.ZOMBIE_MAX
-    );
-  }
-}
-
-/**
- * Ativa/desativa todos os sons do jogo
- * @returns O novo estado do áudio (true = ativado, false = desativado)
- */
-export function toggleAudio() {
-  isMusicMuted = !isMusicMuted;
-  alert(`Áudio ${isMusicMuted ? 'desativado' : 'ativado'}`);
-
-  // Aplicar volume a todos os sons
-  (Object.keys(sounds) as (keyof Sounds)[]).forEach(key => {
-    const sound = sounds[key];
-    if (sound) {
-      sound.volume = isMusicMuted ? 0 : 0.5;
-    }
-    else {
-      console.warn(`Som ${key} não encontrado.`);
-    }
-  });
-
-  // Volumes específicos para músicas
-  sounds.gameMusic.volume = isMusicMuted ? 0 : 0.4;
-  sounds.bossMusic.volume = isMusicMuted ? 0 : 0.5;
-}
-
-/**
- * Reproduz a música de fundo apropriada (normal ou boss)
- */
-export function playBackgroundMusic(isBossFight = false): void {
-  // Não faz nada se o áudio estiver mudo
-  if (isMusicMuted) return;
-
-  const musicToPlay = isBossFight ? sounds.bossMusic : sounds.gameMusic;
-  const musicToPause = isBossFight ? sounds.gameMusic : sounds.bossMusic;
-
-  // Pausa a música atual
-  musicToPause.pause();
-  musicToPause.currentTime = 0;
-
-  // Inicia a nova música
-  musicToPlay.currentTime = 0;
-  musicToPlay.play().catch(error => {
-    console.warn(`Não foi possível tocar a música de fundo: ${error.message}`);
-  });
-}
-
-/**
- * Reproduz um som simples com tratamento de erro
- */
-export function playSound(sound: HTMLAudioElement): void {
-  if (isMusicMuted) return;
-
-  // Clona o áudio para permitir sobreposição
-  const soundClone = sound.cloneNode(true) as HTMLAudioElement;
-
-  soundClone.play().catch(error => {
-    console.warn(`Não foi possível reproduzir o som: ${error.message}`);
-  });
-}
-
-/**
- * Define o volume para todos os sons
- */
-export function setGlobalVolume(volume: number): void {
-  Object.values(sounds).forEach(sound => {
-    const originalVolume = initialVolumes.get(sound) || VOLUME_CONFIG.DEFAULT;
-    // Ajusta proporcionalmente ao volume original
-    sound.volume = originalVolume * volume;
-  });
-}
-
-/**
- * Pausa todos os sons ativos
- */
-export function pauseAllSounds(): void {
-  Object.values(sounds).forEach(sound => {
-    sound.pause();
-  });
-}
+export const sounds: Sounds = {
+  ...gameSounds,
+  ...music,
+  ...playerSounds,
+  ...enemySounds,
+  ...itemSounds,
+};
