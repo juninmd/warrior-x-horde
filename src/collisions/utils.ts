@@ -2,7 +2,6 @@
 // collisions/utils.ts - Funções utilitárias para colisões
 import { sounds } from '../audio';
 import { createReinforcement } from '../entities';
-import { applyDamage } from '../entityUpdater';
 import { Entities, GameState, Player, Barrel } from '../types';
 import { addBuff } from '../buffs';
 

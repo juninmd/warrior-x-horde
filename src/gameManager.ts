@@ -2,9 +2,11 @@
 import { entities } from './game';
 import { gameState } from './gameState';
 import { sounds } from './audio';
-import { spawnBoss } from './spawner';
+import { spawnBoss, spawnObstacles } from './spawner';
+import { triggerRandomEvent } from './events';
+import { Player, Enemy, Boss, EntityType } from './types';
 
-export function handleEntityDeath(entity: any, index: number | null, type: string): void {
+export function handleEntityDeath(entity: EntityType | null, index: number | null, type: string): void {
   if (type === 'ally') {
     entities.allies.splice(index!, 1);
     if (!entities.allies.length) triggerGameOver();
@@ -50,6 +52,7 @@ function advanceToNextWave(): void {
   gameState.difficultyMultiplier += 0.5;
   gameState.enemiesRequiredForBoss = Math.min(20 + gameState.currentWave * 5, 100);
   gameState.spawnRate = Math.max(700 - (gameState.currentWave * 100), 500);
+  spawnObstacles();
   console.log(`Onda ${gameState.currentWave} iniciada!`);
 }
 
@@ -59,6 +62,8 @@ export function updateBossSpawn(): void {
     if (gameState.bossSpawnCooldown <= 0) {
       spawnBoss();
       gameState.showBossWarning = false;
+    } else if (gameState.bossSpawnCooldown % 1000 < 16) { // Trigger event roughly every second during cooldown
+      triggerRandomEvent();
     }
   }
 }

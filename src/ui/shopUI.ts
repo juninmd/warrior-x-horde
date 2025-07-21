@@ -1,4 +1,4 @@
-import { GameState, Entities, Player, Upgrade } from '../types';
+import { GameState, Entities } from '../types';
 import { upgrades } from '../upgrades';
 
 export function drawShopUI(ctx: CanvasRenderingContext2D, entities: Entities, gameState: GameState): void {

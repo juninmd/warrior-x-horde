@@ -1,11 +1,11 @@
 
-import { createPlayer } from './entities';
+
 import { updateEntities } from './entityUpdater';
 import { renderGame } from './renderer';
 import { drawUI } from './ui';
 import { setupInput, isShooting } from './input';
 import { processMovement } from './movement';
-import { sounds } from './audio';
+
 import { preloadSounds } from './audioManager';
 import { checkCollisions } from './collisions';
 import { Entities } from './types';
@@ -25,8 +25,8 @@ const startButton = Object.assign(document.createElement("button"), {
 });
 document.body.appendChild(startButton);
 
-export let entities: Entities = {
-  allies: [], enemies: [], barrels: [], boss: null, bullets: []
+export const entities: Entities = {
+  allies: [], enemies: [], barrels: [], boss: null, bullets: [], obstacles: []
 };
 
 let lastTime = 0;

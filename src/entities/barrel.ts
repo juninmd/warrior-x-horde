@@ -3,7 +3,7 @@
 import { canvas } from '../game';
 import { Barrel } from '../types';
 
-export function createBarrel(type: 'reinforcement' | 'health' | 'buff_shield' | 'buff_damage' | 'buff_firerate' | 'nerf_damage' | 'nerf_firerate' | 'nerf_health'): Barrel {
+export function createBarrel(type: 'reinforcement' | 'health' | 'buff_shield' | 'buff_damage' | 'buff_firerate' | 'nerf_damage' | 'nerf_firerate' | 'nerf_health', side: 'left' | 'right' | undefined = undefined): Barrel {
   const BarrelAttributes = {
     reinforcement: { speed: 1.0, hp: 5 },
     health: { speed: 1.5, hp: 1 },
@@ -18,7 +18,9 @@ export function createBarrel(type: 'reinforcement' | 'health' | 'buff_shield' | 
   if (!attributes) throw new Error(`Tipo de barril inválido: ${type}`);
 
   return {
-    x: Math.random() * ((canvas as HTMLCanvasElement)?.width - 30 || 0),
+    x: side === 'right'
+      ? (canvas as HTMLCanvasElement)?.width / 2 + Math.random() * ((canvas as HTMLCanvasElement)?.width / 2 - 30 || 0)
+      : Math.random() * ((canvas as HTMLCanvasElement)?.width / 2 - 30 || 0),
     y: -Math.random() * 100 - 50,
     barrelType: type,
     width: 30,

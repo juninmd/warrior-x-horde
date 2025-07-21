@@ -1,12 +1,12 @@
 import { playAmbientSounds } from './audioManager.js';
 import { gameState } from './gameState.js';
 import { Entities } from './types';
-import { drawAllies, drawEnemies, drawBoss, drawBarrels, drawBullets } from './drawing';
+import { drawAllies, drawEnemies, drawBoss, drawBarrels, drawBullets, drawObstacles } from './drawing';
 import { drawBackground } from './renderer/background';
 import { drawSuperCannonEffect, drawBossHealthBar } from './renderer/effects';
 
 export function renderGame(ctx: CanvasRenderingContext2D, entities: Entities): void {
-  const { allies, enemies, barrels, boss, bullets } = entities;
+  const { allies, enemies, barrels, boss, bullets, obstacles } = entities;
 
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
@@ -26,6 +26,7 @@ export function renderGame(ctx: CanvasRenderingContext2D, entities: Entities): v
     drawSuperCannonEffect(ctx, allies[0]);
   }
 
+  drawObstacles(ctx, obstacles);
   drawBullets(ctx, bullets);
   drawEnemies(ctx, enemies);
   if (boss) {

@@ -8,7 +8,7 @@ export const upgrades: Upgrade[] = [
     cost: 10,
     level: 0,
     maxLevel: 5,
-    applyEffect: (player: Player, gameState: GameState) => {
+    applyEffect: (player: Player) => {
       player.hp += 1;
     },
   },
@@ -19,7 +19,7 @@ export const upgrades: Upgrade[] = [
     cost: 15,
     level: 0,
     maxLevel: 5,
-    applyEffect: (player: Player, gameState: GameState) => {
+    applyEffect: (player: Player) => {
       player.bulletDamage += 1;
     },
   },
@@ -30,7 +30,7 @@ export const upgrades: Upgrade[] = [
     cost: 20,
     level: 0,
     maxLevel: 5,
-    applyEffect: (player: Player, gameState: GameState) => {
+    applyEffect: (player: Player) => {
       player.fireRate = Math.max(50, player.fireRate - 50);
     },
   },
@@ -41,7 +41,7 @@ export const upgrades: Upgrade[] = [
     cost: 12,
     level: 0,
     maxLevel: 3,
-    applyEffect: (player: Player, gameState: GameState) => {
+    applyEffect: () => {
       // This upgrade would need to be applied to newly spawned reinforcements
       // For existing ones, you'd need to iterate through entities.allies
       // For simplicity, we'll assume it affects future reinforcements for now.

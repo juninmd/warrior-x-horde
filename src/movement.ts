@@ -1,8 +1,9 @@
 // @ts-check
 // movement.ts - Lógica de movimento do jogador e aliados
 import { canvas } from './game';
-import { Entities, Player } from './types';
+import { Player, Entities, Obstacle } from './types';
 import { keys } from './input';
+import { isColliding } from './collisions/utils';
 
 export function processMovement(entities: Entities): void {
   if (entities.allies.length === 0) return;
@@ -11,14 +12,43 @@ export function processMovement(entities: Entities): void {
   let moved = false;
 
   // Movimento horizontal
-  if (keys["ArrowLeft"] && mainPlayer.x > 0) {
+  const originalX = mainPlayer.x;
+  if (keys["ArrowLeft"]) {
     mainPlayer.x -= mainPlayer.speed;
-    moved = true;
+    if (mainPlayer.x < 0 || entities.obstacles.some((obstacle: Obstacle) => isColliding(mainPlayer, obstacle))) {
+      mainPlayer.x = originalX; // Revert if collision or out of bounds
+    } else {
+      moved = true;
+    }
   }
 
-  if (keys["ArrowRight"] && mainPlayer.x < canvas.width - mainPlayer.width) {
+  if (keys["ArrowRight"]) {
     mainPlayer.x += mainPlayer.speed;
-    moved = true;
+    if (mainPlayer.x + mainPlayer.width > canvas.width || entities.obstacles.some((obstacle: Obstacle) => isColliding(mainPlayer, obstacle))) {
+      mainPlayer.x = originalX; // Revert if collision or out of bounds
+    } else {
+      moved = true;
+    }
+  }
+
+  // Movimento vertical
+  const originalY = mainPlayer.y;
+  if (keys["ArrowUp"]) {
+    mainPlayer.y -= mainPlayer.speed;
+    if (mainPlayer.y < 0 || entities.obstacles.some((obstacle: Obstacle) => isColliding(mainPlayer, obstacle))) {
+      mainPlayer.y = originalY;
+    } else {
+      moved = true;
+    }
+  }
+
+  if (keys["ArrowDown"]) {
+    mainPlayer.y += mainPlayer.speed;
+    if (mainPlayer.y + mainPlayer.height > canvas.height || entities.obstacles.some((obstacle: Obstacle) => isColliding(mainPlayer, obstacle))) {
+      mainPlayer.y = originalY;
+    } else {
+      moved = true;
+    }
   }
 
   // Animar o sprite se moveu

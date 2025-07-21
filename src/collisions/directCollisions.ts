@@ -8,7 +8,7 @@ import { canvas } from '../game';
 export function checkDirectCollisions(
   entities: Entities,
   gameState: GameState,
-  handleEntityDeath: (entity: any, index: number | null, type: string) => void
+  handleEntityDeath: (entity: Player | Enemy | Barrel | null, index: number | null, type: string) => void
 ) {
   const { allies, enemies, boss, barrels } = entities;
   const canvasHeight = canvas.height;

@@ -13,7 +13,7 @@ export function activateSuperCannon(): boolean {
   gameState.superCannonLastUsed = x.getTime();
   gameState.superCannonReady = false;
 
-  sounds.power_up.play();
+  sounds.superCannon.play();
   gameState.screenShakeActive = true;
   gameState.screenShakeIntensity = 5;
   gameState.screenShakeDuration = gameState.superCannonDuration;

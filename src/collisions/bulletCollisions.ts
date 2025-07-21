@@ -2,11 +2,11 @@
 // collisions/bulletCollisions.ts - Lógica de colisão para balas
 import { applyDamage } from '../entityUpdater';
 import { processBarrelEffect, isColliding } from './utils';
-import { Entities, GameState } from '../types';
+import { Entities, GameState, EntityType } from '../types';
 
 const DAMAGE_EFFECT_DURATION = 5;
 
-export function checkBulletCollisions(entities: Entities, gameState: GameState, handleEntityDeath: (entity: any, index: number | null, type: string) => void) {
+export function checkBulletCollisions(entities: Entities, gameState: GameState, handleEntityDeath: (entity: EntityType, index: number | null, type: string) => void) {
   const { allies, enemies, boss, bullets, barrels } = entities;
   bullets.forEach((bullet, i) => {
     if (bullet.isEnemy) {

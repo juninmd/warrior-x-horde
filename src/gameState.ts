@@ -5,7 +5,7 @@ import { GameState } from './types';
 const spawnRate = 700; // Taxa de spawn inicial em ms
 
 // Estado global do jogo
-export let gameState: GameState = {
+export const gameState: GameState = {
   isStarted: false,
   isGameOver: false,
   currentWave: 1,

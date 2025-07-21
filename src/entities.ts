@@ -5,3 +5,4 @@ export { createEnemy } from './entities/enemy';
 export { createBoss } from './entities/boss';
 export { createBarrel } from './entities/barrel';
 export { createBullet } from './entities/bullet';
+export { createObstacle } from './entities/obstacle';

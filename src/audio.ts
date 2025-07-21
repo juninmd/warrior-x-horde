@@ -43,7 +43,7 @@ const itemSounds = {
   buff_damage: new Audio(new URL('/audio/buff_damage.wav', import.meta.url).href),
   buff_health: new Audio(new URL('/audio/buff_health.wav', import.meta.url).href),
   buff_firerate: new Audio(new URL('/audio/buff_firerate.wav', import.meta.url).href),
-  
+
 };
 
 export const sounds: Sounds = {
@@ -52,4 +52,6 @@ export const sounds: Sounds = {
   ...playerSounds,
   ...enemySounds,
   ...itemSounds,
+  buff_speed: new Audio(new URL('/audio/power_up.wav', import.meta.url).href),
+  buff_shield: new Audio(new URL('/audio/power_up.wav', import.meta.url).href)
 };

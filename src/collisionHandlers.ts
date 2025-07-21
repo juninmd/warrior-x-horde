@@ -5,3 +5,4 @@ export { checkSuperCannonCollisions } from './collisions/superCannonCollisions';
 export { checkBulletCollisions } from './collisions/bulletCollisions';
 export { checkDirectCollisions } from './collisions/directCollisions';
 export { checkBarrelCollisions } from './collisions/barrelCollisions';
+export { checkObstacleCollisions } from './collisions/obstacleCollisions';

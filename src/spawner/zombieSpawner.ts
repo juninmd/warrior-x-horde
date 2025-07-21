@@ -3,24 +3,23 @@ import { createEnemy } from '../entities';
 import { gameState } from '../gameState';
 import { Enemy } from '../types';
 
-export function createZombie(): Enemy {
-  let zombieType: string;
-  const rand = Math.random();
+export function createZombie(forcedType?: string): Enemy {
+  let zombieType: string = 'normal';
 
-  if (gameState.currentWave < 3) {
-    zombieType = 'normal';
-  } else if (gameState.currentWave < 6) {
-    if (rand < 0.8) zombieType = 'normal';
-    else zombieType = 'fast';
-  } else if (gameState.currentWave < 10) {
-    if (rand < 0.6) zombieType = 'normal';
-    else if (rand < 0.9) zombieType = 'fast';
-    else zombieType = 'tank';
+  if (forcedType) {
+    zombieType = forcedType;
   } else {
-    if (rand < 0.5) zombieType = 'normal';
-    else if (rand < 0.75) zombieType = 'fast';
-    else if (rand < 0.9) zombieType = 'tank';
-    else zombieType = 'spitter';
+    const probabilities = getZombieTypeProbabilities(gameState.currentWave);
+    let cumulativeProbability = 0;
+    const rand = Math.random();
+
+    for (const type in probabilities) {
+      cumulativeProbability += probabilities[type as keyof typeof probabilities];
+      if (rand < cumulativeProbability) {
+        zombieType = type;
+        break;
+      }
+    }
   }
 
   const zombie: Enemy = createEnemy(zombieType, gameState.currentWave);
@@ -31,6 +30,41 @@ export function createZombie(): Enemy {
   zombie.sprintDuration = 0;
   zombie.baseSpeed = zombie.speed;
   return zombie;
+}
+
+function getZombieTypeProbabilities(wave: number): { [key: string]: number } {
+  let normal = 0.7;
+  let fast = 0.2;
+  let tank = 0.1;
+  let spitter = 0;
+
+  if (wave >= 3) {
+    normal = 0.5;
+    fast = 0.3;
+    tank = 0.15;
+    spitter = 0.05;
+  }
+  if (wave >= 6) {
+    normal = 0.4;
+    fast = 0.3;
+    tank = 0.2;
+    spitter = 0.1;
+  }
+  if (wave >= 10) {
+    normal = 0.3;
+    fast = 0.25;
+    tank = 0.25;
+    spitter = 0.2;
+  }
+
+  // Normalize probabilities to ensure they sum to 1
+  const total = normal + fast + tank + spitter;
+  return {
+    normal: normal / total,
+    fast: fast / total,
+    tank: tank / total,
+    spitter: spitter / total,
+  };
 }
 
 function getRandomZombieMovement(): string {

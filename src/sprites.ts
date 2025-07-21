@@ -84,7 +84,7 @@ export function preloadImages(): Promise<void> {
   const imagePromises: Promise<HTMLImageElement>[] = [];
 
   const addImagePromise = (image: HTMLImageElement) => {
-    return new Promise((resolve, reject) => {
+    return new Promise<HTMLImageElement>((resolve, reject) => {
       if (image.complete) {
         resolve(image);
       } else {

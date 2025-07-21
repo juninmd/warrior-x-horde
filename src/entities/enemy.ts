@@ -30,6 +30,7 @@ export function createEnemy(type: string, wave: number): Enemy {
         baseSpeed: baseSpeed,
         attackType: 'melee',
         attackDamage: 1,
+        animationState: 'idle',
         isDeadAndAnimating: false,
       };
       break;
@@ -52,6 +53,7 @@ export function createEnemy(type: string, wave: number): Enemy {
         baseSpeed: baseSpeed * 1.5,
         attackType: 'melee',
         attackDamage: 1,
+        animationState: 'idle',
         isDeadAndAnimating: false,
       };
       break;
@@ -74,6 +76,7 @@ export function createEnemy(type: string, wave: number): Enemy {
         baseSpeed: baseSpeed * 0.7,
         attackType: 'melee',
         attackDamage: 2, // More damage
+        animationState: 'idle',
         isDeadAndAnimating: false,
       };
       break;
@@ -97,6 +100,7 @@ export function createEnemy(type: string, wave: number): Enemy {
         attackType: 'ranged',
         attackDamage: 1,
         bulletSpeed: 3,
+        animationState: 'idle',
         isDeadAndAnimating: false,
       };
       break;
@@ -120,6 +124,7 @@ export function createEnemy(type: string, wave: number): Enemy {
         baseSpeed: baseSpeed,
         attackType: 'melee',
         attackDamage: 1,
+        animationState: 'idle',
         isDeadAndAnimating: false,
       };
       break;

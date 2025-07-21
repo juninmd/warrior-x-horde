@@ -2,8 +2,9 @@
 // entityUpdater.ts - Lógica para atualizar e aplicar dano em entidades
 import { Boss, Enemy, Entities, GameState, Player } from './types';
 import { canvas } from './game';
-import { gameState } from './gameState';
+
 import { createBullet } from './entities';
+import { isColliding } from './collisions/utils';
 import { sounds } from './audio';
 
 // Atualizar entidades
@@ -62,7 +63,42 @@ export function updateEntities(entities: Entities, gameState: GameState, isShoot
       // Do not move or process dead enemies, just let the animation play
       return;
     } else {
-      enemy.y += enemy.speed;
+      const originalEnemyY = enemy.y;
+      const originalEnemyX = enemy.x;
+
+      switch (enemy.moveStyle) {
+        case 'shambler':
+          enemy.y += enemy.speed;
+          break;
+        case 'runner':
+          enemy.y += enemy.speed * 1.5; // Faster vertical movement
+          break;
+        case 'crawler':
+          enemy.y += enemy.speed * 0.7; // Slower vertical movement
+          enemy.x += Math.sin(Date.now() / 500) * 0.5; // Sideways wiggle
+          break;
+        case 'lurker': {
+          // Lurkers move slower until player is close, then speed up
+          const mainPlayer = entities.allies[0];
+          if (mainPlayer) {
+            const distance = Math.sqrt(Math.pow(enemy.x - mainPlayer.x, 2) + Math.pow(enemy.y - mainPlayer.y, 2));
+            if (distance < 200) { // If player is within 200 pixels
+              enemy.y += enemy.speed * 2; // Speed up
+            } else {
+              enemy.y += enemy.speed * 0.5; // Slow movement
+            }
+          }
+          break;
+        }
+        default:
+          enemy.y += enemy.speed;
+          break;
+      }
+
+      if (entities.obstacles.some(obstacle => isColliding(enemy, obstacle))) {
+        enemy.y = originalEnemyY; // Revert Y if collision
+        enemy.x = originalEnemyX; // Revert X if collision
+      }
       if (enemy.y > canvas.height) {
         if (entities.allies.length > 0) applyDamage(entities.allies[0], 1);
         entities.enemies.splice(index, 1);
@@ -86,10 +122,7 @@ export function updateEntities(entities: Entities, gameState: GameState, isShoot
   if (entities.boss) {
     entities.boss.y += entities.boss.speed;
     if (entities.boss.damageEffect > 0) entities.boss.damageEffect--;
-    if (now - entities.boss.lastShot > entities.boss.bulletDelay) {
-      entities.bullets.push(createBullet(entities.boss, true));
-      entities.boss.lastShot = now;
-    }
+
     if (entities.boss.y > canvas.height) {
       entities.boss = null;
       if (gameState) gameState.isGameOver = true;
@@ -106,8 +139,8 @@ export function updateEntities(entities: Entities, gameState: GameState, isShoot
 
 // Aplicar dano
 export function applyDamage(entity: Player | Enemy | Boss, damage: number): boolean {
-  if ((entity as any)?.shield && (entity as any)?.shield > 0) {
-    (entity as any).shield--;
+  if ((entity as Player)?.shield && (entity as Player)?.shield > 0) {
+    (entity as Player).shield--;
   } else {
     entity.hp -= damage;
     entity.damageEffect = 5;

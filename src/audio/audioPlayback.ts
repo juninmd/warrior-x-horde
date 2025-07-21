@@ -1,6 +1,6 @@
 // @ts-check
 // audio/audioPlayback.ts - Funções de reprodução e controle de áudio
-import { GameState, Sounds } from '../types';
+import { GameState } from '../types';
 import { sounds } from '../audio';
 import { VOLUME_CONFIG } from '../types';
 

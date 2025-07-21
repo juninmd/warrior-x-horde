@@ -1,13 +1,11 @@
 // @ts-check
 // collisions/superCannonCollisions.ts - Lógica de colisão para o super canhão
-import { sounds } from '../audio';
-import { applyDamage } from '../entityUpdater';
-import { processBarrelEffect, isColliding } from './utils';
+import { processBarrelEffect } from './utils';
 import { Entities, GameState } from '../types';
 
 const DAMAGE_EFFECT_DURATION = 5;
 
-export function checkSuperCannonCollisions(entities: Entities, gameState: GameState, handleEntityDeath: (entity: any, index: number | null, type: string) => void) {
+export function checkSuperCannonCollisions(entities: Entities, gameState: GameState, handleEntityDeath: (entity: import("../types").Boss | import("../types").Enemy, index: number | null, type: string) => void) {
   const { allies, enemies, boss, barrels } = entities;
   if (allies.length === 0) return;
   const mainPlayer = allies[0], beamX = mainPlayer.x + mainPlayer.width / 2 - 10, beamWidth = 20;

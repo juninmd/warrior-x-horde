@@ -13,7 +13,7 @@ export function setupMobileInput(entities: Entities, canvas: HTMLCanvasElement):
     }
   });
   canvas.addEventListener("touchmove", (e: TouchEvent) => handleTouchMove(e, entities, canvas));
-  canvas.addEventListener("touchend", () => handleTouchEnd());
+  canvas.addEventListener("touchend", () => handleTouchEnd(entities));
 
   // Add a button for mobile to open/close the shop
   const shopButton = Object.assign(document.createElement("button"), {
@@ -50,7 +50,7 @@ function handleTouchMove(e: TouchEvent, entities: Entities, canvas: HTMLCanvasEl
   }
 }
 
-function handleTouchEnd(): void {
+function handleTouchEnd(entities: Entities): void {
   setShooting(false);
   if (entities.allies.length > 0) {
     entities.allies[0].animationState = 'idle';

@@ -78,6 +78,7 @@ export interface Sounds {
   zombieGroan: HTMLAudioElement;
   zombieSprint: HTMLAudioElement;
   superCannon: HTMLAudioElement;
+  superCannonWarning: HTMLAudioElement;
 }
 
 // export Interfaces
@@ -173,7 +174,15 @@ export interface Bullet {
   damage: number;
 }
 
-export type EntityType = Player | Enemy | Boss | Barrel | Bullet;
+export interface Obstacle {
+  type: 'obstacle';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export type EntityType = Player | Enemy | Boss | Barrel | Bullet | Obstacle;
 
 export interface Upgrade {
   id: string;
@@ -191,4 +200,5 @@ export interface Entities {
   enemies: Enemy[];
   boss: Boss | null;
   barrels: Barrel[];
+  obstacles: Obstacle[];
 }
