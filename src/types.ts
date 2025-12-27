@@ -65,7 +65,7 @@ export interface Gate {
   y: number;
   width: number;
   height: number;
-  type: 'add' | 'multiply' | 'subtract' | 'divide';
+  type: 'add' | 'multiply' | 'subtract' | 'divide' | 'firerate' | 'damage' | 'speed';
   value: number;
   color: string;
   side: 'left' | 'right';

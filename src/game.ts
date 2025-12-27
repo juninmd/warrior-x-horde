@@ -18,7 +18,7 @@ let entities: Entities;
 
 // Botão de início
 const startButton = document.createElement('button');
-startButton.innerText = '��� INICIAR JOGO';
+startButton.innerText = 'INICIAR JOGO';
 startButton.style.cssText = `
   position: absolute;
   top: 50%;
@@ -49,36 +49,56 @@ document.body.appendChild(startButton);
 // Game loop
 function gameLoop(): void {
   if (!gameState.isStarted) return;
-  
+
   // Atualizar movimento
   updateMovement(entities, gameState, canvas.width, getMouseX());
-  
+
   // Sistema de tiro
   updateShooting(entities, gameState);
   updateBullets(entities, gameState);
-  
+
   // Spawnar elementos
   updateSpawns(entities, canvas.width, gameState);
-  
+
   // Verificar colisões
   checkCollisions(entities, gameState);
-  
+
+  // Checar progresso de nível (vitória do boss = próximo nível)
+  if (gameState.isVictory) {
+    advanceToNextLevel();
+  }
+
   // Renderizar
   render(ctx, entities, gameState);
-  
+
   // Continuar loop
   if (!gameState.isGameOver) {
     requestAnimationFrame(gameLoop);
   } else {
     // Mostrar tela de game over
     render(ctx, entities, gameState);
-    
+
     // Salvar high score
     if (gameState.score > gameState.highScore) {
       gameState.highScore = gameState.score;
       localStorage.setItem('crowdHighScore', gameState.highScore.toString());
     }
   }
+}
+
+// Avançar para o próximo nível
+function advanceToNextLevel(): void {
+  gameState.currentLevel++;
+  gameState.distanceTraveled = 0;
+  gameState.levelDistance += 500; // Aumenta distância necessária
+  gameState.isVictory = false;
+  gameState.gameSpeed = Math.min(3, gameState.baseGameSpeed + gameState.currentLevel * 0.2); // Aumenta velocidade
+
+  // Limpar entidades antigas, manter o exército
+  entities.gates = [];
+  entities.enemyHordes = [];
+  entities.boss = null;
+  entities.bullets = [];
 }
 
 // Iniciar jogo

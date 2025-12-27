@@ -95,19 +95,24 @@ export function updateBullets(entities: Entities, gameState: GameState): void {
     const bullet = entities.bullets[i];
     if (bullet.isEnemy) continue;
     
-    // Checar colisão com hordas
+    let bulletHit = false;
+    
+    // Checar colisão com hordas - hitbox maior e mais precisa
     for (const horde of entities.enemyHordes) {
-      if (!horde.isActive) continue;
+      if (!horde.isActive || bulletHit) continue;
       
-      const dx = bullet.x - horde.x;
-      const dy = bullet.y - horde.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      
-      if (dist < 50 && horde.soldiers.length > 0) {
-        // Remover um soldado inimigo
-        const idx = horde.soldiers.findIndex(s => s.isAlive);
-        if (idx >= 0) {
-          horde.soldiers.splice(idx, 1);
+      // Checar contra cada soldado individualmente (mais preciso)
+      for (let j = horde.soldiers.length - 1; j >= 0; j--) {
+        const soldier = horde.soldiers[j];
+        if (!soldier.isAlive) continue;
+        
+        const dx = bullet.x - soldier.x;
+        const dy = bullet.y - soldier.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        
+        // Hitbox de 25 pixels por soldado
+        if (dist < 25) {
+          horde.soldiers.splice(j, 1);
           horde.count = horde.soldiers.length;
           gameState.score += 10;
           
@@ -115,12 +120,40 @@ export function updateBullets(entities: Entities, gameState: GameState): void {
             horde.isActive = false;
             gameState.score += 50;
           }
+          
+          entities.bullets.splice(i, 1);
+          bulletHit = true;
+          break;
         }
+      }
+      
+      // Fallback: hitbox grande baseada no tamanho da horda
+      if (!bulletHit) {
+        const hordeRadius = Math.max(80, horde.width / 2 + 30);
+        const dx = bullet.x - horde.x;
+        const dy = bullet.y - horde.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
         
-        entities.bullets.splice(i, 1);
-        break;
+        if (dist < hordeRadius && horde.soldiers.length > 0) {
+          const idx = horde.soldiers.findIndex(s => s.isAlive);
+          if (idx >= 0) {
+            horde.soldiers.splice(idx, 1);
+            horde.count = horde.soldiers.length;
+            gameState.score += 10;
+            
+            if (horde.soldiers.length === 0) {
+              horde.isActive = false;
+              gameState.score += 50;
+            }
+          }
+          
+          entities.bullets.splice(i, 1);
+          bulletHit = true;
+        }
       }
     }
+    
+    if (bulletHit) continue;
     
     // Checar colisão com boss
     if (entities.boss && entities.boss.isActive) {
