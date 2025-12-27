@@ -1,52 +1,37 @@
-// @ts-check
-// gameState.ts - Definição do estado global do jogo
+// gameState.ts - Estado global do jogo
 import { GameState } from './types';
 
-const spawnRate = 700; // Taxa de spawn inicial em ms
-
-// Estado global do jogo
 export const gameState: GameState = {
   isStarted: false,
   isGameOver: false,
-  currentWave: 1,
-  enemiesSpawned: 0,
-  enemiesKilled: 0,
-  enemiesKilledWave: 0,
-  enemiesRequiredForBoss: 50,
-  bossSpawnCooldown: 0,
-  maxBossSpawnCooldown: 10000, // 10 segundos
-  zombieSprintChance: 0.3,
-  zombieSprintCooldown: 0,
-  highScore: Number(localStorage.getItem('highScore')) || 0,
+  isVictory: false,
+  isPaused: false,
+  currentLevel: 1,
   score: 0,
-  spawnRate: spawnRate,
-  lastSpawnTime: 0,
-  difficultyMultiplier: 1.0,
-  waveStartTime: 0,
-  maxReinforcements: 20,
-  maxEnemies: 100,
-  BarrelTypes: {
-    REINFORCEMENT: 'reinforcement',
-    NERF: 'nerf',
-    BUFF: 'buff',
-    HEALTH: 'health',
-    SHIELD: 'shield'
-  },
-  showBossWarning: false,
-  maxAllies: 30,
-  superCannonCooldown: 20000,
-  superCannonActive: false,
-  superCannonTimer: 0,
-  superCannonDuration: 4000,
-  superCannonDamageMultiply: 5,
-  superCannonLastUsed: 0,
-  superCannonReady: false,
+  highScore: Number(localStorage.getItem('crowdHighScore')) || 0,
+  coins: 0,
+  gameSpeed: 3,
+  baseGameSpeed: 3,
+  distanceTraveled: 0,
+  levelDistance: 5000,
+  isBattling: false,
+  battleTimer: 0,
   screenShakeActive: false,
   screenShakeIntensity: 0,
   screenShakeDuration: 0,
   screenShakeTimer: 0,
-  superCannonWarningPlayed: false,
   lastFrameTime: 0,
-  coins: 0,
-  isShopOpen: false
 };
+
+export function resetGameState(): void {
+  gameState.isStarted = false;
+  gameState.isGameOver = false;
+  gameState.isVictory = false;
+  gameState.isPaused = false;
+  gameState.score = 0;
+  gameState.coins = 0;
+  gameState.gameSpeed = gameState.baseGameSpeed;
+  gameState.distanceTraveled = 0;
+  gameState.isBattling = false;
+  gameState.battleTimer = 0;
+}

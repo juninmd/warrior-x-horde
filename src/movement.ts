@@ -1,100 +1,98 @@
-// @ts-check
-// movement.ts - Lógica de movimento do jogador e aliados
-import { canvas } from './game';
-import { Player, Entities, Obstacle } from './types';
-import { keys } from './input';
-import { isColliding } from './collisions/utils';
+// movement.ts - Sistema de movimento
+import { Entities, GameState, Army, Soldier } from './types';
 
-export function processMovement(entities: Entities): void {
-  if (entities.allies.length === 0) return;
-
-  const mainPlayer = entities.allies[0];
-  let moved = false;
-
-  // Movimento horizontal
-  const originalX = mainPlayer.x;
-  if (keys["ArrowLeft"]) {
-    mainPlayer.x -= mainPlayer.speed;
-    if (mainPlayer.x < 0 || entities.obstacles.some((obstacle: Obstacle) => isColliding(mainPlayer, obstacle))) {
-      mainPlayer.x = originalX; // Revert if collision or out of bounds
-    } else {
-      moved = true;
-    }
-  }
-
-  if (keys["ArrowRight"]) {
-    mainPlayer.x += mainPlayer.speed;
-    if (mainPlayer.x + mainPlayer.width > canvas.width || entities.obstacles.some((obstacle: Obstacle) => isColliding(mainPlayer, obstacle))) {
-      mainPlayer.x = originalX; // Revert if collision or out of bounds
-    } else {
-      moved = true;
-    }
-  }
-
-  // Movimento vertical
-  const originalY = mainPlayer.y;
-  if (keys["ArrowUp"]) {
-    mainPlayer.y -= mainPlayer.speed;
-    if (mainPlayer.y < 0 || entities.obstacles.some((obstacle: Obstacle) => isColliding(mainPlayer, obstacle))) {
-      mainPlayer.y = originalY;
-    } else {
-      moved = true;
-    }
-  }
-
-  if (keys["ArrowDown"]) {
-    mainPlayer.y += mainPlayer.speed;
-    if (mainPlayer.y + mainPlayer.height > canvas.height || entities.obstacles.some((obstacle: Obstacle) => isColliding(mainPlayer, obstacle))) {
-      mainPlayer.y = originalY;
-    } else {
-      moved = true;
-    }
-  }
-
-  // Animar o sprite se moveu
-  if (moved) {
-    mainPlayer.frameTimer += 16;
-    if (mainPlayer.frameTimer >= mainPlayer.frameInterval) {
-      mainPlayer.frameTimer = 0;
-      mainPlayer.frameIndex = (mainPlayer.frameIndex + 1) % 3;
-    }
-  } else {
-    mainPlayer.frameIndex = 1; // Frame parado
-  }
-
-  // Atualizar posição dos aliados/reforços
-  updateAlliesPosition(entities.allies);
+export function updateArmyPosition(army: Army, targetX: number, canvasWidth: number): void {
+  // Limitar movimento horizontal
+  const minX = 50;
+  const maxX = canvasWidth - 50;
+  army.targetX = Math.max(minX, Math.min(maxX, targetX));
+  
+  // Mover centro do exército suavemente para o target
+  const dx = army.targetX - army.centerX;
+  army.centerX += dx * 0.1;
+  
+  // Atualizar posição de cada soldado
+  updateSoldierFormation(army);
 }
 
-function updateAlliesPosition(allies: Player[]): void {
-  if (allies.length <= 1) return;
-
-  const mainPlayer = allies[0];
-  const spacingX = 40; // Horizontal spacing between reinforcements
-  const spacingY = 30; // Vertical spacing between rows of reinforcements
-
-  // Starting from index 1 to skip the main player
-  for (let i = 1; i < allies.length; i++) {
-    const ally = allies[i];
-    const row = Math.floor((i - 1) / 2); // Determine the row (0, 1, 2, ...)
-    const side = (i - 1) % 2; // Determine the side (0 for left, 1 for right)
-
-    let targetX = mainPlayer.x;
-    let targetY = mainPlayer.y;
-
-    if (side === 0) { // Left side
-      targetX = mainPlayer.x - (row + 1) * spacingX;
-    } else { // Right side
-      targetX = mainPlayer.x + (row + 1) * spacingX;
+export function updateSoldierFormation(army: Army): void {
+  const aliveSoldiers = army.soldiers.filter(s => s.isAlive);
+  const count = aliveSoldiers.length;
+  
+  if (count === 0) return;
+  
+  // Formação em círculos concêntricos
+  let soldierIndex = 0;
+  let ring = 0;
+  const baseRadius = 25;
+  const ringSpacing = 20;
+  
+  while (soldierIndex < count) {
+    const ringRadius = baseRadius + ring * ringSpacing;
+    const soldiersInRing = ring === 0 ? 1 : Math.min(Math.floor(ring * 6), count - soldierIndex);
+    
+    for (let i = 0; i < soldiersInRing && soldierIndex < count; i++) {
+      const soldier = aliveSoldiers[soldierIndex];
+      const angle = ring === 0 ? 0 : (i / soldiersInRing) * Math.PI * 2;
+      
+      soldier.targetX = army.centerX + Math.cos(angle) * ringRadius;
+      soldier.targetY = army.centerY + Math.sin(angle) * ringRadius * 0.5;
+      
+      // Movimento suave para a posição alvo
+      soldier.x += (soldier.targetX - soldier.x) * 0.15;
+      soldier.y += (soldier.targetY - soldier.y) * 0.15;
+      
+      soldierIndex++;
     }
-    targetY = mainPlayer.y + (row + 1) * spacingY;
+    ring++;
+  }
+}
 
-    ally.x = Math.max(0, Math.min(canvas.width - ally.width, targetX));
-    ally.y = Math.max(0, Math.min(canvas.height - ally.height, targetY));
-
-    // Update animation
-    if (mainPlayer.frameIndex !== ally.frameIndex) {
-      ally.frameIndex = mainPlayer.frameIndex;
+export function moveEntitiesDown(entities: Entities, gameState: GameState): void {
+  if (gameState.isGameOver || gameState.isVictory || gameState.isPaused) return;
+  
+  const speed = gameState.gameSpeed;
+  
+  // Mover gates para baixo
+  for (const gate of entities.gates) {
+    gate.y += speed;
+  }
+  
+  // Mover hordas inimigas para baixo
+  for (const horde of entities.enemyHordes) {
+    horde.y += speed;
+    for (const soldier of horde.soldiers) {
+      soldier.y += speed;
+      soldier.targetY += speed;
     }
   }
+  
+  // Mover boss
+  if (entities.boss) {
+    if (entities.boss.y < 100) {
+      entities.boss.y += speed * 0.5;
+    }
+  }
+  
+  // Mover bullets
+  for (const bullet of entities.bullets) {
+    bullet.y += bullet.speed;
+  }
+  
+  // Atualizar distância percorrida
+  gameState.distanceTraveled += speed;
+  
+  // Checar vitória de nível
+  if (gameState.distanceTraveled >= gameState.levelDistance && gameState.isVictory) {
+    // Próximo nível
+    gameState.currentLevel++;
+    gameState.distanceTraveled = 0;
+    gameState.levelDistance += 1000;
+    gameState.isVictory = false;
+  }
+}
+
+export function updateMovement(entities: Entities, gameState: GameState, canvasWidth: number, targetX: number): void {
+  updateArmyPosition(entities.playerArmy, targetX, canvasWidth);
+  moveEntitiesDown(entities, gameState);
 }

@@ -1,66 +1,117 @@
-
-
-import { updateEntities } from './entityUpdater';
-import { renderGame } from './renderer';
-import { drawUI } from './ui';
-import { setupInput, isShooting } from './input';
-import { processMovement } from './movement';
-
-import { preloadSounds } from './audioManager';
-import { checkCollisions } from './collisions';
+// game.ts - Loop principal do jogo Crowd Runner
 import { Entities } from './types';
-import { gameState } from './gameState';
-import { spawnEnemies, spawnBarrel, triggerZombieSprints } from './spawner';
-import { initGame } from './gameSetup';
-import { handleEntityDeath, updateBossSpawn } from './gameManager';
-import { updateBuffs, drawBuffs } from './buffs';
+import { gameState, resetGameState } from './gameState';
+import { createInitialEntities } from './entities';
+import { render } from './renderer';
+import { checkCollisions } from './collisions';
+import { updateSpawns } from './spawner';
+import { updateMovement } from './movement';
+import { setupInput, getMouseX, initializeMousePosition } from './input';
+import { updateShooting, updateBullets } from './shooting';
 
-preloadSounds();
+// Canvas setup
+export const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
+const ctx = canvas.getContext('2d')!;
 
-export const canvas = document.getElementById("gameCanvas") as HTMLCanvasElement;
-const ctx = canvas.getContext("2d")!;
-const startButton = Object.assign(document.createElement("button"), {
-  innerText: "Iniciar Jogo",
-  style: "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 20px 40px; font-size: 20px;",
-});
+// Entidades do jogo
+let entities: Entities;
+
+// BotÃ£o de inÃ­cio
+const startButton = document.createElement('button');
+startButton.innerText = 'í¾® INICIAR JOGO';
+startButton.style.cssText = `
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 20px 40px;
+  font-size: 24px;
+  font-weight: bold;
+  background: linear-gradient(180deg, #4A90D9 0%, #2E5A8E 100%);
+  color: white;
+  border: none;
+  border-radius: 15px;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+  z-index: 100;
+  transition: transform 0.2s, box-shadow 0.2s;
+`;
+startButton.onmouseover = () => {
+  startButton.style.transform = 'translate(-50%, -50%) scale(1.05)';
+  startButton.style.boxShadow = '0 8px 25px rgba(0,0,0,0.4)';
+};
+startButton.onmouseout = () => {
+  startButton.style.transform = 'translate(-50%, -50%)';
+  startButton.style.boxShadow = '0 6px 20px rgba(0,0,0,0.3)';
+};
 document.body.appendChild(startButton);
 
-export const entities: Entities = {
-  allies: [], enemies: [], barrels: [], boss: null, bullets: [], obstacles: []
-};
+// Game loop
+function gameLoop(): void {
+  if (!gameState.isStarted) return;
+  
+  // Atualizar movimento
+  updateMovement(entities, gameState, canvas.width, getMouseX());
+  
+  // Sistema de tiro
+  updateShooting(entities, gameState);
+  updateBullets(entities, gameState);
+  
+  // Spawnar elementos
+  updateSpawns(entities, canvas.width, gameState);
+  
+  // Verificar colisÃµes
+  checkCollisions(entities, gameState);
+  
+  // Renderizar
+  render(ctx, entities, gameState);
+  
+  // Continuar loop
+  if (!gameState.isGameOver) {
+    requestAnimationFrame(gameLoop);
+  } else {
+    // Mostrar tela de game over
+    render(ctx, entities, gameState);
+    
+    // Salvar high score
+    if (gameState.score > gameState.highScore) {
+      gameState.highScore = gameState.score;
+      localStorage.setItem('crowdHighScore', gameState.highScore.toString());
+    }
+  }
+}
 
-let lastTime = 0;
-function gameLoop(currentTime: number): void {
-  if (gameState.isGameOver) return;
-
-  const deltaTime = currentTime - lastTime;
-  lastTime = currentTime;
-
-  spawnEnemies();
-  updateBossSpawn();
-  triggerZombieSprints(entities.enemies);
-  updateEntities(entities, gameState, isShooting);
-  processMovement(entities);
-  checkCollisions(entities, gameState, handleEntityDeath);
-  updateBuffs(deltaTime);
-  renderGame(ctx, entities);
-  drawUI(ctx, entities, gameState);
-  drawBuffs(ctx);
+// Iniciar jogo
+function startGame(): void {
+  resetGameState();
+  entities = createInitialEntities(canvas.width, canvas.height);
+  initializeMousePosition(canvas.width);
+  gameState.isStarted = true;
+  startButton.style.display = 'none';
   requestAnimationFrame(gameLoop);
 }
 
-import { preloadImages } from './sprites';
-
-startButton.addEventListener("click", async () => {
-  startButton.disabled = true; // Disable button during loading
-  startButton.innerText = "Loading...";
-  try {
-    await preloadImages();
-    initGame(entities, gameState, gameLoop, startButton);
-  } catch (error) {
-    console.error("Failed to load game assets:", error);
-    startButton.innerText = "Error loading game";
+// Restart no clique apÃ³s game over
+canvas.addEventListener('click', () => {
+  if (gameState.isGameOver) {
+    startGame();
   }
 });
-setupInput(entities, canvas);
-setInterval(spawnBarrel, 5000);
+
+canvas.addEventListener('touchstart', (e) => {
+  if (gameState.isGameOver) {
+    e.preventDefault();
+    startGame();
+  }
+});
+
+// Event listeners
+startButton.addEventListener('click', startGame);
+
+// Setup inicial
+setupInput(canvas);
+initializeMousePosition(canvas.width);
+
+// Desenhar tela inicial
+entities = createInitialEntities(canvas.width, canvas.height);
+render(ctx, entities, gameState);
