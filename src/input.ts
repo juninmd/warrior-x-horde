@@ -1,11 +1,17 @@
 // input.ts - Sistema de input (mouse/touch)
-import { Entities } from './types';
+import { Entities, GameState } from './types';
+import { activateSuperCannon } from './shooting';
 
 let mouseX = 0;
 let isDragging = false;
+let gameStateRef: GameState | null = null;
 
 export function getMouseX(): number {
   return mouseX;
+}
+
+export function setGameStateRef(gs: GameState): void {
+  gameStateRef = gs;
 }
 
 export function setupInput(canvas: HTMLCanvasElement): void {
@@ -62,6 +68,11 @@ export function setupInput(canvas: HTMLCanvasElement): void {
     if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
       mouseX = Math.min(canvas.width, mouseX + step);
       isDragging = true;
+    }
+    // Super Cannon - Spacebar
+    if (e.key === ' ' && gameStateRef) {
+      e.preventDefault();
+      activateSuperCannon(gameStateRef);
     }
   });
 }

@@ -20,6 +20,14 @@ export interface GameState {
   screenShakeDuration: number;
   screenShakeTimer: number;
   lastFrameTime: number;
+  // Super Cannon
+  superCannonActive: boolean;
+  superCannonTimer: number;
+  superCannonDuration: number;
+  superCannonCooldown: number;
+  superCannonLastUsed: number;
+  superCannonReady: boolean;
+  superCannonDamageMultiplier: number;
 }
 
 export interface Soldier {

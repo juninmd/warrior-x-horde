@@ -6,8 +6,8 @@ import { render } from './renderer';
 import { checkCollisions } from './collisions';
 import { updateSpawns } from './spawner';
 import { updateMovement } from './movement';
-import { setupInput, getMouseX, initializeMousePosition } from './input';
-import { updateShooting, updateBullets } from './shooting';
+import { setupInput, getMouseX, initializeMousePosition, setGameStateRef } from './input';
+import { updateShooting, updateBullets, updateSuperCannon, activateSuperCannon } from './shooting';
 
 // Canvas setup
 export const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
@@ -56,6 +56,7 @@ function gameLoop(): void {
   // Sistema de tiro
   updateShooting(entities, gameState);
   updateBullets(entities, gameState);
+  updateSuperCannon(entities, gameState, 16); // ~60fps = 16ms por frame
 
   // Spawnar elementos
   updateSpawns(entities, canvas.width, gameState);
@@ -106,6 +107,7 @@ function startGame(): void {
   resetGameState();
   entities = createInitialEntities(canvas.width, canvas.height);
   initializeMousePosition(canvas.width);
+  setGameStateRef(gameState); // Configurar referência para input de Super Cannon
   gameState.isStarted = true;
   startButton.style.display = 'none';
   requestAnimationFrame(gameLoop);

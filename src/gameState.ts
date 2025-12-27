@@ -21,6 +21,14 @@ export const gameState: GameState = {
   screenShakeDuration: 0,
   screenShakeTimer: 0,
   lastFrameTime: 0,
+  // Super Cannon
+  superCannonActive: false,
+  superCannonTimer: 0,
+  superCannonDuration: 3000, // 3 segundos de duração
+  superCannonCooldown: 10000, // 10 segundos de cooldown
+  superCannonLastUsed: 0,
+  superCannonReady: true,
+  superCannonDamageMultiplier: 5,
 };
 
 export function resetGameState(): void {
@@ -34,4 +42,8 @@ export function resetGameState(): void {
   gameState.distanceTraveled = 0;
   gameState.isBattling = false;
   gameState.battleTimer = 0;
+  gameState.superCannonActive = false;
+  gameState.superCannonTimer = 0;
+  gameState.superCannonReady = true;
+  gameState.superCannonLastUsed = 0;
 }

@@ -431,6 +431,61 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
   ctx.beginPath();
   ctx.roundRect(20, 50, progressWidth * progress, 10, 5);
   ctx.fill();
+
+  // Super Cannon cooldown indicator
+  const cannonSize = 40;
+  const cannonX = width - cannonSize - 15;
+  const cannonY = 50;
+  
+  // Fundo do indicador
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+  ctx.beginPath();
+  ctx.arc(cannonX + cannonSize / 2, cannonY + cannonSize / 2, cannonSize / 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  if (gameState.superCannonActive) {
+    // Ativo - brilhando
+    ctx.fillStyle = '#FFD700';
+    ctx.beginPath();
+    ctx.arc(cannonX + cannonSize / 2, cannonY + cannonSize / 2, cannonSize / 2 - 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#000';
+    ctx.font = 'bold 10px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('⚡', cannonX + cannonSize / 2, cannonY + cannonSize / 2 + 4);
+  } else if (gameState.superCannonReady) {
+    // Pronto para usar
+    ctx.fillStyle = '#2ECC71';
+    ctx.beginPath();
+    ctx.arc(cannonX + cannonSize / 2, cannonY + cannonSize / 2, cannonSize / 2 - 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#FFF';
+    ctx.font = 'bold 10px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('SPACE', cannonX + cannonSize / 2, cannonY + cannonSize / 2 + 4);
+  } else {
+    // Em cooldown - mostrar progresso
+    const cooldownProgress = (Date.now() - gameState.superCannonLastUsed) / gameState.superCannonCooldown;
+    const endAngle = -Math.PI / 2 + (cooldownProgress * Math.PI * 2);
+    
+    ctx.fillStyle = '#555';
+    ctx.beginPath();
+    ctx.arc(cannonX + cannonSize / 2, cannonY + cannonSize / 2, cannonSize / 2 - 3, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.fillStyle = '#E74C3C';
+    ctx.beginPath();
+    ctx.moveTo(cannonX + cannonSize / 2, cannonY + cannonSize / 2);
+    ctx.arc(cannonX + cannonSize / 2, cannonY + cannonSize / 2, cannonSize / 2 - 3, -Math.PI / 2, endAngle);
+    ctx.closePath();
+    ctx.fill();
+    
+    ctx.fillStyle = '#FFF';
+    ctx.font = 'bold 12px Arial';
+    ctx.textAlign = 'center';
+    const secondsLeft = Math.ceil((gameState.superCannonCooldown - (Date.now() - gameState.superCannonLastUsed)) / 1000);
+    ctx.fillText(`${secondsLeft}`, cannonX + cannonSize / 2, cannonY + cannonSize / 2 + 4);
+  }
 }
 
 function drawFloatingTexts(ctx: CanvasRenderingContext2D): void {
@@ -483,6 +538,60 @@ function drawGameOver(ctx: CanvasRenderingContext2D, gameState: GameState): void
   ctx.fillText('��� JOGAR NOVAMENTE', width / 2, height / 2 + 110);
 }
 
+// Desenhar Super Cannon beam
+function drawSuperCannonBeam(ctx: CanvasRenderingContext2D, centerX: number, centerY: number, gameState: GameState): void {
+  if (!gameState.superCannonActive) return;
+
+  const beamWidth = 40;
+  const beamX = centerX - beamWidth / 2;
+  
+  // Efeito de pulsação
+  const pulse = Math.sin(Date.now() / 50) * 0.2 + 0.8;
+  
+  // Gradiente do beam
+  const gradient = ctx.createLinearGradient(beamX, 0, beamX + beamWidth, 0);
+  gradient.addColorStop(0, `rgba(255, 200, 50, ${0.3 * pulse})`);
+  gradient.addColorStop(0.3, `rgba(255, 255, 100, ${0.8 * pulse})`);
+  gradient.addColorStop(0.5, `rgba(255, 255, 255, ${1 * pulse})`);
+  gradient.addColorStop(0.7, `rgba(255, 255, 100, ${0.8 * pulse})`);
+  gradient.addColorStop(1, `rgba(255, 200, 50, ${0.3 * pulse})`);
+
+  // Beam principal
+  ctx.fillStyle = gradient;
+  ctx.fillRect(beamX, 0, beamWidth, centerY);
+
+  // Glow externo
+  ctx.shadowColor = '#FFD700';
+  ctx.shadowBlur = 30;
+  ctx.fillStyle = `rgba(255, 215, 0, ${0.4 * pulse})`;
+  ctx.fillRect(beamX - 10, 0, beamWidth + 20, centerY);
+  ctx.shadowBlur = 0;
+
+  // Partículas no beam
+  for (let i = 0; i < 10; i++) {
+    const particleY = (Math.random() * centerY);
+    const particleX = centerX + (Math.random() - 0.5) * beamWidth * 0.8;
+    const particleSize = Math.random() * 4 + 2;
+    
+    ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.5 + 0.5})`;
+    ctx.beginPath();
+    ctx.arc(particleX, particleY, particleSize, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Indicador de tempo restante
+  const progress = gameState.superCannonTimer / gameState.superCannonDuration;
+  const barWidth = 60;
+  const barHeight = 6;
+  const barX = centerX - barWidth / 2;
+  const barY = centerY + 30;
+
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+  ctx.fillRect(barX, barY, barWidth, barHeight);
+  ctx.fillStyle = '#FFD700';
+  ctx.fillRect(barX, barY, barWidth * progress, barHeight);
+}
+
 export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameState: GameState): void {
   const { width, height } = ctx.canvas;
   const time = Date.now();
@@ -523,6 +632,9 @@ export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameSt
 
   // Desenhar exército do jogador
   drawArmy(ctx, entities.playerArmy, time);
+
+  // Desenhar Super Cannon beam (por cima de tudo exceto UI)
+  drawSuperCannonBeam(ctx, entities.playerArmy.centerX, entities.playerArmy.centerY, gameState);
 
   if (gameState.screenShakeActive) {
     ctx.restore();
