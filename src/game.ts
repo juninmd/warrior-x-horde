@@ -7,7 +7,7 @@ import { checkCollisions } from './collisions';
 import { updateSpawns } from './spawner';
 import { updateMovement } from './movement';
 import { setupInput, getMouseX, initializeMousePosition, setGameStateRef } from './input';
-import { updateShooting, updateBullets, updateSuperCannon, activateSuperCannon } from './shooting';
+import { updateShooting, updateBullets, updateSuperCannon } from './shooting';
 import { initAudio, playMusic, playSound, stopAllMusic, audioManager } from './audio';
 
 // Canvas setup

@@ -2,10 +2,7 @@
 import { Entities, GameState } from './types';
 import { createGatePair, createEnemyHorde, createBoss } from './entities';
 
-let lastGateY = -300;
-let lastHordeY = -500;
-
-export function spawnGates(entities: Entities, canvasWidth: number, gameState: GameState): void {
+export function spawnGates(entities: Entities, canvasWidth: number, _gameState: GameState): void {
   // Spawnar gates a cada 1200 pixels de distância (bem mais espaçado)
   const spawnY = -100;
   const gateSpacing = 1200;
@@ -24,7 +21,7 @@ export function spawnGates(entities: Entities, canvasWidth: number, gameState: G
   }
 }
 
-export function spawnEnemies(entities: Entities, canvasWidth: number, gameState: GameState): void {
+export function spawnEnemies(entities: Entities, canvasWidth: number, _gameState: GameState): void {
   // Spawnar hordas inimigas - FREQUENTES mas lentas
   const spawnY = 0; // Começa mais perto da tela
   const hordeSpacing = 150; // Muito frequente!

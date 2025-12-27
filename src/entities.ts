@@ -1,5 +1,5 @@
 // entities.ts - Criação de entidades
-import { Army, Soldier, EnemyHorde, Gate, Weapon, Boss, Entities } from './types';
+import { Army, Soldier, EnemyHorde, Gate, Boss, Entities } from './types';
 
 let soldierIdCounter = 0;
 let hordeIdCounter = 0;
@@ -76,7 +76,6 @@ export function removeSoldiersFromArmy(army: Army, count: number): void {
 export function createEnemyHorde(canvasWidth: number, y: number, count: number): EnemyHorde {
   // Calcular limites da estrada com perspectiva
   // A estrada é mais estreita no topo e mais larga embaixo
-  const roadTop = 0.08; // 8% da altura = topo da estrada
   const roadTopWidth = canvasWidth * 0.3;
   const roadBottomWidth = canvasWidth;
 
@@ -180,7 +179,6 @@ export function createGatePair(canvasWidth: number, y: number): Gate[] {
 
   // SEMPRE garantir que um gate é bom e outro é ruim
   const goodTypes = ['add', 'multiply', 'firerate', 'damage', 'speed'];
-  const badTypes = ['subtract', 'divide'];
 
   const leftIsGood = goodTypes.includes(leftGate.type);
   const rightIsGood = goodTypes.includes(rightGate.type);

@@ -1,5 +1,5 @@
 // input.ts - Sistema de input (mouse/touch)
-import { Entities, GameState } from './types';
+import { GameState } from './types';
 import { activateSuperCannon } from './shooting';
 
 let mouseX = 0;

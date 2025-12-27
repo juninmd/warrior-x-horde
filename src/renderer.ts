@@ -44,7 +44,6 @@ function drawRoad(ctx: CanvasRenderingContext2D, gameState: GameState): void {
   // Estrada principal com perspectiva - comeca mais acima
   const roadTop = height * 0.08; // Comeca bem mais acima
   const roadTopWidth = width * 0.3;
-  const roadBottomWidth = width;
 
   // Fundo da estrada
   ctx.fillStyle = '#E8E8E8';
@@ -82,8 +81,6 @@ function drawRoad(ctx: CanvasRenderingContext2D, gameState: GameState): void {
   ctx.strokeStyle = '#FFFFFF';
   ctx.lineWidth = 4;
   ctx.setLineDash([40, 30]);
-
-  const lineOffset = (gameState.distanceTraveled * 3) % 70;
 
   // Linha central
   ctx.beginPath();

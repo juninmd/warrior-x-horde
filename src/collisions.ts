@@ -1,6 +1,6 @@
 // collisions.ts - Sistema de colisões
 import { Entities, GameState, Army, EnemyHorde, Gate } from './types';
-import { addSoldiersToArmy, multiplySoldiersInArmy, removeSoldiersFromArmy, createSoldier } from './entities';
+import { addSoldiersToArmy, multiplySoldiersInArmy, removeSoldiersFromArmy } from './entities';
 import { addFloatingText } from './renderer';
 import { playSound, audioManager } from './audio';
 
@@ -52,13 +52,14 @@ function applyGateEffect(army: Army, gate: Gate, gameState: GameState): void {
       addFloatingText(`-${gate.value}`, gate.x + gate.width / 2, gate.y, '#E74C3C');
       isPositive = false;
       break;
-    case 'divide':
+    case 'divide': {
       const toRemove = Math.floor(army.soldiers.length * (1 - 1 / gate.value));
       removeSoldiersFromArmy(army, Math.min(toRemove, army.soldiers.length - 1));
       afterCount = army.soldiers.length;
       addFloatingText(`÷${gate.value}`, gate.x + gate.width / 2, gate.y, '#9B59B6');
       isPositive = false;
       break;
+    }
     case 'firerate':
       army.fireRate = Math.max(50, army.fireRate / gate.value);
       addFloatingText(`🔥 Fire Rate!`, gate.x + gate.width / 2, gate.y, '#F39C12');

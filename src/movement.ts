@@ -1,5 +1,5 @@
 // movement.ts - Sistema de movimento
-import { Entities, GameState, Army, Soldier } from './types';
+import { Entities, GameState, Army } from './types';
 
 export function updateArmyPosition(army: Army, targetX: number, canvasWidth: number): void {
   // Limitar movimento horizontal
