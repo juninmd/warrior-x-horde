@@ -2,6 +2,7 @@
 import { Entities, GameState, Army, EnemyHorde, Gate } from './types';
 import { addSoldiersToArmy, multiplySoldiersInArmy, removeSoldiersFromArmy, createSoldier } from './entities';
 import { addFloatingText } from './renderer';
+import { playSound, audioManager } from './audio';
 
 function getArmyBounds(army: Army): { left: number; right: number; top: number; bottom: number } {
   if (army.soldiers.length === 0) {
@@ -32,6 +33,7 @@ function checkGateCollision(army: Army, gate: Gate): boolean {
 function applyGateEffect(army: Army, gate: Gate, gameState: GameState): void {
   const beforeCount = army.soldiers.length;
   let afterCount = beforeCount;
+  let isPositive = true;
 
   switch (gate.type) {
     case 'add':
@@ -48,12 +50,14 @@ function applyGateEffect(army: Army, gate: Gate, gameState: GameState): void {
       removeSoldiersFromArmy(army, Math.min(gate.value, army.soldiers.length - 1));
       afterCount = army.soldiers.length;
       addFloatingText(`-${gate.value}`, gate.x + gate.width / 2, gate.y, '#E74C3C');
+      isPositive = false;
       break;
     case 'divide':
       const toRemove = Math.floor(army.soldiers.length * (1 - 1 / gate.value));
       removeSoldiersFromArmy(army, Math.min(toRemove, army.soldiers.length - 1));
       afterCount = army.soldiers.length;
       addFloatingText(`÷${gate.value}`, gate.x + gate.width / 2, gate.y, '#9B59B6');
+      isPositive = false;
       break;
     case 'firerate':
       army.fireRate = Math.max(50, army.fireRate / gate.value);
@@ -67,6 +71,13 @@ function applyGateEffect(army: Army, gate: Gate, gameState: GameState): void {
       gameState.gameSpeed = Math.min(8, gameState.gameSpeed * gate.value);
       addFloatingText(`💨 Speed!`, gate.x + gate.width / 2, gate.y, '#00BCD4');
       break;
+  }
+
+  // Tocar som apropriado
+  if (isPositive) {
+    playSound(audioManager.powerUp);
+  } else {
+    playSound(audioManager.nerf);
   }
 
   gameState.score += Math.max(0, afterCount - beforeCount) * 10;

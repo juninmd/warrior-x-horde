@@ -8,6 +8,7 @@ import { updateSpawns } from './spawner';
 import { updateMovement } from './movement';
 import { setupInput, getMouseX, initializeMousePosition, setGameStateRef } from './input';
 import { updateShooting, updateBullets, updateSuperCannon, activateSuperCannon } from './shooting';
+import { initAudio, playMusic, playSound, stopAllMusic, audioManager } from './audio';
 
 // Canvas setup
 export const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
@@ -47,6 +48,8 @@ startButton.onmouseout = () => {
 document.body.appendChild(startButton);
 
 // Game loop
+let wasInBossFight = false;
+
 function gameLoop(): void {
   if (!gameState.isStarted) return;
 
@@ -64,6 +67,13 @@ function gameLoop(): void {
   // Verificar colisões
   checkCollisions(entities, gameState);
 
+  // Música do boss
+  const isInBossFight = entities.boss !== null && entities.boss.isActive;
+  if (isInBossFight !== wasInBossFight) {
+    playMusic(isInBossFight);
+    wasInBossFight = isInBossFight;
+  }
+
   // Checar progresso de nível (vitória do boss = próximo nível)
   if (gameState.isVictory) {
     advanceToNextLevel();
@@ -78,6 +88,10 @@ function gameLoop(): void {
   } else {
     // Mostrar tela de game over
     render(ctx, entities, gameState);
+    
+    // Parar música e tocar som de game over
+    stopAllMusic();
+    playSound(audioManager.gameOver);
 
     // Salvar high score
     if (gameState.score > gameState.highScore) {
@@ -108,8 +122,14 @@ function startGame(): void {
   entities = createInitialEntities(canvas.width, canvas.height);
   initializeMousePosition(canvas.width);
   setGameStateRef(gameState); // Configurar referência para input de Super Cannon
+  wasInBossFight = false; // Resetar flag de boss
   gameState.isStarted = true;
   startButton.style.display = 'none';
+  
+  // Iniciar música
+  playSound(audioManager.gameStart);
+  setTimeout(() => playMusic(false), 500); // Iniciar música após som de início
+  
   requestAnimationFrame(gameLoop);
 }
 
@@ -133,6 +153,7 @@ startButton.addEventListener('click', startGame);
 // Setup inicial
 setupInput(canvas);
 initializeMousePosition(canvas.width);
+initAudio(); // Inicializar sistema de áudio
 
 // Desenhar tela inicial
 entities = createInitialEntities(canvas.width, canvas.height);

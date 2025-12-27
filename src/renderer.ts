@@ -436,7 +436,7 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
   const cannonSize = 40;
   const cannonX = width - cannonSize - 15;
   const cannonY = 50;
-  
+
   // Fundo do indicador
   ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
   ctx.beginPath();
@@ -467,19 +467,19 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
     // Em cooldown - mostrar progresso
     const cooldownProgress = (Date.now() - gameState.superCannonLastUsed) / gameState.superCannonCooldown;
     const endAngle = -Math.PI / 2 + (cooldownProgress * Math.PI * 2);
-    
+
     ctx.fillStyle = '#555';
     ctx.beginPath();
     ctx.arc(cannonX + cannonSize / 2, cannonY + cannonSize / 2, cannonSize / 2 - 3, 0, Math.PI * 2);
     ctx.fill();
-    
+
     ctx.fillStyle = '#E74C3C';
     ctx.beginPath();
     ctx.moveTo(cannonX + cannonSize / 2, cannonY + cannonSize / 2);
     ctx.arc(cannonX + cannonSize / 2, cannonY + cannonSize / 2, cannonSize / 2 - 3, -Math.PI / 2, endAngle);
     ctx.closePath();
     ctx.fill();
-    
+
     ctx.fillStyle = '#FFF';
     ctx.font = 'bold 12px Arial';
     ctx.textAlign = 'center';
@@ -544,10 +544,10 @@ function drawSuperCannonBeam(ctx: CanvasRenderingContext2D, centerX: number, cen
 
   const beamWidth = 40;
   const beamX = centerX - beamWidth / 2;
-  
+
   // Efeito de pulsação
   const pulse = Math.sin(Date.now() / 50) * 0.2 + 0.8;
-  
+
   // Gradiente do beam
   const gradient = ctx.createLinearGradient(beamX, 0, beamX + beamWidth, 0);
   gradient.addColorStop(0, `rgba(255, 200, 50, ${0.3 * pulse})`);
@@ -572,7 +572,7 @@ function drawSuperCannonBeam(ctx: CanvasRenderingContext2D, centerX: number, cen
     const particleY = (Math.random() * centerY);
     const particleX = centerX + (Math.random() - 0.5) * beamWidth * 0.8;
     const particleSize = Math.random() * 4 + 2;
-    
+
     ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.5 + 0.5})`;
     ctx.beginPath();
     ctx.arc(particleX, particleY, particleSize, 0, Math.PI * 2);

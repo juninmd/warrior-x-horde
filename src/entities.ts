@@ -74,7 +74,21 @@ export function removeSoldiersFromArmy(army: Army, count: number): void {
 }
 
 export function createEnemyHorde(canvasWidth: number, y: number, count: number): EnemyHorde {
-  const x = canvasWidth / 2 + (Math.random() - 0.5) * 100;
+  // Calcular limites da estrada com perspectiva
+  // A estrada é mais estreita no topo e mais larga embaixo
+  const roadTop = 0.08; // 8% da altura = topo da estrada
+  const roadTopWidth = canvasWidth * 0.3;
+  const roadBottomWidth = canvasWidth;
+  
+  // Calcular a largura da estrada nesta posição Y (interpolação linear)
+  // Como Y é negativo (acima da tela), usar um valor base
+  const normalizedY = Math.max(0, Math.min(1, (y + 200) / 800)); // Normalizar para 0-1
+  const roadWidthAtY = roadTopWidth + (roadBottomWidth - roadTopWidth) * normalizedY;
+  
+  // Centralizar na estrada com pequena variação
+  const maxOffset = roadWidthAtY * 0.2; // 20% de variação máxima
+  const x = canvasWidth / 2 + (Math.random() - 0.5) * maxOffset;
+  
   const soldiers: Soldier[] = [];
 
   for (let i = 0; i < count; i++) {

@@ -20,21 +20,21 @@ export function setupInput(canvas: HTMLCanvasElement): void {
     isDragging = true;
     mouseX = e.clientX - canvas.getBoundingClientRect().left;
   });
-  
+
   canvas.addEventListener('mousemove', (e) => {
     if (isDragging) {
       mouseX = e.clientX - canvas.getBoundingClientRect().left;
     }
   });
-  
+
   canvas.addEventListener('mouseup', () => {
     isDragging = false;
   });
-  
+
   canvas.addEventListener('mouseleave', () => {
     isDragging = false;
   });
-  
+
   // Touch events
   canvas.addEventListener('touchstart', (e) => {
     e.preventDefault();
@@ -43,23 +43,23 @@ export function setupInput(canvas: HTMLCanvasElement): void {
       mouseX = e.touches[0].clientX - canvas.getBoundingClientRect().left;
     }
   }, { passive: false });
-  
+
   canvas.addEventListener('touchmove', (e) => {
     e.preventDefault();
     if (isDragging && e.touches.length > 0) {
       mouseX = e.touches[0].clientX - canvas.getBoundingClientRect().left;
     }
   }, { passive: false });
-  
+
   canvas.addEventListener('touchend', () => {
     isDragging = false;
   });
-  
+
   // Keyboard events for desktop
   document.addEventListener('keydown', (e) => {
     const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
     if (!canvas) return;
-    
+
     const step = 30;
     if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
       mouseX = Math.max(0, mouseX - step);

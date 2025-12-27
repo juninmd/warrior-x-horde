@@ -83,7 +83,7 @@ export function activateSuperCannon(gameState: GameState): void {
   const now = Date.now();
   if (!gameState.superCannonReady) return;
   if (now - gameState.superCannonLastUsed < gameState.superCannonCooldown) return;
-  
+
   gameState.superCannonActive = true;
   gameState.superCannonTimer = gameState.superCannonDuration;
   gameState.superCannonLastUsed = now;
@@ -92,14 +92,14 @@ export function activateSuperCannon(gameState: GameState): void {
 
 export function updateSuperCannon(entities: Entities, gameState: GameState, deltaTime: number): void {
   const now = Date.now();
-  
+
   if (!gameState.superCannonReady && now - gameState.superCannonLastUsed >= gameState.superCannonCooldown) {
     gameState.superCannonReady = true;
   }
-  
+
   if (gameState.superCannonActive) {
     gameState.superCannonTimer -= deltaTime;
-    
+
     if (gameState.superCannonTimer <= 0) {
       gameState.superCannonActive = false;
       gameState.superCannonTimer = 0;
@@ -112,14 +112,14 @@ export function updateSuperCannon(entities: Entities, gameState: GameState, delt
 function applySuperCannonDamage(entities: Entities, gameState: GameState): void {
   const army = entities.playerArmy;
   if (army.soldiers.length === 0) return;
-  
+
   const beamX = army.centerX;
   const beamWidth = 40;
   const damage = army.damage * gameState.superCannonDamageMultiplier;
-  
+
   for (const horde of entities.enemyHordes) {
     if (!horde.isActive) continue;
-    
+
     for (let i = horde.soldiers.length - 1; i >= 0; i--) {
       const soldier = horde.soldiers[i];
       if (soldier.y < army.centerY && soldier.x > beamX - beamWidth / 2 && soldier.x < beamX + beamWidth / 2) {
@@ -127,14 +127,14 @@ function applySuperCannonDamage(entities: Entities, gameState: GameState): void 
         gameState.score += 15;
       }
     }
-    
+
     horde.count = horde.soldiers.length;
     if (horde.soldiers.length === 0) {
       horde.isActive = false;
       gameState.score += 100;
     }
   }
-  
+
   if (entities.boss && entities.boss.isActive) {
     const boss = entities.boss;
     const bossCenter = boss.x + boss.width / 2;

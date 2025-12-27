@@ -69,11 +69,22 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState): void
   for (const horde of entities.enemyHordes) {
     horde.y += enemySpeed;
 
+    // Calcular limites da estrada nesta posição Y
+    const roadTopWidth = 0.3; // 30% da largura no topo
+    const normalizedY = Math.max(0, Math.min(1, horde.y / canvasHeight));
+    const canvasWidth = 480; // Largura padrão do canvas
+    const roadWidthAtY = canvasWidth * (roadTopWidth + (1 - roadTopWidth) * normalizedY);
+    const roadMinX = (canvasWidth - roadWidthAtY) / 2 + 30; // Margem de 30px
+    const roadMaxX = (canvasWidth + roadWidthAtY) / 2 - 30;
+
     // Se a horda passou do threshold, perseguir o jogador horizontalmente
     if (horde.y > pursuitThreshold && horde.isActive) {
       const targetX = entities.playerArmy.centerX;
       const dx = targetX - horde.x;
       horde.x += dx * 0.03;
+      
+      // Limitar dentro da estrada
+      horde.x = Math.max(roadMinX, Math.min(roadMaxX, horde.x));
     }
 
     for (const soldier of horde.soldiers) {
@@ -85,6 +96,9 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState): void
         soldier.targetX = horde.x + (soldier.x - horde.x) * 0.95;
         soldier.x += (soldier.targetX - soldier.x) * 0.1;
       }
+      
+      // Limitar soldados dentro da estrada
+      soldier.x = Math.max(roadMinX - 20, Math.min(roadMaxX + 20, soldier.x));
     }
   }
 
