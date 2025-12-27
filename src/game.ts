@@ -88,7 +88,7 @@ function gameLoop(): void {
   } else {
     // Mostrar tela de game over
     render(ctx, entities, gameState);
-    
+
     // Parar música e tocar som de game over
     stopAllMusic();
     playSound(audioManager.gameOver);
@@ -125,11 +125,11 @@ function startGame(): void {
   wasInBossFight = false; // Resetar flag de boss
   gameState.isStarted = true;
   startButton.style.display = 'none';
-  
+
   // Iniciar música
   playSound(audioManager.gameStart);
   setTimeout(() => playMusic(false), 500); // Iniciar música após som de início
-  
+
   requestAnimationFrame(gameLoop);
 }
 

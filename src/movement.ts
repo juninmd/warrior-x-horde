@@ -82,7 +82,7 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState): void
       const targetX = entities.playerArmy.centerX;
       const dx = targetX - horde.x;
       horde.x += dx * 0.03;
-      
+
       // Limitar dentro da estrada
       horde.x = Math.max(roadMinX, Math.min(roadMaxX, horde.x));
     }
@@ -96,7 +96,7 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState): void
         soldier.targetX = horde.x + (soldier.x - horde.x) * 0.95;
         soldier.x += (soldier.targetX - soldier.x) * 0.1;
       }
-      
+
       // Limitar soldados dentro da estrada
       soldier.x = Math.max(roadMinX - 20, Math.min(roadMaxX + 20, soldier.x));
     }

@@ -33,18 +33,18 @@ export const audioManager: AudioManager = {
 
 export function initAudio(): void {
   if (audioInitialized) return;
-  
+
   // Pré-carregar todos os áudios
   Object.values(audioManager).forEach(audio => {
     audio.load();
   });
-  
+
   audioInitialized = true;
 }
 
 export function playSound(sound: HTMLAudioElement): void {
   if (isMuted) return;
-  
+
   // Clonar para permitir múltiplas reproduções simultâneas
   const clone = sound.cloneNode(true) as HTMLAudioElement;
   clone.volume = sound.volume;
@@ -55,13 +55,13 @@ export function playSound(sound: HTMLAudioElement): void {
 
 export function playMusic(isBoss = false): void {
   if (isMuted) return;
-  
+
   const musicToPlay = isBoss ? audioManager.bossMusic : audioManager.gameMusic;
   const musicToPause = isBoss ? audioManager.gameMusic : audioManager.bossMusic;
-  
+
   musicToPause.pause();
   musicToPause.currentTime = 0;
-  
+
   musicToPlay.currentTime = 0;
   musicToPlay.play().catch(() => {
     // Autoplay bloqueado - será iniciado na primeira interação
@@ -77,11 +77,11 @@ export function stopAllMusic(): void {
 
 export function toggleMute(): boolean {
   isMuted = !isMuted;
-  
+
   if (isMuted) {
     stopAllMusic();
   }
-  
+
   return isMuted;
 }
 
