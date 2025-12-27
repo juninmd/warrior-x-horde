@@ -11,7 +11,7 @@
       padding: 0;
       box-sizing: border-box;
     }
-    
+
     body {
       background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
       min-height: 100vh;
@@ -23,7 +23,7 @@
       overflow: hidden;
       touch-action: none;
     }
-    
+
     .game-title {
       color: #fff;
       font-size: 28px;
@@ -31,32 +31,32 @@
       text-shadow: 0 4px 10px rgba(0,0,0,0.5);
       margin-bottom: 10px;
     }
-    
+
     .game-subtitle {
       color: #aaa;
       font-size: 14px;
       margin-bottom: 15px;
     }
-    
+
     #gameCanvas {
       border-radius: 15px;
       box-shadow: 0 10px 40px rgba(0,0,0,0.5);
       background: #2c3e50;
       touch-action: none;
     }
-    
+
     .controls-hint {
       color: #888;
       font-size: 12px;
       margin-top: 15px;
       text-align: center;
     }
-    
+
     @media (max-width: 500px) {
       .game-title {
         font-size: 22px;
       }
-      
+
       .controls-hint {
         font-size: 11px;
       }
@@ -67,9 +67,9 @@
 <body>
   <h1 class="game-title">⚔️ Crowd Runner ⚔️</h1>
   <p class="game-subtitle">Multiplique seu exército e destrua as hordas!</p>
-  
+
   <canvas id="gameCanvas" width="480" height="800"></canvas>
-  
+
   <div class="controls-hint">
     <p>Arraste para mover | A/D ou setas para mover</p>
     <p>Escolha os gates verdes/azuis para multiplicar seu exercito!</p>
