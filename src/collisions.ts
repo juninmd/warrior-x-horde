@@ -30,23 +30,41 @@ function checkGateCollision(army: Army, gate: Gate): boolean {
     bounds.top < gate.y + gate.height;
 }
 
-function applyGateEffect(army: Army, gate: Gate, gameState: GameState): void {
+function applyGateEffect(army: Army, gate: Gate, gameState: GameState, entities: Entities): void {
   const beforeCount = army.soldiers.length;
   let afterCount = beforeCount;
   let isPositive = true;
 
+  // Calcular multiplicador baseado na quantidade de inimigos na tela
+  // Quanto mais inimigos, melhores os bônus positivos
+  const totalEnemies = entities.enemyHordes.reduce((sum, horde) => {
+    return sum + horde.soldiers.filter(s => s.isAlive).length;
+  }, 0);
+
+  // Multiplicador de 1x a 3x baseado na quantidade de inimigos (100 inimigos = 2x, 200+ = 3x)
+  const enemyBonus = Math.min(3, 1 + totalEnemies / 100);
+
   switch (gate.type) {
-    case 'add':
-      addSoldiersToArmy(army, gate.value);
+    case 'add': {
+      // Bônus de adição escalado pelos inimigos
+      const scaledAdd = Math.floor(gate.value * enemyBonus);
+      addSoldiersToArmy(army, scaledAdd);
       afterCount = army.soldiers.length;
-      addFloatingText(`+${gate.value}`, gate.x + gate.width / 2, gate.y, '#2ECC71');
+      const bonusText = enemyBonus > 1.2 ? ` (${enemyBonus.toFixed(1)}x!)` : '';
+      addFloatingText(`+${scaledAdd}${bonusText}`, gate.x + gate.width / 2, gate.y, '#2ECC71');
       break;
-    case 'multiply':
-      multiplySoldiersInArmy(army, gate.value);
+    }
+    case 'multiply': {
+      // Multiplicador extra baseado nos inimigos (x2 pode virar x2.5 ou x3)
+      const scaledMultiplier = gate.value + (enemyBonus - 1) * 0.5; // +0.5 a cada 100 inimigos
+      multiplySoldiersInArmy(army, scaledMultiplier);
       afterCount = army.soldiers.length;
-      addFloatingText(`×${gate.value}`, gate.x + gate.width / 2, gate.y, '#3498DB');
+      const bonusText = scaledMultiplier > gate.value ? ` (${scaledMultiplier.toFixed(1)}x!)` : '';
+      addFloatingText(`×${scaledMultiplier.toFixed(1)}${bonusText}`, gate.x + gate.width / 2, gate.y, '#3498DB');
       break;
+    }
     case 'subtract':
+      // Subtração não é afetada (mantém o nerf)
       removeSoldiersFromArmy(army, Math.min(gate.value, army.soldiers.length - 1));
       afterCount = army.soldiers.length;
       addFloatingText(`-${gate.value}`, gate.x + gate.width / 2, gate.y, '#E74C3C');
@@ -60,14 +78,22 @@ function applyGateEffect(army: Army, gate: Gate, gameState: GameState): void {
       isPositive = false;
       break;
     }
-    case 'firerate':
-      army.fireRate = Math.max(50, army.fireRate / gate.value);
-      addFloatingText(`🔥 Fire Rate!`, gate.x + gate.width / 2, gate.y, '#F39C12');
+    case 'firerate': {
+      // Fire rate buff escalado pelos inimigos
+      const scaledFireRate = gate.value + (enemyBonus - 1) * 0.25;
+      army.fireRate = Math.max(50, army.fireRate / scaledFireRate);
+      const bonusText = scaledFireRate > gate.value ? ` ${scaledFireRate.toFixed(1)}x!` : '';
+      addFloatingText(`🔥 Fire Rate!${bonusText}`, gate.x + gate.width / 2, gate.y, '#F39C12');
       break;
-    case 'damage':
-      army.damage = (army.damage || 1) * gate.value;
-      addFloatingText(`⚔️ Damage!`, gate.x + gate.width / 2, gate.y, '#E91E63');
+    }
+    case 'damage': {
+      // Damage buff escalado pelos inimigos
+      const scaledDamage = gate.value + (enemyBonus - 1) * 0.25;
+      army.damage = (army.damage || 1) * scaledDamage;
+      const bonusText = scaledDamage > gate.value ? ` ${scaledDamage.toFixed(1)}x!` : '';
+      addFloatingText(`⚔️ Damage!${bonusText}`, gate.x + gate.width / 2, gate.y, '#E91E63');
       break;
+    }
     case 'speed':
       gameState.gameSpeed = Math.min(3, gameState.gameSpeed * gate.value); // Máximo 3x velocidade
       addFloatingText(`💨 Speed!`, gate.x + gate.width / 2, gate.y, '#00BCD4');
@@ -209,7 +235,7 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
   // Checar colisão com gates
   for (const gate of entities.gates) {
     if (checkGateCollision(army, gate)) {
-      applyGateEffect(army, gate, gameState);
+      applyGateEffect(army, gate, gameState, entities);
 
       // Marcar o gate do outro lado como "passed" também (mesmo Y = mesmo par)
       for (const otherGate of entities.gates) {
