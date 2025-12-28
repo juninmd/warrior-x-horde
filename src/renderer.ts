@@ -42,7 +42,7 @@ function updateParticles(): void {
     p.vy += 0.1; // Gravidade
     p.life -= 0.03;
     p.size *= 0.97;
-    
+
     if (p.life <= 0 || p.size < 0.5) {
       particles.splice(i, 1);
     }
@@ -53,16 +53,16 @@ function drawParticles(ctx: CanvasRenderingContext2D): void {
   for (const p of particles) {
     ctx.save();
     ctx.globalAlpha = p.life;
-    
+
     if (p.type === 'spark' || p.type === 'star') {
       // Brilho
       ctx.shadowColor = p.color;
       ctx.shadowBlur = 10;
     }
-    
+
     ctx.fillStyle = p.color;
     ctx.beginPath();
-    
+
     if (p.type === 'star') {
       // Desenhar estrela
       drawStar(ctx, p.x, p.y, 5, p.size, p.size / 2);
@@ -77,10 +77,10 @@ function drawParticles(ctx: CanvasRenderingContext2D): void {
 function drawStar(ctx: CanvasRenderingContext2D, cx: number, cy: number, spikes: number, outerRadius: number, innerRadius: number): void {
   let rot = Math.PI / 2 * 3;
   const step = Math.PI / spikes;
-  
+
   ctx.beginPath();
   ctx.moveTo(cx, cy - outerRadius);
-  
+
   for (let i = 0; i < spikes; i++) {
     ctx.lineTo(cx + Math.cos(rot) * outerRadius, cy + Math.sin(rot) * outerRadius);
     rot += step;
@@ -243,7 +243,7 @@ function drawArmy(ctx: CanvasRenderingContext2D, army: Army, time: number): void
     }
   }
   lastArmyX = army.centerX;
-  
+
   // Ordenar soldados por Y para depth sorting
   const sortedSoldiers = [...army.soldiers].filter(s => s.isAlive).sort((a, b) => a.y - b.y);
 
@@ -592,27 +592,27 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
     const comboX = width / 2;
     const comboY = 100;
     const pulse = 1 + Math.sin(Date.now() * 0.01) * 0.1;
-    
+
     ctx.save();
     ctx.translate(comboX, comboY);
     ctx.scale(pulse, pulse);
-    
+
     // Fundo do combo com brilho
     ctx.shadowColor = getComboColor(gameState.combo);
     ctx.shadowBlur = 20;
-    
+
     ctx.fillStyle = getComboColor(gameState.combo);
     ctx.font = 'bold 28px Arial';
     ctx.textAlign = 'center';
     ctx.fillText(`${gameState.combo}x COMBO!`, 0, 0);
-    
+
     // Barra de tempo do combo
     const comboProgress = gameState.comboTimer / 2000; // 2 segundos
     ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
     ctx.fillRect(-50, 10, 100, 6);
     ctx.fillStyle = getComboColor(gameState.combo);
     ctx.fillRect(-50, 10, 100 * comboProgress, 6);
-    
+
     ctx.restore();
   }
 }
@@ -650,7 +650,7 @@ function drawGameOver(ctx: CanvasRenderingContext2D, gameState: GameState): void
   ctx.save();
   ctx.translate(width / 2, height / 2 - 100);
   ctx.scale(pulse, pulse);
-  
+
   ctx.fillStyle = gameState.isVictory ? '#2ECC71' : '#E74C3C';
   ctx.font = 'bold 48px Arial';
   ctx.textAlign = 'center';
@@ -666,12 +666,12 @@ function drawGameOver(ctx: CanvasRenderingContext2D, gameState: GameState): void
   const boxHeight = 180;
   const boxX = width / 2 - boxWidth / 2;
   const boxY = height / 2 - 40;
-  
+
   ctx.fillStyle = 'rgba(30, 30, 50, 0.9)';
   ctx.beginPath();
   ctx.roundRect(boxX, boxY, boxWidth, boxHeight, 15);
   ctx.fill();
-  
+
   ctx.strokeStyle = '#4A90D9';
   ctx.lineWidth = 2;
   ctx.stroke();
@@ -712,16 +712,16 @@ function drawGameOver(ctx: CanvasRenderingContext2D, gameState: GameState): void
   ctx.save();
   ctx.translate(width / 2, boxY + boxHeight + 50);
   ctx.scale(buttonPulse, buttonPulse);
-  
+
   const buttonGradient = ctx.createLinearGradient(-100, -25, -100, 25);
   buttonGradient.addColorStop(0, '#4A90D9');
   buttonGradient.addColorStop(1, '#2E5A8E');
-  
+
   ctx.fillStyle = buttonGradient;
   ctx.beginPath();
   ctx.roundRect(-100, -25, 200, 50, 25);
   ctx.fill();
-  
+
   ctx.shadowColor = '#4A90D9';
   ctx.shadowBlur = 15;
   ctx.strokeStyle = '#6BB3F0';

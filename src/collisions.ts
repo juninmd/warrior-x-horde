@@ -104,23 +104,23 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
   if (playerCount <= 0 || enemyCount <= 0) {
     if (enemyCount <= 0) {
       horde.isActive = false;
-      
+
       // Aumentar combo quando derrotar uma horda
       gameState.combo++;
       gameState.comboTimer = 2000; // 2 segundos para manter o combo
       if (gameState.combo > gameState.maxCombo) {
         gameState.maxCombo = gameState.combo;
       }
-      
+
       // Score com multiplicador de combo
       const comboMultiplier = Math.min(gameState.combo, 10);
       const scoreGain = 100 * comboMultiplier;
       gameState.score += scoreGain;
-      
+
       // Efeito visual épico de vitória
       addExplosion(horde.x, horde.y, '#FFD700');
       addParticle(horde.x, horde.y, 'star', '#FFD700', 5);
-      
+
       if (gameState.combo >= 3) {
         addFloatingText(`${gameState.combo}x COMBO! +${scoreGain}`, horde.x, horde.y - 30, getComboColor(gameState.combo));
       } else {
@@ -160,18 +160,18 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
 
   if (horde.soldiers.length <= 0) {
     horde.isActive = false;
-    
+
     // Combo e score
     gameState.combo++;
     gameState.comboTimer = 2000;
     if (gameState.combo > gameState.maxCombo) {
       gameState.maxCombo = gameState.combo;
     }
-    
+
     const comboMultiplier = Math.min(gameState.combo, 10);
     const scoreGain = 100 * comboMultiplier;
     gameState.score += scoreGain;
-    
+
     addExplosion(horde.x, horde.y, '#FFD700');
     addParticle(horde.x, horde.y, 'star', '#FFD700', 8);
     addFloatingText('VICTORY!', horde.x, horde.y, '#FFD700');

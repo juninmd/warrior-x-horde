@@ -177,7 +177,7 @@ export function updateBullets(entities: Entities, gameState: GameState): void {
         if (checkBulletSoldierCollision(bullet, soldier)) {
           // Efeito visual de impacto
           addExplosion(soldier.x, soldier.y, '#E74C3C');
-          
+
           horde.soldiers.splice(j, 1);
           horde.count = horde.soldiers.length;
           gameState.score += 10;
@@ -204,7 +204,7 @@ export function updateBullets(entities: Entities, gameState: GameState): void {
           bullet.y > boss.y && bullet.y < boss.y + boss.height) {
         boss.hp -= bullet.damage;
         entities.bullets.splice(i, 1);
-        
+
         // Efeito de impacto no boss
         addExplosion(bullet.x, bullet.y, '#FF6B6B');
 
