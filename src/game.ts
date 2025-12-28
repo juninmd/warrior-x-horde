@@ -311,9 +311,9 @@ function gameLoop(currentTime: number = 0): void {
 function advanceToNextLevel(): void {
   gameState.currentLevel++;
   gameState.distanceTraveled = 0;
-  gameState.levelDistance += 500; // Aumenta distância necessária
+  gameState.levelDistance += 300; // Incremento menor por level (era 500)
   gameState.isVictory = false;
-  gameState.gameSpeed = Math.min(2, gameState.baseGameSpeed + gameState.currentLevel * 0.1); // Máximo 2x, incremento menor
+  gameState.gameSpeed = Math.min(1.5, gameState.baseGameSpeed + gameState.currentLevel * 0.08); // Máximo 1.5x, incremento menor
 
   // Limpar entidades antigas, manter o exército
   entities.gates = [];
@@ -321,12 +321,11 @@ function advanceToNextLevel(): void {
   entities.bullets = [];
   entities.miniBosses = [];
 
-  // Spawnar hordas iniciais para o novo level (mínimo 15, com level para HP)
-  const baseEnemies = 15 + gameState.currentLevel * 3;
+  // Spawnar hordas iniciais para o novo level - quantidades reduzidas
+  const baseEnemies = 12 + gameState.currentLevel * 2; // Reduzido
   entities.enemyHordes = [
     createEnemyHorde(canvas.width, -50, baseEnemies, gameState.currentLevel),
-    createEnemyHorde(canvas.width, -200, baseEnemies + 5, gameState.currentLevel),
-    createEnemyHorde(canvas.width, -400, baseEnemies + 10, gameState.currentLevel),
+    createEnemyHorde(canvas.width, -200, baseEnemies + 3, gameState.currentLevel),
   ];
 }
 
@@ -412,7 +411,7 @@ function debugSetLevel(targetLevel: number): void {
   // Definir o level
   gameState.currentLevel = targetLevel;
   gameState.distanceTraveled = 0;
-  gameState.levelDistance = 3000 + (targetLevel - 1) * 500;
+  gameState.levelDistance = 5000 + (targetLevel - 1) * 300;
   gameState.isVictory = false;
   gameState.gameSpeed = Math.min(2, gameState.baseGameSpeed + targetLevel * 0.1);
 

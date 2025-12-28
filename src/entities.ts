@@ -47,9 +47,9 @@ export function createPlayerArmy(canvasWidth: number, canvasHeight: number): Arm
   const centerY = canvasHeight - 80; // Mais para baixo - mais tempo de reação
   const soldiers: Soldier[] = [];
 
-  // Começa com 1 soldado para ter margem
-  for (let i = 0; i < 1; i++) {
-    const angle = (i / 1) * Math.PI * 2;
+  // Começa com 5 soldados para ter uma base decente
+  for (let i = 0; i < 5; i++) {
+    const angle = (i / 5) * Math.PI * 2;
     const radius = 20;
     soldiers.push(createSoldier(
       centerX + Math.cos(angle) * radius,
@@ -65,9 +65,9 @@ export function createPlayerArmy(canvasWidth: number, canvasHeight: number): Arm
     targetX: centerX,
     color: '#4A90D9',
     isPlayer: true,
-    fireRate: 600, // FireRate base: 600ms, vai diminuindo com gates
+    fireRate: 500, // FireRate base: 500ms (mais rápido - era 600)
     lastShotTime: 0,
-    damage: 3, // Dano base aumentado para 3
+    damage: 4, // Dano base aumentado para 4 (era 3)
   };
 }
 
@@ -136,8 +136,8 @@ export function createEnemyHorde(canvasWidth: number, y: number, count: number, 
 
   const soldiers: Soldier[] = [];
 
-  // HP dos inimigos aumenta com o level (+50% por level)
-  const enemyHp = 1 + Math.floor((level - 1) * 0.5);
+  // HP dos inimigos aumenta LEVEMENTE com o level (+25% por level ao invés de 50%)
+  const enemyHp = 1 + Math.floor((level - 1) * 0.25);
 
   // Formação em círculos concêntricos (igual ao exército do jogador)
   let soldierIndex = 0;
@@ -207,42 +207,42 @@ export function createGate(canvasWidth: number, y: number, side: 'left' | 'right
     }
   } else {
     // MUITO mais chances de aumentar o exército e super soldados!
-    // Add com valores incrementais baseados no level
-    const baseAdd = 5 + Math.floor(level / 2); // 5 no level 1, aumenta com level
-    const maxAdd = baseAdd + 8; // Até +8 extra
+    // Add com valores incrementais baseados no level - AUMENTADOS
+    const baseAdd = 8 + Math.floor(level / 2); // 8 no level 1, aumenta com level
+    const maxAdd = baseAdd + 12; // Até +12 extra
 
-    if (roll < 0.50) {
-      // 50% - Adicionar soldados (valores maiores)
+    if (roll < 0.55) {
+      // 55% - Adicionar soldados (valores maiores!)
       type = 'add';
-      value = Math.floor(Math.random() * (maxAdd - baseAdd + 1)) + baseAdd; // 5-13 no level 1
+      value = Math.floor(Math.random() * (maxAdd - baseAdd + 1)) + baseAdd; // 8-20 no level 1
       color = '#2ECC71';
-    } else if (roll < 0.62) {
-      // 12% - Multiplicar soldados
-      type = 'multiply';
-      value = 1.5; // x1.5 para crescimento sólido
-      color = '#3498DB';
     } else if (roll < 0.70) {
+      // 15% - Multiplicar soldados
+      type = 'multiply';
+      value = 1.8; // x1.8 para crescimento mais forte
+      color = '#3498DB';
+    } else if (roll < 0.78) {
       // 8% - Buff de firerate (diminui aos pouquinhos)
       type = 'firerate';
-      value = 0.92; // Multiplica por 0.92 (~8% mais rápido por gate)
+      value = 0.90; // Multiplica por 0.90 (~10% mais rápido por gate)
       color = '#F39C12';
-    } else if (roll < 0.76) {
+    } else if (roll < 0.84) {
       // 6% - Buff de dano FORTE
       type = 'damage';
       value = 2; // Dobra o dano!
       color = '#9900ffff';
-    } else if (roll < 0.88) {
-      // 12% - Super Guerreiro (adiciona 1-3 heróis especiais)
-      type = 'superwarrior';
-      value = 1 + Math.floor(Math.random() * 3); // 1-3 super guerreiros
-      color = '#FFD700'; // Dourado
     } else if (roll < 0.94) {
-      // 6% - Subtrair soldados (valores baixos)
+      // 10% - Super Guerreiro (adiciona 2-4 heróis especiais)
+      type = 'superwarrior';
+      value = 2 + Math.floor(Math.random() * 3); // 2-4 super guerreiros
+      color = '#FFD700'; // Dourado
+    } else if (roll < 0.97) {
+      // 3% - Subtrair soldados (valores baixos)
       type = 'subtract';
       value = Math.floor(Math.random() * 2) + 1; // 1-2 soldados apenas
       color = '#ff1900ff';
     } else {
-      // 6% - Dividir soldados (sempre por 1.2, bem leve)
+      // 3% - Dividir soldados (sempre por 1.2, bem leve)
       type = 'divide';
       value = 1.2; // Divide por 1.2
       color = '#ff0000ff';
@@ -340,8 +340,8 @@ export function createBoss(canvasWidth: number, level: number): Boss {
   const isMothership = level >= 10;
 
   if (isMothership) {
-    // Nave mãe - boss final com MUITA vida
-    const bossHp = 10000 + (level - 10) * 5000; // 10000 HP base + 5000 por level acima de 10
+    // Nave mãe - boss final com vida desafiadora mas alcançável
+    const bossHp = 5000 + (level - 10) * 2000; // 5000 HP base + 2000 por level acima de 10
     return {
       x: canvasWidth / 2,
       y: 25, // Posição fixa da nave no topo (não se move!)
@@ -357,8 +357,8 @@ export function createBoss(canvasWidth: number, level: number): Boss {
     };
   }
 
-  // Boss normal - Vida aumentada em 30x
-  const bossHp = (50 + level * 30) * 30;
+  // Boss normal - HP reduzido para ser mais justo
+  const bossHp = (30 + level * 20) * 20; // Reduzido de 30x para 20x
   return {
     x: canvasWidth / 2 - 50,
     y: -200,
@@ -375,8 +375,8 @@ export function createBoss(canvasWidth: number, level: number): Boss {
 }
 
 export function createMiniBoss(canvasWidth: number, y: number, level: number): MiniBoss {
-  // Vida do mini-boss aumentada em 5x
-  const miniBossHp = (20 + level * 15) * 5;
+  // Vida do mini-boss reduzida para 3x (era 5x)
+  const miniBossHp = (15 + level * 10) * 3;
   return {
     id: miniBossIdCounter++,
     x: canvasWidth / 2 - 40 + (Math.random() - 0.5) * 100,

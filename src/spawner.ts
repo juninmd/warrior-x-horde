@@ -44,10 +44,10 @@ export function spawnEnemies(entities: Entities, canvasWidth: number, gameState:
   const currentEnemyCount = getTotalEnemyCount(entities);
   if (currentEnemyCount >= MAX_ENEMIES) return;
 
-  // Espaçamento equilibrado para hordas
-  const baseSpacing = 120;
-  const levelReduction = Math.min(60, (gameState.currentLevel - 1) * 6);
-  const hordeSpacing = Math.max(60, baseSpacing - levelReduction); // Mínimo 60
+  // Espaçamento mais generoso para hordas
+  const baseSpacing = 180; // Aumentado de 120
+  const levelReduction = Math.min(80, (gameState.currentLevel - 1) * 8);
+  const hordeSpacing = Math.max(100, baseSpacing - levelReduction); // Mínimo 100 (era 60)
 
   // Remover hordas inativas ou que já passaram
   entities.enemyHordes = entities.enemyHordes.filter(horde => horde.isActive && horde.y < 1200);
@@ -57,23 +57,23 @@ export function spawnEnemies(entities: Entities, canvasWidth: number, gameState:
     ? Math.min(...entities.enemyHordes.map(h => h.y))
     : spawnY + hordeSpacing;
 
-  // Chance de spawn equilibrada
-  const spawnChance = Math.min(0.85, 0.6 + (gameState.currentLevel - 1) * 0.05);
+  // Chance de spawn equilibrada - reduzida para dar mais tempo
+  const spawnChance = Math.min(0.70, 0.45 + (gameState.currentLevel - 1) * 0.05);
 
   if (lowestHordeY > spawnY && Math.random() < spawnChance) {
     // Balancear inimigos baseado no tamanho do exército
     const playerCount = entities.playerArmy.soldiers.filter(s => s.isAlive).length;
 
-    // Multiplicador equilibrado
-    const baseMultiplier = 0.8 + Math.random() * 1.5; // 0.8x a 2.3x
-    const levelBonus = 1 + (gameState.currentLevel - 1) * 0.12; // +12% por level
+    // Multiplicador mais equilibrado - menos inimigos
+    const baseMultiplier = 0.5 + Math.random() * 1.0; // 0.5x a 1.5x (era 0.8x a 2.3x)
+    const levelBonus = 1 + (gameState.currentLevel - 1) * 0.08; // +8% por level (era 12%)
 
     const multiplier = baseMultiplier * levelBonus;
     const baseEnemies = Math.floor(playerCount * multiplier);
 
-    // Limites de inimigos - máximo 500 por horda
-    const minEnemies = Math.min(40, 20 + gameState.currentLevel * 3); // 23 no level 1, até 40
-    const maxEnemies = Math.min(500, 60 + gameState.currentLevel * 40); // 100 no level 1, até 500
+    // Limites de inimigos - reduzidos
+    const minEnemies = Math.min(25, 12 + gameState.currentLevel * 2); // 14 no level 1, até 25
+    const maxEnemies = Math.min(300, 40 + gameState.currentLevel * 25); // 65 no level 1, até 300
 
     // Garantir que não excedemos o limite global
     const availableSpace = MAX_ENEMIES - currentEnemyCount;

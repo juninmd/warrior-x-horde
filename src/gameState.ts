@@ -13,7 +13,7 @@ export const gameState: GameState = {
   gameSpeed: 0.5,
   baseGameSpeed: 0.5,
   distanceTraveled: 0,
-  levelDistance: 15000, // 3x maior (era 5000)
+  levelDistance: 5000, // Reduzido para levels mais curtos e atingíveis
   isBattling: false,
   battleTimer: 0,
   screenShakeActive: false,
