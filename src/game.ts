@@ -1,7 +1,7 @@
 // game.ts - Loop principal do jogo Crowd Runner
 import { Entities } from './types';
 import { gameState, resetGameState } from './gameState';
-import { createInitialEntities } from './entities';
+import { createInitialEntities, createEnemyHorde } from './entities';
 import { render, getShareButtonBounds, shareOnX } from './renderer';
 import { checkCollisions } from './collisions';
 import { updateSpawns } from './spawner';
@@ -315,9 +315,16 @@ function advanceToNextLevel(): void {
 
   // Limpar entidades antigas, manter o exército
   entities.gates = [];
-  entities.enemyHordes = [];
   entities.boss = null;
   entities.bullets = [];
+
+  // Spawnar hordas iniciais para o novo level (mais fortes conforme o level)
+  const baseEnemies = 20 + gameState.currentLevel * 5;
+  entities.enemyHordes = [
+    createEnemyHorde(canvas.width, -50, baseEnemies),
+    createEnemyHorde(canvas.width, -200, baseEnemies + 10),
+    createEnemyHorde(canvas.width, -400, baseEnemies + 20),
+  ];
 }
 
 // Iniciar jogo

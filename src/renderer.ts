@@ -106,35 +106,104 @@ function updateFloatingTexts(): void {
   }
 }
 
-function drawRoad(ctx: CanvasRenderingContext2D, gameState: GameState): void {
+function drawRoad(ctx: CanvasRenderingContext2D, _gameState: GameState): void {
   const { width, height } = ctx.canvas;
+  const time = Date.now();
 
-  // Ceu azul
-  const skyGradient = ctx.createLinearGradient(0, 0, 0, height * 0.3);
-  skyGradient.addColorStop(0, '#87CEEB');
-  skyGradient.addColorStop(1, '#B0E0E6');
+  // Definir linha do horizonte onde começa a grama e a estrada visível
+  const horizonY = height * 0.18; // Linha do horizonte (18% da altura)
+
+  // Céu com gradiente realista (azul mais profundo no topo)
+  const skyGradient = ctx.createLinearGradient(0, 0, 0, horizonY);
+  skyGradient.addColorStop(0, '#1e3a5f'); // Azul escuro no topo
+  skyGradient.addColorStop(0.4, '#3b6b9a'); // Azul médio
+  skyGradient.addColorStop(0.7, '#7eb3d8'); // Azul claro
+  skyGradient.addColorStop(1, '#b8d4e8'); // Quase branco no horizonte
   ctx.fillStyle = skyGradient;
-  ctx.fillRect(0, 0, width, height);
+  ctx.fillRect(0, 0, width, horizonY + 10);
 
-  // Desenhar montanhas/cristais de gelo no fundo
-  ctx.fillStyle = '#ADD8E6';
-  for (let i = 0; i < 5; i++) {
-    const x = i * (width / 4) - 50;
-    const peakHeight = 80 + Math.sin(i * 1.5) * 40;
+  // Sol/lua brilhante
+  const sunX = width * 0.8;
+  const sunY = height * 0.06;
+  const sunGlow = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 50);
+  sunGlow.addColorStop(0, 'rgba(255, 255, 200, 1)');
+  sunGlow.addColorStop(0.3, 'rgba(255, 220, 150, 0.8)');
+  sunGlow.addColorStop(0.6, 'rgba(255, 180, 100, 0.3)');
+  sunGlow.addColorStop(1, 'rgba(255, 150, 50, 0)');
+  ctx.fillStyle = sunGlow;
+  ctx.fillRect(sunX - 50, sunY - 50, 100, 100);
+
+  // Nuvens suaves (mais altas)
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+  const cloudOffset = (time * 0.008) % (width + 200);
+  for (let i = 0; i < 3; i++) {
+    const cx = ((i * 180 + cloudOffset) % (width + 100)) - 50;
+    const cy = 20 + i * 12;
     ctx.beginPath();
-    ctx.moveTo(x, height * 0.15);
-    ctx.lineTo(x + 60, height * 0.15 - peakHeight);
-    ctx.lineTo(x + 120, height * 0.15);
+    ctx.ellipse(cx, cy, 35, 12, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx + 20, cy - 3, 25, 10, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Montanhas distantes (no horizonte, ATRÁS de tudo)
+  // Camada mais distante (mais clara)
+  ctx.fillStyle = '#8aa8c4';
+  for (let i = 0; i < 6; i++) {
+    const x = i * (width / 4) - 60;
+    const peakHeight = 40 + Math.sin(i * 2.1) * 20;
+    ctx.beginPath();
+    ctx.moveTo(x - 20, horizonY);
+    ctx.lineTo(x + 50, horizonY - peakHeight);
+    ctx.lineTo(x + 120, horizonY);
     ctx.closePath();
     ctx.fill();
   }
 
-  // Estrada principal com perspectiva - comeca mais acima
-  const roadTop = height * 0.08; // Comeca bem mais acima
-  const roadTopWidth = width * 0.3;
+  // Camada mais próxima de montanhas (mais escura)
+  ctx.fillStyle = '#6b8cae';
+  for (let i = 0; i < 5; i++) {
+    const x = i * (width / 3) - 30;
+    const peakHeight = 50 + Math.sin(i * 1.7) * 25;
+    ctx.beginPath();
+    ctx.moveTo(x, horizonY);
+    ctx.lineTo(x + 60, horizonY - peakHeight);
+    ctx.lineTo(x + 120, horizonY);
+    ctx.closePath();
+    ctx.fill();
+  }
 
-  // Fundo da estrada
-  ctx.fillStyle = '#E8E8E8';
+  // Neve nos picos
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+  for (let i = 0; i < 5; i++) {
+    const x = i * (width / 3) - 30;
+    const peakHeight = 50 + Math.sin(i * 1.7) * 25;
+    ctx.beginPath();
+    ctx.moveTo(x + 45, horizonY - peakHeight + 12);
+    ctx.lineTo(x + 60, horizonY - peakHeight);
+    ctx.lineTo(x + 75, horizonY - peakHeight + 12);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Área verde/grama (a partir do horizonte até embaixo)
+  const grassGradient = ctx.createLinearGradient(0, horizonY, 0, height);
+  grassGradient.addColorStop(0, '#4a7a4a'); // Verde escuro distante
+  grassGradient.addColorStop(0.3, '#5a9a5a'); // Verde médio
+  grassGradient.addColorStop(1, '#6ab06a'); // Verde claro próximo
+  ctx.fillStyle = grassGradient;
+  ctx.fillRect(0, horizonY, width, height - horizonY);
+
+  // Estrada principal com perspectiva
+  const roadTop = -100; // Começa bem acima da tela para inimigos
+  const roadTopWidth = width * 0.05; // Bem estreita no topo (fora da tela)
+  const roadHorizonWidth = width * 0.25; // Largura no horizonte
+
+  // Asfalto com gradiente realista
+  const roadGradient = ctx.createLinearGradient(0, horizonY, 0, height);
+  roadGradient.addColorStop(0, '#3a3a3a'); // Cinza escuro no horizonte
+  roadGradient.addColorStop(0.5, '#4a4a4a'); // Cinza médio
+  roadGradient.addColorStop(1, '#5a5a5a'); // Cinza mais claro perto
+  ctx.fillStyle = roadGradient;
   ctx.beginPath();
   ctx.moveTo(width / 2 - roadTopWidth / 2, roadTop);
   ctx.lineTo(width / 2 + roadTopWidth / 2, roadTop);
@@ -143,40 +212,136 @@ function drawRoad(ctx: CanvasRenderingContext2D, gameState: GameState): void {
   ctx.closePath();
   ctx.fill();
 
-  // Bordas da estrada
-  ctx.fillStyle = '#2C3E50';
-  ctx.lineWidth = 3;
+  // Bordas da estrada (calçada/meio-fio)
+  const borderGradient = ctx.createLinearGradient(0, horizonY, 0, height);
+  borderGradient.addColorStop(0, '#7a7a6a');
+  borderGradient.addColorStop(1, '#909080');
+  ctx.fillStyle = borderGradient;
+
+  // Calcular largura da estrada no horizonte para as bordas
+  const horizonProgress = (horizonY - roadTop) / (height - roadTop);
+  const roadWidthAtHorizon = roadTopWidth + (width - roadTopWidth) * horizonProgress;
 
   // Borda esquerda
   ctx.beginPath();
-  ctx.moveTo(width / 2 - roadTopWidth / 2, roadTop);
+  ctx.moveTo(width / 2 - roadWidthAtHorizon / 2, horizonY);
   ctx.lineTo(0, height);
-  ctx.lineTo(-20, height);
-  ctx.lineTo(width / 2 - roadTopWidth / 2 - 20, roadTop);
+  ctx.lineTo(-10, height);
+  ctx.lineTo(width / 2 - roadWidthAtHorizon / 2 - 6, horizonY);
   ctx.closePath();
   ctx.fill();
 
   // Borda direita
   ctx.beginPath();
-  ctx.moveTo(width / 2 + roadTopWidth / 2, roadTop);
+  ctx.moveTo(width / 2 + roadWidthAtHorizon / 2, horizonY);
   ctx.lineTo(width, height);
-  ctx.lineTo(width + 20, height);
-  ctx.lineTo(width / 2 + roadTopWidth / 2 + 20, roadTop);
+  ctx.lineTo(width + 10, height);
+  ctx.lineTo(width / 2 + roadWidthAtHorizon / 2 + 6, horizonY);
   ctx.closePath();
   ctx.fill();
 
-  // Faixas pontilhadas da estrada
-  ctx.strokeStyle = '#FFFFFF';
-  ctx.lineWidth = 4;
-  ctx.setLineDash([40, 30]);
+  // === PONTE NO HORIZONTE ===
+  const bridgeY = horizonY;
+  const bridgeHeight = 35;
+  const bridgeWidth = roadWidthAtHorizon + 40;
 
-  // Linha central
+  // Pilares da ponte (embaixo)
+  ctx.fillStyle = '#5a4a3a';
+  const pillarWidth = 12;
+  const pillarHeight = 25;
+  // Pilar esquerdo
+  ctx.fillRect(width / 2 - bridgeWidth / 2 + 10, bridgeY + bridgeHeight - 8, pillarWidth, pillarHeight);
+  // Pilar direito
+  ctx.fillRect(width / 2 + bridgeWidth / 2 - 22, bridgeY + bridgeHeight - 8, pillarWidth, pillarHeight);
+  // Pilar central
+  ctx.fillRect(width / 2 - pillarWidth / 2, bridgeY + bridgeHeight - 8, pillarWidth, pillarHeight);
+
+  // Base da ponte (deck)
+  const deckGradient = ctx.createLinearGradient(0, bridgeY, 0, bridgeY + bridgeHeight);
+  deckGradient.addColorStop(0, '#6a5a4a');
+  deckGradient.addColorStop(0.5, '#7a6a5a');
+  deckGradient.addColorStop(1, '#5a4a3a');
+  ctx.fillStyle = deckGradient;
+  ctx.fillRect(width / 2 - bridgeWidth / 2, bridgeY, bridgeWidth, bridgeHeight);
+
+  // Borda superior da ponte (guarda-corpo)
+  ctx.fillStyle = '#8a7a6a';
+  ctx.fillRect(width / 2 - bridgeWidth / 2, bridgeY - 4, bridgeWidth, 6);
+
+  // Detalhes do guarda-corpo (postes)
+  ctx.fillStyle = '#6a5a4a';
+  const postCount = 7;
+  for (let i = 0; i <= postCount; i++) {
+    const postX = width / 2 - bridgeWidth / 2 + (bridgeWidth / postCount) * i;
+    ctx.fillRect(postX - 2, bridgeY - 10, 4, 12);
+  }
+
+  // Cabos da ponte (estilo ponte suspensa)
+  ctx.strokeStyle = '#4a4a4a';
+  ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(width / 2, roadTop);
+  // Cabo esquerdo (curva)
+  ctx.moveTo(width / 2 - bridgeWidth / 2, bridgeY - 10);
+  ctx.quadraticCurveTo(width / 2, bridgeY - 25, width / 2 + bridgeWidth / 2, bridgeY - 10);
+  ctx.stroke();
+
+  // Torres nos cantos da ponte
+  ctx.fillStyle = '#5a4a3a';
+  ctx.fillRect(width / 2 - bridgeWidth / 2 - 4, bridgeY - 18, 8, 22);
+  ctx.fillRect(width / 2 + bridgeWidth / 2 - 4, bridgeY - 18, 8, 22);
+
+  // Faixas pontilhadas amarelas
+  ctx.strokeStyle = '#FFD700';
+  ctx.lineWidth = 3;
+  ctx.setLineDash([25, 35]);
+
+  // Linha central (começa após a ponte)
+  ctx.beginPath();
+  ctx.moveTo(width / 2, bridgeY + bridgeHeight);
   ctx.lineTo(width / 2, height);
   ctx.stroke();
 
   ctx.setLineDash([]);
+
+  // Árvores nas laterais da estrada (DEPOIS da grama, só na área verde)
+  for (let i = 0; i < 7; i++) {
+    const treeY = horizonY + 20 + i * 95;
+    if (treeY > height - 50) continue; // Não desenhar muito perto do jogador
+
+    const progress = (treeY - horizonY) / (height - horizonY);
+    const treeSize = 12 + progress * 22;
+
+    // Calcular largura da estrada nesta posição Y
+    const treeProgress = (treeY - roadTop) / (height - roadTop);
+    const roadWidthAtY = roadTopWidth + (width - roadTopWidth) * treeProgress;
+
+    // Árvore esquerda (fora da estrada)
+    const leftX = (width - roadWidthAtY) / 2 - 25 - progress * 15;
+    if (leftX > 10) drawTree(ctx, leftX, treeY, treeSize);
+
+    // Árvore direita (fora da estrada)
+    const rightX = (width + roadWidthAtY) / 2 + 25 + progress * 15;
+    if (rightX < width - 10) drawTree(ctx, rightX, treeY, treeSize);
+  }
+}
+
+// Função auxiliar para desenhar árvores
+function drawTree(ctx: CanvasRenderingContext2D, x: number, y: number, size: number): void {
+  // Tronco
+  ctx.fillStyle = '#5d4037';
+  ctx.fillRect(x - size * 0.1, y, size * 0.2, size * 0.4);
+
+  // Copa da árvore (múltiplos círculos)
+  ctx.fillStyle = '#2d5a2d';
+  ctx.beginPath();
+  ctx.arc(x, y - size * 0.2, size * 0.4, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#3d7a3d';
+  ctx.beginPath();
+  ctx.arc(x - size * 0.15, y - size * 0.1, size * 0.3, 0, Math.PI * 2);
+  ctx.arc(x + size * 0.15, y - size * 0.1, size * 0.3, 0, Math.PI * 2);
+  ctx.fill();
 }
 
 function drawSoldier3D(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, color: string, animOffset: number, time: number): void {

@@ -254,9 +254,20 @@ export function createBoss(canvasWidth: number, level: number): Boss {
 }
 
 export function createInitialEntities(canvasWidth: number, canvasHeight: number): Entities {
+  // Criar hordas iniciais menores para começar mais fácil
+  const initialHordes = [];
+
+  // Spawnar 2 hordas iniciais pequenas
+  const hordePositions = [-80, -250];
+  const enemyCounts = [5, 8]; // Bem menores para dar tempo do jogador crescer
+
+  for (let i = 0; i < hordePositions.length; i++) {
+    initialHordes.push(createEnemyHorde(canvasWidth, hordePositions[i], enemyCounts[i]));
+  }
+
   return {
     playerArmy: createPlayerArmy(canvasWidth, canvasHeight),
-    enemyHordes: [],
+    enemyHordes: initialHordes,
     gates: [],
     weapons: [],
     bullets: [],
