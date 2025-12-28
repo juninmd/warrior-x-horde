@@ -125,7 +125,7 @@ export function createEnemyHorde(canvasWidth: number, y: number, count: number):
   };
 }
 
-export function createGate(canvasWidth: number, y: number, side: 'left' | 'right'): Gate {
+export function createGate(canvasWidth: number, y: number, side: 'left' | 'right', level: number = 1): Gate {
   const gateWidth = canvasWidth / 2 - 30;
   const roll = Math.random();
 
@@ -133,41 +133,45 @@ export function createGate(canvasWidth: number, y: number, side: 'left' | 'right
   let value: number;
   let color: string;
 
+  // Valores escalam com o level, mas de forma conservadora
+  // Add: máximo de 3 + (level-1) membros (level 1 = 3, level 5 = 7, level 10 = 12)
+  const maxAdd = Math.min(15, 3 + (level - 1));
+
   if (roll < 0.30) {
-    // 30% - Adicionar soldados (valores mais generosos)
+    // 30% - Adicionar soldados (valores conservadores baseados no level)
     type = 'add';
-    value = Math.floor(Math.random() * 10) + 8; // 8-17 soldados
+    value = Math.floor(Math.random() * Math.min(3, maxAdd)) + 1; // 1-3 no início, cresce com level
     color = '#2ECC71';
   } else if (roll < 0.50) {
-    // 20% - Multiplicar soldados
+    // 20% - Multiplicar soldados (sempre x2 máximo)
     type = 'multiply';
-    value = 2; // Sempre x2 para ser previsível
+    value = 2; // Sempre x2, nunca mais
     color = '#3498DB';
   } else if (roll < 0.58) {
     // 8% - Buff de firerate
     type = 'firerate';
-    value = 2;
+    value = 1.5;
     color = '#F39C12';
   } else if (roll < 0.66) {
     // 8% - Buff de dano
     type = 'damage';
-    value = 2;
-    color = '#E91E63';
+    value = 1.5;
+    color = '#9900ffff';
   } else if (roll < 0.74) {
     // 8% - Buff de velocidade
     type = 'speed';
-    value = 1.3;
+    value = 1.2;
     color = '#00BCD4';
   } else if (roll < 0.88) {
     // 14% - Subtrair soldados (valores menores, nunca fatal)
     type = 'subtract';
-    value = Math.floor(Math.random() * 4) + 2; // 2-5 soldados apenas
-    color = '#E74C3C';
+    value = Math.floor(Math.random() * 3) + 1; // 1-3 soldados apenas
+    color = '#ff1900ff';
   } else {
     // 12% - Dividir soldados (sempre por 2, nunca pior)
     type = 'divide';
     value = 2; // Sempre divide por 2
-    color = '#9B59B6';
+    color = '#ff0000ff';
   }
 
   return {
@@ -184,9 +188,12 @@ export function createGate(canvasWidth: number, y: number, side: 'left' | 'right
   };
 }
 
-export function createGatePair(canvasWidth: number, y: number): Gate[] {
-  const leftGate = createGate(canvasWidth, y, 'left');
-  const rightGate = createGate(canvasWidth, y, 'right');
+export function createGatePair(canvasWidth: number, y: number, level: number = 1): Gate[] {
+  const leftGate = createGate(canvasWidth, y, 'left', level);
+  const rightGate = createGate(canvasWidth, y, 'right', level);
+
+  // Valores máximos baseados no level
+  const maxAdd = Math.min(15, 3 + (level - 1));
 
   // SEMPRE garantir que um gate é bom e outro é ruim
   const goodTypes = ['add', 'multiply', 'firerate', 'damage', 'speed'];
@@ -198,36 +205,35 @@ export function createGatePair(canvasWidth: number, y: number): Gate[] {
     // Mudar o direito para ruim (mas com valores baixos)
     rightGate.type = Math.random() > 0.5 ? 'subtract' : 'divide';
     rightGate.value = rightGate.type === 'subtract' ?
-      Math.floor(Math.random() * 3) + 2 : // 2-4 apenas
+      Math.floor(Math.random() * 2) + 1 : // 1-2 apenas
       2; // Sempre divide por 2
     rightGate.color = rightGate.type === 'subtract' ? '#E74C3C' : '#9B59B6';
   } else if (!leftIsGood && !rightIsGood) {
-    // Mudar o esquerdo para bom (com valores generosos)
+    // Mudar o esquerdo para bom (valores conservadores baseados no level)
     const buffRoll = Math.random();
     if (buffRoll < 0.5) {
       leftGate.type = 'add';
-      leftGate.value = Math.floor(Math.random() * 8) + 10; // 10-17 soldados
+      leftGate.value = Math.floor(Math.random() * Math.min(3, maxAdd)) + 1; // 1-3 baseado no level
       leftGate.color = '#2ECC71';
     } else if (buffRoll < 0.85) {
       leftGate.type = 'multiply';
-      leftGate.value = 2;
+      leftGate.value = 2; // Sempre x2
       leftGate.color = '#3498DB';
     } else {
       leftGate.type = 'firerate';
-      leftGate.value = 2;
+      leftGate.value = 1.5;
       leftGate.color = '#F39C12';
     }
   }
 
-  // Garantir que o gate bom tenha valor vantajoso sobre o ruim
-  // Se o ruim subtrai X, o bom deve adicionar pelo menos X+5
+  // Garantir que o gate bom tenha valor ligeiramente vantajoso
   if (!leftIsGood && rightIsGood) {
     if (leftGate.type === 'subtract' && rightGate.type === 'add') {
-      rightGate.value = Math.max(rightGate.value, leftGate.value + 5);
+      rightGate.value = Math.max(rightGate.value, leftGate.value + 1);
     }
   } else if (leftIsGood && !rightIsGood) {
     if (rightGate.type === 'subtract' && leftGate.type === 'add') {
-      leftGate.value = Math.max(leftGate.value, rightGate.value + 5);
+      leftGate.value = Math.max(leftGate.value, rightGate.value + 1);
     }
   }
 

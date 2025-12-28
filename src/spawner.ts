@@ -2,10 +2,13 @@
 import { Entities, GameState } from './types';
 import { createGatePair, createEnemyHorde, createBoss } from './entities';
 
-export function spawnGates(entities: Entities, canvasWidth: number, _gameState: GameState): void {
-  // Spawnar gates bem mais espaçados para evitar crescimento explosivo
+export function spawnGates(entities: Entities, canvasWidth: number, gameState: GameState): void {
+  // Spawnar gates - espaçamento diminui com o level
   const spawnY = -100;
-  const gateSpacing = 2500; // Aumentado de 1200 para 2500
+  // Gates mais espaçados no início, ficam mais frequentes com o level
+  const baseSpacing = 3000;
+  const levelReduction = Math.min(1500, (gameState.currentLevel - 1) * 150); // -150 por level, max -1500
+  const gateSpacing = Math.max(1500, baseSpacing - levelReduction); // Mínimo 1500
 
   // Remover gates que já passaram
   entities.gates = entities.gates.filter(gate => gate.y < 1200);
@@ -16,7 +19,7 @@ export function spawnGates(entities: Entities, canvasWidth: number, _gameState: 
     : spawnY + gateSpacing;
 
   if (lowestGateY > spawnY) {
-    const newGates = createGatePair(canvasWidth, spawnY - gateSpacing);
+    const newGates = createGatePair(canvasWidth, spawnY - gateSpacing, gameState.currentLevel);
     entities.gates.push(...newGates);
   }
 }
