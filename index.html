@@ -194,11 +194,10 @@
       background: linear-gradient(180deg, #6c5ce7 0%, #5541d7 100%);
       color: white;
       border: none;
-      padding: 8px 16px;
-      border-radius: 20px;
+      padding: 6px 12px;
+      border-radius: 15px;
       cursor: pointer;
-      font-size: 12px;
-      margin-top: 5px;
+      font-size: 11px;
       transition: transform 0.2s;
     }
 
@@ -206,33 +205,58 @@
       transform: scale(1.05);
     }
 
-    /* Debug Level Selector */
-    .debug-controls {
+    /* Controles em linha */
+    .game-controls {
       display: flex;
       gap: 5px;
-      margin-top: 8px;
+      margin-top: 6px;
       flex-wrap: wrap;
       justify-content: center;
+      align-items: center;
     }
 
-    .debug-controls select {
+    .game-controls select {
       background: #2c3e50;
       color: #fff;
       border: 1px solid #4a9eff;
-      padding: 5px 10px;
-      border-radius: 5px;
-      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 10px;
+      font-size: 11px;
       cursor: pointer;
     }
 
-    .debug-controls button {
-      background: #e74c3c;
+    .game-controls button {
+      background: linear-gradient(180deg, #e74c3c 0%, #c0392b 100%);
       color: white;
       border: none;
-      padding: 5px 10px;
-      border-radius: 5px;
+      padding: 6px 10px;
+      border-radius: 15px;
       cursor: pointer;
       font-size: 11px;
+      transition: transform 0.2s;
+    }
+
+    .game-controls button:hover {
+      transform: scale(1.05);
+    }
+
+    .game-controls .go-btn {
+      background: linear-gradient(180deg, #27ae60 0%, #1e8449 100%);
+    }
+
+    .game-controls .pause-btn {
+      background: linear-gradient(180deg, #f39c12 0%, #d68910 100%);
+    }
+
+    .game-controls .super-btn {
+      background: linear-gradient(180deg, #FFD700 0%, #FFA500 100%);
+      color: #333;
+      font-weight: bold;
+    }
+
+    .game-controls .super-btn:disabled {
+      background: linear-gradient(180deg, #555 0%, #333 100%);
+      color: #999;
     }
   </style>
 </head>
@@ -245,32 +269,29 @@
     <canvas id="gameCanvas" width="480" height="800"></canvas>
 
     <div class="controls-hint">
-      <p>Arraste para mover | A/D ou setas para mover</p>
-      <p>Escolha os gates verdes/azuis para multiplicar seu exercito!</p>
+      <p>Arraste para mover | A/D ou setas para mover | P para pausar</p>
     </div>
 
-    <button class="story-btn" onclick="document.getElementById('storyModal').classList.add('active')">📖 História</button>
-
-    <!-- Debug: Seletor de Level -->
-    <div class="debug-controls">
+    <!-- Controles do jogo em uma linha -->
+    <div class="game-controls">
+      <button class="story-btn" onclick="document.getElementById('storyModal').classList.add('active')">📖 História</button>
       <select id="levelSelector">
-        <option value="1">Level 1</option>
-        <option value="2">Level 2</option>
-        <option value="3">Level 3</option>
-        <option value="4">Level 4</option>
-        <option value="5">Level 5</option>
-        <option value="6">Level 6</option>
-        <option value="7">Level 7</option>
-        <option value="8">Level 8</option>
-        <option value="9">Level 9</option>
-        <option value="10">Level 10 (Boss)</option>
-        <option value="11">Level 11+</option>
+        <option value="1">Lv 1</option>
+        <option value="2">Lv 2</option>
+        <option value="3">Lv 3</option>
+        <option value="4">Lv 4</option>
+        <option value="5">Lv 5</option>
+        <option value="6">Lv 6</option>
+        <option value="7">Lv 7</option>
+        <option value="8">Lv 8</option>
+        <option value="9">Lv 9</option>
+        <option value="10">Lv 10</option>
+        <option value="11">Lv 11+</option>
       </select>
-      <button onclick="window.debugSetLevel && window.debugSetLevel(parseInt(document.getElementById('levelSelector').value))">⚡ Ir para Level</button>
+      <button class="go-btn" onclick="window.debugSetLevel && window.debugSetLevel(parseInt(document.getElementById('levelSelector').value))">⚡ Ir</button>
+      <button class="pause-btn" id="pauseBtn" onclick="window.togglePause && window.togglePause()">⏸️ Pause</button>
+      <button class="super-btn" id="superCannonBtnInline" onclick="window.triggerSuperCannon && window.triggerSuperCannon()">⚡ SUPER</button>
     </div>
-
-    <!-- Container para o botão Super Cannon (preenchido via JS) -->
-    <div id="superCannonContainer" style="margin-top: 8px; display: none;"></div>
   </div>
 
   <!-- Story Modal -->

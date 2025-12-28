@@ -237,6 +237,24 @@ let lastTime = 0;
 
 function gameLoop(currentTime: number = 0): void {
   if (!gameState.isStarted) return;
+  
+  // Se pausado, apenas renderizar e esperar
+  if (gameState.isPaused) {
+    render(ctx, entities, gameState);
+    // Desenhar texto de PAUSADO
+    ctx.save();
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#FFD700';
+    ctx.font = 'bold 48px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('⏸️ PAUSADO', canvas.width / 2, canvas.height / 2);
+    ctx.font = '18px Arial';
+    ctx.fillStyle = '#FFF';
+    ctx.fillText('Pressione P ou ESC para continuar', canvas.width / 2, canvas.height / 2 + 40);
+    ctx.restore();
+    return; // Não continua o loop enquanto pausado
+  }
 
   // Calcular delta time
   const deltaTime = lastTime ? currentTime - lastTime : 16;
@@ -252,6 +270,7 @@ function gameLoop(currentTime: number = 0): void {
 
   // Atualizar botão do Super Cannon
   updateSuperCannonButton();
+  updateSuperButtonInline();
 
   // Spawnar elementos
   updateSpawns(entities, canvas.width, gameState, canvas.height);
@@ -460,5 +479,75 @@ function debugSetLevel(targetLevel: number): void {
   }
 }
 
-// Expor função globalmente para o HTML acessar
-(window as unknown as { debugSetLevel: typeof debugSetLevel }).debugSetLevel = debugSetLevel;
+// Função para pausar/despausar o jogo
+function togglePause(): void {
+  if (!gameState.isStarted || gameState.isGameOver) return;
+  
+  gameState.isPaused = !gameState.isPaused;
+  
+  // Atualizar botão de pause
+  const pauseBtn = document.getElementById('pauseBtn');
+  if (pauseBtn) {
+    pauseBtn.textContent = gameState.isPaused ? '▶️ Play' : '⏸️ Pause';
+  }
+  
+  // Se despausou, continuar o game loop
+  if (!gameState.isPaused) {
+    requestAnimationFrame(gameLoop);
+  }
+  
+  console.log(`⏸️ Jogo ${gameState.isPaused ? 'pausado' : 'retomado'}`);
+}
+
+// Função para ativar super cannon (exposta para HTML)
+function triggerSuperCannon(): void {
+  if (gameState.isStarted && !gameState.isGameOver && !gameState.isPaused) {
+    activateSuperCannon(gameState);
+  }
+}
+
+// Atualizar estado do botão Super inline
+function updateSuperButtonInline(): void {
+  const superBtn = document.getElementById('superCannonBtnInline') as HTMLButtonElement;
+  if (!superBtn) return;
+  
+  if (!gameState.isStarted || gameState.isGameOver) {
+    superBtn.disabled = true;
+    superBtn.textContent = '⚡ SUPER';
+    return;
+  }
+  
+  const now = Date.now();
+  const timeSinceLastUse = now - gameState.superCannonLastUsed;
+  const cooldownRemaining = Math.max(0, gameState.superCannonCooldown - timeSinceLastUse);
+  const isOnCooldown = cooldownRemaining > 0 && !gameState.superCannonActive;
+  
+  if (gameState.superCannonActive) {
+    superBtn.textContent = '⚡ ATIVO!';
+    superBtn.disabled = true;
+  } else if (isOnCooldown) {
+    const cooldownSecs = Math.ceil(cooldownRemaining / 1000);
+    superBtn.textContent = `⏳ ${cooldownSecs}s`;
+    superBtn.disabled = true;
+  } else {
+    superBtn.textContent = '⚡ SUPER';
+    superBtn.disabled = false;
+  }
+}
+
+// Expor funções globalmente para o HTML acessar
+(window as unknown as { 
+  debugSetLevel: typeof debugSetLevel;
+  togglePause: typeof togglePause;
+  triggerSuperCannon: typeof triggerSuperCannon;
+}).debugSetLevel = debugSetLevel;
+
+(window as unknown as { togglePause: typeof togglePause }).togglePause = togglePause;
+(window as unknown as { triggerSuperCannon: typeof triggerSuperCannon }).triggerSuperCannon = triggerSuperCannon;
+
+// Adicionar atalho de teclado para pause (P ou Escape)
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'p' || e.key === 'P' || e.key === 'Escape') {
+    togglePause();
+  }
+});

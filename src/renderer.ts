@@ -4,9 +4,19 @@ import { Entities, GameState, FloatingText, Army, EnemyHorde, Gate, Boss, Bullet
 const floatingTexts: FloatingText[] = [];
 const particles: Particle[] = [];
 
+// Limite máximo de partículas para evitar travamentos
+const MAX_PARTICLES = 100;
+
 // Sistema de partículas (reduzido para melhor performance)
 export function addParticle(x: number, y: number, type: Particle['type'], color: string, count = 1): void {
-  for (let i = 0; i < count; i++) {
+  // Limitar quantidade de partículas
+  if (particles.length >= MAX_PARTICLES) return;
+  
+  // Reduzir count se estiver chegando no limite
+  const availableSlots = MAX_PARTICLES - particles.length;
+  const actualCount = Math.min(count, availableSlots, 3); // Máximo 3 partículas por vez
+  
+  for (let i = 0; i < actualCount; i++) {
     const angle = Math.random() * Math.PI * 2;
     const speed = type === 'explosion' ? 1.5 + Math.random() * 2.5 : 0.8 + Math.random() * 1.5;
     particles.push({
@@ -24,12 +34,12 @@ export function addParticle(x: number, y: number, type: Particle['type'], color:
 }
 
 export function addExplosion(x: number, y: number, color: string): void {
-  addParticle(x, y, 'explosion', color, 6);
-  addParticle(x, y, 'spark', '#FFD700', 3);
+  addParticle(x, y, 'explosion', color, 3); // Reduzido de 6 para 3
+  addParticle(x, y, 'spark', '#FFD700', 2); // Reduzido de 3 para 2
 }
 
 export function addTrail(x: number, y: number, color: string): void {
-  if (Math.random() < 0.3) {
+  if (Math.random() < 0.15) { // Reduzido de 0.3 para 0.15
     addParticle(x, y, 'trail', color, 1);
   }
 }
