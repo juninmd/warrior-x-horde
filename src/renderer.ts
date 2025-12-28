@@ -4,18 +4,18 @@ import { Entities, GameState, FloatingText, Army, EnemyHorde, Gate, Boss, Bullet
 const floatingTexts: FloatingText[] = [];
 const particles: Particle[] = [];
 
-// Sistema de partículas
+// Sistema de partículas (reduzido para melhor performance)
 export function addParticle(x: number, y: number, type: Particle['type'], color: string, count = 1): void {
   for (let i = 0; i < count; i++) {
     const angle = Math.random() * Math.PI * 2;
-    const speed = type === 'explosion' ? 2 + Math.random() * 4 : 1 + Math.random() * 2;
+    const speed = type === 'explosion' ? 1.5 + Math.random() * 2.5 : 0.8 + Math.random() * 1.5;
     particles.push({
       x,
       y,
       vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed - (type === 'star' ? 2 : 0),
+      vy: Math.sin(angle) * speed - (type === 'star' ? 1.5 : 0),
       color,
-      size: type === 'explosion' ? 3 + Math.random() * 4 : 2 + Math.random() * 3,
+      size: type === 'explosion' ? 2 + Math.random() * 2.5 : 1.5 + Math.random() * 2,
       life: 1,
       maxLife: 1,
       type,
@@ -24,8 +24,8 @@ export function addParticle(x: number, y: number, type: Particle['type'], color:
 }
 
 export function addExplosion(x: number, y: number, color: string): void {
-  addParticle(x, y, 'explosion', color, 12);
-  addParticle(x, y, 'spark', '#FFD700', 6);
+  addParticle(x, y, 'explosion', color, 6);
+  addParticle(x, y, 'spark', '#FFD700', 3);
 }
 
 export function addTrail(x: number, y: number, color: string): void {

@@ -21,7 +21,7 @@ export function spawnGates(entities: Entities, canvasWidth: number, _gameState: 
   }
 }
 
-export function spawnEnemies(entities: Entities, canvasWidth: number, _gameState: GameState): void {
+export function spawnEnemies(entities: Entities, canvasWidth: number, gameState: GameState): void {
   // Spawnar hordas inimigas - FREQUENTES mas lentas
   const spawnY = 0; // Começa mais perto da tela
   const hordeSpacing = 150; // Muito frequente!
@@ -37,13 +37,21 @@ export function spawnEnemies(entities: Entities, canvasWidth: number, _gameState
   if (lowestHordeY > spawnY && Math.random() < 0.7) { // 70% chance - bem frequente
     // Balancear inimigos com base no tamanho do exército do jogador
     const playerCount = entities.playerArmy.soldiers.filter(s => s.isAlive).length;
+''
+    // Multiplicador base  (agora 1-4x)
+    const baseMultiplier = 1 + Math.random() * 4;
 
-    // Inimigos são 100-500% do tamanho do exército do jogador (desafiador!)
-    const multiplier = 1 + Math.random() * 4; // 1x a 5x
+    // Adicionar 20% por level (level 1 = +0%, level 5 = +80%, level 10 = +180%)
+    const levelBonus = 1 + (gameState.currentLevel - 1) * 0.2;
+
+    const multiplier = baseMultiplier * levelBonus;
     const baseEnemies = Math.floor(playerCount * multiplier);
-    const minEnemies = 5;
 
-    const enemyCount = Math.max(minEnemies, baseEnemies);
+    // Mínimo e máximo de inimigos por horda
+    const minEnemies = 10;
+    const maxEnemies = 30 + gameState.currentLevel * 6; // Máximo cresce com level
+
+    const enemyCount = Math.max(maxEnemies, Math.max(minEnemies, baseEnemies));
     entities.enemyHordes.push(createEnemyHorde(canvasWidth, spawnY - hordeSpacing, enemyCount));
   }
 }
