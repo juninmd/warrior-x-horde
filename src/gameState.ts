@@ -24,11 +24,15 @@ export const gameState: GameState = {
   // Super Cannon
   superCannonActive: false,
   superCannonTimer: 0,
-  superCannonDuration: 3000, // 3 segundos de duração
-  superCannonCooldown: 10000, // 10 segundos de cooldown
+  superCannonDuration: 3000,
+  superCannonCooldown: 10000,
   superCannonLastUsed: 0,
   superCannonReady: true,
   superCannonDamageMultiplier: 5,
+  // Combo system
+  combo: 0,
+  comboTimer: 0,
+  maxCombo: 0,
 };
 
 export function resetGameState(): void {
@@ -46,4 +50,7 @@ export function resetGameState(): void {
   gameState.superCannonTimer = 0;
   gameState.superCannonReady = true;
   gameState.superCannonLastUsed = 0;
+  gameState.combo = 0;
+  gameState.comboTimer = 0;
+  gameState.maxCombo = 0;
 }

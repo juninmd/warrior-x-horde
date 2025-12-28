@@ -1,7 +1,7 @@
 // collisions.ts - Sistema de colisões
 import { Entities, GameState, Army, EnemyHorde, Gate } from './types';
 import { addSoldiersToArmy, multiplySoldiersInArmy, removeSoldiersFromArmy } from './entities';
-import { addFloatingText } from './renderer';
+import { addFloatingText, addExplosion, addParticle } from './renderer';
 import { playSound, audioManager } from './audio';
 
 function getArmyBounds(army: Army): { left: number; right: number; top: number; bottom: number } {
@@ -104,7 +104,28 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
   if (playerCount <= 0 || enemyCount <= 0) {
     if (enemyCount <= 0) {
       horde.isActive = false;
-      gameState.score += 100;
+      
+      // Aumentar combo quando derrotar uma horda
+      gameState.combo++;
+      gameState.comboTimer = 2000; // 2 segundos para manter o combo
+      if (gameState.combo > gameState.maxCombo) {
+        gameState.maxCombo = gameState.combo;
+      }
+      
+      // Score com multiplicador de combo
+      const comboMultiplier = Math.min(gameState.combo, 10);
+      const scoreGain = 100 * comboMultiplier;
+      gameState.score += scoreGain;
+      
+      // Efeito visual épico de vitória
+      addExplosion(horde.x, horde.y, '#FFD700');
+      addParticle(horde.x, horde.y, 'star', '#FFD700', 5);
+      
+      if (gameState.combo >= 3) {
+        addFloatingText(`${gameState.combo}x COMBO! +${scoreGain}`, horde.x, horde.y - 30, getComboColor(gameState.combo));
+      } else {
+        addFloatingText(`+${scoreGain}`, horde.x, horde.y, '#FFD700');
+      }
     }
     return;
   }
@@ -115,13 +136,21 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
   // Remove do jogador
   for (let i = 0; i < casualties && army.soldiers.length > 0; i++) {
     const idx = army.soldiers.findIndex(s => s.isAlive);
-    if (idx >= 0) army.soldiers[idx].isAlive = false;
+    if (idx >= 0) {
+      const soldier = army.soldiers[idx];
+      addExplosion(soldier.x, soldier.y, '#4A90D9');
+      army.soldiers[idx].isAlive = false;
+    }
   }
 
   // Remove do inimigo
   for (let i = 0; i < casualties && horde.soldiers.length > 0; i++) {
     const idx = horde.soldiers.findIndex(s => s.isAlive);
-    if (idx >= 0) horde.soldiers[idx].isAlive = false;
+    if (idx >= 0) {
+      const soldier = horde.soldiers[idx];
+      addExplosion(soldier.x, soldier.y, '#E74C3C');
+      horde.soldiers[idx].isAlive = false;
+    }
   }
 
   // Limpar soldados mortos
@@ -131,7 +160,20 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
 
   if (horde.soldiers.length <= 0) {
     horde.isActive = false;
-    gameState.score += 100;
+    
+    // Combo e score
+    gameState.combo++;
+    gameState.comboTimer = 2000;
+    if (gameState.combo > gameState.maxCombo) {
+      gameState.maxCombo = gameState.combo;
+    }
+    
+    const comboMultiplier = Math.min(gameState.combo, 10);
+    const scoreGain = 100 * comboMultiplier;
+    gameState.score += scoreGain;
+    
+    addExplosion(horde.x, horde.y, '#FFD700');
+    addParticle(horde.x, horde.y, 'star', '#FFD700', 8);
     addFloatingText('VICTORY!', horde.x, horde.y, '#FFD700');
   }
 
@@ -139,6 +181,14 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
   gameState.screenShakeActive = true;
   gameState.screenShakeIntensity = 5;
   gameState.screenShakeDuration = 100;
+}
+
+function getComboColor(combo: number): string {
+  if (combo >= 10) return '#FF00FF';
+  if (combo >= 7) return '#FFD700';
+  if (combo >= 5) return '#FF6B6B';
+  if (combo >= 3) return '#F39C12';
+  return '#2ECC71';
 }
 
 function checkBossCollision(army: Army, entities: Entities): boolean {

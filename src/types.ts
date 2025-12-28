@@ -1,5 +1,17 @@
 // types.ts - Sistema de Crowd Runner
 
+export interface Particle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  color: string;
+  size: number;
+  life: number;
+  maxLife: number;
+  type: 'explosion' | 'trail' | 'spark' | 'star';
+}
+
 export interface GameState {
   isGameOver: boolean;
   isVictory: boolean;
@@ -28,6 +40,10 @@ export interface GameState {
   superCannonLastUsed: number;
   superCannonReady: boolean;
   superCannonDamageMultiplier: number;
+  // Combo system
+  combo: number;
+  comboTimer: number;
+  maxCombo: number;
 }
 
 export interface Soldier {

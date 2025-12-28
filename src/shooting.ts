@@ -1,6 +1,6 @@
 // shooting.ts - Sistema de tiro automatico e Super Cannon
 import { Entities, GameState, Bullet, Army, EnemyHorde, Boss, Soldier } from './types';
-import { addFloatingText } from './renderer';
+import { addFloatingText, addExplosion, addParticle } from './renderer';
 
 export function createBullet(x: number, y: number, targetX: number, targetY: number, damage: number, isEnemy: boolean): Bullet {
   return {
@@ -123,6 +123,9 @@ function applySuperCannonDamage(entities: Entities, gameState: GameState): void 
     for (let i = horde.soldiers.length - 1; i >= 0; i--) {
       const soldier = horde.soldiers[i];
       if (soldier.y < army.centerY && soldier.x > beamX - beamWidth / 2 && soldier.x < beamX + beamWidth / 2) {
+        // Efeito visual de desintegração
+        addExplosion(soldier.x, soldier.y, '#FFD700');
+        addParticle(soldier.x, soldier.y, 'spark', '#FFF', 3);
         horde.soldiers.splice(i, 1);
         gameState.score += 15;
       }
@@ -132,6 +135,7 @@ function applySuperCannonDamage(entities: Entities, gameState: GameState): void 
     if (horde.soldiers.length === 0) {
       horde.isActive = false;
       gameState.score += 100;
+      addParticle(horde.x, horde.y, 'star', '#FFD700', 10);
     }
   }
 
@@ -171,6 +175,9 @@ export function updateBullets(entities: Entities, gameState: GameState): void {
         if (!soldier.isAlive) continue;
 
         if (checkBulletSoldierCollision(bullet, soldier)) {
+          // Efeito visual de impacto
+          addExplosion(soldier.x, soldier.y, '#E74C3C');
+          
           horde.soldiers.splice(j, 1);
           horde.count = horde.soldiers.length;
           gameState.score += 10;
@@ -179,6 +186,7 @@ export function updateBullets(entities: Entities, gameState: GameState): void {
             horde.isActive = false;
             gameState.score += 50;
             addFloatingText('HORDE DESTROYED!', horde.x, horde.y, '#FFD700');
+            addParticle(horde.x, horde.y, 'star', '#FFD700', 8);
           }
 
           entities.bullets.splice(i, 1);
@@ -196,12 +204,22 @@ export function updateBullets(entities: Entities, gameState: GameState): void {
           bullet.y > boss.y && bullet.y < boss.y + boss.height) {
         boss.hp -= bullet.damage;
         entities.bullets.splice(i, 1);
+        
+        // Efeito de impacto no boss
+        addExplosion(bullet.x, bullet.y, '#FF6B6B');
 
         if (boss.hp <= 0) {
           boss.isActive = false;
           gameState.isVictory = true;
           gameState.score += 500;
           addFloatingText('BOSS DEFEATED!', boss.x + boss.width / 2, boss.y, '#FFD700');
+          // Explosão épica do boss
+          for (let k = 0; k < 5; k++) {
+            setTimeout(() => {
+              addExplosion(boss.x + Math.random() * boss.width, boss.y + Math.random() * boss.height, '#FFD700');
+              addParticle(boss.x + boss.width / 2, boss.y + boss.height / 2, 'star', '#FF6B6B', 10);
+            }, k * 100);
+          }
         }
       }
     }

@@ -1,7 +1,95 @@
 // renderer.ts - Renderização do jogo estilo Crowd Runner
-import { Entities, GameState, FloatingText, Army, EnemyHorde, Gate, Boss, Bullet } from './types';
+import { Entities, GameState, FloatingText, Army, EnemyHorde, Gate, Boss, Bullet, Particle } from './types';
 
 const floatingTexts: FloatingText[] = [];
+const particles: Particle[] = [];
+
+// Sistema de partículas
+export function addParticle(x: number, y: number, type: Particle['type'], color: string, count = 1): void {
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = type === 'explosion' ? 2 + Math.random() * 4 : 1 + Math.random() * 2;
+    particles.push({
+      x,
+      y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - (type === 'star' ? 2 : 0),
+      color,
+      size: type === 'explosion' ? 3 + Math.random() * 4 : 2 + Math.random() * 3,
+      life: 1,
+      maxLife: 1,
+      type,
+    });
+  }
+}
+
+export function addExplosion(x: number, y: number, color: string): void {
+  addParticle(x, y, 'explosion', color, 12);
+  addParticle(x, y, 'spark', '#FFD700', 6);
+}
+
+export function addTrail(x: number, y: number, color: string): void {
+  if (Math.random() < 0.3) {
+    addParticle(x, y, 'trail', color, 1);
+  }
+}
+
+function updateParticles(): void {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.1; // Gravidade
+    p.life -= 0.03;
+    p.size *= 0.97;
+    
+    if (p.life <= 0 || p.size < 0.5) {
+      particles.splice(i, 1);
+    }
+  }
+}
+
+function drawParticles(ctx: CanvasRenderingContext2D): void {
+  for (const p of particles) {
+    ctx.save();
+    ctx.globalAlpha = p.life;
+    
+    if (p.type === 'spark' || p.type === 'star') {
+      // Brilho
+      ctx.shadowColor = p.color;
+      ctx.shadowBlur = 10;
+    }
+    
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    
+    if (p.type === 'star') {
+      // Desenhar estrela
+      drawStar(ctx, p.x, p.y, 5, p.size, p.size / 2);
+    } else {
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    }
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+function drawStar(ctx: CanvasRenderingContext2D, cx: number, cy: number, spikes: number, outerRadius: number, innerRadius: number): void {
+  let rot = Math.PI / 2 * 3;
+  const step = Math.PI / spikes;
+  
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - outerRadius);
+  
+  for (let i = 0; i < spikes; i++) {
+    ctx.lineTo(cx + Math.cos(rot) * outerRadius, cy + Math.sin(rot) * outerRadius);
+    rot += step;
+    ctx.lineTo(cx + Math.cos(rot) * innerRadius, cy + Math.sin(rot) * innerRadius);
+    rot += step;
+  }
+  ctx.lineTo(cx, cy - outerRadius);
+  ctx.closePath();
+}
 
 export function addFloatingText(text: string, x: number, y: number, color: string): void {
   floatingTexts.push({ text, x, y, color, alpha: 1, scale: 1 });
@@ -140,7 +228,22 @@ function shadeColor(color: string, percent: number): string {
     (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
 }
 
+// Histórico de posições para trail effect
+let lastArmyX = 0;
+
 function drawArmy(ctx: CanvasRenderingContext2D, army: Army, time: number): void {
+  // Trail effect - adicionar partículas quando se move
+  const dx = army.centerX - lastArmyX;
+  if (Math.abs(dx) > 2) {
+    // Adicionar trail particles para soldados aleatórios
+    const aliveSoldiers = army.soldiers.filter(s => s.isAlive);
+    if (aliveSoldiers.length > 0 && Math.random() < 0.5) {
+      const randomSoldier = aliveSoldiers[Math.floor(Math.random() * aliveSoldiers.length)];
+      addTrail(randomSoldier.x, randomSoldier.y + 10, '#4A90D9');
+    }
+  }
+  lastArmyX = army.centerX;
+  
   // Ordenar soldados por Y para depth sorting
   const sortedSoldiers = [...army.soldiers].filter(s => s.isAlive).sort((a, b) => a.y - b.y);
 
@@ -483,6 +586,43 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
     const secondsLeft = Math.ceil((gameState.superCannonCooldown - (Date.now() - gameState.superCannonLastUsed)) / 1000);
     ctx.fillText(`${secondsLeft}`, cannonX + cannonSize / 2, cannonY + cannonSize / 2 + 4);
   }
+
+  // Combo indicator (se houver combo ativo)
+  if (gameState.combo > 1) {
+    const comboX = width / 2;
+    const comboY = 100;
+    const pulse = 1 + Math.sin(Date.now() * 0.01) * 0.1;
+    
+    ctx.save();
+    ctx.translate(comboX, comboY);
+    ctx.scale(pulse, pulse);
+    
+    // Fundo do combo com brilho
+    ctx.shadowColor = getComboColor(gameState.combo);
+    ctx.shadowBlur = 20;
+    
+    ctx.fillStyle = getComboColor(gameState.combo);
+    ctx.font = 'bold 28px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${gameState.combo}x COMBO!`, 0, 0);
+    
+    // Barra de tempo do combo
+    const comboProgress = gameState.comboTimer / 2000; // 2 segundos
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.fillRect(-50, 10, 100, 6);
+    ctx.fillStyle = getComboColor(gameState.combo);
+    ctx.fillRect(-50, 10, 100 * comboProgress, 6);
+    
+    ctx.restore();
+  }
+}
+
+function getComboColor(combo: number): string {
+  if (combo >= 10) return '#FF00FF'; // Magenta para combo épico
+  if (combo >= 7) return '#FFD700';  // Dourado
+  if (combo >= 5) return '#FF6B6B';  // Vermelho claro
+  if (combo >= 3) return '#F39C12';  // Laranja
+  return '#2ECC71'; // Verde
 }
 
 function drawFloatingTexts(ctx: CanvasRenderingContext2D): void {
@@ -502,37 +642,98 @@ function drawFloatingTexts(ctx: CanvasRenderingContext2D): void {
 function drawGameOver(ctx: CanvasRenderingContext2D, gameState: GameState): void {
   const { width, height } = ctx.canvas;
 
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
   ctx.fillRect(0, 0, width, height);
 
-  // Título
+  // Título com efeito de pulsação
+  const pulse = 1 + Math.sin(Date.now() * 0.003) * 0.05;
+  ctx.save();
+  ctx.translate(width / 2, height / 2 - 100);
+  ctx.scale(pulse, pulse);
+  
   ctx.fillStyle = gameState.isVictory ? '#2ECC71' : '#E74C3C';
   ctx.font = 'bold 48px Arial';
   ctx.textAlign = 'center';
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-  ctx.shadowBlur = 10;
-  ctx.fillText(gameState.isVictory ? '��� VITÓRIA!' : '��� GAME OVER', width / 2, height / 2 - 80);
+  ctx.shadowColor = gameState.isVictory ? '#2ECC71' : '#E74C3C';
+  ctx.shadowBlur = 20;
+  ctx.fillText(gameState.isVictory ? '🏆 VITÓRIA!' : '💀 GAME OVER', 0, 0);
+  ctx.restore();
 
   ctx.shadowBlur = 0;
 
-  // Scores
-  ctx.fillStyle = '#FFFFFF';
-  ctx.font = '28px Arial';
-  ctx.fillText(`Score: ${gameState.score}`, width / 2, height / 2);
-
-  ctx.fillStyle = '#FFD700';
-  ctx.font = '22px Arial';
-  ctx.fillText(`��� High Score: ${gameState.highScore}`, width / 2, height / 2 + 45);
-
-  // Botão de restart
-  ctx.fillStyle = '#3498DB';
+  // Caixa de estatísticas
+  const boxWidth = 280;
+  const boxHeight = 180;
+  const boxX = width / 2 - boxWidth / 2;
+  const boxY = height / 2 - 40;
+  
+  ctx.fillStyle = 'rgba(30, 30, 50, 0.9)';
   ctx.beginPath();
-  ctx.roundRect(width / 2 - 100, height / 2 + 80, 200, 50, 25);
+  ctx.roundRect(boxX, boxY, boxWidth, boxHeight, 15);
   ctx.fill();
+  
+  ctx.strokeStyle = '#4A90D9';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Scores com ícones
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = 'bold 22px Arial';
+  ctx.fillText(`🎯 Score:`, boxX + 20, boxY + 35);
+  ctx.textAlign = 'right';
+  ctx.fillStyle = '#2ECC71';
+  ctx.fillText(`${gameState.score}`, boxX + boxWidth - 20, boxY + 35);
+
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#FFD700';
+  ctx.font = '18px Arial';
+  ctx.fillText(`👑 High Score:`, boxX + 20, boxY + 70);
+  ctx.textAlign = 'right';
+  ctx.fillText(`${gameState.highScore}`, boxX + boxWidth - 20, boxY + 70);
+
+  // Max combo
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#FF6B6B';
+  ctx.fillText(`🔥 Max Combo:`, boxX + 20, boxY + 105);
+  ctx.textAlign = 'right';
+  ctx.fillStyle = getComboColor(gameState.maxCombo);
+  ctx.fillText(`${gameState.maxCombo}x`, boxX + boxWidth - 20, boxY + 105);
+
+  // Nível alcançado
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#3498DB';
+  ctx.fillText(`📊 Level:`, boxX + 20, boxY + 140);
+  ctx.textAlign = 'right';
+  ctx.fillText(`${gameState.currentLevel}`, boxX + boxWidth - 20, boxY + 140);
+
+  // Botão de restart animado
+  const buttonPulse = 1 + Math.sin(Date.now() * 0.005) * 0.03;
+  ctx.save();
+  ctx.translate(width / 2, boxY + boxHeight + 50);
+  ctx.scale(buttonPulse, buttonPulse);
+  
+  const buttonGradient = ctx.createLinearGradient(-100, -25, -100, 25);
+  buttonGradient.addColorStop(0, '#4A90D9');
+  buttonGradient.addColorStop(1, '#2E5A8E');
+  
+  ctx.fillStyle = buttonGradient;
+  ctx.beginPath();
+  ctx.roundRect(-100, -25, 200, 50, 25);
+  ctx.fill();
+  
+  ctx.shadowColor = '#4A90D9';
+  ctx.shadowBlur = 15;
+  ctx.strokeStyle = '#6BB3F0';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.shadowBlur = 0;
 
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 20px Arial';
-  ctx.fillText('��� JOGAR NOVAMENTE', width / 2, height / 2 + 110);
+  ctx.font = 'bold 18px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('🔄 JOGAR NOVAMENTE', 0, 6);
+  ctx.restore();
 }
 
 // Desenhar Super Cannon beam
@@ -626,6 +827,10 @@ export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameSt
 
   // Desenhar bullets
   drawBullets(ctx, entities.bullets);
+
+  // Desenhar partículas (efeitos visuais)
+  updateParticles();
+  drawParticles(ctx);
 
   // Desenhar exército do jogador
   drawArmy(ctx, entities.playerArmy, time);

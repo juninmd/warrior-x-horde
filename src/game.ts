@@ -49,9 +49,14 @@ document.body.appendChild(startButton);
 
 // Game loop
 let wasInBossFight = false;
+let lastTime = 0;
 
-function gameLoop(): void {
+function gameLoop(currentTime: number = 0): void {
   if (!gameState.isStarted) return;
+
+  // Calcular delta time
+  const deltaTime = lastTime ? currentTime - lastTime : 16;
+  lastTime = currentTime;
 
   // Atualizar movimento
   updateMovement(entities, gameState, canvas.width, getMouseX());
@@ -59,13 +64,22 @@ function gameLoop(): void {
   // Sistema de tiro
   updateShooting(entities, gameState);
   updateBullets(entities, gameState);
-  updateSuperCannon(entities, gameState, 16); // ~60fps = 16ms por frame
+  updateSuperCannon(entities, gameState, deltaTime);
 
   // Spawnar elementos
   updateSpawns(entities, canvas.width, gameState);
 
   // Verificar colisões
   checkCollisions(entities, gameState);
+
+  // Atualizar combo timer
+  if (gameState.comboTimer > 0) {
+    gameState.comboTimer -= deltaTime;
+    if (gameState.comboTimer <= 0) {
+      gameState.combo = 0;
+      gameState.comboTimer = 0;
+    }
+  }
 
   // Música do boss
   const isInBossFight = entities.boss !== null && entities.boss.isActive;
