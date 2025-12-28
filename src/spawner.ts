@@ -3,9 +3,9 @@ import { Entities, GameState } from './types';
 import { createGatePair, createEnemyHorde, createBoss } from './entities';
 
 export function spawnGates(entities: Entities, canvasWidth: number, _gameState: GameState): void {
-  // Spawnar gates a cada 1200 pixels de distância (bem mais espaçado)
+  // Spawnar gates bem mais espaçados para evitar crescimento explosivo
   const spawnY = -100;
-  const gateSpacing = 1200;
+  const gateSpacing = 2500; // Aumentado de 1200 para 2500
 
   // Remover gates que já passaram
   entities.gates = entities.gates.filter(gate => gate.y < 1200);
@@ -22,9 +22,9 @@ export function spawnGates(entities: Entities, canvasWidth: number, _gameState: 
 }
 
 export function spawnEnemies(entities: Entities, canvasWidth: number, gameState: GameState): void {
-  // Spawnar hordas inimigas - FREQUENTES mas lentas
-  const spawnY = 0; // Começa mais perto da tela
-  const hordeSpacing = 150; // Muito frequente!
+  // Spawnar hordas inimigas - muito frequentes e gigantes
+  const spawnY = 0;
+  const hordeSpacing = 200; // Bem mais frequente (era 200)
 
   // Remover hordas inativas ou que já passaram
   entities.enemyHordes = entities.enemyHordes.filter(horde => horde.isActive && horde.y < 1200);
@@ -34,24 +34,24 @@ export function spawnEnemies(entities: Entities, canvasWidth: number, gameState:
     ? Math.min(...entities.enemyHordes.map(h => h.y))
     : spawnY + hordeSpacing;
 
-  if (lowestHordeY > spawnY && Math.random() < 0.7) { // 70% chance - bem frequente
+  if (lowestHordeY > spawnY && Math.random() < 0.75) { // 75% chance (era 60%)
     // Balancear inimigos com base no tamanho do exército do jogador
     const playerCount = entities.playerArmy.soldiers.filter(s => s.isAlive).length;
-''
-    // Multiplicador base  (agora 1-4x)
-    const baseMultiplier = 1 + Math.random() * 4;
 
-    // Adicionar 20% por level (level 1 = +0%, level 5 = +80%, level 10 = +180%)
-    const levelBonus = 1 + (gameState.currentLevel - 1) * 0.2;
+    // Multiplicador base 3x maior (2.7x a 13.5x do jogador) - TRIPLO!
+    const baseMultiplier = 2.7 + Math.random() * 10.8;
+
+    // Bônus por level (+15% por level)
+    const levelBonus = 1 + (gameState.currentLevel - 1) * 0.15;
 
     const multiplier = baseMultiplier * levelBonus;
     const baseEnemies = Math.floor(playerCount * multiplier);
 
-    // Mínimo e máximo de inimigos por horda
-    const minEnemies = 10;
-    const maxEnemies = 30 + gameState.currentLevel * 6; // Máximo cresce com level
+    // Limites triplicados
+    const minEnemies = 27; // 3x (era 9)
+    const maxEnemies = Math.min(450, 135 + gameState.currentLevel * 27); // 3x (era 150, 45+level*9)
 
-    const enemyCount = Math.max(maxEnemies, Math.max(minEnemies, baseEnemies));
+    const enemyCount = Math.min(maxEnemies, Math.max(minEnemies, baseEnemies));
     entities.enemyHordes.push(createEnemyHorde(canvasWidth, spawnY - hordeSpacing, enemyCount));
   }
 }

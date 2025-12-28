@@ -56,7 +56,7 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState): void
 
   const baseSpeed = gameState.gameSpeed;
   const gateSpeed = baseSpeed * 3;      // Gates são 3x mais rápidos
-  const enemySpeed = baseSpeed * 0.5;   // Inimigos são 2x mais lentos
+  const enemySpeed = baseSpeed * 0.25;  // Inimigos são 4x mais lentos (metade do anterior)
   const canvasHeight = 800;
   const pursuitThreshold = canvasHeight * 0.6;
 

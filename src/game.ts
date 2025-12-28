@@ -104,19 +104,18 @@ startButton.onmouseout = () => {
 };
 document.body.appendChild(startButton);
 
-// Botão de Super Cannon para mobile (retangular, fácil de clicar)
+// Container para o botão Super Cannon
+const superCannonContainer = document.getElementById('superCannonContainer');
+
+// Botão de Super Cannon para mobile (dentro do layout, não fixed)
 const superCannonButton = document.createElement('button');
 superCannonButton.id = 'superCannonBtn';
 superCannonButton.innerHTML = '⚡ SUPER';
 superCannonButton.style.cssText = `
-  position: fixed;
-  bottom: 10px;
-  left: 50%;
-  transform: translateX(-50%);
   min-width: 120px;
-  height: 50px;
-  padding: 10px 20px;
-  font-size: 18px;
+  height: 45px;
+  padding: 8px 20px;
+  font-size: 16px;
   font-weight: bold;
   background: linear-gradient(180deg, #FFD700 0%, #FFA500 100%);
   color: #333;
@@ -124,8 +123,6 @@ superCannonButton.style.cssText = `
   border-radius: 12px;
   cursor: pointer;
   box-shadow: 0 4px 15px rgba(255, 215, 0, 0.5), 0 0 15px rgba(255, 215, 0, 0.3);
-  z-index: 1000;
-  display: none;
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
@@ -152,19 +149,19 @@ superCannonButton.addEventListener('touchstart', (e) => {
   e.stopPropagation();
   trySuperCannon();
   // Feedback visual
-  superCannonButton.style.transform = 'translateX(-50%) scale(0.95)';
+  superCannonButton.style.transform = 'scale(0.95)';
   superCannonButton.style.opacity = '0.9';
 }, { passive: false });
 
 superCannonButton.addEventListener('touchend', (e) => {
   e.preventDefault();
   e.stopPropagation();
-  superCannonButton.style.transform = 'translateX(-50%) scale(1)';
+  superCannonButton.style.transform = 'scale(1)';
   superCannonButton.style.opacity = '1';
 }, { passive: false });
 
 superCannonButton.addEventListener('touchcancel', () => {
-  superCannonButton.style.transform = 'translateX(-50%) scale(1)';
+  superCannonButton.style.transform = 'scale(1)';
   superCannonButton.style.opacity = '1';
 });
 
@@ -183,18 +180,22 @@ superCannonButton.addEventListener('pointerdown', (e) => {
   }
 });
 
-document.body.appendChild(superCannonButton);
+// Adicionar ao container no HTML
+if (superCannonContainer) {
+  superCannonContainer.appendChild(superCannonButton);
+}
 
 // Atualizar estado visual do botão Super Cannon
 function updateSuperCannonButton(): void {
+  if (!superCannonContainer) return;
+
   if (!gameState.isStarted || gameState.isGameOver) {
-    superCannonButton.style.display = 'none';
+    superCannonContainer.style.display = 'none';
     return;
   }
 
-  superCannonButton.style.display = 'flex';
-  superCannonButton.style.alignItems = 'center';
-  superCannonButton.style.justifyContent = 'center';
+  superCannonContainer.style.display = 'flex';
+  superCannonContainer.style.justifyContent = 'center';
 
   // Calcular tempo restante do cooldown
   const now = Date.now();

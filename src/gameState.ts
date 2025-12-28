@@ -13,7 +13,7 @@ export const gameState: GameState = {
   gameSpeed: 0.5,
   baseGameSpeed: 0.5,
   distanceTraveled: 0,
-  levelDistance: 5000,
+  levelDistance: 15000, // 3x maior (era 5000)
   isBattling: false,
   battleTimer: 0,
   screenShakeActive: false,
@@ -25,7 +25,7 @@ export const gameState: GameState = {
   superCannonActive: false,
   superCannonTimer: 0,
   superCannonDuration: 3000,
-  superCannonCooldown: 18000,
+  superCannonCooldown: 33000, // 33 segundos entre disparos
   superCannonLastUsed: 0,
   superCannonReady: true,
   superCannonDamageMultiplier: 5,

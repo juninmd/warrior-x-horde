@@ -69,7 +69,7 @@ function applyGateEffect(army: Army, gate: Gate, gameState: GameState): void {
       addFloatingText(`⚔️ Damage!`, gate.x + gate.width / 2, gate.y, '#E91E63');
       break;
     case 'speed':
-      gameState.gameSpeed = Math.min(8, gameState.gameSpeed * gate.value);
+      gameState.gameSpeed = Math.min(3, gameState.gameSpeed * gate.value); // Máximo 3x velocidade
       addFloatingText(`💨 Speed!`, gate.x + gate.width / 2, gate.y, '#00BCD4');
       break;
   }
