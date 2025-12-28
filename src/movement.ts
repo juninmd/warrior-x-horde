@@ -58,7 +58,7 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState): void
   // Gates começam lentos e ficam mais rápidos com o level (1.5x no level 1, até 3x no level 10+)
   const gateSpeedMultiplier = Math.min(3, 1.5 + (gameState.currentLevel - 1) * 0.15);
   const gateSpeed = baseSpeed * gateSpeedMultiplier;
-  const enemySpeed = baseSpeed * 0.25;  // Inimigos são 4x mais lentos
+  const enemySpeed = baseSpeed * 0.50;  // Inimigos são 4x mais lentos
   const canvasHeight = 800;
   const pursuitThreshold = canvasHeight * 0.6;
 
