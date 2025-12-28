@@ -58,6 +58,8 @@ export interface Soldier {
   animOffset: number;
   hp: number;
   maxHp: number;
+  isSuper?: boolean; // Super guerreiro
+  personalFireRate?: number; // Fire rate individual (para super guerreiros)
 }
 
 export interface Army {
@@ -104,7 +106,7 @@ export interface Gate {
   y: number;
   width: number;
   height: number;
-  type: 'add' | 'multiply' | 'subtract' | 'divide' | 'firerate' | 'damage' | 'speed';
+  type: 'add' | 'multiply' | 'subtract' | 'divide' | 'firerate' | 'damage' | 'superwarrior';
   value: number;
   color: string;
   side: 'left' | 'right';
@@ -142,6 +144,8 @@ export interface Boss {
   maxHp: number;
   isActive: boolean;
   color: string;
+  spawnTime: number; // Timestamp de quando o boss spawnou
+  isMoving: boolean; // Se já começou a se mover
 }
 
 export interface Entities {

@@ -1,6 +1,6 @@
 // collisions.ts - Sistema de colisões
 import { Entities, GameState, Army, EnemyHorde, Gate, MiniBoss } from './types';
-import { addSoldiersToArmy, multiplySoldiersInArmy, removeSoldiersFromArmy } from './entities';
+import { addSoldiersToArmy, multiplySoldiersInArmy, removeSoldiersFromArmy, addSuperSoldiersToArmy } from './entities';
 import { addFloatingText, addExplosion, addParticle } from './renderer';
 import { playSound, audioManager } from './audio';
 
@@ -99,10 +99,13 @@ function applyGateEffect(army: Army, gate: Gate, gameState: GameState, entities:
       addFloatingText(`⚔️ Damage!`, gate.x + gate.width / 2, gate.y, '#E91E63');
       break;
     }
-    case 'speed':
-      gameState.gameSpeed = Math.min(2, gameState.gameSpeed * gate.value); // Máximo 2x velocidade
-      addFloatingText(`💨 Speed!`, gate.x + gate.width / 2, gate.y, '#00BCD4');
+    case 'superwarrior': {
+      // Adiciona super guerreiros (mais fortes, mais vida, tiro mais rápido)
+      addSuperSoldiersToArmy(army, Math.floor(gate.value));
+      afterCount = army.soldiers.length;
+      addFloatingText(`⭐ SUPER WARRIOR!`, gate.x + gate.width / 2, gate.y, '#FFD700');
       break;
+    }
   }
 
   // Tocar som apropriado

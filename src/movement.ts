@@ -93,10 +93,24 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState): void
     updateHordeFormation(horde, enemySpeed);
   }
 
-  // Mover boss (velocidade média)
-  if (entities.boss) {
-    if (entities.boss.y < 100) {
-      entities.boss.y += baseSpeed;
+  // Mover boss - fica parado por 10 segundos, depois avança igual inimigos
+  if (entities.boss && entities.boss.isActive) {
+    const boss = entities.boss;
+    const timeSinceSpawn = Date.now() - boss.spawnTime;
+    const waitTime = 10000; // 10 segundos parado
+
+    // Primeiro, mover até a posição inicial (y = 100)
+    if (boss.y < 100) {
+      boss.y += baseSpeed;
+    } else if (timeSinceSpawn > waitTime) {
+      // Após 10 segundos, começa a avançar igual aos inimigos comuns
+      boss.isMoving = true;
+      boss.y += enemySpeed * 0.8; // Um pouco mais lento que inimigos normais
+
+      // Boss também persegue o jogador horizontalmente (lentamente)
+      const targetX = entities.playerArmy.centerX - boss.width / 2;
+      const dx = targetX - boss.x;
+      boss.x += dx * 0.01;
     }
   }
 

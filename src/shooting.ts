@@ -93,13 +93,17 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
     const target = findNearestTarget(shooter, entities.enemyHordes, entities.boss, entities.miniBosses);
     if (!target) continue;
 
-    // Tiro sai do soldado específico - dispersão MUITO menor para forçar movimento
+    // Super guerreiros disparam do centro do exército com precisão perfeita
+    // Guerreiros normais disparam de sua posição com dispersão mínima
+    const bulletX = shooter.isSuper ? army.centerX : shooter.x;
+    const dispersion = shooter.isSuper ? 0 : (Math.random() - 0.5) * 2; // 0 dispersão para super, mínima para normal
+
     entities.bullets.push(createBullet(
-      shooter.x,
+      bulletX,
       shooter.y - 8,
-      target.x + (Math.random() - 0.5) * 1.5, // Dispersão muito menor (era 15)
+      target.x + dispersion, // Tiros mais centralizados
       target.y,
-      army.damage,
+      shooter.isSuper ? army.damage * 2 : army.damage, // Super causa 2x dano
       false
     ));
   }

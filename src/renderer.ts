@@ -413,7 +413,23 @@ function drawArmy(ctx: CanvasRenderingContext2D, army: Army, time: number): void
   const sortedSoldiers = [...army.soldiers].filter(s => s.isAlive).sort((a, b) => a.y - b.y);
 
   for (const soldier of sortedSoldiers) {
-    drawSoldier3D(ctx, soldier.x, soldier.y, soldier.size, soldier.color, soldier.animOffset, time);
+    // Super guerreiros são desenhados com efeito especial (dourados e maiores)
+    if (soldier.isSuper) {
+      // Aura dourada
+      ctx.save();
+      ctx.shadowColor = '#FFD700';
+      ctx.shadowBlur = 15;
+      drawSoldier3D(ctx, soldier.x, soldier.y, soldier.size, '#FFD700', soldier.animOffset, time);
+      ctx.restore();
+
+      // Estrela acima do super guerreiro
+      ctx.fillStyle = '#FFD700';
+      ctx.font = '10px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('⭐', soldier.x, soldier.y - soldier.size - 5);
+    } else {
+      drawSoldier3D(ctx, soldier.x, soldier.y, soldier.size, soldier.color, soldier.animOffset, time);
+    }
   }
 
   // Contador de soldados (badge flutuante)
@@ -544,7 +560,7 @@ function drawGate(ctx: CanvasRenderingContext2D, gate: Gate): void {
     case 'divide': text = `÷${gate.value}`; break;
     case 'firerate': text = `🔥×${gate.value}`; break;
     case 'damage': text = `⚔️×${gate.value}`; break;
-    case 'speed': text = `💨×${gate.value}`; break;
+    case 'superwarrior': text = `⭐×${gate.value}`; break;
   }
 
   ctx.fillText(text, x + width / 2, gate.y + height / 2);

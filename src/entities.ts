@@ -19,6 +19,26 @@ export function createSoldier(x: number, y: number, color: string, hp: number = 
     animOffset: Math.random() * Math.PI * 2,
     hp,
     maxHp: hp,
+    isSuper: false,
+  };
+}
+
+// Criar super guerreiro (mais forte, mais vida, tiro mais rápido)
+export function createSuperSoldier(x: number, y: number): Soldier {
+  return {
+    id: soldierIdCounter++,
+    x,
+    y,
+    targetX: x,
+    targetY: y,
+    color: '#FFD700', // Dourado para destacar
+    size: 20, // Maior
+    isAlive: true,
+    animOffset: Math.random() * Math.PI * 2,
+    hp: 5, // 5x mais vida
+    maxHp: 5,
+    isSuper: true,
+    personalFireRate: 100, // Atira 2x mais rápido
   };
 }
 
@@ -82,6 +102,23 @@ export function removeSoldiersFromArmy(army: Army, count: number): void {
   }
 }
 
+// Adicionar super guerreiros ao exército
+export function addSuperSoldiersToArmy(army: Army, count: number): void {
+  const baseCount = army.soldiers.length;
+  // Limitar ao máximo de heróis
+  const maxToAdd = Math.max(0, MAX_HEROES - baseCount);
+  const actualCount = Math.min(count, maxToAdd);
+
+  for (let i = 0; i < actualCount; i++) {
+    const angle = ((baseCount + i) / (baseCount + actualCount)) * Math.PI * 2;
+    const radius = 20 + Math.floor((baseCount + i) / 8) * 15;
+    army.soldiers.push(createSuperSoldier(
+      army.centerX + Math.cos(angle) * radius,
+      army.centerY + Math.sin(angle) * radius * 0.5
+    ));
+  }
+}
+
 export function createEnemyHorde(canvasWidth: number, y: number, count: number, level: number = 1): EnemyHorde {
   // Calcular limites da estrada com perspectiva
   // A estrada é mais estreita no topo e mais larga embaixo
@@ -141,7 +178,7 @@ export function createGate(canvasWidth: number, y: number, side: 'left' | 'right
   const gateWidth = canvasWidth / 2 - 30;
   const roll = Math.random();
 
-  let type: 'add' | 'multiply' | 'subtract' | 'divide' | 'firerate' | 'damage' | 'speed';
+  let type: 'add' | 'multiply' | 'subtract' | 'divide' | 'firerate' | 'damage' | 'superwarrior';
   let value: number;
   let color: string;
 
@@ -170,10 +207,10 @@ export function createGate(canvasWidth: number, y: number, side: 'left' | 'right
     value = 1.3;
     color = '#9900ffff';
   } else if (roll < 0.74) {
-    // 8% - Buff de velocidade
-    type = 'speed';
-    value = 1.15;
-    color = '#00BCD4';
+    // 8% - Super Guerreiro (adiciona 1 herói especial)
+    type = 'superwarrior';
+    value = 1; // Adiciona 1 super guerreiro
+    color = '#FFD700'; // Dourado
   } else if (roll < 0.88) {
     // 14% - Subtrair soldados (valores menores, nunca fatal)
     type = 'subtract';
@@ -205,7 +242,7 @@ export function createGatePair(canvasWidth: number, y: number, level: number = 1
   const rightGate = createGate(canvasWidth, y, 'right', level);
 
   // SEMPRE garantir que um gate é bom e outro é ruim para forçar decisão estratégica
-  const goodTypes = ['add', 'multiply', 'firerate', 'damage', 'speed'];
+  const goodTypes = ['add', 'multiply', 'firerate', 'damage', 'superwarrior'];
 
   const leftIsGood = goodTypes.includes(leftGate.type);
   const rightIsGood = goodTypes.includes(rightGate.type);
@@ -220,18 +257,22 @@ export function createGatePair(canvasWidth: number, y: number, level: number = 1
   } else if (!leftIsGood && !rightIsGood) {
     // Mudar o esquerdo para bom (valores conservadores)
     const buffRoll = Math.random();
-    if (buffRoll < 0.5) {
+    if (buffRoll < 0.4) {
       leftGate.type = 'add';
       leftGate.value = Math.floor(Math.random() * 4) + 2; // 2-5
       leftGate.color = '#2ECC71';
-    } else if (buffRoll < 0.75) {
+    } else if (buffRoll < 0.65) {
       leftGate.type = 'multiply';
       leftGate.value = 1.5; // Sempre x1.5
       leftGate.color = '#3498DB';
-    } else {
+    } else if (buffRoll < 0.85) {
       leftGate.type = 'firerate';
       leftGate.value = 1.3;
       leftGate.color = '#F39C12';
+    } else {
+      leftGate.type = 'superwarrior';
+      leftGate.value = 1;
+      leftGate.color = '#FFD700';
     }
   }
 
@@ -261,6 +302,8 @@ export function createBoss(canvasWidth: number, level: number): Boss {
     maxHp: bossHp,
     isActive: true,
     color: '#8B0000',
+    spawnTime: Date.now(), // Momento em que o boss spawnou
+    isMoving: false, // Começa parado
   };
 }
 
