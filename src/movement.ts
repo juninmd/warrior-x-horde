@@ -87,19 +87,8 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState): void
       horde.x = Math.max(roadMinX, Math.min(roadMaxX, horde.x));
     }
 
-    for (const soldier of horde.soldiers) {
-      soldier.y += enemySpeed;
-      soldier.targetY += enemySpeed;
-
-      // Atualizar posição X dos soldados para acompanhar a horda
-      if (horde.y > pursuitThreshold && horde.isActive) {
-        soldier.targetX = horde.x + (soldier.x - horde.x) * 0.95;
-        soldier.x += (soldier.targetX - soldier.x) * 0.1;
-      }
-
-      // Limitar soldados dentro da estrada
-      soldier.x = Math.max(roadMinX - 20, Math.min(roadMaxX + 20, soldier.x));
-    }
+    // Atualizar formação circular dos soldados da horda
+    updateHordeFormation(horde, enemySpeed);
   }
 
   // Mover boss (velocidade média)
@@ -116,6 +105,40 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState): void
 
   // Atualizar distância percorrida (baseado na velocidade dos gates)
   gameState.distanceTraveled += gateSpeed;
+}
+
+// Atualizar formação circular da horda inimiga
+function updateHordeFormation(horde: { x: number; y: number; soldiers: { x: number; y: number; targetX: number; targetY: number; isAlive: boolean }[]; isActive: boolean }, speed: number): void {
+  const aliveSoldiers = horde.soldiers.filter(s => s.isAlive);
+  const count = aliveSoldiers.length;
+
+  if (count === 0) return;
+
+  // Formação em círculos concêntricos
+  let soldierIndex = 0;
+  let ring = 0;
+  const baseRadius = 20;
+  const ringSpacing = 18;
+
+  while (soldierIndex < count) {
+    const ringRadius = ring === 0 ? 0 : baseRadius + (ring - 1) * ringSpacing;
+    const soldiersInRing = ring === 0 ? 1 : Math.min(Math.floor(ring * 6), count - soldierIndex);
+
+    for (let i = 0; i < soldiersInRing && soldierIndex < count; i++) {
+      const soldier = aliveSoldiers[soldierIndex];
+      const angle = ring === 0 ? 0 : (i / soldiersInRing) * Math.PI * 2;
+
+      soldier.targetX = horde.x + Math.cos(angle) * ringRadius;
+      soldier.targetY = horde.y + Math.sin(angle) * ringRadius * 0.5;
+
+      // Movimento suave para a posição alvo
+      soldier.x += (soldier.targetX - soldier.x) * 0.1;
+      soldier.y += (soldier.targetY - soldier.y) * 0.1 + speed;
+
+      soldierIndex++;
+    }
+    ring++;
+  }
 }
 
 export function updateMovement(entities: Entities, gameState: GameState, canvasWidth: number, targetX: number): void {

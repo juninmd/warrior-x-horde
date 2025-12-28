@@ -90,14 +90,25 @@ export function createEnemyHorde(canvasWidth: number, y: number, count: number):
 
   const soldiers: Soldier[] = [];
 
-  for (let i = 0; i < count; i++) {
-    const angle = (i / count) * Math.PI * 2;
-    const radius = 15 + Math.floor(i / 6) * 12;
-    soldiers.push(createSoldier(
-      x + Math.cos(angle) * radius,
-      y + Math.sin(angle) * radius * 0.5,
-      '#E74C3C'
-    ));
+  // Formação em círculos concêntricos (igual ao exército do jogador)
+  let soldierIndex = 0;
+  let ring = 0;
+  const baseRadius = 20;
+  const ringSpacing = 18;
+
+  while (soldierIndex < count) {
+    const ringRadius = ring === 0 ? 0 : baseRadius + (ring - 1) * ringSpacing;
+    const soldiersInRing = ring === 0 ? 1 : Math.min(Math.floor(ring * 6), count - soldierIndex);
+
+    for (let i = 0; i < soldiersInRing && soldierIndex < count; i++) {
+      const angle = ring === 0 ? 0 : (i / soldiersInRing) * Math.PI * 2;
+      const soldierX = x + Math.cos(angle) * ringRadius;
+      const soldierY = y + Math.sin(angle) * ringRadius * 0.5; // Achatar em Y para efeito 3D
+
+      soldiers.push(createSoldier(soldierX, soldierY, '#E74C3C'));
+      soldierIndex++;
+    }
+    ring++;
   }
 
   return {

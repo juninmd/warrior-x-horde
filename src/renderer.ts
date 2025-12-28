@@ -648,7 +648,7 @@ function drawGameOver(ctx: CanvasRenderingContext2D, gameState: GameState): void
   // Título com efeito de pulsação
   const pulse = 1 + Math.sin(Date.now() * 0.003) * 0.05;
   ctx.save();
-  ctx.translate(width / 2, height / 2 - 100);
+  ctx.translate(width / 2, height / 2 - 120);
   ctx.scale(pulse, pulse);
 
   ctx.fillStyle = gameState.isVictory ? '#2ECC71' : '#E74C3C';
@@ -665,7 +665,7 @@ function drawGameOver(ctx: CanvasRenderingContext2D, gameState: GameState): void
   const boxWidth = 280;
   const boxHeight = 180;
   const boxX = width / 2 - boxWidth / 2;
-  const boxY = height / 2 - 40;
+  const boxY = height / 2 - 60;
 
   ctx.fillStyle = 'rgba(30, 30, 50, 0.9)';
   ctx.beginPath();
@@ -710,16 +710,16 @@ function drawGameOver(ctx: CanvasRenderingContext2D, gameState: GameState): void
   // Botão de restart animado
   const buttonPulse = 1 + Math.sin(Date.now() * 0.005) * 0.03;
   ctx.save();
-  ctx.translate(width / 2, boxY + boxHeight + 50);
+  ctx.translate(width / 2, boxY + boxHeight + 45);
   ctx.scale(buttonPulse, buttonPulse);
 
-  const buttonGradient = ctx.createLinearGradient(-100, -25, -100, 25);
+  const buttonGradient = ctx.createLinearGradient(-100, -22, -100, 22);
   buttonGradient.addColorStop(0, '#4A90D9');
   buttonGradient.addColorStop(1, '#2E5A8E');
 
   ctx.fillStyle = buttonGradient;
   ctx.beginPath();
-  ctx.roundRect(-100, -25, 200, 50, 25);
+  ctx.roundRect(-100, -22, 200, 44, 22);
   ctx.fill();
 
   ctx.shadowColor = '#4A90D9';
@@ -730,10 +730,59 @@ function drawGameOver(ctx: CanvasRenderingContext2D, gameState: GameState): void
   ctx.shadowBlur = 0;
 
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 18px Arial';
+  ctx.font = 'bold 16px Arial';
   ctx.textAlign = 'center';
-  ctx.fillText('🔄 JOGAR NOVAMENTE', 0, 6);
+  ctx.fillText('🔄 JOGAR NOVAMENTE', 0, 5);
   ctx.restore();
+
+  // Botão de compartilhar no X (Twitter)
+  ctx.save();
+  ctx.translate(width / 2, boxY + boxHeight + 100);
+  ctx.scale(buttonPulse, buttonPulse);
+
+  const shareGradient = ctx.createLinearGradient(-100, -20, -100, 20);
+  shareGradient.addColorStop(0, '#1DA1F2');
+  shareGradient.addColorStop(1, '#0C85D0');
+
+  ctx.fillStyle = shareGradient;
+  ctx.beginPath();
+  ctx.roundRect(-100, -20, 200, 40, 20);
+  ctx.fill();
+
+  ctx.shadowColor = '#1DA1F2';
+  ctx.shadowBlur = 10;
+  ctx.strokeStyle = '#4FC3F7';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = 'bold 15px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('𝕏 COMPARTILHAR SCORE', 0, 5);
+  ctx.restore();
+
+  // Guardar posição do botão de share para detecção de clique
+  shareButtonBounds = {
+    x: width / 2 - 100,
+    y: boxY + boxHeight + 100 - 20,
+    width: 200,
+    height: 40
+  };
+}
+
+// Bounds do botão de compartilhar
+let shareButtonBounds = { x: 0, y: 0, width: 0, height: 0 };
+
+export function getShareButtonBounds(): { x: number; y: number; width: number; height: number } {
+  return shareButtonBounds;
+}
+
+export function shareOnX(gameState: GameState): void {
+  const text = `🎮 Crowd Runner - Warrior X Horde!\n\n🏆 Score: ${gameState.score}\n👑 High Score: ${gameState.highScore}\n🔥 Max Combo: ${gameState.maxCombo}x\n📊 Level: ${gameState.currentLevel}\n\nConsegue superar?`;
+  const url = window.location.href;
+  const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+  window.open(tweetUrl, '_blank', 'width=550,height=420');
 }
 
 // Desenhar Super Cannon beam

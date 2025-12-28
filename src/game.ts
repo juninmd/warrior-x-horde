@@ -2,7 +2,7 @@
 import { Entities } from './types';
 import { gameState, resetGameState } from './gameState';
 import { createInitialEntities } from './entities';
-import { render } from './renderer';
+import { render, getShareButtonBounds, shareOnX } from './renderer';
 import { checkCollisions } from './collisions';
 import { updateSpawns } from './spawner';
 import { updateMovement } from './movement';
@@ -148,8 +148,20 @@ function startGame(): void {
 }
 
 // Restart no clique após game over
-canvas.addEventListener('click', () => {
+canvas.addEventListener('click', (e) => {
   if (gameState.isGameOver) {
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const bounds = getShareButtonBounds();
+
+    // Verificar se clicou no botão de compartilhar
+    if (x >= bounds.x && x <= bounds.x + bounds.width &&
+        y >= bounds.y && y <= bounds.y + bounds.height) {
+      shareOnX(gameState);
+      return;
+    }
+
     startGame();
   }
 });
@@ -157,6 +169,19 @@ canvas.addEventListener('click', () => {
 canvas.addEventListener('touchstart', (e) => {
   if (gameState.isGameOver) {
     e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches[0];
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+    const bounds = getShareButtonBounds();
+
+    // Verificar se clicou no botão de compartilhar
+    if (x >= bounds.x && x <= bounds.x + bounds.width &&
+        y >= bounds.y && y <= bounds.y + bounds.height) {
+      shareOnX(gameState);
+      return;
+    }
+
     startGame();
   }
 });
