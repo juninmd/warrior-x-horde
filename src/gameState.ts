@@ -25,7 +25,7 @@ export const gameState: GameState = {
   superCannonActive: false,
   superCannonTimer: 0,
   superCannonDuration: 3000,
-  superCannonCooldown: 10000,
+  superCannonCooldown: 18000,
   superCannonLastUsed: 0,
   superCannonReady: true,
   superCannonDamageMultiplier: 5,

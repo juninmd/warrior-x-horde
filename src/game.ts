@@ -7,7 +7,7 @@ import { checkCollisions } from './collisions';
 import { updateSpawns } from './spawner';
 import { updateMovement } from './movement';
 import { setupInput, getMouseX, initializeMousePosition, setGameStateRef, setInputScale } from './input';
-import { updateShooting, updateBullets, updateSuperCannon } from './shooting';
+import { updateShooting, updateBullets, updateSuperCannon, activateSuperCannon } from './shooting';
 import { initAudio, playMusic, playSound, stopAllMusic, audioManager } from './audio';
 
 // Canvas setup
@@ -27,9 +27,9 @@ function resizeCanvas(): void {
   const container = canvas.parentElement;
   if (!container) return;
 
-  // Calcular espaço disponível
+  // Calcular espaço disponível (deixar espaço para o botão Super Cannon no mobile)
   const maxWidth = Math.min(window.innerWidth - 20, 600); // Max 600px de largura
-  const maxHeight = window.innerHeight - 120; // Deixar espaço para título e dicas
+  const maxHeight = window.innerHeight - 150; // Deixar espaço para título, dicas e botão
 
   // Calcular dimensões mantendo aspect ratio
   let newWidth = maxWidth;
@@ -104,6 +104,132 @@ startButton.onmouseout = () => {
 };
 document.body.appendChild(startButton);
 
+// Botão de Super Cannon para mobile (retangular, fácil de clicar)
+const superCannonButton = document.createElement('button');
+superCannonButton.id = 'superCannonBtn';
+superCannonButton.innerHTML = '⚡ SUPER';
+superCannonButton.style.cssText = `
+  position: fixed;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 120px;
+  height: 50px;
+  padding: 10px 20px;
+  font-size: 18px;
+  font-weight: bold;
+  background: linear-gradient(180deg, #FFD700 0%, #FFA500 100%);
+  color: #333;
+  border: 3px solid #FFD700;
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.5), 0 0 15px rgba(255, 215, 0, 0.3);
+  z-index: 1000;
+  display: none;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+`;
+
+// Função para tentar ativar o Super Cannon
+function trySuperCannon(): void {
+  console.log('Super Cannon button pressed!', { 
+    isStarted: gameState.isStarted, 
+    isGameOver: gameState.isGameOver,
+    superCannonReady: gameState.superCannonReady 
+  });
+  
+  if (gameState.isStarted && !gameState.isGameOver) {
+    activateSuperCannon(gameState);
+  }
+}
+
+// Touch events para mobile
+superCannonButton.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  trySuperCannon();
+  // Feedback visual
+  superCannonButton.style.transform = 'translateX(-50%) scale(0.95)';
+  superCannonButton.style.opacity = '0.9';
+}, { passive: false });
+
+superCannonButton.addEventListener('touchend', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  superCannonButton.style.transform = 'translateX(-50%) scale(1)';
+  superCannonButton.style.opacity = '1';
+}, { passive: false });
+
+superCannonButton.addEventListener('touchcancel', () => {
+  superCannonButton.style.transform = 'translateX(-50%) scale(1)';
+  superCannonButton.style.opacity = '1';
+});
+
+// Click para desktop
+superCannonButton.addEventListener('click', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  trySuperCannon();
+});
+
+// Pointer events como fallback
+superCannonButton.addEventListener('pointerdown', (e) => {
+  if (e.pointerType === 'touch') {
+    e.preventDefault();
+    trySuperCannon();
+  }
+});
+
+document.body.appendChild(superCannonButton);
+
+// Atualizar estado visual do botão Super Cannon
+function updateSuperCannonButton(): void {
+  if (!gameState.isStarted || gameState.isGameOver) {
+    superCannonButton.style.display = 'none';
+    return;
+  }
+
+  superCannonButton.style.display = 'flex';
+  superCannonButton.style.alignItems = 'center';
+  superCannonButton.style.justifyContent = 'center';
+
+  // Calcular tempo restante do cooldown
+  const now = Date.now();
+  const timeSinceLastUse = now - gameState.superCannonLastUsed;
+  const cooldownRemaining = Math.max(0, gameState.superCannonCooldown - timeSinceLastUse);
+  const isOnCooldown = cooldownRemaining > 0 && !gameState.superCannonActive;
+
+  if (gameState.superCannonActive) {
+    // Ativo - brilhando
+    superCannonButton.innerHTML = '⚡ ATIVO!';
+    superCannonButton.style.background = 'linear-gradient(180deg, #FFEB3B 0%, #FF9800 100%)';
+    superCannonButton.style.boxShadow = '0 0 25px rgba(255, 215, 0, 0.9), 0 0 50px rgba(255, 215, 0, 0.5)';
+    superCannonButton.style.borderColor = '#FFEB3B';
+    superCannonButton.style.color = '#333';
+    superCannonButton.disabled = true;
+  } else if (isOnCooldown) {
+    // Em cooldown - mostrar tempo restante
+    const cooldownSecs = Math.ceil(cooldownRemaining / 1000);
+    superCannonButton.innerHTML = `⏳ ${cooldownSecs}s`;
+    superCannonButton.style.background = 'linear-gradient(180deg, #555 0%, #333 100%)';
+    superCannonButton.style.boxShadow = '0 4px 10px rgba(0, 0, 0, 0.4)';
+    superCannonButton.style.borderColor = '#555';
+    superCannonButton.style.color = '#999';
+    superCannonButton.disabled = true;
+  } else {
+    // Pronto para usar
+    superCannonButton.innerHTML = '⚡ SUPER';
+    superCannonButton.style.background = 'linear-gradient(180deg, #FFD700 0%, #FFA500 100%)';
+    superCannonButton.style.boxShadow = '0 4px 15px rgba(255, 215, 0, 0.5), 0 0 15px rgba(255, 215, 0, 0.3)';
+    superCannonButton.style.borderColor = '#FFD700';
+    superCannonButton.style.color = '#333';
+    superCannonButton.disabled = false;
+  }
+}
+
 // Game loop
 let wasInBossFight = false;
 let lastTime = 0;
@@ -122,6 +248,9 @@ function gameLoop(currentTime: number = 0): void {
   updateShooting(entities, gameState);
   updateBullets(entities, gameState);
   updateSuperCannon(entities, gameState, deltaTime);
+
+  // Atualizar botão do Super Cannon
+  updateSuperCannonButton();
 
   // Spawnar elementos
   updateSpawns(entities, canvas.width, gameState);
@@ -157,6 +286,9 @@ function gameLoop(currentTime: number = 0): void {
   if (!gameState.isGameOver) {
     requestAnimationFrame(gameLoop);
   } else {
+    // Esconder botão do Super Cannon no game over
+    superCannonButton.style.display = 'none';
+
     // Mostrar tela de game over
     render(ctx, entities, gameState);
 
@@ -196,6 +328,7 @@ function startGame(): void {
   wasInBossFight = false; // Resetar flag de boss
   gameState.isStarted = true;
   startButton.style.display = 'none';
+  superCannonButton.style.display = 'block'; // Mostrar botão do Super Cannon
 
   // Iniciar música
   playSound(audioManager.gameStart);

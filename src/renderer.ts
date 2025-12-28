@@ -532,61 +532,6 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
   ctx.roundRect(20, 50, progressWidth * progress, 10, 5);
   ctx.fill();
 
-  // Super Cannon cooldown indicator
-  const cannonSize = 40;
-  const cannonX = width - cannonSize - 15;
-  const cannonY = 50;
-
-  // Fundo do indicador
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-  ctx.beginPath();
-  ctx.arc(cannonX + cannonSize / 2, cannonY + cannonSize / 2, cannonSize / 2, 0, Math.PI * 2);
-  ctx.fill();
-
-  if (gameState.superCannonActive) {
-    // Ativo - brilhando
-    ctx.fillStyle = '#FFD700';
-    ctx.beginPath();
-    ctx.arc(cannonX + cannonSize / 2, cannonY + cannonSize / 2, cannonSize / 2 - 3, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#000';
-    ctx.font = 'bold 10px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('⚡', cannonX + cannonSize / 2, cannonY + cannonSize / 2 + 4);
-  } else if (gameState.superCannonReady) {
-    // Pronto para usar
-    ctx.fillStyle = '#2ECC71';
-    ctx.beginPath();
-    ctx.arc(cannonX + cannonSize / 2, cannonY + cannonSize / 2, cannonSize / 2 - 3, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#FFF';
-    ctx.font = 'bold 10px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('SPACE', cannonX + cannonSize / 2, cannonY + cannonSize / 2 + 4);
-  } else {
-    // Em cooldown - mostrar progresso
-    const cooldownProgress = (Date.now() - gameState.superCannonLastUsed) / gameState.superCannonCooldown;
-    const endAngle = -Math.PI / 2 + (cooldownProgress * Math.PI * 2);
-
-    ctx.fillStyle = '#555';
-    ctx.beginPath();
-    ctx.arc(cannonX + cannonSize / 2, cannonY + cannonSize / 2, cannonSize / 2 - 3, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = '#E74C3C';
-    ctx.beginPath();
-    ctx.moveTo(cannonX + cannonSize / 2, cannonY + cannonSize / 2);
-    ctx.arc(cannonX + cannonSize / 2, cannonY + cannonSize / 2, cannonSize / 2 - 3, -Math.PI / 2, endAngle);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.fillStyle = '#FFF';
-    ctx.font = 'bold 12px Arial';
-    ctx.textAlign = 'center';
-    const secondsLeft = Math.ceil((gameState.superCannonCooldown - (Date.now() - gameState.superCannonLastUsed)) / 1000);
-    ctx.fillText(`${secondsLeft}`, cannonX + cannonSize / 2, cannonY + cannonSize / 2 + 4);
-  }
-
   // Combo indicator (se houver combo ativo)
   if (gameState.combo > 1) {
     const comboX = width / 2;
