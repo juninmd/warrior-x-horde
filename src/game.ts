@@ -330,7 +330,7 @@ function gameLoop(currentTime: number = 0): void {
 function advanceToNextLevel(): void {
   gameState.currentLevel++;
   gameState.distanceTraveled = 0;
-  gameState.levelDistance += 300; // Incremento menor por level (era 500)
+  gameState.levelDistance += 900; // Incremento 3x maior por level (era 300)
   gameState.isVictory = false;
   gameState.gameSpeed = Math.min(1.5, gameState.baseGameSpeed + gameState.currentLevel * 0.08); // Máximo 1.5x, incremento menor
 
@@ -430,7 +430,7 @@ function debugSetLevel(targetLevel: number): void {
   // Definir o level
   gameState.currentLevel = targetLevel;
   gameState.distanceTraveled = 0;
-  gameState.levelDistance = 5000 + (targetLevel - 1) * 300;
+  gameState.levelDistance = 15000 + (targetLevel - 1) * 900; // 3x maior
   gameState.isVictory = false;
   gameState.gameSpeed = Math.min(2, gameState.baseGameSpeed + targetLevel * 0.1);
 

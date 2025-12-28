@@ -13,7 +13,7 @@ export const gameState: GameState = {
   gameSpeed: 0.5,
   baseGameSpeed: 0.5,
   distanceTraveled: 0,
-  levelDistance: 5000, // Reduzido para levels mais curtos e atingíveis
+  levelDistance: 15000, // 3x maior (5000 * 3) para levels mais longos
   isBattling: false,
   battleTimer: 0,
   screenShakeActive: false,
@@ -43,6 +43,8 @@ export function resetGameState(): void {
   gameState.isGameOver = false;
   gameState.isVictory = false;
   gameState.isPaused = false;
+  gameState.currentLevel = 1; // Reiniciar do level 1
+  gameState.levelDistance = 15000; // Reset da distância do level
   gameState.score = 0;
   gameState.coins = 0;
   gameState.gameSpeed = gameState.baseGameSpeed;
