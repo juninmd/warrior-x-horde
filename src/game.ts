@@ -135,12 +135,12 @@ superCannonButton.style.cssText = `
 
 // Função para tentar ativar o Super Cannon
 function trySuperCannon(): void {
-  console.log('Super Cannon button pressed!', { 
-    isStarted: gameState.isStarted, 
+  console.log('Super Cannon button pressed!', {
+    isStarted: gameState.isStarted,
     isGameOver: gameState.isGameOver,
-    superCannonReady: gameState.superCannonReady 
+    superCannonReady: gameState.superCannonReady
   });
-  
+
   if (gameState.isStarted && !gameState.isGameOver) {
     activateSuperCannon(gameState);
   }
