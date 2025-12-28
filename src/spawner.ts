@@ -41,18 +41,18 @@ export function spawnEnemies(entities: Entities, canvasWidth: number, gameState:
     ? Math.min(...entities.enemyHordes.map(h => h.y))
     : spawnY + hordeSpacing;
 
-  // Chance de spawn aumenta com o level (50% no level 1, até 85% no level 5+)
-  const spawnChance = Math.min(0.85, 0.5 + (gameState.currentLevel - 1) * 0.09);
+  // Chance de spawn aumenta com o level (40% no level 1, até 85% no level 5+)
+  const spawnChance = Math.min(0.85, 0.4 + (gameState.currentLevel - 1) * 0.09);
 
   if (lowestHordeY > spawnY && Math.random() < spawnChance) {
     // Balancear inimigos com base no tamanho do exército do jogador
-    const playerCount = entities.playerArmy.soldiers.filter(s => s.isAlive).length / 3;
+    const playerCount = entities.playerArmy.soldiers.filter(s => s.isAlive).length / 8;
 
     // Multiplicador menor no início, cresce com o level (1.5x a 3x no level 1)
-    const baseMultiplier = 1.5 + Math.random() * 4;
+    const baseMultiplier = 1.0 + Math.random() * 3;
 
-    // Bônus por level (+40% por level, mais agressivo depois)
-    const levelBonus = 1 + (gameState.currentLevel - 1) * 0.4;
+    // Bônus por level (+20% por level, mais agressivo depois)
+    const levelBonus = 1 + (gameState.currentLevel - 1) * 0.2;
 
     const multiplier = baseMultiplier * levelBonus;
     const baseEnemies = Math.floor(playerCount * multiplier);
