@@ -165,7 +165,7 @@ export interface Entities {
 }
 
 // Limites de entidades para performance
-export const MAX_HEROES = 500; // Aumentado de 200 para 500 (renderização otimizada protege performance)
+export const MAX_HEROES = 10000; // Aumentado para 10k (renderização limitada a 100 protege performance)
 export const MAX_ENEMIES = 20000;
 
 export interface FloatingText {
