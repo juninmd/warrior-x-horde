@@ -536,18 +536,18 @@ function drawArmy(ctx: CanvasRenderingContext2D, army: Army, time: number): void
 
   // Ordenar soldados por Y para depth sorting
   let sortedSoldiers = [...army.soldiers].filter(s => s.isAlive).sort((a, b) => a.y - b.y);
-  
+
   // OTIMIZAÇÃO: Limitar renderização a MAX_RENDERED_SOLDIERS
   // Priorizar super guerreiros e soldados mais visíveis (mais próximos do centro)
   if (sortedSoldiers.length > MAX_RENDERED_SOLDIERS) {
     // Separar super guerreiros (sempre renderizar)
     const superSoldiers = sortedSoldiers.filter(s => s.isSuper);
     const normalSoldiers = sortedSoldiers.filter(s => !s.isSuper);
-    
+
     // Pegar os mais próximos do centro da tela
     const remainingSlots = MAX_RENDERED_SOLDIERS - superSoldiers.length;
     const selectedNormal = normalSoldiers.slice(0, Math.max(0, remainingSlots));
-    
+
     sortedSoldiers = [...superSoldiers, ...selectedNormal].sort((a, b) => a.y - b.y);
   }
 
