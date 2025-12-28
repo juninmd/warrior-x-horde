@@ -1,5 +1,5 @@
 // collisions.ts - Sistema de colisões
-import { Entities, GameState, Army, EnemyHorde, Gate } from './types';
+import { Entities, GameState, Army, EnemyHorde, Gate, MiniBoss } from './types';
 import { addSoldiersToArmy, multiplySoldiersInArmy, removeSoldiersFromArmy } from './entities';
 import { addFloatingText, addExplosion, addParticle } from './renderer';
 import { playSound, audioManager } from './audio';
@@ -21,11 +21,38 @@ function getArmyBounds(army: Army): { left: number; right: number; top: number; 
   return { left, right, top, bottom };
 }
 
+// Nova função: determinar qual gate é ativado baseado no CENTRO do exército
+function getGateForArmyCenter(army: Army, gates: Gate[]): Gate | null {
+  const bounds = getArmyBounds(army);
+
+  // Encontrar gates na mesma linha (mesmo Y aproximado) que estão na posição do exército
+  for (const gate of gates) {
+    if (gate.passed) continue;
+
+    // Verificar se o exército está na altura do gate
+    if (bounds.bottom > gate.y && bounds.top < gate.y + gate.height) {
+      // Usar o CENTRO do exército para determinar qual gate
+      const gateCenter = gate.x + gate.width / 2;
+      const armyCenterX = army.centerX;
+
+      // Se o centro do exército está dentro do gate
+      if (armyCenterX >= gate.x && armyCenterX <= gate.x + gate.width) {
+        return gate;
+      }
+    }
+  }
+  return null;
+}
+
 function checkGateCollision(army: Army, gate: Gate): boolean {
   const bounds = getArmyBounds(army);
+
+  // Usar o CENTRO do exército para determinar colisão
+  const armyCenterX = army.centerX;
+
   return !gate.passed &&
-    bounds.right > gate.x &&
-    bounds.left < gate.x + gate.width &&
+    armyCenterX >= gate.x &&
+    armyCenterX <= gate.x + gate.width &&
     bounds.bottom > gate.y &&
     bounds.top < gate.y + gate.height;
 }
@@ -35,36 +62,20 @@ function applyGateEffect(army: Army, gate: Gate, gameState: GameState, entities:
   let afterCount = beforeCount;
   let isPositive = true;
 
-  // Calcular multiplicador baseado na quantidade de inimigos na tela
-  // Quanto mais inimigos, melhores os bônus positivos
-  const totalEnemies = entities.enemyHordes.reduce((sum, horde) => {
-    return sum + horde.soldiers.filter(s => s.isAlive).length;
-  }, 0);
-
-  // Multiplicador de 1x a 3x baseado na quantidade de inimigos (100 inimigos = 2x, 200+ = 3x)
-  const enemyBonus = Math.min(3, 1 + totalEnemies / 100);
-
   switch (gate.type) {
     case 'add': {
-      // Bônus de adição escalado pelos inimigos
-      const scaledAdd = Math.floor(gate.value * enemyBonus);
-      addSoldiersToArmy(army, scaledAdd);
+      addSoldiersToArmy(army, gate.value);
       afterCount = army.soldiers.length;
-      const bonusText = enemyBonus > 1.2 ? ` (${enemyBonus.toFixed(1)}x!)` : '';
-      addFloatingText(`+${scaledAdd}${bonusText}`, gate.x + gate.width / 2, gate.y, '#2ECC71');
+      addFloatingText(`+${gate.value}`, gate.x + gate.width / 2, gate.y, '#2ECC71');
       break;
     }
     case 'multiply': {
-      // Multiplicador extra baseado nos inimigos (x2 pode virar x2.5 ou x3)
-      const scaledMultiplier = gate.value + (enemyBonus - 1) * 0.5; // +0.5 a cada 100 inimigos
-      multiplySoldiersInArmy(army, scaledMultiplier);
+      multiplySoldiersInArmy(army, gate.value);
       afterCount = army.soldiers.length;
-      const bonusText = scaledMultiplier > gate.value ? ` (${scaledMultiplier.toFixed(1)}x!)` : '';
-      addFloatingText(`×${scaledMultiplier.toFixed(1)}${bonusText}`, gate.x + gate.width / 2, gate.y, '#3498DB');
+      addFloatingText(`×${gate.value}`, gate.x + gate.width / 2, gate.y, '#3498DB');
       break;
     }
     case 'subtract':
-      // Subtração não é afetada (mantém o nerf)
       removeSoldiersFromArmy(army, Math.min(gate.value, army.soldiers.length - 1));
       afterCount = army.soldiers.length;
       addFloatingText(`-${gate.value}`, gate.x + gate.width / 2, gate.y, '#E74C3C');
@@ -79,23 +90,17 @@ function applyGateEffect(army: Army, gate: Gate, gameState: GameState, entities:
       break;
     }
     case 'firerate': {
-      // Fire rate buff escalado pelos inimigos
-      const scaledFireRate = gate.value + (enemyBonus - 1) * 0.25;
-      army.fireRate = Math.max(50, army.fireRate / scaledFireRate);
-      const bonusText = scaledFireRate > gate.value ? ` ${scaledFireRate.toFixed(1)}x!` : '';
-      addFloatingText(`🔥 Fire Rate!${bonusText}`, gate.x + gate.width / 2, gate.y, '#F39C12');
+      army.fireRate = Math.max(50, army.fireRate / gate.value);
+      addFloatingText(`🔥 Fire Rate!`, gate.x + gate.width / 2, gate.y, '#F39C12');
       break;
     }
     case 'damage': {
-      // Damage buff escalado pelos inimigos
-      const scaledDamage = gate.value + (enemyBonus - 1) * 0.25;
-      army.damage = (army.damage || 1) * scaledDamage;
-      const bonusText = scaledDamage > gate.value ? ` ${scaledDamage.toFixed(1)}x!` : '';
-      addFloatingText(`⚔️ Damage!${bonusText}`, gate.x + gate.width / 2, gate.y, '#E91E63');
+      army.damage = (army.damage || 1) * gate.value;
+      addFloatingText(`⚔️ Damage!`, gate.x + gate.width / 2, gate.y, '#E91E63');
       break;
     }
     case 'speed':
-      gameState.gameSpeed = Math.min(3, gameState.gameSpeed * gate.value); // Máximo 3x velocidade
+      gameState.gameSpeed = Math.min(2, gameState.gameSpeed * gate.value); // Máximo 2x velocidade
       addFloatingText(`💨 Speed!`, gate.x + gate.width / 2, gate.y, '#00BCD4');
       break;
   }
@@ -217,6 +222,67 @@ function getComboColor(combo: number): string {
   return '#2ECC71';
 }
 
+// Verificar colisão com mini-boss
+function checkMiniBossCollision(army: Army, miniBoss: MiniBoss): boolean {
+  if (!miniBoss.isActive) return false;
+
+  const bounds = getArmyBounds(army);
+
+  return bounds.bottom > miniBoss.y &&
+    bounds.top < miniBoss.y + miniBoss.height &&
+    bounds.right > miniBoss.x &&
+    bounds.left < miniBoss.x + miniBoss.width;
+}
+
+// Processar batalha com mini-boss (igual hordas - troca de baixas)
+function processMiniBossBattle(army: Army, miniBoss: MiniBoss, gameState: GameState): void {
+  const playerCount = army.soldiers.filter(s => s.isAlive).length;
+
+  if (playerCount <= 0 || miniBoss.hp <= 0) {
+    if (miniBoss.hp <= 0) {
+      miniBoss.isActive = false;
+      gameState.score += 300;
+      addExplosion(miniBoss.x + miniBoss.width / 2, miniBoss.y + miniBoss.height / 2, '#FF4500');
+      addParticle(miniBoss.x + miniBoss.width / 2, miniBoss.y + miniBoss.height / 2, 'star', '#FF4500', 8);
+      addFloatingText('MINI-BOSS DEFEATED!', miniBoss.x + miniBoss.width / 2, miniBoss.y, '#FF4500');
+    }
+    return;
+  }
+
+  // Mini-boss causa 1 baixa por frame no exército do jogador
+  const casualties = 1;
+
+  // Remove do jogador
+  for (let i = 0; i < casualties && army.soldiers.length > 0; i++) {
+    const idx = army.soldiers.findIndex(s => s.isAlive);
+    if (idx >= 0) {
+      const soldier = army.soldiers[idx];
+      addExplosion(soldier.x, soldier.y, '#4A90D9');
+      army.soldiers[idx].isAlive = false;
+    }
+  }
+
+  // Mini-boss recebe dano baseado nos soldados em contato
+  const damageToMiniBoss = Math.min(playerCount * 0.5, 5); // Máximo 5 de dano por frame
+  miniBoss.hp -= damageToMiniBoss;
+
+  // Limpar soldados mortos
+  army.soldiers = army.soldiers.filter(s => s.isAlive);
+
+  if (miniBoss.hp <= 0) {
+    miniBoss.isActive = false;
+    gameState.score += 300;
+    addExplosion(miniBoss.x + miniBoss.width / 2, miniBoss.y + miniBoss.height / 2, '#FF4500');
+    addParticle(miniBoss.x + miniBoss.width / 2, miniBoss.y + miniBoss.height / 2, 'star', '#FF4500', 10);
+    addFloatingText('MINI-BOSS DEFEATED!', miniBoss.x + miniBoss.width / 2, miniBoss.y, '#FF4500');
+  }
+
+  // Screen shake menor para mini-boss
+  gameState.screenShakeActive = true;
+  gameState.screenShakeIntensity = 3;
+  gameState.screenShakeDuration = 50;
+}
+
 function checkBossCollision(army: Army, entities: Entities): boolean {
   if (!entities.boss || !entities.boss.isActive) return false;
 
@@ -251,6 +317,14 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
     if (checkHordeCollision(army, horde)) {
       gameState.isBattling = true;
       processBattle(army, horde, gameState);
+    }
+  }
+
+  // Checar colisão com mini-bosses (batalha igual às hordas)
+  for (const miniBoss of entities.miniBosses) {
+    if (checkMiniBossCollision(army, miniBoss)) {
+      gameState.isBattling = true;
+      processMiniBossBattle(army, miniBoss, gameState);
     }
   }
 

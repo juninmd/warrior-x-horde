@@ -1,11 +1,12 @@
 // entities.ts - Criação de entidades
-import { Army, Soldier, EnemyHorde, Gate, Boss, Entities } from './types';
+import { Army, Soldier, EnemyHorde, Gate, Boss, Entities, MiniBoss, MAX_HEROES, MAX_ENEMIES } from './types';
 
 let soldierIdCounter = 0;
 let hordeIdCounter = 0;
 let gateIdCounter = 0;
+let miniBossIdCounter = 0;
 
-export function createSoldier(x: number, y: number, color: string): Soldier {
+export function createSoldier(x: number, y: number, color: string, hp: number = 1): Soldier {
   return {
     id: soldierIdCounter++,
     x,
@@ -16,6 +17,8 @@ export function createSoldier(x: number, y: number, color: string): Soldier {
     size: 16,
     isAlive: true,
     animOffset: Math.random() * Math.PI * 2,
+    hp,
+    maxHp: hp,
   };
 }
 
@@ -42,7 +45,7 @@ export function createPlayerArmy(canvasWidth: number, canvasHeight: number): Arm
     targetX: centerX,
     color: '#4A90D9',
     isPlayer: true,
-    fireRate: 500,
+    fireRate: 200, // Disparo mais frequente (era 500ms)
     lastShotTime: 0,
     damage: 1,
   };
@@ -50,8 +53,12 @@ export function createPlayerArmy(canvasWidth: number, canvasHeight: number): Arm
 
 export function addSoldiersToArmy(army: Army, count: number): void {
   const baseCount = army.soldiers.length;
-  for (let i = 0; i < count; i++) {
-    const angle = ((baseCount + i) / (baseCount + count)) * Math.PI * 2;
+  // Limitar ao máximo de heróis
+  const maxToAdd = Math.max(0, MAX_HEROES - baseCount);
+  const actualCount = Math.min(count, maxToAdd);
+
+  for (let i = 0; i < actualCount; i++) {
+    const angle = ((baseCount + i) / (baseCount + actualCount)) * Math.PI * 2;
     const radius = 20 + Math.floor((baseCount + i) / 8) * 15;
     army.soldiers.push(createSoldier(
       army.centerX + Math.cos(angle) * radius,
@@ -63,7 +70,9 @@ export function addSoldiersToArmy(army: Army, count: number): void {
 
 export function multiplySoldiersInArmy(army: Army, multiplier: number): void {
   const currentCount = army.soldiers.length;
-  const newCount = Math.floor(currentCount * multiplier) - currentCount;
+  // Limitar multiplicador para evitar explosão de entidades
+  const targetCount = Math.min(MAX_HEROES, Math.floor(currentCount * multiplier));
+  const newCount = targetCount - currentCount;
   addSoldiersToArmy(army, Math.max(0, newCount));
 }
 
@@ -73,7 +82,7 @@ export function removeSoldiersFromArmy(army: Army, count: number): void {
   }
 }
 
-export function createEnemyHorde(canvasWidth: number, y: number, count: number): EnemyHorde {
+export function createEnemyHorde(canvasWidth: number, y: number, count: number, level: number = 1): EnemyHorde {
   // Calcular limites da estrada com perspectiva
   // A estrada é mais estreita no topo e mais larga embaixo
   const roadTopWidth = canvasWidth * 0.3;
@@ -90,6 +99,9 @@ export function createEnemyHorde(canvasWidth: number, y: number, count: number):
 
   const soldiers: Soldier[] = [];
 
+  // HP dos inimigos aumenta com o level (+50% por level)
+  const enemyHp = 1 + Math.floor((level - 1) * 0.5);
+
   // Formação em círculos concêntricos (igual ao exército do jogador)
   let soldierIndex = 0;
   let ring = 0;
@@ -105,7 +117,7 @@ export function createEnemyHorde(canvasWidth: number, y: number, count: number):
       const soldierX = x + Math.cos(angle) * ringRadius;
       const soldierY = y + Math.sin(angle) * ringRadius * 0.5; // Achatar em Y para efeito 3D
 
-      soldiers.push(createSoldier(soldierX, soldierY, '#E74C3C'));
+      soldiers.push(createSoldier(soldierX, soldierY, '#E74C3C', enemyHp));
       soldierIndex++;
     }
     ring++;
@@ -133,34 +145,34 @@ export function createGate(canvasWidth: number, y: number, side: 'left' | 'right
   let value: number;
   let color: string;
 
-  // Valores escalam com o level, mas de forma conservadora
-  // Add: máximo de 3 + (level-1) membros (level 1 = 3, level 5 = 7, level 10 = 12)
-  const maxAdd = Math.min(15, 3 + (level - 1));
+  // Valores conservadores - evitar multiplicações explosivas
+  // Add: 2-5 soldados (independente do level para manter balanceado)
+  const maxAdd = 5;
 
-  if (roll < 0.30) {
-    // 30% - Adicionar soldados (valores conservadores baseados no level)
+  if (roll < 0.35) {
+    // 35% - Adicionar soldados (valores fixos e baixos)
     type = 'add';
-    value = Math.floor(Math.random() * Math.min(3, maxAdd)) + 1; // 1-3 no início, cresce com level
+    value = Math.floor(Math.random() * maxAdd) + 2; // 2-6 soldados
     color = '#2ECC71';
   } else if (roll < 0.50) {
-    // 20% - Multiplicar soldados (sempre x2 máximo)
+    // 15% - Multiplicar soldados (apenas x1.5, nunca x2)
     type = 'multiply';
-    value = 2; // Sempre x2, nunca mais
+    value = 1.5; // Sempre x1.5 para evitar explosão
     color = '#3498DB';
   } else if (roll < 0.58) {
     // 8% - Buff de firerate
     type = 'firerate';
-    value = 1.5;
+    value = 1.3;
     color = '#F39C12';
   } else if (roll < 0.66) {
     // 8% - Buff de dano
     type = 'damage';
-    value = 1.5;
+    value = 1.3;
     color = '#9900ffff';
   } else if (roll < 0.74) {
     // 8% - Buff de velocidade
     type = 'speed';
-    value = 1.2;
+    value = 1.15;
     color = '#00BCD4';
   } else if (roll < 0.88) {
     // 14% - Subtrair soldados (valores menores, nunca fatal)
@@ -168,9 +180,9 @@ export function createGate(canvasWidth: number, y: number, side: 'left' | 'right
     value = Math.floor(Math.random() * 3) + 1; // 1-3 soldados apenas
     color = '#ff1900ff';
   } else {
-    // 12% - Dividir soldados (sempre por 2, nunca pior)
+    // 12% - Dividir soldados (sempre por 1.5, não por 2)
     type = 'divide';
-    value = 2; // Sempre divide por 2
+    value = 1.5; // Divide por 1.5
     color = '#ff0000ff';
   }
 
@@ -192,10 +204,7 @@ export function createGatePair(canvasWidth: number, y: number, level: number = 1
   const leftGate = createGate(canvasWidth, y, 'left', level);
   const rightGate = createGate(canvasWidth, y, 'right', level);
 
-  // Valores máximos baseados no level
-  const maxAdd = Math.min(15, 3 + (level - 1));
-
-  // SEMPRE garantir que um gate é bom e outro é ruim
+  // SEMPRE garantir que um gate é bom e outro é ruim para forçar decisão estratégica
   const goodTypes = ['add', 'multiply', 'firerate', 'damage', 'speed'];
 
   const leftIsGood = goodTypes.includes(leftGate.type);
@@ -206,22 +215,22 @@ export function createGatePair(canvasWidth: number, y: number, level: number = 1
     rightGate.type = Math.random() > 0.5 ? 'subtract' : 'divide';
     rightGate.value = rightGate.type === 'subtract' ?
       Math.floor(Math.random() * 2) + 1 : // 1-2 apenas
-      2; // Sempre divide por 2
+      1.5; // Divide por 1.5
     rightGate.color = rightGate.type === 'subtract' ? '#E74C3C' : '#9B59B6';
   } else if (!leftIsGood && !rightIsGood) {
-    // Mudar o esquerdo para bom (valores conservadores baseados no level)
+    // Mudar o esquerdo para bom (valores conservadores)
     const buffRoll = Math.random();
     if (buffRoll < 0.5) {
       leftGate.type = 'add';
-      leftGate.value = Math.floor(Math.random() * Math.min(3, maxAdd)) + 1; // 1-3 baseado no level
+      leftGate.value = Math.floor(Math.random() * 4) + 2; // 2-5
       leftGate.color = '#2ECC71';
-    } else if (buffRoll < 0.85) {
+    } else if (buffRoll < 0.75) {
       leftGate.type = 'multiply';
-      leftGate.value = 2; // Sempre x2
+      leftGate.value = 1.5; // Sempre x1.5
       leftGate.color = '#3498DB';
     } else {
       leftGate.type = 'firerate';
-      leftGate.value = 1.5;
+      leftGate.value = 1.3;
       leftGate.color = '#F39C12';
     }
   }
@@ -241,28 +250,46 @@ export function createGatePair(canvasWidth: number, y: number, level: number = 1
 }
 
 export function createBoss(canvasWidth: number, level: number): Boss {
+  // Vida do boss aumentada em 10x
+  const bossHp = (50 + level * 30) * 10;
   return {
     x: canvasWidth / 2 - 50,
     y: -200,
     width: 100,
     height: 100,
-    hp: 50 + level * 30,
-    maxHp: 50 + level * 30,
+    hp: bossHp,
+    maxHp: bossHp,
     isActive: true,
     color: '#8B0000',
   };
 }
 
+export function createMiniBoss(canvasWidth: number, y: number, level: number): MiniBoss {
+  // Vida do mini-boss aumentada em 5x
+  const miniBossHp = (20 + level * 15) * 5;
+  return {
+    id: miniBossIdCounter++,
+    x: canvasWidth / 2 - 40 + (Math.random() - 0.5) * 100,
+    y,
+    width: 80,
+    height: 80,
+    hp: miniBossHp,
+    maxHp: miniBossHp,
+    isActive: true,
+    color: '#FF4500', // Laranja escuro para mini-boss
+  };
+}
+
 export function createInitialEntities(canvasWidth: number, canvasHeight: number): Entities {
-  // Criar hordas iniciais menores para começar mais fácil
+  // Criar hordas iniciais com mínimo de 15
   const initialHordes = [];
 
-  // Spawnar 2 hordas iniciais pequenas
+  // Spawnar 2 hordas iniciais
   const hordePositions = [-80, -250];
-  const enemyCounts = [5, 8]; // Bem menores para dar tempo do jogador crescer
+  const enemyCounts = [15, 15]; // Mínimo 15 inimigos
 
   for (let i = 0; i < hordePositions.length; i++) {
-    initialHordes.push(createEnemyHorde(canvasWidth, hordePositions[i], enemyCounts[i]));
+    initialHordes.push(createEnemyHorde(canvasWidth, hordePositions[i], enemyCounts[i], 1));
   }
 
   return {
@@ -272,5 +299,6 @@ export function createInitialEntities(canvasWidth: number, canvasHeight: number)
     weapons: [],
     bullets: [],
     boss: null,
+    miniBosses: [],
   };
 }

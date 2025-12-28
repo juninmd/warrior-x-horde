@@ -1,14 +1,13 @@
 // spawner.ts - Gerador de obstáculos e inimigos
-import { Entities, GameState } from './types';
-import { createGatePair, createEnemyHorde, createBoss } from './entities';
+import { Entities, GameState, MAX_ENEMIES } from './types';
+import { createGatePair, createEnemyHorde, createBoss, createMiniBoss } from './entities';
 
 export function spawnGates(entities: Entities, canvasWidth: number, gameState: GameState): void {
-  // Spawnar gates - espaçamento diminui com o level (3x mais frequentes)
+  // Spawnar gates - espaçamento maior para dar tempo de decisão
   const spawnY = -100;
-  // Gates mais espaçados no início, ficam mais frequentes com o level
-  const baseSpacing = 1000; // 3x mais frequente (era 3000)
-  const levelReduction = Math.min(500, (gameState.currentLevel - 1) * 50); // -50 por level, max -500
-  const gateSpacing = Math.max(500, baseSpacing - levelReduction); // Mínimo 500 (era 1500)
+  const baseSpacing = 1200; // Mais espaçados
+  const levelReduction = Math.min(400, (gameState.currentLevel - 1) * 40);
+  const gateSpacing = Math.max(700, baseSpacing - levelReduction); // Mínimo 700
 
   // Remover gates que já passaram
   entities.gates = entities.gates.filter(gate => gate.y < 1200);
@@ -24,14 +23,28 @@ export function spawnGates(entities: Entities, canvasWidth: number, gameState: G
   }
 }
 
+// Contar total de inimigos ativos
+function getTotalEnemyCount(entities: Entities): number {
+  let total = 0;
+  for (const horde of entities.enemyHordes) {
+    if (horde.isActive) {
+      total += horde.soldiers.filter(s => s.isAlive).length;
+    }
+  }
+  return total;
+}
+
 export function spawnEnemies(entities: Entities, canvasWidth: number, gameState: GameState): void {
-  // Spawnar hordas inimigas - mais fácil no começo, dificuldade crescente
   const spawnY = 0;
 
-  // Espaçamento maior no início, diminui com o level
-  const baseSpacing = 180; // Começa mais espaçado
-  const levelReduction = Math.min(100, (gameState.currentLevel - 1) * 15);
-  const hordeSpacing = Math.max(80, baseSpacing - levelReduction);
+  // Verificar limite de inimigos
+  const currentEnemyCount = getTotalEnemyCount(entities);
+  if (currentEnemyCount >= MAX_ENEMIES) return;
+
+  // Espaçamento menor para hordas mais frequentes
+  const baseSpacing = 150;
+  const levelReduction = Math.min(80, (gameState.currentLevel - 1) * 8);
+  const hordeSpacing = Math.max(70, baseSpacing - levelReduction);
 
   // Remover hordas inativas ou que já passaram
   entities.enemyHordes = entities.enemyHordes.filter(horde => horde.isActive && horde.y < 1200);
@@ -41,28 +54,49 @@ export function spawnEnemies(entities: Entities, canvasWidth: number, gameState:
     ? Math.min(...entities.enemyHordes.map(h => h.y))
     : spawnY + hordeSpacing;
 
-  // Chance de spawn aumenta com o level (40% no level 1, até 85% no level 5+)
-  const spawnChance = Math.min(0.85, 0.4 + (gameState.currentLevel - 1) * 0.09);
+  // Chance de spawn mais alta para hordas mais frequentes
+  const spawnChance = Math.min(0.85, 0.5 + (gameState.currentLevel - 1) * 0.07);
 
   if (lowestHordeY > spawnY && Math.random() < spawnChance) {
-    // Balancear inimigos com base no tamanho do exército do jogador
-    const playerCount = entities.playerArmy.soldiers.filter(s => s.isAlive).length / 8;
+    // Balancear inimigos baseado no tamanho do exército, mas com limites baixos
+    const playerCount = entities.playerArmy.soldiers.filter(s => s.isAlive).length;
 
-    // Multiplicador menor no início, cresce com o level (1.5x a 3x no level 1)
-    const baseMultiplier = 1.0 + Math.random() * 3;
-
-    // Bônus por level (+20% por level, mais agressivo depois)
-    const levelBonus = 1 + (gameState.currentLevel - 1) * 0.2;
+    // Multiplicador muito mais conservador
+    const baseMultiplier = 0.5 + Math.random() * 1.5; // 0.5x a 2x
+    const levelBonus = 1 + (gameState.currentLevel - 1) * 0.1; // +10% por level
 
     const multiplier = baseMultiplier * levelBonus;
     const baseEnemies = Math.floor(playerCount * multiplier);
 
-    // Limites menores no início, crescem com o level
-    const minEnemies = Math.min(50, 8 + gameState.currentLevel * 7); // 15 no level 1, até 50
-    const maxEnemies = Math.min(875, 80 + gameState.currentLevel * 70); // 150 no level 1, cresce rápido
+    // Limites ajustados - mínimo 15
+    const minEnemies = Math.min(30, 15 + gameState.currentLevel * 2); // 15 no level 1, até 30
+    const maxEnemies = Math.min(200, 40 + gameState.currentLevel * 20); // 60 no level 1, até 200
 
-    const enemyCount = Math.min(maxEnemies, Math.max(minEnemies, baseEnemies));
-    entities.enemyHordes.push(createEnemyHorde(canvasWidth, spawnY - hordeSpacing, enemyCount));
+    // Garantir que não excedemos o limite global
+    const availableSpace = MAX_ENEMIES - currentEnemyCount;
+    const enemyCount = Math.min(availableSpace, maxEnemies, Math.max(minEnemies, baseEnemies));
+
+    if (enemyCount > 0) {
+      entities.enemyHordes.push(createEnemyHorde(canvasWidth, spawnY - hordeSpacing, enemyCount, gameState.currentLevel));
+    }
+  }
+}
+
+// Mini-boss spawn durante as hordas
+let lastMiniBossSpawn = 0;
+
+export function spawnMiniBoss(entities: Entities, canvasWidth: number, gameState: GameState): void {
+  // Spawnar mini-boss a cada 20% da distância do level
+  const miniBossInterval = gameState.levelDistance * 0.2;
+  const miniBossThreshold = Math.floor(gameState.distanceTraveled / miniBossInterval);
+
+  if (miniBossThreshold > lastMiniBossSpawn && !entities.boss) {
+    // Não spawnar se já tem muitos mini-bosses ativos
+    const activeMiniBosses = entities.miniBosses.filter(mb => mb.isActive).length;
+    if (activeMiniBosses < 2) {
+      entities.miniBosses.push(createMiniBoss(canvasWidth, -150, gameState.currentLevel));
+      lastMiniBossSpawn = miniBossThreshold;
+    }
   }
 }
 
@@ -70,6 +104,8 @@ export function checkBossSpawn(entities: Entities, canvasWidth: number, gameStat
   // Spawnar boss quando atingir distância do nível
   if (gameState.distanceTraveled >= gameState.levelDistance * 0.9 && !entities.boss) {
     entities.boss = createBoss(canvasWidth, gameState.currentLevel);
+    // Resetar contador de mini-boss para próximo level
+    lastMiniBossSpawn = 0;
   }
 }
 
@@ -78,5 +114,6 @@ export function updateSpawns(entities: Entities, canvasWidth: number, gameState:
 
   spawnGates(entities, canvasWidth, gameState);
   spawnEnemies(entities, canvasWidth, gameState);
+  spawnMiniBoss(entities, canvasWidth, gameState);
   checkBossSpawn(entities, canvasWidth, gameState);
 }

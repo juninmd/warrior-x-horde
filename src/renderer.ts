@@ -623,6 +623,80 @@ function drawBoss(ctx: CanvasRenderingContext2D, boss: Boss, time: number): void
   ctx.fillText(`${Math.ceil(boss.hp)}/${boss.maxHp}`, barX + barWidth / 2, barY + barHeight / 2 + 5);
 }
 
+function drawMiniBoss(ctx: CanvasRenderingContext2D, miniBoss: { x: number; y: number; width: number; height: number; hp: number; maxHp: number; isActive: boolean; color: string }, time: number): void {
+  if (!miniBoss.isActive) return;
+
+  const pulse = Math.sin(time * 0.008) * 5;
+
+  // Sombra
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+  ctx.beginPath();
+  ctx.ellipse(miniBoss.x + miniBoss.width / 2, miniBoss.y + miniBoss.height + 10, miniBoss.width / 2, 12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Corpo do mini-boss
+  const bossGradient = ctx.createRadialGradient(
+    miniBoss.x + miniBoss.width / 2 - 10, miniBoss.y + miniBoss.height / 2 - 10, 0,
+    miniBoss.x + miniBoss.width / 2, miniBoss.y + miniBoss.height / 2, miniBoss.width / 2 + pulse
+  );
+  bossGradient.addColorStop(0, '#FF6347');
+  bossGradient.addColorStop(1, '#FF4500');
+
+  ctx.fillStyle = bossGradient;
+  ctx.beginPath();
+  ctx.arc(miniBoss.x + miniBoss.width / 2, miniBoss.y + miniBoss.height / 2, miniBoss.width / 2 + pulse, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Olhos
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath();
+  ctx.arc(miniBoss.x + miniBoss.width * 0.35, miniBoss.y + miniBoss.height * 0.4, 8, 0, Math.PI * 2);
+  ctx.arc(miniBoss.x + miniBoss.width * 0.65, miniBoss.y + miniBoss.height * 0.4, 8, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Pupilas
+  ctx.fillStyle = '#000000';
+  ctx.beginPath();
+  ctx.arc(miniBoss.x + miniBoss.width * 0.35, miniBoss.y + miniBoss.height * 0.4, 3, 0, Math.PI * 2);
+  ctx.arc(miniBoss.x + miniBoss.width * 0.65, miniBoss.y + miniBoss.height * 0.4, 3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Barra de vida menor
+  const barWidth = 100;
+  const barHeight = 15;
+  const barX = miniBoss.x + miniBoss.width / 2 - barWidth / 2;
+  const barY = miniBoss.y - 25;
+
+  // Fundo da barra
+  ctx.fillStyle = '#333';
+  ctx.beginPath();
+  ctx.roundRect(barX, barY, barWidth, barHeight, 3);
+  ctx.fill();
+
+  // Vida (laranja)
+  const hpGradient = ctx.createLinearGradient(barX, barY, barX + barWidth, barY);
+  hpGradient.addColorStop(0, '#FF6347');
+  hpGradient.addColorStop(1, '#FF4500');
+
+  ctx.fillStyle = hpGradient;
+  ctx.beginPath();
+  ctx.roundRect(barX + 2, barY + 2, (barWidth - 4) * (miniBoss.hp / miniBoss.maxHp), barHeight - 4, 2);
+  ctx.fill();
+
+  // Borda
+  ctx.strokeStyle = '#FFF';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(barX, barY, barWidth, barHeight, 3);
+  ctx.stroke();
+
+  // Label "MINI-BOSS"
+  ctx.fillStyle = '#FF4500';
+  ctx.font = 'bold 10px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('MINI-BOSS', miniBoss.x + miniBoss.width / 2, barY - 5);
+}
+
 function drawBullets(ctx: CanvasRenderingContext2D, bullets: Bullet[]): void {
   for (const bullet of bullets) {
     // Brilho
@@ -976,6 +1050,13 @@ export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameSt
   for (const horde of entities.enemyHordes) {
     if (horde.isActive) {
       drawEnemyHorde(ctx, horde, time);
+    }
+  }
+
+  // Desenhar mini-bosses
+  for (const miniBoss of entities.miniBosses) {
+    if (miniBoss.isActive) {
+      drawMiniBoss(ctx, miniBoss, time);
     }
   }
 

@@ -56,6 +56,8 @@ export interface Soldier {
   size: number;
   isAlive: boolean;
   animOffset: number;
+  hp: number;
+  maxHp: number;
 }
 
 export interface Army {
@@ -81,6 +83,19 @@ export interface EnemyHorde {
   color: string;
   speed: number;
   isActive: boolean;
+  isMini?: boolean; // Mini-boss horde
+}
+
+export interface MiniBoss {
+  id: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  hp: number;
+  maxHp: number;
+  isActive: boolean;
+  color: string;
 }
 
 export interface Gate {
@@ -136,7 +151,12 @@ export interface Entities {
   weapons: Weapon[];
   bullets: Bullet[];
   boss: Boss | null;
+  miniBosses: MiniBoss[];
 }
+
+// Limites de entidades para performance
+export const MAX_HEROES = 1000;
+export const MAX_ENEMIES = 20000;
 
 export interface FloatingText {
   text: string;

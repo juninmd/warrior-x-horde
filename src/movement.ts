@@ -100,6 +100,29 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState): void
     }
   }
 
+  // Mover mini-bosses (mais lentos que as hordas normais)
+  for (const miniBoss of entities.miniBosses) {
+    if (!miniBoss.isActive) continue;
+
+    // Mini-boss se move mais devagar verticalmente
+    const miniBossSpeed = baseSpeed * 0.4; // 40% da velocidade base (bem lento)
+
+    if (miniBoss.y < 200) {
+      miniBoss.y += miniBossSpeed;
+    } else {
+      // Mini-boss continua descendo lentamente e persegue o jogador
+      miniBoss.y += miniBossSpeed * 0.3;
+
+      // Mini-boss persegue o jogador horizontalmente (lentamente)
+      const targetX = entities.playerArmy.centerX - miniBoss.width / 2;
+      const dx = targetX - miniBoss.x;
+      miniBoss.x += dx * 0.015; // Perseguição mais lenta
+    }
+  }
+
+  // Remover mini-bosses inativos
+  entities.miniBosses = entities.miniBosses.filter(mb => mb.isActive && mb.y < 1000);
+
   // Mover bullets
   for (const bullet of entities.bullets) {
     bullet.y += bullet.speed;
