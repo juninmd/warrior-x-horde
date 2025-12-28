@@ -5,17 +5,20 @@ const floatingTexts: FloatingText[] = [];
 const particles: Particle[] = [];
 
 // Limite máximo de partículas para evitar travamentos
-const MAX_PARTICLES = 100;
+const MAX_PARTICLES = 50; // Reduzido de 100 para 50
+
+// Limite máximo de soldados renderizados por grupo (para performance)
+const MAX_RENDERED_SOLDIERS = 100;
 
 // Sistema de partículas (reduzido para melhor performance)
 export function addParticle(x: number, y: number, type: Particle['type'], color: string, count = 1): void {
   // Limitar quantidade de partículas
   if (particles.length >= MAX_PARTICLES) return;
-  
+
   // Reduzir count se estiver chegando no limite
   const availableSlots = MAX_PARTICLES - particles.length;
-  const actualCount = Math.min(count, availableSlots, 3); // Máximo 3 partículas por vez
-  
+  const actualCount = Math.min(count, availableSlots, 2); // Máximo 2 partículas por vez (era 3)
+
   for (let i = 0; i < actualCount; i++) {
     const angle = Math.random() * Math.PI * 2;
     const speed = type === 'explosion' ? 1.5 + Math.random() * 2.5 : 0.8 + Math.random() * 1.5;
@@ -34,12 +37,12 @@ export function addParticle(x: number, y: number, type: Particle['type'], color:
 }
 
 export function addExplosion(x: number, y: number, color: string): void {
-  addParticle(x, y, 'explosion', color, 3); // Reduzido de 6 para 3
-  addParticle(x, y, 'spark', '#FFD700', 2); // Reduzido de 3 para 2
+  addParticle(x, y, 'explosion', color, 2); // Reduzido de 3 para 2
+  addParticle(x, y, 'spark', '#FFD700', 1); // Reduzido de 2 para 1
 }
 
 export function addTrail(x: number, y: number, color: string): void {
-  if (Math.random() < 0.15) { // Reduzido de 0.3 para 0.15
+  if (Math.random() < 0.08) { // Reduzido de 0.15 para 0.08
     addParticle(x, y, 'trail', color, 1);
   }
 }
@@ -524,7 +527,7 @@ function drawArmy(ctx: CanvasRenderingContext2D, army: Army, time: number): void
   if (Math.abs(dx) > 2) {
     // Adicionar trail particles para soldados aleatórios
     const aliveSoldiers = army.soldiers.filter(s => s.isAlive);
-    if (aliveSoldiers.length > 0 && Math.random() < 0.5) {
+    if (aliveSoldiers.length > 0 && Math.random() < 0.3) { // Reduzido de 0.5
       const randomSoldier = aliveSoldiers[Math.floor(Math.random() * aliveSoldiers.length)];
       addTrail(randomSoldier.x, randomSoldier.y + 10, '#4A90D9');
     }
@@ -532,7 +535,21 @@ function drawArmy(ctx: CanvasRenderingContext2D, army: Army, time: number): void
   lastArmyX = army.centerX;
 
   // Ordenar soldados por Y para depth sorting
-  const sortedSoldiers = [...army.soldiers].filter(s => s.isAlive).sort((a, b) => a.y - b.y);
+  let sortedSoldiers = [...army.soldiers].filter(s => s.isAlive).sort((a, b) => a.y - b.y);
+  
+  // OTIMIZAÇÃO: Limitar renderização a MAX_RENDERED_SOLDIERS
+  // Priorizar super guerreiros e soldados mais visíveis (mais próximos do centro)
+  if (sortedSoldiers.length > MAX_RENDERED_SOLDIERS) {
+    // Separar super guerreiros (sempre renderizar)
+    const superSoldiers = sortedSoldiers.filter(s => s.isSuper);
+    const normalSoldiers = sortedSoldiers.filter(s => !s.isSuper);
+    
+    // Pegar os mais próximos do centro da tela
+    const remainingSlots = MAX_RENDERED_SOLDIERS - superSoldiers.length;
+    const selectedNormal = normalSoldiers.slice(0, Math.max(0, remainingSlots));
+    
+    sortedSoldiers = [...superSoldiers, ...selectedNormal].sort((a, b) => a.y - b.y);
+  }
 
   for (const soldier of sortedSoldiers) {
     // Super guerreiros são desenhados com efeito especial (dourados e maiores)
@@ -588,7 +605,18 @@ function drawArmy(ctx: CanvasRenderingContext2D, army: Army, time: number): void
 }
 
 function drawEnemyHorde(ctx: CanvasRenderingContext2D, horde: EnemyHorde, time: number): void {
-  const sortedSoldiers = [...horde.soldiers].filter(s => s.isAlive).sort((a, b) => a.y - b.y);
+  let sortedSoldiers = [...horde.soldiers].filter(s => s.isAlive).sort((a, b) => a.y - b.y);
+
+  // OTIMIZAÇÃO: Limitar renderização a MAX_RENDERED_SOLDIERS
+  if (sortedSoldiers.length > MAX_RENDERED_SOLDIERS) {
+    // Pegar uma amostra distribuída uniformemente
+    const step = sortedSoldiers.length / MAX_RENDERED_SOLDIERS;
+    const sampled: typeof sortedSoldiers = [];
+    for (let i = 0; i < MAX_RENDERED_SOLDIERS; i++) {
+      sampled.push(sortedSoldiers[Math.floor(i * step)]);
+    }
+    sortedSoldiers = sampled;
+  }
 
   // FadeIn effect - inimigos aparecem gradualmente quando saem da nave
   const fadeStartY = 100; // Começa a aparecer
@@ -605,7 +633,7 @@ function drawEnemyHorde(ctx: CanvasRenderingContext2D, horde: EnemyHorde, time: 
     drawSoldier3D(ctx, soldier.x, soldier.y, soldier.size, soldier.color, soldier.animOffset, time);
   }
 
-  // Contador de inimigos
+  // Contador de inimigos (usa contagem REAL, não a renderizada)
   const count = horde.soldiers.filter(s => s.isAlive).length;
   if (count > 0 && hordeAlpha > 0.5) {
     // Sombra
