@@ -65,9 +65,9 @@ export function createPlayerArmy(canvasWidth: number, canvasHeight: number): Arm
     targetX: centerX,
     color: '#4A90D9',
     isPlayer: true,
-    fireRate: 200, // Disparo mais frequente (era 500ms)
+    fireRate: 600, // FireRate base: 600ms, vai diminuindo com gates
     lastShotTime: 0,
-    damage: 1,
+    damage: 3, // Dano base aumentado para 3
   };
 }
 
@@ -174,53 +174,79 @@ export function createEnemyHorde(canvasWidth: number, y: number, count: number, 
   };
 }
 
-export function createGate(canvasWidth: number, y: number, side: 'left' | 'right', level: number = 1): Gate {
+export function createGate(canvasWidth: number, y: number, side: 'left' | 'right', level: number = 1, currentHeroCount: number = 0): Gate {
   const gateWidth = canvasWidth / 2 - 30;
-  const roll = Math.random();
+  let roll = Math.random();
 
   let type: 'add' | 'multiply' | 'subtract' | 'divide' | 'firerate' | 'damage' | 'superwarrior';
   let value: number;
   let color: string;
 
-  // Valores conservadores - evitar multiplicações explosivas
-  // Add: 2-5 soldados (independente do level para manter balanceado)
-  const maxAdd = 5;
+  // Se já atingiu o máximo de heróis, não gerar gates de aumento
+  const atMaxHeroes = currentHeroCount >= MAX_HEROES;
 
-  if (roll < 0.35) {
-    // 35% - Adicionar soldados (valores fixos e baixos)
-    type = 'add';
-    value = Math.floor(Math.random() * maxAdd) + 2; // 2-6 soldados
-    color = '#2ECC71';
-  } else if (roll < 0.50) {
-    // 15% - Multiplicar soldados (apenas x1.5, nunca x2)
-    type = 'multiply';
-    value = 1.5; // Sempre x1.5 para evitar explosão
-    color = '#3498DB';
-  } else if (roll < 0.58) {
-    // 8% - Buff de firerate
-    type = 'firerate';
-    value = 1.3;
-    color = '#F39C12';
-  } else if (roll < 0.66) {
-    // 8% - Buff de dano
-    type = 'damage';
-    value = 1.3;
-    color = '#9900ffff';
-  } else if (roll < 0.74) {
-    // 8% - Super Guerreiro (adiciona 1 herói especial)
-    type = 'superwarrior';
-    value = 1; // Adiciona 1 super guerreiro
-    color = '#FFD700'; // Dourado
-  } else if (roll < 0.88) {
-    // 14% - Subtrair soldados (valores menores, nunca fatal)
-    type = 'subtract';
-    value = Math.floor(Math.random() * 3) + 1; // 1-3 soldados apenas
-    color = '#ff1900ff';
+  // Se no máximo, redistribuir probabilidades (remover add, multiply, superwarrior)
+  if (atMaxHeroes) {
+    // Apenas gates que não aumentam heróis: firerate, damage, subtract, divide
+    if (roll < 0.35) {
+      type = 'firerate';
+      value = 0.92;
+      color = '#F39C12';
+    } else if (roll < 0.70) {
+      type = 'damage';
+      value = 2;
+      color = '#9900ffff';
+    } else if (roll < 0.85) {
+      type = 'subtract';
+      value = Math.floor(Math.random() * 2) + 1;
+      color = '#ff1900ff';
+    } else {
+      type = 'divide';
+      value = 1.2;
+      color = '#ff0000ff';
+    }
   } else {
-    // 12% - Dividir soldados (sempre por 1.5, não por 2)
-    type = 'divide';
-    value = 1.5; // Divide por 1.5
-    color = '#ff0000ff';
+    // MUITO mais chances de aumentar o exército e super soldados!
+    // Add com valores incrementais baseados no level
+    const baseAdd = 5 + Math.floor(level / 2); // 5 no level 1, aumenta com level
+    const maxAdd = baseAdd + 8; // Até +8 extra
+
+    if (roll < 0.50) {
+      // 50% - Adicionar soldados (valores maiores)
+      type = 'add';
+      value = Math.floor(Math.random() * (maxAdd - baseAdd + 1)) + baseAdd; // 5-13 no level 1
+      color = '#2ECC71';
+    } else if (roll < 0.62) {
+      // 12% - Multiplicar soldados
+      type = 'multiply';
+      value = 1.5; // x1.5 para crescimento sólido
+      color = '#3498DB';
+    } else if (roll < 0.70) {
+      // 8% - Buff de firerate (diminui aos pouquinhos)
+      type = 'firerate';
+      value = 0.92; // Multiplica por 0.92 (~8% mais rápido por gate)
+      color = '#F39C12';
+    } else if (roll < 0.76) {
+      // 6% - Buff de dano FORTE
+      type = 'damage';
+      value = 2; // Dobra o dano!
+      color = '#9900ffff';
+    } else if (roll < 0.88) {
+      // 12% - Super Guerreiro (adiciona 1-3 heróis especiais)
+      type = 'superwarrior';
+      value = 1 + Math.floor(Math.random() * 3); // 1-3 super guerreiros
+      color = '#FFD700'; // Dourado
+    } else if (roll < 0.94) {
+      // 6% - Subtrair soldados (valores baixos)
+      type = 'subtract';
+      value = Math.floor(Math.random() * 2) + 1; // 1-2 soldados apenas
+      color = '#ff1900ff';
+    } else {
+      // 6% - Dividir soldados (sempre por 1.2, bem leve)
+      type = 'divide';
+      value = 1.2; // Divide por 1.2
+      color = '#ff0000ff';
+    }
   }
 
   return {
@@ -237,12 +263,18 @@ export function createGate(canvasWidth: number, y: number, side: 'left' | 'right
   };
 }
 
-export function createGatePair(canvasWidth: number, y: number, level: number = 1): Gate[] {
-  const leftGate = createGate(canvasWidth, y, 'left', level);
-  const rightGate = createGate(canvasWidth, y, 'right', level);
+export function createGatePair(canvasWidth: number, y: number, level: number = 1, currentHeroCount: number = 0): Gate[] {
+  const leftGate = createGate(canvasWidth, y, 'left', level, currentHeroCount);
+  const rightGate = createGate(canvasWidth, y, 'right', level, currentHeroCount);
 
-  // SEMPRE garantir que um gate é bom e outro é ruim para forçar decisão estratégica
-  const goodTypes = ['add', 'multiply', 'firerate', 'damage', 'superwarrior'];
+  // Se no máximo de heróis, não forçar gates de aumento
+  const atMaxHeroes = currentHeroCount >= MAX_HEROES;
+
+  // Tipos que aumentam heróis (excluir se no máximo)
+  const heroIncreaseTypes = ['add', 'multiply', 'superwarrior'];
+  const goodTypes = atMaxHeroes
+    ? ['firerate', 'damage'] // Apenas buffs que não aumentam heróis
+    : ['add', 'multiply', 'firerate', 'damage', 'superwarrior'];
 
   const leftIsGood = goodTypes.includes(leftGate.type);
   const rightIsGood = goodTypes.includes(rightGate.type);
@@ -257,22 +289,35 @@ export function createGatePair(canvasWidth: number, y: number, level: number = 1
   } else if (!leftIsGood && !rightIsGood) {
     // Mudar o esquerdo para bom (valores conservadores)
     const buffRoll = Math.random();
-    if (buffRoll < 0.4) {
-      leftGate.type = 'add';
-      leftGate.value = Math.floor(Math.random() * 4) + 2; // 2-5
-      leftGate.color = '#2ECC71';
-    } else if (buffRoll < 0.65) {
-      leftGate.type = 'multiply';
-      leftGate.value = 1.5; // Sempre x1.5
-      leftGate.color = '#3498DB';
-    } else if (buffRoll < 0.85) {
-      leftGate.type = 'firerate';
-      leftGate.value = 1.3;
-      leftGate.color = '#F39C12';
+    if (atMaxHeroes) {
+      // Apenas firerate e damage quando no máximo
+      if (buffRoll < 0.5) {
+        leftGate.type = 'firerate';
+        leftGate.value = 0.92;
+        leftGate.color = '#F39C12';
+      } else {
+        leftGate.type = 'damage';
+        leftGate.value = 2;
+        leftGate.color = '#9900ffff';
+      }
     } else {
-      leftGate.type = 'superwarrior';
-      leftGate.value = 1;
-      leftGate.color = '#FFD700';
+      if (buffRoll < 0.4) {
+        leftGate.type = 'add';
+        leftGate.value = Math.floor(Math.random() * 4) + 2; // 2-5
+        leftGate.color = '#2ECC71';
+      } else if (buffRoll < 0.65) {
+        leftGate.type = 'multiply';
+        leftGate.value = 1.5; // Sempre x1.5
+        leftGate.color = '#3498DB';
+      } else if (buffRoll < 0.85) {
+        leftGate.type = 'firerate';
+        leftGate.value = 0.92;
+        leftGate.color = '#F39C12';
+      } else {
+        leftGate.type = 'superwarrior';
+        leftGate.value = 1;
+        leftGate.color = '#FFD700';
+      }
     }
   }
 
@@ -291,8 +336,29 @@ export function createGatePair(canvasWidth: number, y: number, level: number = 1
 }
 
 export function createBoss(canvasWidth: number, level: number): Boss {
-  // Vida do boss aumentada em 10x
-  const bossHp = (50 + level * 30) * 10;
+  // Level 10 = Boss final (Nave Mãe)
+  const isMothership = level >= 10;
+
+  if (isMothership) {
+    // Nave mãe - boss final com MUITA vida
+    const bossHp = 10000 + (level - 10) * 5000; // 10000 HP base + 5000 por level acima de 10
+    return {
+      x: canvasWidth / 2,
+      y: 25, // Posição fixa da nave no topo (não se move!)
+      width: 90,
+      height: 30,
+      hp: bossHp,
+      maxHp: bossHp,
+      isActive: true,
+      color: '#00FF88',
+      spawnTime: Date.now(),
+      isMoving: false, // Nave não se move, fica no topo
+      type: 'mothership',
+    };
+  }
+
+  // Boss normal - Vida aumentada em 30x
+  const bossHp = (50 + level * 30) * 30;
   return {
     x: canvasWidth / 2 - 50,
     y: -200,
@@ -302,8 +368,9 @@ export function createBoss(canvasWidth: number, level: number): Boss {
     maxHp: bossHp,
     isActive: true,
     color: '#8B0000',
-    spawnTime: Date.now(), // Momento em que o boss spawnou
-    isMoving: false, // Começa parado
+    spawnTime: Date.now(),
+    isMoving: false,
+    type: 'normal',
   };
 }
 

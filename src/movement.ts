@@ -58,7 +58,12 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState): void
   // Gates começam lentos e ficam mais rápidos com o level (1.5x no level 1, até 3x no level 10+)
   const gateSpeedMultiplier = Math.min(3, 1.5 + (gameState.currentLevel - 1) * 0.15);
   const gateSpeed = baseSpeed * gateSpeedMultiplier;
-  const enemySpeed = baseSpeed * 0.50;  // Inimigos são 4x mais lentos
+
+  // Inimigos começam BEM lentos e aceleram aos poucos com o level
+  // Level 1: 0.25x, Level 5: 0.45x, Level 10: 0.70x
+  const enemySpeedMultiplier = Math.min(0.8, 0.25 + (gameState.currentLevel - 1) * 0.05);
+  const enemySpeed = baseSpeed * enemySpeedMultiplier;
+
   const canvasHeight = 800;
   const pursuitThreshold = canvasHeight * 0.6;
 
@@ -93,24 +98,69 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState): void
     updateHordeFormation(horde, enemySpeed);
   }
 
-  // Mover boss - fica parado por 10 segundos, depois avança igual inimigos
+  // Mover boss - comportamento diferente para nave mãe
   if (entities.boss && entities.boss.isActive) {
     const boss = entities.boss;
-    const timeSinceSpawn = Date.now() - boss.spawnTime;
-    const waitTime = 10000; // 10 segundos parado
+    const canvasWidth = 480; // Largura padrão do canvas
 
-    // Primeiro, mover até a posição inicial (y = 100)
-    if (boss.y < 100) {
-      boss.y += baseSpeed;
-    } else if (timeSinceSpawn > waitTime) {
-      // Após 10 segundos, começa a avançar igual aos inimigos comuns
-      boss.isMoving = true;
-      boss.y += enemySpeed * 0.8; // Um pouco mais lento que inimigos normais
+    // Nave mãe (boss final do level 10) - movimento aleatório suave
+    if (boss.type === 'mothership') {
+      // Inicializa velocidades aleatórias se não existirem
+      if (boss.vx === undefined) boss.vx = (Math.random() - 0.5) * 2;
+      if (boss.vy === undefined) boss.vy = (Math.random() - 0.5) * 0.5;
 
-      // Boss também persegue o jogador horizontalmente (lentamente)
-      const targetX = entities.playerArmy.centerX - boss.width / 2;
-      const dx = targetX - boss.x;
-      boss.x += dx * 0.01;
+      // Movimento suave
+      boss.x += boss.vx;
+      boss.y += boss.vy;
+
+      // Limites horizontais (margem de 20px)
+      const minX = 20;
+      const maxX = canvasWidth - boss.width - 20;
+      if (boss.x < minX) {
+        boss.x = minX;
+        boss.vx = Math.abs(boss.vx) * (0.8 + Math.random() * 0.4);
+      } else if (boss.x > maxX) {
+        boss.x = maxX;
+        boss.vx = -Math.abs(boss.vx) * (0.8 + Math.random() * 0.4);
+      }
+
+      // Limites verticais (entre y=20 e y=80)
+      const minY = 20;
+      const maxY = 80;
+      if (boss.y < minY) {
+        boss.y = minY;
+        boss.vy = Math.abs(boss.vy) * (0.8 + Math.random() * 0.4);
+      } else if (boss.y > maxY) {
+        boss.y = maxY;
+        boss.vy = -Math.abs(boss.vy) * (0.8 + Math.random() * 0.4);
+      }
+
+      // Mudança aleatória de direção ocasional
+      if (Math.random() < 0.02) {
+        boss.vx += (Math.random() - 0.5) * 0.5;
+        boss.vy += (Math.random() - 0.5) * 0.2;
+        // Limitar velocidade máxima
+        boss.vx = Math.max(-2, Math.min(2, boss.vx));
+        boss.vy = Math.max(-0.5, Math.min(0.5, boss.vy));
+      }
+    } else {
+      // Boss normal - fica parado por 10 segundos, depois avança
+      const timeSinceSpawn = Date.now() - boss.spawnTime;
+      const waitTime = 10000; // 10 segundos parado
+
+      // Primeiro, mover até a posição inicial (y = 100)
+      if (boss.y < 100) {
+        boss.y += baseSpeed;
+      } else if (timeSinceSpawn > waitTime) {
+        // Após 10 segundos, começa a avançar igual aos inimigos comuns
+        boss.isMoving = true;
+        boss.y += enemySpeed * 0.8; // Um pouco mais lento que inimigos normais
+
+        // Boss também persegue o jogador horizontalmente (lentamente)
+        const targetX = entities.playerArmy.centerX - boss.width / 2;
+        const dx = targetX - boss.x;
+        boss.x += dx * 0.01;
+      }
     }
   }
 

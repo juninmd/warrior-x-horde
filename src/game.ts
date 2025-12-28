@@ -254,7 +254,7 @@ function gameLoop(currentTime: number = 0): void {
   updateSuperCannonButton();
 
   // Spawnar elementos
-  updateSpawns(entities, canvas.width, gameState);
+  updateSpawns(entities, canvas.width, gameState, canvas.height);
 
   // Verificar colisões
   checkCollisions(entities, gameState);
@@ -277,6 +277,7 @@ function gameLoop(currentTime: number = 0): void {
 
   // Checar progresso de nível (vitória do boss = próximo nível)
   if (gameState.isVictory) {
+    // Após level 10, continua em modo infinito!
     advanceToNextLevel();
   }
 
@@ -288,6 +289,7 @@ function gameLoop(currentTime: number = 0): void {
     requestAnimationFrame(gameLoop);
   } else {
     // Esconder botão do Super Cannon no game over
+    superCannonButton.style.display = 'none';
     superCannonButton.style.display = 'none';
 
     // Mostrar tela de game over
@@ -399,3 +401,65 @@ initAudio(); // Inicializar sistema de áudio
 // Desenhar tela inicial
 entities = createInitialEntities(canvas.width, canvas.height);
 render(ctx, entities, gameState);
+
+// DEBUG: Função para ir para um level específico (exposta globalmente)
+function debugSetLevel(targetLevel: number): void {
+  if (!gameState.isStarted) {
+    // Se o jogo não começou, iniciar primeiro
+    startGame();
+  }
+
+  // Definir o level
+  gameState.currentLevel = targetLevel;
+  gameState.distanceTraveled = 0;
+  gameState.levelDistance = 3000 + (targetLevel - 1) * 500;
+  gameState.isVictory = false;
+  gameState.gameSpeed = Math.min(2, gameState.baseGameSpeed + targetLevel * 0.1);
+
+  // Dar um exército razoável para teste
+  const testSoldiers = Math.min(50, 10 + targetLevel * 5);
+  entities = createInitialEntities(canvas.width, canvas.height);
+
+  // Adicionar soldados extras
+  for (let i = 0; i < testSoldiers; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const radius = Math.random() * 50;
+    entities.playerArmy.soldiers.push({
+      id: Math.random(),
+      x: entities.playerArmy.centerX + Math.cos(angle) * radius,
+      y: entities.playerArmy.centerY + Math.sin(angle) * radius,
+      targetX: 0,
+      targetY: 0,
+      color: '#4A90D9',
+      size: 8,
+      isAlive: true,
+      animOffset: Math.random() * Math.PI * 2,
+      hp: 100,
+      maxHp: 100,
+    });
+  }
+
+  // Limpar e recriar entidades
+  entities.gates = [];
+  entities.boss = null;
+  entities.bullets = [];
+  entities.miniBosses = [];
+
+  // Spawnar hordas para o level
+  const baseEnemies = 15 + targetLevel * 3;
+  entities.enemyHordes = [
+    createEnemyHorde(canvas.width, -50, baseEnemies, targetLevel),
+    createEnemyHorde(canvas.width, -200, baseEnemies + 5, targetLevel),
+  ];
+
+  console.log(`🎮 Debug: Indo para Level ${targetLevel}`);
+
+  // Se for level 10+, forçar spawn do boss imediatamente
+  if (targetLevel >= 10) {
+    gameState.distanceTraveled = gameState.levelDistance - 100;
+    console.log(`🛸 Mothership boss aparecerá em breve!`);
+  }
+}
+
+// Expor função globalmente para o HTML acessar
+(window as unknown as { debugSetLevel: typeof debugSetLevel }).debugSetLevel = debugSetLevel;

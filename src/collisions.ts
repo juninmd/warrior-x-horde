@@ -90,13 +90,16 @@ function applyGateEffect(army: Army, gate: Gate, gameState: GameState, entities:
       break;
     }
     case 'firerate': {
-      army.fireRate = Math.max(50, army.fireRate / gate.value);
-      addFloatingText(`🔥 Fire Rate!`, gate.x + gate.width / 2, gate.y, '#F39C12');
+      // Multiplica o fireRate pelo valor (0.92 = ~8% mais rápido por gate)
+      // Limite mínimo de 40ms para máxima cadência
+      army.fireRate = Math.max(40, army.fireRate * gate.value);
+      addFloatingText(`🔥 Fire Rate UP!`, gate.x + gate.width / 2, gate.y, '#F39C12');
       break;
     }
     case 'damage': {
+      // Multiplica o dano pelo valor (2 = dobra o dano!)
       army.damage = (army.damage || 1) * gate.value;
-      addFloatingText(`⚔️ Damage!`, gate.x + gate.width / 2, gate.y, '#E91E63');
+      addFloatingText(`⚔️ DMG x${gate.value}!`, gate.x + gate.width / 2, gate.y, '#E91E63');
       break;
     }
     case 'superwarrior': {

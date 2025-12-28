@@ -44,6 +44,9 @@ export interface GameState {
   combo: number;
   comboTimer: number;
   maxCombo: number;
+  // Boss Atmosphere
+  bossActive: boolean;
+  bossAtmosphereIntensity: number;
 }
 
 export interface Soldier {
@@ -146,6 +149,9 @@ export interface Boss {
   color: string;
   spawnTime: number; // Timestamp de quando o boss spawnou
   isMoving: boolean; // Se já começou a se mover
+  type: 'normal' | 'mothership'; // Tipo de boss - mothership é a nave final
+  vx?: number; // Velocidade horizontal (para mothership)
+  vy?: number; // Velocidade vertical (para mothership)
 }
 
 export interface Entities {
@@ -159,7 +165,7 @@ export interface Entities {
 }
 
 // Limites de entidades para performance
-export const MAX_HEROES = 1000;
+export const MAX_HEROES = 200;
 export const MAX_ENEMIES = 20000;
 
 export interface FloatingText {

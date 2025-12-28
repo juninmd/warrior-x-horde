@@ -111,222 +111,234 @@ function drawRoad(ctx: CanvasRenderingContext2D, _gameState: GameState): void {
   const time = Date.now();
 
   // Definir linha do horizonte onde começa a grama e a estrada visível
-  const horizonY = height * 0.18; // Linha do horizonte (18% da altura)
+  const horizonY = height * 0.22; // Linha do horizonte um pouco mais baixa
 
   // Céu com gradiente realista (azul mais profundo no topo)
   const skyGradient = ctx.createLinearGradient(0, 0, 0, horizonY);
-  skyGradient.addColorStop(0, '#1e3a5f'); // Azul escuro no topo
-  skyGradient.addColorStop(0.4, '#3b6b9a'); // Azul médio
-  skyGradient.addColorStop(0.7, '#7eb3d8'); // Azul claro
-  skyGradient.addColorStop(1, '#b8d4e8'); // Quase branco no horizonte
+  skyGradient.addColorStop(0, '#87CEEB'); // Azul céu claro
+  skyGradient.addColorStop(0.3, '#ADD8E6'); // Azul claro
+  skyGradient.addColorStop(0.6, '#B0E0E6'); // Azul bem claro
+  skyGradient.addColorStop(1, '#E0F4FF'); // Quase branco no horizonte
   ctx.fillStyle = skyGradient;
   ctx.fillRect(0, 0, width, horizonY + 10);
 
-  // Sol/lua brilhante
-  const sunX = width * 0.8;
-  const sunY = height * 0.06;
-  const sunGlow = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 50);
-  sunGlow.addColorStop(0, 'rgba(255, 255, 200, 1)');
-  sunGlow.addColorStop(0.3, 'rgba(255, 220, 150, 0.8)');
-  sunGlow.addColorStop(0.6, 'rgba(255, 180, 100, 0.3)');
-  sunGlow.addColorStop(1, 'rgba(255, 150, 50, 0)');
+  // Sol brilhante
+  const sunX = width * 0.82;
+  const sunY = height * 0.08;
+  const sunGlow = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 60);
+  sunGlow.addColorStop(0, 'rgba(255, 255, 220, 1)');
+  sunGlow.addColorStop(0.2, 'rgba(255, 240, 180, 0.9)');
+  sunGlow.addColorStop(0.5, 'rgba(255, 220, 150, 0.4)');
+  sunGlow.addColorStop(1, 'rgba(255, 200, 100, 0)');
   ctx.fillStyle = sunGlow;
-  ctx.fillRect(sunX - 50, sunY - 50, 100, 100);
-
-  // Nuvens suaves (mais altas)
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-  const cloudOffset = (time * 0.008) % (width + 200);
-  for (let i = 0; i < 3; i++) {
-    const cx = ((i * 180 + cloudOffset) % (width + 100)) - 50;
-    const cy = 20 + i * 12;
-    ctx.beginPath();
-    ctx.ellipse(cx, cy, 35, 12, 0, 0, Math.PI * 2);
-    ctx.ellipse(cx + 20, cy - 3, 25, 10, 0, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  // Montanhas distantes (no horizonte, ATRÁS de tudo)
-  // Camada mais distante (mais clara)
-  ctx.fillStyle = '#8aa8c4';
-  for (let i = 0; i < 6; i++) {
-    const x = i * (width / 4) - 60;
-    const peakHeight = 40 + Math.sin(i * 2.1) * 20;
-    ctx.beginPath();
-    ctx.moveTo(x - 20, horizonY);
-    ctx.lineTo(x + 50, horizonY - peakHeight);
-    ctx.lineTo(x + 120, horizonY);
-    ctx.closePath();
-    ctx.fill();
-  }
-
-  // Camada mais próxima de montanhas (mais escura)
-  ctx.fillStyle = '#6b8cae';
-  for (let i = 0; i < 5; i++) {
-    const x = i * (width / 3) - 30;
-    const peakHeight = 50 + Math.sin(i * 1.7) * 25;
-    ctx.beginPath();
-    ctx.moveTo(x, horizonY);
-    ctx.lineTo(x + 60, horizonY - peakHeight);
-    ctx.lineTo(x + 120, horizonY);
-    ctx.closePath();
-    ctx.fill();
-  }
-
-  // Neve nos picos
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-  for (let i = 0; i < 5; i++) {
-    const x = i * (width / 3) - 30;
-    const peakHeight = 50 + Math.sin(i * 1.7) * 25;
-    ctx.beginPath();
-    ctx.moveTo(x + 45, horizonY - peakHeight + 12);
-    ctx.lineTo(x + 60, horizonY - peakHeight);
-    ctx.lineTo(x + 75, horizonY - peakHeight + 12);
-    ctx.closePath();
-    ctx.fill();
-  }
-
-  // Área verde/grama (a partir do horizonte até embaixo)
-  const grassGradient = ctx.createLinearGradient(0, horizonY, 0, height);
-  grassGradient.addColorStop(0, '#4a7a4a'); // Verde escuro distante
-  grassGradient.addColorStop(0.3, '#5a9a5a'); // Verde médio
-  grassGradient.addColorStop(1, '#6ab06a'); // Verde claro próximo
-  ctx.fillStyle = grassGradient;
-  ctx.fillRect(0, horizonY, width, height - horizonY);
-
-  // Estrada principal com perspectiva
-  const roadTop = -100; // Começa bem acima da tela para inimigos
-  const roadTopWidth = width * 0.05; // Bem estreita no topo (fora da tela)
-  const roadHorizonWidth = width * 0.25; // Largura no horizonte
-
-  // Asfalto com gradiente realista
-  const roadGradient = ctx.createLinearGradient(0, horizonY, 0, height);
-  roadGradient.addColorStop(0, '#3a3a3a'); // Cinza escuro no horizonte
-  roadGradient.addColorStop(0.5, '#4a4a4a'); // Cinza médio
-  roadGradient.addColorStop(1, '#5a5a5a'); // Cinza mais claro perto
-  ctx.fillStyle = roadGradient;
   ctx.beginPath();
-  ctx.moveTo(width / 2 - roadTopWidth / 2, roadTop);
-  ctx.lineTo(width / 2 + roadTopWidth / 2, roadTop);
-  ctx.lineTo(width, height);
-  ctx.lineTo(0, height);
+  ctx.arc(sunX, sunY, 60, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Nuvens suaves movendo
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+  const cloudOffset = (time * 0.01) % (width + 300);
+  for (let i = 0; i < 4; i++) {
+    const cx = ((i * 200 + cloudOffset) % (width + 150)) - 75;
+    const cy = 25 + i * 15 + Math.sin(i) * 10;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, 40, 15, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx + 25, cy - 5, 30, 12, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx - 20, cy + 2, 25, 10, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Montanhas distantes no horizonte (azuladas pela atmosfera)
+  // Camada mais distante
+  ctx.fillStyle = '#A8C4D8';
+  ctx.beginPath();
+  ctx.moveTo(0, horizonY);
+  for (let i = 0; i <= width; i += 40) {
+    const peakHeight = 25 + Math.sin(i * 0.02) * 15 + Math.sin(i * 0.05) * 10;
+    ctx.lineTo(i, horizonY - peakHeight);
+  }
+  ctx.lineTo(width, horizonY);
   ctx.closePath();
   ctx.fill();
 
-  // Bordas da estrada (calçada/meio-fio)
-  const borderGradient = ctx.createLinearGradient(0, horizonY, 0, height);
-  borderGradient.addColorStop(0, '#7a7a6a');
-  borderGradient.addColorStop(1, '#909080');
-  ctx.fillStyle = borderGradient;
+  // Camada mais próxima de montanhas
+  ctx.fillStyle = '#7BA3BD';
+  ctx.beginPath();
+  ctx.moveTo(0, horizonY);
+  for (let i = 0; i <= width; i += 50) {
+    const peakHeight = 35 + Math.sin(i * 0.025 + 1) * 20 + Math.sin(i * 0.04) * 12;
+    ctx.lineTo(i, horizonY - peakHeight);
+  }
+  ctx.lineTo(width, horizonY);
+  ctx.closePath();
+  ctx.fill();
 
-  // Calcular largura da estrada no horizonte para as bordas
-  const horizonProgress = (horizonY - roadTop) / (height - roadTop);
-  const roadWidthAtHorizon = roadTopWidth + (width - roadTopWidth) * horizonProgress;
+  // Neve nos picos principais
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+  const peaks = [80, 200, 350, 420];
+  peaks.forEach(px => {
+    const peakH = 35 + Math.sin(px * 0.025 + 1) * 20;
+    ctx.beginPath();
+    ctx.moveTo(px - 15, horizonY - peakH + 8);
+    ctx.lineTo(px, horizonY - peakH);
+    ctx.lineTo(px + 15, horizonY - peakH + 8);
+    ctx.closePath();
+    ctx.fill();
+  });
+
+  // === NAVE ALIENÍGENA NO CÉU ===
+  // A nave fica pairando bem alto no céu, de onde os inimigos saem
+  const shipX = width / 2;
+  const shipY = 25; // Mais para cima ainda
+  drawAlienShip(ctx, shipX, shipY, time, horizonY);
+
+  // Área verde/grama (a partir do horizonte até embaixo)
+  const grassGradient = ctx.createLinearGradient(0, horizonY, 0, height);
+  grassGradient.addColorStop(0, '#4A7C59'); // Verde escuro distante
+  grassGradient.addColorStop(0.2, '#5B8A5B'); // Verde médio
+  grassGradient.addColorStop(0.5, '#6B9B6B'); // Verde
+  grassGradient.addColorStop(1, '#7CAC7C'); // Verde claro próximo
+  ctx.fillStyle = grassGradient;
+  ctx.fillRect(0, horizonY, width, height - horizonY);
+
+  // Textura de grama (linhas sutis)
+  ctx.strokeStyle = 'rgba(50, 100, 50, 0.15)';
+  ctx.lineWidth = 1;
+  for (let y = horizonY + 20; y < height; y += 30) {
+    for (let x = 0; x < width; x += 15) {
+      if (Math.random() > 0.7) {
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + 3, y - 5);
+        ctx.stroke();
+      }
+    }
+  }
+
+  // === ESTRADA PRINCIPAL - começa no horizonte, NÃO no céu ===
+  const roadStartY = horizonY; // Estrada começa no horizonte
+  const roadHorizonWidth = width * 0.18; // Largura no horizonte
+  const roadBottomWidth = width * 0.95; // Quase toda largura embaixo
+
+  // Asfalto com gradiente realista
+  const roadGradient = ctx.createLinearGradient(0, roadStartY, 0, height);
+  roadGradient.addColorStop(0, '#3D3D3D'); // Cinza escuro no horizonte
+  roadGradient.addColorStop(0.3, '#4A4A4A'); // Cinza médio
+  roadGradient.addColorStop(0.7, '#525252'); // Cinza
+  roadGradient.addColorStop(1, '#5A5A5A'); // Cinza mais claro perto
+  ctx.fillStyle = roadGradient;
+  ctx.beginPath();
+  ctx.moveTo(width / 2 - roadHorizonWidth / 2, roadStartY);
+  ctx.lineTo(width / 2 + roadHorizonWidth / 2, roadStartY);
+  ctx.lineTo(width / 2 + roadBottomWidth / 2, height);
+  ctx.lineTo(width / 2 - roadBottomWidth / 2, height);
+  ctx.closePath();
+  ctx.fill();
+
+  // Bordas da estrada (acostamento)
+  ctx.fillStyle = '#8B8B7A';
+  const borderWidth = 8;
 
   // Borda esquerda
   ctx.beginPath();
-  ctx.moveTo(width / 2 - roadWidthAtHorizon / 2, horizonY);
-  ctx.lineTo(0, height);
-  ctx.lineTo(-10, height);
-  ctx.lineTo(width / 2 - roadWidthAtHorizon / 2 - 6, horizonY);
+  ctx.moveTo(width / 2 - roadHorizonWidth / 2, roadStartY);
+  ctx.lineTo(width / 2 - roadHorizonWidth / 2 - 3, roadStartY);
+  ctx.lineTo(width / 2 - roadBottomWidth / 2 - borderWidth, height);
+  ctx.lineTo(width / 2 - roadBottomWidth / 2, height);
   ctx.closePath();
   ctx.fill();
 
   // Borda direita
   ctx.beginPath();
-  ctx.moveTo(width / 2 + roadWidthAtHorizon / 2, horizonY);
-  ctx.lineTo(width, height);
-  ctx.lineTo(width + 10, height);
-  ctx.lineTo(width / 2 + roadWidthAtHorizon / 2 + 6, horizonY);
+  ctx.moveTo(width / 2 + roadHorizonWidth / 2, roadStartY);
+  ctx.lineTo(width / 2 + roadHorizonWidth / 2 + 3, roadStartY);
+  ctx.lineTo(width / 2 + roadBottomWidth / 2 + borderWidth, height);
+  ctx.lineTo(width / 2 + roadBottomWidth / 2, height);
   ctx.closePath();
   ctx.fill();
 
-  // === PONTE NO HORIZONTE ===
-  const bridgeY = horizonY;
-  const bridgeHeight = 35;
-  const bridgeWidth = roadWidthAtHorizon + 40;
-
-  // Pilares da ponte (embaixo)
-  ctx.fillStyle = '#5a4a3a';
-  const pillarWidth = 12;
-  const pillarHeight = 25;
-  // Pilar esquerdo
-  ctx.fillRect(width / 2 - bridgeWidth / 2 + 10, bridgeY + bridgeHeight - 8, pillarWidth, pillarHeight);
-  // Pilar direito
-  ctx.fillRect(width / 2 + bridgeWidth / 2 - 22, bridgeY + bridgeHeight - 8, pillarWidth, pillarHeight);
-  // Pilar central
-  ctx.fillRect(width / 2 - pillarWidth / 2, bridgeY + bridgeHeight - 8, pillarWidth, pillarHeight);
-
-  // Base da ponte (deck)
-  const deckGradient = ctx.createLinearGradient(0, bridgeY, 0, bridgeY + bridgeHeight);
-  deckGradient.addColorStop(0, '#6a5a4a');
-  deckGradient.addColorStop(0.5, '#7a6a5a');
-  deckGradient.addColorStop(1, '#5a4a3a');
-  ctx.fillStyle = deckGradient;
-  ctx.fillRect(width / 2 - bridgeWidth / 2, bridgeY, bridgeWidth, bridgeHeight);
-
-  // Borda superior da ponte (guarda-corpo)
-  ctx.fillStyle = '#8a7a6a';
-  ctx.fillRect(width / 2 - bridgeWidth / 2, bridgeY - 4, bridgeWidth, 6);
-
-  // Detalhes do guarda-corpo (postes)
-  ctx.fillStyle = '#6a5a4a';
-  const postCount = 7;
-  for (let i = 0; i <= postCount; i++) {
-    const postX = width / 2 - bridgeWidth / 2 + (bridgeWidth / postCount) * i;
-    ctx.fillRect(postX - 2, bridgeY - 10, 4, 12);
-  }
-
-  // Cabos da ponte (estilo ponte suspensa)
-  ctx.strokeStyle = '#4a4a4a';
-  ctx.lineWidth = 2;
+  // Faixas pontilhadas amarelas (centro da estrada)
+  ctx.strokeStyle = '#FFD700';
+  ctx.lineWidth = 4;
+  ctx.setLineDash([30, 40]);
   ctx.beginPath();
-  // Cabo esquerdo (curva)
-  ctx.moveTo(width / 2 - bridgeWidth / 2, bridgeY - 10);
-  ctx.quadraticCurveTo(width / 2, bridgeY - 25, width / 2 + bridgeWidth / 2, bridgeY - 10);
+  ctx.moveTo(width / 2, roadStartY + 10);
+  ctx.lineTo(width / 2, height);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Linhas laterais brancas da estrada
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([20, 30]);
+
+  // Linha esquerda
+  ctx.beginPath();
+  ctx.moveTo(width / 2 - roadHorizonWidth / 2 + 5, roadStartY + 10);
+  ctx.lineTo(width / 2 - roadBottomWidth / 2 + 30, height);
   ctx.stroke();
 
-  // Torres nos cantos da ponte
-  ctx.fillStyle = '#5a4a3a';
-  ctx.fillRect(width / 2 - bridgeWidth / 2 - 4, bridgeY - 18, 8, 22);
-  ctx.fillRect(width / 2 + bridgeWidth / 2 - 4, bridgeY - 18, 8, 22);
-
-  // Faixas pontilhadas amarelas
-  ctx.strokeStyle = '#FFD700';
-  ctx.lineWidth = 3;
-  ctx.setLineDash([25, 35]);
-
-  // Linha central (começa após a ponte)
+  // Linha direita
   ctx.beginPath();
-  ctx.moveTo(width / 2, bridgeY + bridgeHeight);
-  ctx.lineTo(width / 2, height);
+  ctx.moveTo(width / 2 + roadHorizonWidth / 2 - 5, roadStartY + 10);
+  ctx.lineTo(width / 2 + roadBottomWidth / 2 - 30, height);
   ctx.stroke();
 
   ctx.setLineDash([]);
 
-  // Árvores nas laterais da estrada (DEPOIS da grama, só na área verde)
-  for (let i = 0; i < 7; i++) {
-    const treeY = horizonY + 20 + i * 95;
-    if (treeY > height - 50) continue; // Não desenhar muito perto do jogador
+  // Árvores nas laterais (só na área de grama)
+  for (let i = 0; i < 8; i++) {
+    const treeY = horizonY + 50 + i * 85;
+    if (treeY > height - 80) continue;
 
     const progress = (treeY - horizonY) / (height - horizonY);
-    const treeSize = 12 + progress * 22;
+    const treeSize = 10 + progress * 25;
 
     // Calcular largura da estrada nesta posição Y
-    const treeProgress = (treeY - roadTop) / (height - roadTop);
-    const roadWidthAtY = roadTopWidth + (width - roadTopWidth) * treeProgress;
+    const treeProgress = (treeY - roadStartY) / (height - roadStartY);
+    const roadWidthAtY = roadHorizonWidth + (roadBottomWidth - roadHorizonWidth) * treeProgress;
 
-    // Árvore esquerda (fora da estrada)
-    const leftX = (width - roadWidthAtY) / 2 - 25 - progress * 15;
-    if (leftX > 10) drawTree(ctx, leftX, treeY, treeSize);
+    // Árvore esquerda
+    const leftX = (width - roadWidthAtY) / 2 - 30 - progress * 20;
+    if (leftX > 15) drawTree(ctx, leftX, treeY, treeSize);
 
-    // Árvore direita (fora da estrada)
-    const rightX = (width + roadWidthAtY) / 2 + 25 + progress * 15;
-    if (rightX < width - 10) drawTree(ctx, rightX, treeY, treeSize);
+    // Árvore direita
+    const rightX = (width + roadWidthAtY) / 2 + 30 + progress * 20;
+    if (rightX < width - 15) drawTree(ctx, rightX, treeY, treeSize);
+  }
+
+  // Arbustos pequenos perto da estrada
+  ctx.fillStyle = '#4A6A4A';
+  for (let i = 0; i < 6; i++) {
+    const bushY = horizonY + 80 + i * 100;
+    if (bushY > height - 100) continue;
+
+    const progress = (bushY - horizonY) / (height - horizonY);
+    const bushSize = 6 + progress * 10;
+    const roadWidthAtBush = roadHorizonWidth + (roadBottomWidth - roadHorizonWidth) * progress;
+
+    // Arbusto esquerdo
+    const leftBushX = (width - roadWidthAtBush) / 2 - 15;
+    ctx.beginPath();
+    ctx.arc(leftBushX, bushY, bushSize, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Arbusto direito
+    const rightBushX = (width + roadWidthAtBush) / 2 + 15;
+    ctx.beginPath();
+    ctx.arc(rightBushX, bushY, bushSize, 0, Math.PI * 2);
+    ctx.fill();
   }
 }
 
 // Função auxiliar para desenhar árvores
 function drawTree(ctx: CanvasRenderingContext2D, x: number, y: number, size: number): void {
+  // Sombra da árvore (no chão, abaixo da árvore)
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+  ctx.beginPath();
+  ctx.ellipse(x + size * 0.2, y + size * 0.45, size * 0.35, size * 0.1, 0, 0, Math.PI * 2);
+  ctx.fill();
+
   // Tronco
   ctx.fillStyle = '#5d4037';
   ctx.fillRect(x - size * 0.1, y, size * 0.2, size * 0.4);
@@ -342,6 +354,106 @@ function drawTree(ctx: CanvasRenderingContext2D, x: number, y: number, size: num
   ctx.arc(x - size * 0.15, y - size * 0.1, size * 0.3, 0, Math.PI * 2);
   ctx.arc(x + size * 0.15, y - size * 0.1, size * 0.3, 0, Math.PI * 2);
   ctx.fill();
+}
+
+// Função para desenhar nave alienígena no horizonte
+function drawAlienShip(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, horizonY: number = 200): void {
+  const hover = Math.sin(time * 0.002) * 3; // Leve flutuação
+  const shipY = y + hover;
+
+  ctx.save();
+
+  // Brilho/aura da nave (energia alienígena) - maior
+  const glowRadius = 55 + Math.sin(time * 0.005) * 8;
+  const glow = ctx.createRadialGradient(x, shipY, 0, x, shipY, glowRadius);
+  glow.addColorStop(0, 'rgba(0, 255, 150, 0.4)');
+  glow.addColorStop(0.5, 'rgba(0, 200, 100, 0.2)');
+  glow.addColorStop(1, 'rgba(0, 150, 80, 0)');
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.arc(x, shipY, glowRadius, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Corpo principal da nave (disco) - maior
+  const bodyGradient = ctx.createLinearGradient(x - 45, shipY - 12, x + 45, shipY + 12);
+  bodyGradient.addColorStop(0, '#2a2a3a');
+  bodyGradient.addColorStop(0.3, '#4a4a6a');
+  bodyGradient.addColorStop(0.5, '#6a6a8a');
+  bodyGradient.addColorStop(0.7, '#4a4a6a');
+  bodyGradient.addColorStop(1, '#2a2a3a');
+  ctx.fillStyle = bodyGradient;
+  ctx.beginPath();
+  ctx.ellipse(x, shipY, 45, 12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Borda metálica
+  ctx.strokeStyle = '#8a8aaa';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Cúpula superior (cockpit) - maior
+  const domeGradient = ctx.createRadialGradient(x - 5, shipY - 15, 0, x, shipY - 10, 22);
+  domeGradient.addColorStop(0, '#66ffaa');
+  domeGradient.addColorStop(0.4, '#33cc77');
+  domeGradient.addColorStop(0.7, '#229955');
+  domeGradient.addColorStop(1, '#116633');
+  ctx.fillStyle = domeGradient;
+  ctx.beginPath();
+  ctx.ellipse(x, shipY - 5, 18, 15, 0, Math.PI, 0);
+  ctx.fill();
+
+  // Reflexo na cúpula
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+  ctx.beginPath();
+  ctx.ellipse(x - 5, shipY - 12, 6, 4, -0.3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Luzes piscando na base da nave
+  const lightCount = 8;
+  for (let i = 0; i < lightCount; i++) {
+    const angle = (i / lightCount) * Math.PI * 2 + time * 0.003;
+    const lightX = x + Math.cos(angle) * 38;
+    const lightY = shipY + Math.sin(angle) * 9;
+    const brightness = (Math.sin(time * 0.01 + i) + 1) / 2;
+
+    ctx.fillStyle = `rgba(0, 255, 150, ${0.5 + brightness * 0.5})`;
+    ctx.beginPath();
+    ctx.arc(lightX, lightY, 2.5 + brightness * 1.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Raio trator GRANDE (luz que desce da nave até o horizonte)
+  const beamEndY = horizonY + 50; // Até depois do horizonte
+  const beamIntensity = (Math.sin(time * 0.003) + 1) / 2 * 0.3 + 0.15;
+  const beamGradient = ctx.createLinearGradient(x, shipY + 12, x, beamEndY);
+  beamGradient.addColorStop(0, `rgba(0, 255, 150, ${beamIntensity})`);
+  beamGradient.addColorStop(0.3, `rgba(0, 220, 120, ${beamIntensity * 0.7})`);
+  beamGradient.addColorStop(0.6, `rgba(0, 180, 100, ${beamIntensity * 0.4})`);
+  beamGradient.addColorStop(1, 'rgba(0, 150, 80, 0)');
+  ctx.fillStyle = beamGradient;
+  ctx.beginPath();
+  ctx.moveTo(x - 25, shipY + 10);
+  ctx.lineTo(x + 25, shipY + 10);
+  ctx.lineTo(x + 80, beamEndY);
+  ctx.lineTo(x - 80, beamEndY);
+  ctx.closePath();
+  ctx.fill();
+
+  // Partículas descendo no raio trator (mais partículas)
+  ctx.fillStyle = 'rgba(150, 255, 200, 0.7)';
+  const beamHeight = beamEndY - shipY;
+  for (let i = 0; i < 12; i++) {
+    const particleProgress = ((time * 0.08 + i * 20) % beamHeight) / beamHeight;
+    const particleY = shipY + 15 + particleProgress * (beamHeight - 20);
+    const beamWidthAtY = 25 + particleProgress * 55;
+    const particleX = x + Math.sin(time * 0.004 + i * 1.5) * beamWidthAtY * 0.6;
+    const particleSize = 1.5 + Math.random() * 1.5;
+    ctx.beginPath();
+    ctx.arc(particleX, particleY, particleSize, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.restore();
 }
 
 function drawSoldier3D(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, color: string, animOffset: number, time: number): void {
@@ -468,13 +580,24 @@ function drawArmy(ctx: CanvasRenderingContext2D, army: Army, time: number): void
 function drawEnemyHorde(ctx: CanvasRenderingContext2D, horde: EnemyHorde, time: number): void {
   const sortedSoldiers = [...horde.soldiers].filter(s => s.isAlive).sort((a, b) => a.y - b.y);
 
+  // FadeIn effect - inimigos aparecem gradualmente quando saem da nave
+  const fadeStartY = 100; // Começa a aparecer
+  const fadeEndY = 200;   // Totalmente visível
+  const hordeAlpha = horde.y < fadeStartY ? 0 :
+                     horde.y < fadeEndY ? (horde.y - fadeStartY) / (fadeEndY - fadeStartY) : 1;
+
+  if (hordeAlpha <= 0) return; // Não desenhar se totalmente invisível
+
+  ctx.save();
+  ctx.globalAlpha = hordeAlpha;
+
   for (const soldier of sortedSoldiers) {
     drawSoldier3D(ctx, soldier.x, soldier.y, soldier.size, soldier.color, soldier.animOffset, time);
   }
 
   // Contador de inimigos
   const count = horde.soldiers.filter(s => s.isAlive).length;
-  if (count > 0) {
+  if (count > 0 && hordeAlpha > 0.5) {
     // Sombra
     ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
     ctx.beginPath();
@@ -501,6 +624,8 @@ function drawEnemyHorde(ctx: CanvasRenderingContext2D, horde: EnemyHorde, time: 
     ctx.textBaseline = 'middle';
     ctx.fillText(count.toString(), horde.x, horde.y - 48);
   }
+
+  ctx.restore();
 }
 
 function drawGate(ctx: CanvasRenderingContext2D, gate: Gate): void {
@@ -567,47 +692,288 @@ function drawGate(ctx: CanvasRenderingContext2D, gate: Gate): void {
   ctx.restore();
 }
 
-function drawBoss(ctx: CanvasRenderingContext2D, boss: Boss, time: number): void {
-  const pulse = Math.sin(time * 0.005) * 10;
+// Boss final - Nave Mãe Alienígena
+function drawMothershipBoss(ctx: CanvasRenderingContext2D, boss: Boss, time: number): void {
+  const { width } = ctx.canvas;
+  const x = width / 2;
+  const y = boss.y;
+  const hover = Math.sin(time * 0.002) * 3;
+  const shipY = y + hover;
+  const damageFlash = boss.hp < boss.maxHp * 0.3 ? Math.sin(time * 0.02) * 0.3 : 0;
 
-  // Sombra
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+  ctx.save();
+
+  // Aura de dano (vermelha quando com pouca vida)
+  if (boss.hp < boss.maxHp * 0.5) {
+    const damageAura = ctx.createRadialGradient(x, shipY, 0, x, shipY, 100);
+    damageAura.addColorStop(0, `rgba(255, 0, 0, ${0.3 + damageFlash})`);
+    damageAura.addColorStop(1, 'rgba(255, 0, 0, 0)');
+    ctx.fillStyle = damageAura;
+    ctx.beginPath();
+    ctx.arc(x, shipY, 100, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Brilho/aura da nave (energia alienígena) - MAIOR e mais intensa
+  const glowRadius = 80 + Math.sin(time * 0.005) * 10;
+  const glow = ctx.createRadialGradient(x, shipY, 0, x, shipY, glowRadius);
+  glow.addColorStop(0, 'rgba(0, 255, 150, 0.5)');
+  glow.addColorStop(0.5, 'rgba(0, 200, 100, 0.3)');
+  glow.addColorStop(1, 'rgba(0, 150, 80, 0)');
+  ctx.fillStyle = glow;
   ctx.beginPath();
-  ctx.ellipse(boss.x + boss.width / 2, boss.y + boss.height + 20, boss.width / 2 + 10, 20, 0, 0, Math.PI * 2);
+  ctx.arc(x, shipY, glowRadius, 0, Math.PI * 2);
   ctx.fill();
 
-  // Corpo do boss
+  // Corpo principal da nave (disco) - MUITO maior
+  const bodyGradient = ctx.createLinearGradient(x - 70, shipY - 18, x + 70, shipY + 18);
+  bodyGradient.addColorStop(0, '#1a1a2a');
+  bodyGradient.addColorStop(0.3, '#3a3a5a');
+  bodyGradient.addColorStop(0.5, '#5a5a7a');
+  bodyGradient.addColorStop(0.7, '#3a3a5a');
+  bodyGradient.addColorStop(1, '#1a1a2a');
+  ctx.fillStyle = bodyGradient;
+  ctx.beginPath();
+  ctx.ellipse(x, shipY, 70, 18, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Borda metálica brilhante
+  ctx.strokeStyle = '#aaaacc';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  // Anel externo
+  ctx.strokeStyle = '#666688';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.ellipse(x, shipY + 3, 60, 12, 0, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Cúpula superior (cockpit) - maior com efeito de dano
+  const domeColor = boss.hp < boss.maxHp * 0.3 ?
+    `rgba(255, ${100 + Math.sin(time * 0.02) * 100}, 100, 1)` : '#66ffaa';
+  const domeGradient = ctx.createRadialGradient(x - 8, shipY - 20, 0, x, shipY - 12, 30);
+  domeGradient.addColorStop(0, domeColor);
+  domeGradient.addColorStop(0.4, '#33cc77');
+  domeGradient.addColorStop(0.7, '#229955');
+  domeGradient.addColorStop(1, '#116633');
+  ctx.fillStyle = domeGradient;
+  ctx.beginPath();
+  ctx.ellipse(x, shipY - 5, 25, 20, 0, Math.PI, 0);
+  ctx.fill();
+
+  // Reflexo na cúpula
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+  ctx.beginPath();
+  ctx.ellipse(x - 8, shipY - 15, 8, 5, -0.3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Luzes piscando na base da nave - mais luzes
+  const lightCount = 12;
+  for (let i = 0; i < lightCount; i++) {
+    const angle = (i / lightCount) * Math.PI * 2 + time * 0.004;
+    const lightX = x + Math.cos(angle) * 58;
+    const lightY = shipY + Math.sin(angle) * 13;
+    const brightness = (Math.sin(time * 0.015 + i) + 1) / 2;
+
+    const lightColor = boss.hp < boss.maxHp * 0.3 ?
+      `rgba(255, ${150 * brightness}, 0, ${0.5 + brightness * 0.5})` :
+      `rgba(0, 255, 150, ${0.5 + brightness * 0.5})`;
+    ctx.fillStyle = lightColor;
+    ctx.beginPath();
+    ctx.arc(lightX, lightY, 3 + brightness * 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Canhões laterais
+  ctx.fillStyle = '#444466';
+  ctx.fillRect(x - 75, shipY - 3, 15, 6);
+  ctx.fillRect(x + 60, shipY - 3, 15, 6);
+
+  // Disparos dos canhões (visual)
+  if (Math.sin(time * 0.01) > 0.8) {
+    ctx.fillStyle = 'rgba(255, 100, 0, 0.8)';
+    ctx.beginPath();
+    ctx.arc(x - 78, shipY, 4, 0, Math.PI * 2);
+    ctx.arc(x + 78, shipY, 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.restore();
+
+  // Barra de vida do BOSS FINAL - maior e mais visível
+  const barWidth = 280;
+  const barHeight = 20;
+  const barX = x - barWidth / 2;
+  const barY = shipY + 45;
+
+  // Fundo da barra
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+  ctx.beginPath();
+  ctx.roundRect(barX - 3, barY - 3, barWidth + 6, barHeight + 6, 8);
+  ctx.fill();
+
+  ctx.fillStyle = '#222';
+  ctx.beginPath();
+  ctx.roundRect(barX, barY, barWidth, barHeight, 5);
+  ctx.fill();
+
+  // Vida - verde quando alta, vermelho quando baixa
+  const hpPercent = boss.hp / boss.maxHp;
+  const hpGradient = ctx.createLinearGradient(barX, barY, barX + barWidth, barY);
+  if (hpPercent > 0.5) {
+    hpGradient.addColorStop(0, '#00FF88');
+    hpGradient.addColorStop(1, '#00CC66');
+  } else if (hpPercent > 0.25) {
+    hpGradient.addColorStop(0, '#FFAA00');
+    hpGradient.addColorStop(1, '#FF8800');
+  } else {
+    hpGradient.addColorStop(0, '#FF4444');
+    hpGradient.addColorStop(1, '#CC0000');
+  }
+
+  ctx.fillStyle = hpGradient;
+  ctx.beginPath();
+  ctx.roundRect(barX, barY, barWidth * hpPercent, barHeight, 5);
+  ctx.fill();
+
+  // Borda da barra
+  ctx.strokeStyle = '#FFF';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.roundRect(barX, barY, barWidth, barHeight, 5);
+  ctx.stroke();
+
+  // Texto "NAVE MÃE" e HP
+  ctx.fillStyle = '#FF4444';
+  ctx.font = 'bold 14px Arial';
+  ctx.textAlign = 'center';
+  ctx.shadowColor = '#000';
+  ctx.shadowBlur = 4;
+  ctx.fillText('🛸 NAVE MÃE ALIENÍGENA 🛸', x, barY - 10);
+
+  ctx.fillStyle = '#FFF';
+  ctx.font = 'bold 12px Arial';
+  ctx.fillText(`${Math.ceil(boss.hp)} / ${boss.maxHp}`, x, barY + barHeight / 2 + 4);
+}
+
+function drawBoss(ctx: CanvasRenderingContext2D, boss: Boss, time: number): void {
+  // Se for a nave mãe (boss final), desenhar de forma diferente
+  if (boss.type === 'mothership') {
+    drawMothershipBoss(ctx, boss, time);
+    return;
+  }
+
+  const pulse = Math.sin(time * 0.005) * 15;
+  const fastPulse = Math.sin(time * 0.02) * 5;
+
+  // Aura maligna pulsante (várias camadas)
+  for (let i = 3; i >= 0; i--) {
+    const auraSize = boss.width / 2 + 40 + i * 20 + pulse;
+    const auraAlpha = 0.15 - i * 0.03;
+    ctx.fillStyle = `rgba(139, 0, 0, ${auraAlpha})`;
+    ctx.beginPath();
+    ctx.arc(boss.x + boss.width / 2, boss.y + boss.height / 2, auraSize, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Sombra grande e assustadora
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+  ctx.beginPath();
+  ctx.ellipse(boss.x + boss.width / 2, boss.y + boss.height + 30, boss.width / 2 + 30, 35, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Corpo do boss - maior e mais detalhado
   const bossGradient = ctx.createRadialGradient(
-    boss.x + boss.width / 2 - 20, boss.y + boss.height / 2 - 20, 0,
+    boss.x + boss.width / 2 - 30, boss.y + boss.height / 2 - 30, 0,
     boss.x + boss.width / 2, boss.y + boss.height / 2, boss.width / 2 + pulse
   );
-  bossGradient.addColorStop(0, '#DC143C');
-  bossGradient.addColorStop(1, '#8B0000');
+  bossGradient.addColorStop(0, '#FF2020');
+  bossGradient.addColorStop(0.5, '#DC143C');
+  bossGradient.addColorStop(1, '#4A0000');
 
+  ctx.save();
+  ctx.shadowColor = '#FF0000';
+  ctx.shadowBlur = 30 + fastPulse;
   ctx.fillStyle = bossGradient;
   ctx.beginPath();
   ctx.arc(boss.x + boss.width / 2, boss.y + boss.height / 2, boss.width / 2 + pulse, 0, Math.PI * 2);
   ctx.fill();
+  ctx.restore();
 
-  // Olhos malignos
+  // Veias/rachaduras no corpo
+  ctx.strokeStyle = '#4A0000';
+  ctx.lineWidth = 3;
+  for (let i = 0; i < 6; i++) {
+    const angle = (i / 6) * Math.PI * 2 + time * 0.001;
+    const startX = boss.x + boss.width / 2;
+    const startY = boss.y + boss.height / 2;
+    const endX = startX + Math.cos(angle) * (boss.width / 2 + pulse - 10);
+    const endY = startY + Math.sin(angle) * (boss.width / 2 + pulse - 10);
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+  }
+
+  // Olhos malignos brilhantes
+  ctx.save();
+  ctx.shadowColor = '#FFFF00';
+  ctx.shadowBlur = 20;
   ctx.fillStyle = '#FFFF00';
   ctx.beginPath();
-  ctx.arc(boss.x + boss.width * 0.35, boss.y + boss.height * 0.4, 12, 0, Math.PI * 2);
-  ctx.arc(boss.x + boss.width * 0.65, boss.y + boss.height * 0.4, 12, 0, Math.PI * 2);
+  ctx.arc(boss.x + boss.width * 0.35, boss.y + boss.height * 0.4, 15, 0, Math.PI * 2);
+  ctx.arc(boss.x + boss.width * 0.65, boss.y + boss.height * 0.4, 15, 0, Math.PI * 2);
   ctx.fill();
+  ctx.restore();
 
-  // Pupilas
+  // Pupilas que seguem para baixo (olhando o player)
   ctx.fillStyle = '#000000';
   ctx.beginPath();
-  ctx.arc(boss.x + boss.width * 0.35, boss.y + boss.height * 0.4, 5, 0, Math.PI * 2);
-  ctx.arc(boss.x + boss.width * 0.65, boss.y + boss.height * 0.4, 5, 0, Math.PI * 2);
+  ctx.arc(boss.x + boss.width * 0.35, boss.y + boss.height * 0.42, 6, 0, Math.PI * 2);
+  ctx.arc(boss.x + boss.width * 0.65, boss.y + boss.height * 0.42, 6, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Boca assustadora
+  ctx.fillStyle = '#200000';
+  ctx.beginPath();
+  ctx.ellipse(boss.x + boss.width / 2, boss.y + boss.height * 0.65, 25, 15 + fastPulse, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Dentes
+  ctx.fillStyle = '#FFFFFF';
+  for (let i = 0; i < 5; i++) {
+    const toothX = boss.x + boss.width * 0.35 + i * 15;
+    ctx.beginPath();
+    ctx.moveTo(toothX, boss.y + boss.height * 0.58);
+    ctx.lineTo(toothX + 5, boss.y + boss.height * 0.68);
+    ctx.lineTo(toothX - 5, boss.y + boss.height * 0.68);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Chifres
+  ctx.fillStyle = '#2F0000';
+  // Chifre esquerdo
+  ctx.beginPath();
+  ctx.moveTo(boss.x + boss.width * 0.25, boss.y + boss.height * 0.2);
+  ctx.lineTo(boss.x + boss.width * 0.1, boss.y - 30);
+  ctx.lineTo(boss.x + boss.width * 0.35, boss.y + boss.height * 0.25);
+  ctx.closePath();
+  ctx.fill();
+  // Chifre direito
+  ctx.beginPath();
+  ctx.moveTo(boss.x + boss.width * 0.75, boss.y + boss.height * 0.2);
+  ctx.lineTo(boss.x + boss.width * 0.9, boss.y - 30);
+  ctx.lineTo(boss.x + boss.width * 0.65, boss.y + boss.height * 0.25);
+  ctx.closePath();
   ctx.fill();
 
   // Barra de vida
   const barWidth = 180;
   const barHeight = 25;
   const barX = boss.x + boss.width / 2 - barWidth / 2;
-  const barY = boss.y - 50;
+  const barY = boss.y - 70;
 
   // Fundo da barra
   ctx.fillStyle = '#333';
@@ -713,6 +1079,55 @@ function drawMiniBoss(ctx: CanvasRenderingContext2D, miniBoss: { x: number; y: n
   ctx.fillText('MINI-BOSS', miniBoss.x + miniBoss.width / 2, barY - 5);
 }
 
+// Atmosfera tensa quando o boss aparece
+function drawBossAtmosphere(ctx: CanvasRenderingContext2D, width: number, height: number, intensity: number, time: number): void {
+  // Escurecimento gradual das bordas (vinheta)
+  const vignetteGradient = ctx.createRadialGradient(
+    width / 2, height / 2, height * 0.3,
+    width / 2, height / 2, height * 0.9
+  );
+  vignetteGradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+  vignetteGradient.addColorStop(0.5, `rgba(20, 0, 0, ${0.3 * intensity})`);
+  vignetteGradient.addColorStop(1, `rgba(50, 0, 0, ${0.7 * intensity})`);
+
+  ctx.fillStyle = vignetteGradient;
+  ctx.fillRect(0, 0, width, height);
+
+  // Overlay vermelho pulsante
+  const pulse = (Math.sin(time * 0.003) + 1) / 2; // 0 a 1
+  ctx.fillStyle = `rgba(100, 0, 0, ${0.1 * intensity * pulse})`;
+  ctx.fillRect(0, 0, width, height);
+
+  // Raios/relâmpagos ocasionais
+  if (Math.random() < 0.02 * intensity) {
+    ctx.fillStyle = `rgba(255, 50, 50, ${0.3 * intensity})`;
+    ctx.fillRect(0, 0, width, height);
+  }
+
+  // Partículas de fogo/cinzas caindo
+  if (Math.random() < 0.3 * intensity) {
+    const ashX = Math.random() * width;
+    const ashY = Math.random() * height;
+    ctx.fillStyle = `rgba(255, 100, 50, ${0.5 * intensity})`;
+    ctx.beginPath();
+    ctx.arc(ashX, ashY, 1 + Math.random() * 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Texto de aviso pulsante
+  if (intensity > 0.5) {
+    const warningAlpha = (Math.sin(time * 0.01) + 1) / 2;
+    ctx.save();
+    ctx.fillStyle = `rgba(255, 0, 0, ${warningAlpha * intensity * 0.8})`;
+    ctx.font = 'bold 28px Arial';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = '#FF0000';
+    ctx.shadowBlur = 20;
+    ctx.fillText('⚠️ BOSS ⚠️', width / 2, 100);
+    ctx.restore();
+  }
+}
+
 function drawBullets(ctx: CanvasRenderingContext2D, bullets: Bullet[]): void {
   for (const bullet of bullets) {
     // Brilho
@@ -734,63 +1149,61 @@ function drawBullets(ctx: CanvasRenderingContext2D, bullets: Bullet[]): void {
 }
 
 function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: number): void {
-  const { width } = ctx.canvas;
+  const { width, height } = ctx.canvas;
 
-  // Barra superior com gradiente
-  const uiGradient = ctx.createLinearGradient(0, 0, 0, 70);
-  uiGradient.addColorStop(0, 'rgba(0, 0, 0, 0.7)');
-  uiGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
-  ctx.fillStyle = uiGradient;
-  ctx.fillRect(0, 0, width, 70);
+  // Badges pequenos nos cantos inferiores (sem fundo escuro grande)
+  const bottomY = height - 25;
+  const badgeHeight = 22;
 
-  // Level badge
-  ctx.fillStyle = '#3498DB';
+  // Level badge - canto inferior esquerdo
+  ctx.fillStyle = 'rgba(52, 152, 219, 0.9)';
   ctx.beginPath();
-  ctx.roundRect(15, 10, 80, 30, 15);
+  ctx.roundRect(5, bottomY - badgeHeight/2, 70, badgeHeight, 11);
   ctx.fill();
   ctx.fillStyle = '#FFF';
-  ctx.font = 'bold 14px Arial';
+  ctx.font = 'bold 11px Arial';
   ctx.textAlign = 'center';
-  ctx.fillText(`Level ${gameState.currentLevel}`, 55, 28);
+  ctx.fillText(`Level ${gameState.currentLevel}`, 40, bottomY + 4);
 
-  // Score
-  ctx.fillStyle = '#2ECC71';
+  // Score - centro inferior
+  ctx.fillStyle = 'rgba(46, 204, 113, 0.9)';
   ctx.beginPath();
-  ctx.roundRect(width / 2 - 50, 10, 100, 30, 15);
+  ctx.roundRect(width / 2 - 40, bottomY - badgeHeight/2, 80, badgeHeight, 11);
   ctx.fill();
   ctx.fillStyle = '#FFF';
-  ctx.fillText(`${gameState.score}`, width / 2, 28);
+  ctx.fillText(`${gameState.score}`, width / 2, bottomY + 4);
 
-  // Contador de exército
-  ctx.fillStyle = '#E74C3C';
+  // Contador de exército - canto inferior direito
+  ctx.fillStyle = 'rgba(231, 76, 60, 0.9)';
   ctx.beginPath();
-  ctx.roundRect(width - 95, 10, 80, 30, 15);
+  ctx.roundRect(width - 75, bottomY - badgeHeight/2, 70, badgeHeight, 11);
   ctx.fill();
   ctx.fillStyle = '#FFF';
-  ctx.fillText(`⚔️ ${armyCount}`, width - 55, 28);
+  ctx.fillText(`⚔️ ${armyCount}`, width - 40, bottomY + 4);
 
-  // Barra de progresso
-  const progressWidth = width - 40;
+  // Barra de progresso fina no topo da tela
+  const progressWidth = width - 20;
   const progress = Math.min(gameState.distanceTraveled / gameState.levelDistance, 1);
+  const progressY = 5;
 
   ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
   ctx.beginPath();
-  ctx.roundRect(20, 50, progressWidth, 10, 5);
+  ctx.roundRect(10, progressY, progressWidth, 5, 2);
   ctx.fill();
 
-  const progressGradient = ctx.createLinearGradient(20, 50, 20 + progressWidth, 50);
+  const progressGradient = ctx.createLinearGradient(10, progressY, 10 + progressWidth, progressY);
   progressGradient.addColorStop(0, '#2ECC71');
   progressGradient.addColorStop(1, '#27AE60');
 
   ctx.fillStyle = progressGradient;
   ctx.beginPath();
-  ctx.roundRect(20, 50, progressWidth * progress, 10, 5);
+  ctx.roundRect(10, progressY, progressWidth * progress, 5, 2);
   ctx.fill();
 
   // Combo indicator (se houver combo ativo)
   if (gameState.combo > 1) {
     const comboX = width / 2;
-    const comboY = 100;
+    const comboY = 35;
     const pulse = 1 + Math.sin(Date.now() * 0.01) * 0.1;
 
     ctx.save();
@@ -842,7 +1255,18 @@ function drawFloatingTexts(ctx: CanvasRenderingContext2D): void {
 function drawGameOver(ctx: CanvasRenderingContext2D, gameState: GameState): void {
   const { width, height } = ctx.canvas;
 
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+  // Fundo especial para vitória final (level 10+)
+  const isFinalVictory = gameState.isVictory && gameState.currentLevel >= 10;
+
+  if (isFinalVictory) {
+    // Fundo com efeito de celebração (gradiente colorido)
+    const bgGradient = ctx.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, height);
+    bgGradient.addColorStop(0, 'rgba(0, 50, 30, 0.95)');
+    bgGradient.addColorStop(1, 'rgba(0, 20, 10, 0.98)');
+    ctx.fillStyle = bgGradient;
+  } else {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+  }
   ctx.fillRect(0, 0, width, height);
 
   // Título com efeito de pulsação
@@ -851,12 +1275,26 @@ function drawGameOver(ctx: CanvasRenderingContext2D, gameState: GameState): void
   ctx.translate(width / 2, height / 2 - 120);
   ctx.scale(pulse, pulse);
 
-  ctx.fillStyle = gameState.isVictory ? '#2ECC71' : '#E74C3C';
-  ctx.font = 'bold 48px Arial';
-  ctx.textAlign = 'center';
-  ctx.shadowColor = gameState.isVictory ? '#2ECC71' : '#E74C3C';
-  ctx.shadowBlur = 20;
-  ctx.fillText(gameState.isVictory ? '🏆 VITÓRIA!' : '💀 GAME OVER', 0, 0);
+  if (isFinalVictory) {
+    // Vitória final épica!
+    ctx.fillStyle = '#00FF88';
+    ctx.font = 'bold 36px Arial';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = '#00FF88';
+    ctx.shadowBlur = 30;
+    ctx.fillText('🛸 NAVE MÃE DESTRUÍDA! 🛸', 0, -30);
+    ctx.fillStyle = '#FFD700';
+    ctx.font = 'bold 48px Arial';
+    ctx.shadowColor = '#FFD700';
+    ctx.fillText('🎉 VITÓRIA FINAL! 🎉', 0, 30);
+  } else {
+    ctx.fillStyle = gameState.isVictory ? '#2ECC71' : '#E74C3C';
+    ctx.font = 'bold 48px Arial';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = gameState.isVictory ? '#2ECC71' : '#E74C3C';
+    ctx.shadowBlur = 20;
+    ctx.fillText(gameState.isVictory ? '🏆 VITÓRIA!' : '💀 GAME OVER', 0, 0);
+  }
   ctx.restore();
 
   ctx.shadowBlur = 0;
@@ -1045,10 +1483,24 @@ export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameSt
 
   ctx.clearRect(0, 0, width, height);
 
+  // Boss atmosphere - atualizar intensidade
+  if (entities.boss && entities.boss.isActive) {
+    gameState.bossActive = true;
+    // Aumentar intensidade gradualmente até 1
+    gameState.bossAtmosphereIntensity = Math.min(1, gameState.bossAtmosphereIntensity + 0.02);
+  } else {
+    gameState.bossActive = false;
+    // Diminuir intensidade gradualmente
+    gameState.bossAtmosphereIntensity = Math.max(0, gameState.bossAtmosphereIntensity - 0.05);
+  }
+
+  // Screen shake contínuo quando boss está ativo
+  const bossShake = gameState.bossActive ? Math.sin(time * 0.02) * 3 * gameState.bossAtmosphereIntensity : 0;
+
   // Screen shake
-  if (gameState.screenShakeActive) {
-    const shakeX = (Math.random() - 0.5) * gameState.screenShakeIntensity;
-    const shakeY = (Math.random() - 0.5) * gameState.screenShakeIntensity;
+  if (gameState.screenShakeActive || gameState.bossActive) {
+    const shakeX = (Math.random() - 0.5) * gameState.screenShakeIntensity + bossShake;
+    const shakeY = (Math.random() - 0.5) * gameState.screenShakeIntensity + bossShake * 0.5;
     ctx.save();
     ctx.translate(shakeX, shakeY);
   }
@@ -1094,8 +1546,13 @@ export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameSt
   // Desenhar Super Cannon beam (por cima de tudo exceto UI)
   drawSuperCannonBeam(ctx, entities.playerArmy.centerX, entities.playerArmy.centerY, gameState);
 
-  if (gameState.screenShakeActive) {
+  if (gameState.screenShakeActive || gameState.bossActive) {
     ctx.restore();
+  }
+
+  // Boss atmosphere overlay - escurecer a tela
+  if (gameState.bossAtmosphereIntensity > 0) {
+    drawBossAtmosphere(ctx, width, height, gameState.bossAtmosphereIntensity, time);
   }
 
   // UI

@@ -33,6 +33,9 @@ export const gameState: GameState = {
   combo: 0,
   comboTimer: 0,
   maxCombo: 0,
+  // Boss Atmosphere
+  bossActive: false,
+  bossAtmosphereIntensity: 0,
 };
 
 export function resetGameState(): void {
@@ -53,4 +56,6 @@ export function resetGameState(): void {
   gameState.combo = 0;
   gameState.comboTimer = 0;
   gameState.maxCombo = 0;
+  gameState.bossActive = false;
+  gameState.bossAtmosphereIntensity = 0;
 }

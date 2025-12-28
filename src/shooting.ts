@@ -93,14 +93,14 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
     const target = findNearestTarget(shooter, entities.enemyHordes, entities.boss, entities.miniBosses);
     if (!target) continue;
 
-    // Super guerreiros disparam do centro do exército com precisão perfeita
-    // Guerreiros normais disparam de sua posição com dispersão mínima
-    const bulletX = shooter.isSuper ? army.centerX : shooter.x;
-    const dispersion = shooter.isSuper ? 0 : (Math.random() - 0.5) * 2; // 0 dispersão para super, mínima para normal
+    // TODOS os tiros saem do centro do exército (como o Super Cannon)
+    // Super guerreiros têm precisão perfeita, normais têm dispersão mínima
+    const bulletX = army.centerX;
+    const dispersion = shooter.isSuper ? 0 : (Math.random() - 0.5) * 3; // 0 dispersão para super, mínima para normal
 
     entities.bullets.push(createBullet(
       bulletX,
-      shooter.y - 8,
+      army.centerY - 20, // Sai do centro do exército
       target.x + dispersion, // Tiros mais centralizados
       target.y,
       shooter.isSuper ? army.damage * 2 : army.damage, // Super causa 2x dano
@@ -199,13 +199,19 @@ export function updateBullets(entities: Entities, gameState: GameState): void {
 
     let bulletHit = false;
 
-    // Colisão com hordas
+    // Colisão com hordas (só inimigos visíveis - y > 100)
     for (const horde of entities.enemyHordes) {
       if (!horde.isActive || bulletHit) continue;
+
+      // Horda precisa estar visível (abaixo da área de fadeIn)
+      if (horde.y < 100) continue;
 
       for (let j = horde.soldiers.length - 1; j >= 0; j--) {
         const soldier = horde.soldiers[j];
         if (!soldier.isAlive) continue;
+
+        // Soldado precisa estar visível
+        if (soldier.y < 100) continue;
 
         if (checkBulletSoldierCollision(bullet, soldier)) {
           // Aplicar dano ao HP do inimigo
@@ -237,9 +243,12 @@ export function updateBullets(entities: Entities, gameState: GameState): void {
 
     if (bulletHit) continue;
 
-    // Colisão com mini-bosses
+    // Colisão com mini-bosses (só se visíveis)
     for (const miniBoss of entities.miniBosses) {
       if (!miniBoss.isActive || bulletHit) continue;
+
+      // Mini-boss precisa estar visível
+      if (miniBoss.y < 50) continue;
 
       if (bullet.x > miniBoss.x && bullet.x < miniBoss.x + miniBoss.width &&
           bullet.y > miniBoss.y && bullet.y < miniBoss.y + miniBoss.height) {
@@ -270,25 +279,60 @@ export function updateBullets(entities: Entities, gameState: GameState): void {
     // Colisão com boss
     if (entities.boss && entities.boss.isActive) {
       const boss = entities.boss;
-      if (bullet.x > boss.x && bullet.x < boss.x + boss.width &&
-          bullet.y > boss.y && bullet.y < boss.y + boss.height) {
+
+      // Hitbox diferente para nave mãe (área circular no topo)
+      let hitBoss = false;
+      if (boss.type === 'mothership') {
+        // A nave está no centro do topo, hitbox circular
+        const shipCenterX = boss.x;
+        const shipCenterY = boss.y;
+        const hitRadius = 70; // Raio da nave
+        const dx = bullet.x - shipCenterX;
+        const dy = bullet.y - shipCenterY;
+        hitBoss = (dx * dx + dy * dy) < (hitRadius * hitRadius);
+      } else {
+        // Boss normal - hitbox retangular
+        hitBoss = bullet.x > boss.x && bullet.x < boss.x + boss.width &&
+                  bullet.y > boss.y && bullet.y < boss.y + boss.height;
+      }
+
+      if (hitBoss) {
         boss.hp -= bullet.damage;
         entities.bullets.splice(i, 1);
 
         // Efeito de impacto no boss
-        addExplosion(bullet.x, bullet.y, '#FF6B6B');
+        addExplosion(bullet.x, bullet.y, boss.type === 'mothership' ? '#00FF88' : '#FF6B6B');
 
         if (boss.hp <= 0) {
           boss.isActive = false;
-          gameState.isVictory = true;
-          gameState.score += 500;
-          addFloatingText('BOSS DEFEATED!', boss.x + boss.width / 2, boss.y, '#FFD700');
-          // Explosão épica do boss
-          for (let k = 0; k < 5; k++) {
-            setTimeout(() => {
-              addExplosion(boss.x + Math.random() * boss.width, boss.y + Math.random() * boss.height, '#FFD700');
-              addParticle(boss.x + boss.width / 2, boss.y + boss.height / 2, 'star', '#FF6B6B', 10);
-            }, k * 100);
+
+          if (boss.type === 'mothership') {
+            // Vitória final do jogo - derrotou a nave mãe!
+            gameState.isVictory = true;
+            gameState.score += 5000; // Bônus maior
+            addFloatingText('🎉 VITÓRIA FINAL! 🎉', boss.x, boss.y + 100, '#FFD700');
+            addFloatingText('NAVE MÃE DESTRUÍDA!', boss.x, boss.y + 140, '#00FF88');
+            // Explosão ÉPICA da nave mãe
+            for (let k = 0; k < 15; k++) {
+              setTimeout(() => {
+                const explosionX = boss.x + (Math.random() - 0.5) * 150;
+                const explosionY = boss.y + (Math.random() - 0.5) * 80;
+                addExplosion(explosionX, explosionY, k % 2 === 0 ? '#00FF88' : '#FFD700');
+                addParticle(boss.x, boss.y, 'star', '#00FFAA', 15);
+              }, k * 150);
+            }
+          } else {
+            // Boss normal derrotado - próximo level
+            gameState.isVictory = true;
+            gameState.score += 500;
+            addFloatingText('BOSS DEFEATED!', boss.x + boss.width / 2, boss.y, '#FFD700');
+            // Explosão épica do boss
+            for (let k = 0; k < 5; k++) {
+              setTimeout(() => {
+                addExplosion(boss.x + Math.random() * boss.width, boss.y + Math.random() * boss.height, '#FFD700');
+                addParticle(boss.x + boss.width / 2, boss.y + boss.height / 2, 'star', '#FF6B6B', 10);
+              }, k * 100);
+            }
           }
         }
       }
