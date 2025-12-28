@@ -6,13 +6,70 @@ import { render, getShareButtonBounds, shareOnX } from './renderer';
 import { checkCollisions } from './collisions';
 import { updateSpawns } from './spawner';
 import { updateMovement } from './movement';
-import { setupInput, getMouseX, initializeMousePosition, setGameStateRef } from './input';
+import { setupInput, getMouseX, initializeMousePosition, setGameStateRef, setInputScale } from './input';
 import { updateShooting, updateBullets, updateSuperCannon } from './shooting';
 import { initAudio, playMusic, playSound, stopAllMusic, audioManager } from './audio';
 
 // Canvas setup
 export const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
+
+// Dimensões base do jogo (design de referência)
+const BASE_WIDTH = 480;
+const BASE_HEIGHT = 800;
+const ASPECT_RATIO = BASE_WIDTH / BASE_HEIGHT;
+
+// Escala atual
+let scale = 1;
+
+// Função para redimensionar o canvas responsivamente
+function resizeCanvas(): void {
+  const container = canvas.parentElement;
+  if (!container) return;
+
+  // Calcular espaço disponível
+  const maxWidth = Math.min(window.innerWidth - 20, 600); // Max 600px de largura
+  const maxHeight = window.innerHeight - 120; // Deixar espaço para título e dicas
+
+  // Calcular dimensões mantendo aspect ratio
+  let newWidth = maxWidth;
+  let newHeight = newWidth / ASPECT_RATIO;
+
+  // Se altura excede, ajustar pela altura
+  if (newHeight > maxHeight) {
+    newHeight = maxHeight;
+    newWidth = newHeight * ASPECT_RATIO;
+  }
+
+  // Mínimo para não ficar muito pequeno
+  newWidth = Math.max(newWidth, 280);
+  newHeight = Math.max(newHeight, newWidth / ASPECT_RATIO);
+
+  // Aplicar dimensões de exibição (CSS)
+  canvas.style.width = `${newWidth}px`;
+  canvas.style.height = `${newHeight}px`;
+
+  // Manter dimensões internas do canvas (resolução do jogo)
+  canvas.width = BASE_WIDTH;
+  canvas.height = BASE_HEIGHT;
+
+  // Calcular escala para eventos de input
+  scale = newWidth / BASE_WIDTH;
+  setInputScale(scale);
+}
+
+// Converter coordenadas do mouse/touch para coordenadas do canvas
+export function screenToCanvas(screenX: number, screenY: number): { x: number; y: number } {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: (screenX - rect.left) / scale,
+    y: (screenY - rect.top) / scale
+  };
+}
+
+export function getScale(): number {
+  return scale;
+}
 
 // Entidades do jogo
 let entities: Entities;
@@ -150,9 +207,7 @@ function startGame(): void {
 // Restart no clique após game over
 canvas.addEventListener('click', (e) => {
   if (gameState.isGameOver) {
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const { x, y } = screenToCanvas(e.clientX, e.clientY);
     const bounds = getShareButtonBounds();
 
     // Verificar se clicou no botão de compartilhar
@@ -169,10 +224,8 @@ canvas.addEventListener('click', (e) => {
 canvas.addEventListener('touchstart', (e) => {
   if (gameState.isGameOver) {
     e.preventDefault();
-    const rect = canvas.getBoundingClientRect();
     const touch = e.touches[0];
-    const x = touch.clientX - rect.left;
-    const y = touch.clientY - rect.top;
+    const { x, y } = screenToCanvas(touch.clientX, touch.clientY);
     const bounds = getShareButtonBounds();
 
     // Verificar se clicou no botão de compartilhar
@@ -184,12 +237,19 @@ canvas.addEventListener('touchstart', (e) => {
 
     startGame();
   }
-});
+}, { passive: false });
 
 // Event listeners
 startButton.addEventListener('click', startGame);
 
+// Resize handler
+window.addEventListener('resize', resizeCanvas);
+window.addEventListener('orientationchange', () => {
+  setTimeout(resizeCanvas, 100); // Delay para orientação estabilizar
+});
+
 // Setup inicial
+resizeCanvas(); // Configurar tamanho inicial
 setupInput(canvas);
 initializeMousePosition(canvas.width);
 initAudio(); // Inicializar sistema de áudio
