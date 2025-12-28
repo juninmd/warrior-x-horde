@@ -44,10 +44,10 @@ export function spawnEnemies(entities: Entities, canvasWidth: number, gameState:
   const currentEnemyCount = getTotalEnemyCount(entities);
   if (currentEnemyCount >= MAX_ENEMIES) return;
 
-  // Espaçamento mais generoso para hordas
-  const baseSpacing = 180; // Aumentado de 120
-  const levelReduction = Math.min(80, (gameState.currentLevel - 1) * 8);
-  const hordeSpacing = Math.max(100, baseSpacing - levelReduction); // Mínimo 100 (era 60)
+  // Espaçamento menor = hordas mais frequentes
+  const baseSpacing = 80; // Reduzido de 180 para spawnar mais rápido
+  const levelReduction = Math.min(40, (gameState.currentLevel - 1) * 4);
+  const hordeSpacing = Math.max(40, baseSpacing - levelReduction); // Mínimo 40 (era 100)
 
   // Remover hordas inativas ou que já passaram
   entities.enemyHordes = entities.enemyHordes.filter(horde => horde.isActive && horde.y < 1200);
@@ -57,23 +57,23 @@ export function spawnEnemies(entities: Entities, canvasWidth: number, gameState:
     ? Math.min(...entities.enemyHordes.map(h => h.y))
     : spawnY + hordeSpacing;
 
-  // Chance de spawn equilibrada - reduzida para dar mais tempo
-  const spawnChance = Math.min(0.70, 0.45 + (gameState.currentLevel - 1) * 0.05);
+  // Chance de spawn MUITO alta - sempre ter inimigos na tela
+  const spawnChance = Math.min(1.0, 0.95 + (gameState.currentLevel - 1) * 0.01);
 
   if (lowestHordeY > spawnY && Math.random() < spawnChance) {
     // Balancear inimigos baseado no tamanho do exército
     const playerCount = entities.playerArmy.soldiers.filter(s => s.isAlive).length;
 
-    // Multiplicador mais equilibrado - menos inimigos
-    const baseMultiplier = 0.5 + Math.random() * 1.0; // 0.5x a 1.5x (era 0.8x a 2.3x)
-    const levelBonus = 1 + (gameState.currentLevel - 1) * 0.08; // +8% por level (era 12%)
+    // Multiplicador menor = grupos menores mas mais frequentes
+    const baseMultiplier = 0.3 + Math.random() * 0.5; // 0.3x a 0.8x (era 0.5x a 1.5x)
+    const levelBonus = 1 + (gameState.currentLevel - 1) * 0.05; // +5% por level (era 8%)
 
     const multiplier = baseMultiplier * levelBonus;
     const baseEnemies = Math.floor(playerCount * multiplier);
 
-    // Limites de inimigos - reduzidos
-    const minEnemies = Math.min(25, 12 + gameState.currentLevel * 2); // 14 no level 1, até 25
-    const maxEnemies = Math.min(300, 40 + gameState.currentLevel * 25); // 65 no level 1, até 300
+    // Limites de inimigos - grupos menores
+    const minEnemies = Math.min(15, 8 + gameState.currentLevel); // 9 no level 1, até 15
+    const maxEnemies = Math.min(300, 50 + gameState.currentLevel * 25); // 75 no level 1, até 300
 
     // Garantir que não excedemos o limite global
     const availableSpace = MAX_ENEMIES - currentEnemyCount;
@@ -90,14 +90,14 @@ export function spawnEnemies(entities: Entities, canvasWidth: number, gameState:
 let lastMiniBossSpawn = 0;
 
 export function spawnMiniBoss(entities: Entities, canvasWidth: number, gameState: GameState, _canvasHeight: number = 800): void {
-  // Spawnar mini-boss a cada 10% da distância do level (era 20%)
-  const miniBossInterval = gameState.levelDistance * 0.10;
+  // Spawnar mini-boss a cada 25% da distância do level
+  const miniBossInterval = gameState.levelDistance * 0.25;
   const miniBossThreshold = Math.floor(gameState.distanceTraveled / miniBossInterval);
 
   if (miniBossThreshold > lastMiniBossSpawn && !entities.boss) {
-    // Permitir até 3 mini-bosses ativos ao mesmo tempo
+    // Permitir até 5 mini-bosses ativos ao mesmo tempo
     const activeMiniBosses = entities.miniBosses.filter(mb => mb.isActive).length;
-    if (activeMiniBosses < 3) {
+    if (activeMiniBosses < 5) {
       // Spawn do céu (da nave alienígena)
       entities.miniBosses.push(createMiniBoss(canvasWidth, -100, gameState.currentLevel));
       lastMiniBossSpawn = miniBossThreshold;

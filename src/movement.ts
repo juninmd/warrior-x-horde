@@ -21,22 +21,25 @@ export function updateSoldierFormation(army: Army): void {
 
   if (count === 0) return;
 
-  // Formação em círculos concêntricos
+  // Formação em círculos concêntricos compactos
   let soldierIndex = 0;
   let ring = 0;
-  const baseRadius = 25;
-  const ringSpacing = 20;
+  const baseRadius = 15;
+  const ringSpacing = 12; // Mais compacto
 
   while (soldierIndex < count) {
     const ringRadius = baseRadius + ring * ringSpacing;
-    const soldiersInRing = ring === 0 ? 1 : Math.min(Math.floor(ring * 6), count - soldierIndex);
+    // Primeiro anel tem 1, depois 6, 12, 18... soldados por anel
+    const soldiersInRing = ring === 0 ? 1 : Math.min(ring * 6, count - soldierIndex);
 
     for (let i = 0; i < soldiersInRing && soldierIndex < count; i++) {
       const soldier = aliveSoldiers[soldierIndex];
-      const angle = ring === 0 ? 0 : (i / soldiersInRing) * Math.PI * 2;
+      // Offset por anel para efeito espiral
+      const angleOffset = ring * 0.5;
+      const angle = ring === 0 ? 0 : (i / soldiersInRing) * Math.PI * 2 + angleOffset;
 
       soldier.targetX = army.centerX + Math.cos(angle) * ringRadius;
-      soldier.targetY = army.centerY + Math.sin(angle) * ringRadius * 0.5;
+      soldier.targetY = army.centerY + Math.sin(angle) * ringRadius * 0.6; // 0.6 para efeito 3D
 
       // Movimento suave para a posição alvo
       soldier.x += (soldier.targetX - soldier.x) * 0.15;

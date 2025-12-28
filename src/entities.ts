@@ -50,10 +50,10 @@ export function createPlayerArmy(canvasWidth: number, canvasHeight: number): Arm
   // Começa com 5 soldados para ter uma base decente
   for (let i = 0; i < 5; i++) {
     const angle = (i / 5) * Math.PI * 2;
-    const radius = 20;
+    const radius = 15;
     soldiers.push(createSoldier(
       centerX + Math.cos(angle) * radius,
-      centerY + Math.sin(angle) * radius * 0.5,
+      centerY + Math.sin(angle) * radius * 0.6, // 0.6 para efeito 3D
       '#4A90D9'
     ));
   }
@@ -78,11 +78,18 @@ export function addSoldiersToArmy(army: Army, count: number): void {
   const actualCount = Math.min(count, maxToAdd);
 
   for (let i = 0; i < actualCount; i++) {
-    const angle = ((baseCount + i) / (baseCount + actualCount)) * Math.PI * 2;
-    const radius = 20 + Math.floor((baseCount + i) / 8) * 15;
+    const index = baseCount + i;
+    // Formação em espiral/círculos concêntricos
+    // Cada "anel" tem ~8 soldados mais que o anterior (densidade crescente)
+    const ring = Math.floor(Math.sqrt(index / 2)); // Determina qual anel
+    const soldiersInRing = Math.max(6, ring * 6); // Mais soldados por anel externo
+    const positionInRing = index - (ring > 0 ? Math.floor((ring * (ring - 1) / 2) * 6) : 0);
+    const angle = (positionInRing / soldiersInRing) * Math.PI * 2 + ring * 0.5; // Offset por anel
+    const radius = 15 + ring * 12; // Raio aumenta por anel
+
     army.soldiers.push(createSoldier(
       army.centerX + Math.cos(angle) * radius,
-      army.centerY + Math.sin(angle) * radius * 0.5,
+      army.centerY + Math.sin(angle) * radius * 0.6, // 0.6 para efeito 3D
       army.color
     ));
   }
@@ -110,11 +117,17 @@ export function addSuperSoldiersToArmy(army: Army, count: number): void {
   const actualCount = Math.min(count, maxToAdd);
 
   for (let i = 0; i < actualCount; i++) {
-    const angle = ((baseCount + i) / (baseCount + actualCount)) * Math.PI * 2;
-    const radius = 20 + Math.floor((baseCount + i) / 8) * 15;
+    const index = baseCount + i;
+    // Mesma formação circular dos soldados normais
+    const ring = Math.floor(Math.sqrt(index / 2));
+    const soldiersInRing = Math.max(6, ring * 6);
+    const positionInRing = index - (ring > 0 ? Math.floor((ring * (ring - 1) / 2) * 6) : 0);
+    const angle = (positionInRing / soldiersInRing) * Math.PI * 2 + ring * 0.5;
+    const radius = 15 + ring * 12;
+
     army.soldiers.push(createSuperSoldier(
       army.centerX + Math.cos(angle) * radius,
-      army.centerY + Math.sin(angle) * radius * 0.5
+      army.centerY + Math.sin(angle) * radius * 0.6
     ));
   }
 }
@@ -206,38 +219,38 @@ export function createGate(canvasWidth: number, y: number, side: 'left' | 'right
       color = '#ff0000ff';
     }
   } else {
-    // MUITO mais chances de aumentar o exército e super soldados!
-    // Add com valores MUITO maiores baseados no level
-    // Level 1: 10-30, Level 5: 30-70, Level 10: 60-200
-    const baseAdd = 10 + level * 5; // 15 no level 1, 60 no level 10
-    const maxAdd = baseAdd + 20 + level * 10; // 45 no level 1, 180 no level 10
+    // Chances de aumentar o exército e super soldados
+    // Valores equilibrados para crescimento gradual
+    // Level 1: 5-15, Level 5: 10-25, Level 10: 15-40
+    const baseAdd = 5 + level * 1; // 6 no level 1, 15 no level 10
+    const maxAdd = baseAdd + 10 + level * 2; // 18 no level 1, 45 no level 10
 
     if (roll < 0.50) {
-      // 50% - Adicionar soldados (valores MUITO maiores!)
+      // 50% - Adicionar soldados (valores equilibrados)
       type = 'add';
       value = Math.floor(Math.random() * (maxAdd - baseAdd + 1)) + baseAdd;
       color = '#2ECC71';
     } else if (roll < 0.65) {
-      // 15% - Multiplicar soldados
+      // 15% - Multiplicar soldados (mais conservador)
       type = 'multiply';
-      value = 1.5 + level * 0.1; // x1.6 no level 1, x2.5 no level 10
+      value = 1.3 + level * 0.05; // x1.35 no level 1, x1.8 no level 10
       color = '#3498DB';
     } else if (roll < 0.73) {
       // 8% - Buff de firerate (diminui aos pouquinhos)
       type = 'firerate';
-      value = 0.85; // Multiplica por 0.85 (~15% mais rápido por gate)
+      value = 0.90; // Multiplica por 0.90 (~10% mais rápido por gate)
       color = '#F39C12';
     } else if (roll < 0.80) {
-      // 7% - Buff de dano FORTE
+      // 7% - Buff de dano
       type = 'damage';
-      value = 2 + Math.floor(level / 3); // 2x no level 1, até 5x no level 10
+      value = 1 + Math.floor(level / 4); // 1x no level 1, até 3x no level 10
       color = '#9900ffff';
     } else if (roll < 0.94) {
-      // 14% - Super Guerreiro (adiciona MUITOS heróis especiais baseado no level)
-      // Level 1: 2-5, Level 5: 5-12, Level 10: 10-25
+      // 14% - Super Guerreiro (valores equilibrados)
+      // Level 1: 1-3, Level 5: 2-5, Level 10: 3-8
       type = 'superwarrior';
-      const baseSuperWarriors = 2 + level;
-      const maxSuperWarriors = baseSuperWarriors + 3 + Math.floor(level * 1.5);
+      const baseSuperWarriors = 1 + Math.floor(level / 4);
+      const maxSuperWarriors = baseSuperWarriors + 2 + Math.floor(level / 3);
       value = Math.floor(Math.random() * (maxSuperWarriors - baseSuperWarriors + 1)) + baseSuperWarriors;
       color = '#FFD700'; // Dourado
     } else if (roll < 0.97) {
@@ -398,9 +411,9 @@ export function createInitialEntities(canvasWidth: number, canvasHeight: number)
   // Criar hordas iniciais com mínimo de 15
   const initialHordes = [];
 
-  // Spawnar 2 hordas iniciais
-  const hordePositions = [-80, -250];
-  const enemyCounts = [15, 15]; // Mínimo 15 inimigos
+  // Spawnar 3 hordas iniciais bem próximas para ação imediata
+  const hordePositions = [-20, -80, -140];
+  const enemyCounts = [10, 100, 20]; // Grupos pequenos iniciais
 
   for (let i = 0; i < hordePositions.length; i++) {
     initialHordes.push(createEnemyHorde(canvasWidth, hordePositions[i], enemyCounts[i], 1));
