@@ -207,39 +207,43 @@ export function createGate(canvasWidth: number, y: number, side: 'left' | 'right
     }
   } else {
     // MUITO mais chances de aumentar o exército e super soldados!
-    // Add com valores incrementais baseados no level - AUMENTADOS
-    const baseAdd = 8 + Math.floor(level / 2); // 8 no level 1, aumenta com level
-    const maxAdd = baseAdd + 12; // Até +12 extra
+    // Add com valores MUITO maiores baseados no level
+    // Level 1: 10-30, Level 5: 30-70, Level 10: 60-200
+    const baseAdd = 10 + level * 5; // 15 no level 1, 60 no level 10
+    const maxAdd = baseAdd + 20 + level * 10; // 45 no level 1, 180 no level 10
 
-    if (roll < 0.55) {
-      // 55% - Adicionar soldados (valores maiores!)
+    if (roll < 0.50) {
+      // 50% - Adicionar soldados (valores MUITO maiores!)
       type = 'add';
-      value = Math.floor(Math.random() * (maxAdd - baseAdd + 1)) + baseAdd; // 8-20 no level 1
+      value = Math.floor(Math.random() * (maxAdd - baseAdd + 1)) + baseAdd;
       color = '#2ECC71';
-    } else if (roll < 0.70) {
+    } else if (roll < 0.65) {
       // 15% - Multiplicar soldados
       type = 'multiply';
-      value = 1.8; // x1.8 para crescimento mais forte
+      value = 1.5 + level * 0.1; // x1.6 no level 1, x2.5 no level 10
       color = '#3498DB';
-    } else if (roll < 0.78) {
+    } else if (roll < 0.73) {
       // 8% - Buff de firerate (diminui aos pouquinhos)
       type = 'firerate';
-      value = 0.90; // Multiplica por 0.90 (~10% mais rápido por gate)
+      value = 0.85; // Multiplica por 0.85 (~15% mais rápido por gate)
       color = '#F39C12';
-    } else if (roll < 0.84) {
-      // 6% - Buff de dano FORTE
+    } else if (roll < 0.80) {
+      // 7% - Buff de dano FORTE
       type = 'damage';
-      value = 2; // Dobra o dano!
+      value = 2 + Math.floor(level / 3); // 2x no level 1, até 5x no level 10
       color = '#9900ffff';
     } else if (roll < 0.94) {
-      // 10% - Super Guerreiro (adiciona 2-4 heróis especiais)
+      // 14% - Super Guerreiro (adiciona MUITOS heróis especiais baseado no level)
+      // Level 1: 2-5, Level 5: 5-12, Level 10: 10-25
       type = 'superwarrior';
-      value = 2 + Math.floor(Math.random() * 3); // 2-4 super guerreiros
+      const baseSuperWarriors = 2 + level;
+      const maxSuperWarriors = baseSuperWarriors + 3 + Math.floor(level * 1.5);
+      value = Math.floor(Math.random() * (maxSuperWarriors - baseSuperWarriors + 1)) + baseSuperWarriors;
       color = '#FFD700'; // Dourado
     } else if (roll < 0.97) {
       // 3% - Subtrair soldados (valores baixos)
       type = 'subtract';
-      value = Math.floor(Math.random() * 2) + 1; // 1-2 soldados apenas
+      value = Math.floor(Math.random() * 3) + 1; // 1-3 soldados apenas
       color = '#ff1900ff';
     } else {
       // 3% - Dividir soldados (sempre por 1.2, bem leve)

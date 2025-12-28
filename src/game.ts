@@ -1,7 +1,7 @@
 // game.ts - Loop principal do jogo Crowd Runner
 import { Entities } from './types';
 import { gameState, resetGameState } from './gameState';
-import { createInitialEntities, createEnemyHorde } from './entities';
+import { createInitialEntities, createEnemyHorde, createSoldier } from './entities';
 import { render, getShareButtonBounds, shareOnX } from './renderer';
 import { checkCollisions } from './collisions';
 import { updateSpawns } from './spawner';
@@ -374,7 +374,7 @@ canvas.addEventListener('click', (e) => {
 
     // Verificar se clicou no botão de compartilhar
     if (x >= bounds.x && x <= bounds.x + bounds.width &&
-        y >= bounds.y && y <= bounds.y + bounds.height) {
+      y >= bounds.y && y <= bounds.y + bounds.height) {
       shareOnX(gameState);
       return;
     }
@@ -392,7 +392,7 @@ canvas.addEventListener('touchstart', (e) => {
 
     // Verificar se clicou no botão de compartilhar
     if (x >= bounds.x && x <= bounds.x + bounds.width &&
-        y >= bounds.y && y <= bounds.y + bounds.height) {
+      y >= bounds.y && y <= bounds.y + bounds.height) {
       shareOnX(gameState);
       return;
     }
@@ -435,26 +435,17 @@ function debugSetLevel(targetLevel: number): void {
   gameState.gameSpeed = Math.min(2, gameState.baseGameSpeed + targetLevel * 0.1);
 
   // Dar um exército razoável para teste
-  const testSoldiers = Math.min(50, 10 + targetLevel * 5);
+  const testSoldiers = Math.min(200, 10 + targetLevel * 12);
   entities = createInitialEntities(canvas.width, canvas.height);
 
   // Adicionar soldados extras
   for (let i = 0; i < testSoldiers; i++) {
     const angle = Math.random() * Math.PI * 2;
     const radius = Math.random() * 50;
-    entities.playerArmy.soldiers.push({
-      id: Math.random(),
-      x: entities.playerArmy.centerX + Math.cos(angle) * radius,
-      y: entities.playerArmy.centerY + Math.sin(angle) * radius,
-      targetX: 0,
-      targetY: 0,
-      color: '#4A90D9',
-      size: 8,
-      isAlive: true,
-      animOffset: Math.random() * Math.PI * 2,
-      hp: 100,
-      maxHp: 100,
-    });
+    entities.playerArmy.soldiers.push(
+      createSoldier(entities.playerArmy.centerX + Math.cos(angle) * radius,
+      entities.playerArmy.centerY + Math.sin(angle) * radius,
+      '#4A90D9', 100 * targetLevel));
   }
 
   // Limpar e recriar entidades

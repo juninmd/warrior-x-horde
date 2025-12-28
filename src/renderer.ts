@@ -1257,8 +1257,8 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
     ctx.textAlign = 'center';
     ctx.fillText(`${gameState.combo}x COMBO!`, 0, 0);
 
-    // Barra de tempo do combo
-    const comboProgress = gameState.comboTimer / 2000; // 2 segundos
+    // Barra de tempo do combo (4 segundos agora)
+    const comboProgress = gameState.comboTimer / 4000; // 4 segundos
     ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
     ctx.fillRect(-50, 10, 100, 6);
     ctx.fillStyle = getComboColor(gameState.combo);
@@ -1269,6 +1269,7 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
 }
 
 function getComboColor(combo: number): string {
+  if (combo >= 15) return '#00FFFF'; // Ciano para combo LENDÁRIO
   if (combo >= 10) return '#FF00FF'; // Magenta para combo épico
   if (combo >= 7) return '#FFD700';  // Dourado
   if (combo >= 5) return '#FF6B6B';  // Vermelho claro
