@@ -18,9 +18,10 @@ export function spawnGates(entities: Entities, canvasWidth: number, gameState: G
     : spawnY + gateSpacing;
 
   if (lowestGateY > spawnY) {
-    // Passar contagem atual de heróis para evitar gates de aumento quando no máximo
+    // Passar contagem atual de heróis e inimigos para balancear gates
     const currentHeroCount = entities.playerArmy.soldiers.filter(s => s.isAlive).length;
-    const newGates = createGatePair(canvasWidth, spawnY - gateSpacing, gameState.currentLevel, currentHeroCount);
+    const currentEnemyCount = getTotalEnemyCount(entities);
+    const newGates = createGatePair(canvasWidth, spawnY - gateSpacing, gameState.currentLevel, currentHeroCount, currentEnemyCount);
     entities.gates.push(...newGates);
   }
 }

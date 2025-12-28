@@ -187,7 +187,7 @@ export function createEnemyHorde(canvasWidth: number, y: number, count: number, 
   };
 }
 
-export function createGate(canvasWidth: number, y: number, side: 'left' | 'right', level: number = 1, currentHeroCount: number = 0): Gate {
+export function createGate(canvasWidth: number, y: number, side: 'left' | 'right', level: number = 1, currentHeroCount: number = 0, currentEnemyCount: number = 0): Gate {
   const gateWidth = canvasWidth / 2 - 30;
   let roll = Math.random();
 
@@ -219,38 +219,73 @@ export function createGate(canvasWidth: number, y: number, side: 'left' | 'right
       color = '#ff0000ff';
     }
   } else {
-    // Chances de aumentar o exército e super soldados
-    // Valores equilibrados para crescimento gradual
-    // Level 1: 5-15, Level 5: 10-25, Level 10: 15-40
-    const baseAdd = 5 + level * 1; // 6 no level 1, 15 no level 10
-    const maxAdd = baseAdd + 10 + level * 2; // 18 no level 1, 45 no level 10
+    // Buffs escalam com base no tamanho do exército E quantidade de inimigos
+    const armySize = currentHeroCount;
+    const enemySize = currentEnemyCount;
+
+    // Calcular razão inimigos/heróis - quanto maior, mais em desvantagem estamos
+    const ratio = armySize > 0 ? enemySize / armySize : 10;
+
+    // Fator de emergência: se temos MUITO mais inimigos que heróis, buffs ENORMES
+    // ratio < 0.5: temos 2x mais heróis que inimigos (buffs reduzidos)
+    // ratio = 1: equilibrado (buffs normais)
+    // ratio > 2: temos 2x mais inimigos que heróis (buffs aumentados)
+    // ratio > 5: situação crítica (buffs ENORMES)
+    const emergencyFactor = ratio < 0.5
+      ? 0.6  // Muito forte, reduzir buffs
+      : ratio < 1
+        ? 0.8  // Forte, buffs levemente reduzidos
+        : ratio < 2
+          ? 1.2  // Em desvantagem, buffs aumentados
+          : ratio < 5
+            ? 2.0  // Desvantagem grande, buffs 2x
+            : 3.0; // Situação crítica, buffs 3x!
+
+    // Fator de escala baseado no tamanho do exército
+    const armySizeFactor = armySize < 30
+      ? 2.5  // Exército muito pequeno - buffs enormes
+      : armySize < 80
+        ? 1.8  // Exército pequeno
+        : armySize < 200
+          ? 1.2  // Exército médio
+          : armySize < 500
+            ? 1.0  // Exército grande
+            : 0.5; // Exército enorme - reduzir
+
+    // Combinar os dois fatores
+    const scaleFactor = Math.min(4.0, emergencyFactor * armySizeFactor); // Máximo 4x
+
+    // Valores base escalam com level E com fator combinado
+    const baseAdd = Math.floor((8 + level * 2) * scaleFactor);
+    const maxAdd = Math.floor((baseAdd + 15 + level * 3) * scaleFactor);
 
     if (roll < 0.50) {
-      // 50% - Adicionar soldados (valores equilibrados)
+      // 50% - Adicionar soldados (escala com emergência)
       type = 'add';
       value = Math.floor(Math.random() * (maxAdd - baseAdd + 1)) + baseAdd;
       color = '#2ECC71';
     } else if (roll < 0.65) {
-      // 15% - Multiplicar soldados (mais conservador)
+      // 15% - Multiplicar soldados (escala com emergência)
       type = 'multiply';
-      value = 1.3 + level * 0.05; // x1.35 no level 1, x1.8 no level 10
+      // Base: x1.3, máximo x3.0 em situação crítica
+      const baseMultiplier = 1.2 + level * 0.03;
+      value = Math.min(3.0, baseMultiplier * (scaleFactor > 1 ? 1 + (scaleFactor - 1) * 0.3 : 1));
       color = '#3498DB';
     } else if (roll < 0.73) {
       // 8% - Buff de firerate (diminui aos pouquinhos)
       type = 'firerate';
-      value = 0.90; // Multiplica por 0.90 (~10% mais rápido por gate)
+      value = 0.88; // Multiplica por 0.88 (~12% mais rápido por gate)
       color = '#F39C12';
     } else if (roll < 0.80) {
-      // 7% - Buff de dano
+      // 7% - Buff de dano (escala com emergência)
       type = 'damage';
-      value = 1 + Math.floor(level / 4); // 1x no level 1, até 3x no level 10
+      value = Math.floor((1 + Math.floor(level / 3)) * Math.min(2, scaleFactor));
       color = '#9900ffff';
     } else if (roll < 0.94) {
-      // 14% - Super Guerreiro (valores equilibrados)
-      // Level 1: 1-3, Level 5: 2-5, Level 10: 3-8
+      // 14% - Super Guerreiro (escala com emergência)
       type = 'superwarrior';
-      const baseSuperWarriors = 1 + Math.floor(level / 4);
-      const maxSuperWarriors = baseSuperWarriors + 2 + Math.floor(level / 3);
+      const baseSuperWarriors = Math.max(1, Math.floor((1 + Math.floor(level / 3)) * scaleFactor));
+      const maxSuperWarriors = Math.max(baseSuperWarriors + 1, Math.floor((baseSuperWarriors + 3 + Math.floor(level / 2)) * scaleFactor));
       value = Math.floor(Math.random() * (maxSuperWarriors - baseSuperWarriors + 1)) + baseSuperWarriors;
       color = '#FFD700'; // Dourado
     } else if (roll < 0.97) {
@@ -280,9 +315,9 @@ export function createGate(canvasWidth: number, y: number, side: 'left' | 'right
   };
 }
 
-export function createGatePair(canvasWidth: number, y: number, level: number = 1, currentHeroCount: number = 0): Gate[] {
-  const leftGate = createGate(canvasWidth, y, 'left', level, currentHeroCount);
-  const rightGate = createGate(canvasWidth, y, 'right', level, currentHeroCount);
+export function createGatePair(canvasWidth: number, y: number, level: number = 1, currentHeroCount: number = 0, currentEnemyCount: number = 0): Gate[] {
+  const leftGate = createGate(canvasWidth, y, 'left', level, currentHeroCount, currentEnemyCount);
+  const rightGate = createGate(canvasWidth, y, 'right', level, currentHeroCount, currentEnemyCount);
 
   // Se no máximo de heróis, não forçar gates de aumento
   const atMaxHeroes = currentHeroCount >= MAX_HEROES;
