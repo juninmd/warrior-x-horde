@@ -1,17 +1,31 @@
 // shooting.ts - Sistema de tiro automatico e Super Cannon
 import { Entities, GameState, Bullet, Army, EnemyHorde, Boss, Soldier, MiniBoss } from './types';
 import { addFloatingText, addExplosion, addParticle } from './renderer';
+import { ObjectPool } from './pool';
+
+const bulletPool = new ObjectPool<Bullet>(
+  () => ({ x: 0, y: 0, targetX: 0, targetY: 0, speed: 0, damage: 0, isEnemy: false }),
+  (b) => {
+    b.x = 0;
+    b.y = 0;
+    b.targetX = 0;
+    b.targetY = 0;
+    b.speed = 0;
+    b.damage = 0;
+    b.isEnemy = false;
+  }
+);
 
 export function createBullet(x: number, y: number, targetX: number, targetY: number, damage: number, isEnemy: boolean): Bullet {
-  return {
-    x,
-    y,
-    targetX,
-    targetY,
-    speed: isEnemy ? 3 : -12, // Tiros do jogador mais rápidos
-    damage,
-    isEnemy,
-  };
+  const bullet = bulletPool.get();
+  bullet.x = x;
+  bullet.y = y;
+  bullet.targetX = targetX;
+  bullet.targetY = targetY;
+  bullet.speed = isEnemy ? 3 : -12; // Tiros do jogador mais rápidos
+  bullet.damage = damage;
+  bullet.isEnemy = isEnemy;
+  return bullet;
 }
 
 function findNearestTarget(shooter: Soldier, hordes: EnemyHorde[], boss: Boss | null, miniBosses: MiniBoss[]): { x: number; y: number } | null {
@@ -187,11 +201,16 @@ function applySuperCannonDamage(entities: Entities, gameState: GameState): void 
 }
 
 export function updateBullets(entities: Entities, gameState: GameState): void {
-  for (const bullet of entities.bullets) {
+  // Atualizar e remover bullets fora da tela manualmente para usar o pool
+  for (let i = entities.bullets.length - 1; i >= 0; i--) {
+    const bullet = entities.bullets[i];
     bullet.y += bullet.speed;
-  }
 
-  entities.bullets = entities.bullets.filter(b => b.y > -50 && b.y < 900);
+    if (bullet.y <= -50 || bullet.y >= 900) {
+      bulletPool.release(bullet);
+      entities.bullets.splice(i, 1);
+    }
+  }
 
   for (let i = entities.bullets.length - 1; i >= 0; i--) {
     const bullet = entities.bullets[i];
@@ -234,6 +253,7 @@ export function updateBullets(entities: Entities, gameState: GameState): void {
             }
           }
 
+          bulletPool.release(bullet);
           entities.bullets.splice(i, 1);
           bulletHit = true;
           break;
@@ -253,6 +273,7 @@ export function updateBullets(entities: Entities, gameState: GameState): void {
       if (bullet.x > miniBoss.x && bullet.x < miniBoss.x + miniBoss.width &&
           bullet.y > miniBoss.y && bullet.y < miniBoss.y + miniBoss.height) {
         miniBoss.hp -= bullet.damage;
+        bulletPool.release(bullet);
         entities.bullets.splice(i, 1);
 
         // Efeito de impacto
@@ -298,6 +319,7 @@ export function updateBullets(entities: Entities, gameState: GameState): void {
 
       if (hitBoss) {
         boss.hp -= bullet.damage;
+        bulletPool.release(bullet);
         entities.bullets.splice(i, 1);
 
         // Efeito de impacto no boss
