@@ -24,8 +24,8 @@ export function updateSoldierFormation(army: Army): void {
   // Formação em círculos concêntricos compactos
   let soldierIndex = 0;
   let ring = 0;
-  const baseRadius = 15;
-  const ringSpacing = 12; // Mais compacto
+  const baseRadius = 10;
+  const ringSpacing = 4; // Muito mais compacto para manter formato circular
 
   while (soldierIndex < count) {
     const ringRadius = baseRadius + ring * ringSpacing;
