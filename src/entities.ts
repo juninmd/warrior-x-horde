@@ -495,8 +495,10 @@ export function createGatePair(canvasWidth: number, y: number, level: number = 1
 }
 
 export function createBoss(canvasWidth: number, level: number): Boss {
-  // Level 10+ = Boss final (Nave Mãe)
-  if (level >= 10) {
+  // Level 10 = Boss final (Nave Mãe)
+  const isMothership = level >= 10;
+
+  if (isMothership) {
     // Nave mãe - boss final com vida desafiadora mas alcançável
     const bossHp = 5000 + (level - 10) * 2000; // 5000 HP base + 2000 por level acima de 10
     return {
@@ -516,22 +518,6 @@ export function createBoss(canvasWidth: number, level: number): Boss {
 
   // Boss normal - HP reduzido para ser mais justo
   const bossHp = (30 + level * 20) * 20; // Reduzido de 30x para 20x
-
-  // Determinar o tipo de boss baseado no nível
-  let type: Boss['type'] = 'beast';
-  let color = '#8B0000';
-
-  if (level >= 7) {
-    type = 'demon';
-    color = '#FF2020'; // Vermelho vivo
-  } else if (level >= 4) {
-    type = 'machine';
-    color = '#708090'; // Cinza metálico
-  } else {
-    type = 'beast';
-    color = '#8B4513'; // Marrom besta
-  }
-
   return {
     x: canvasWidth / 2 - 50,
     y: -200,
@@ -540,10 +526,10 @@ export function createBoss(canvasWidth: number, level: number): Boss {
     hp: bossHp,
     maxHp: bossHp,
     isActive: true,
-    color,
+    color: '#8B0000',
     spawnTime: Date.now(),
     isMoving: false,
-    type,
+    type: 'normal',
   };
 }
 
