@@ -1386,15 +1386,19 @@ function drawGameOver(ctx: CanvasRenderingContext2D, gameState: GameState): void
   if (isFinalVictory) {
     // Vitória final épica!
     ctx.fillStyle = '#00FF88';
-    ctx.font = 'bold 36px Arial';
+    ctx.font = 'bold 28px Arial';
     ctx.textAlign = 'center';
     ctx.shadowColor = '#00FF88';
     ctx.shadowBlur = 30;
-    ctx.fillText('🛸 NAVE MÃE DESTRUÍDA! 🛸', 0, -30);
+    ctx.fillText('🛸 NAVE MÃE DESTRUÍDA! 🛸', 0, -40);
+
     ctx.fillStyle = '#FFD700';
-    ctx.font = 'bold 48px Arial';
+    ctx.font = 'bold 32px Arial';
     ctx.shadowColor = '#FFD700';
-    ctx.fillText('🎉 VITÓRIA FINAL! 🎉', 0, 30);
+    ctx.fillText('🎉 PARABÉNS! 🎉', 0, 10);
+
+    ctx.font = 'bold 24px Arial';
+    ctx.fillText('VOCÊ SALVOU O MUNDO', 0, 50);
   } else {
     ctx.fillStyle = gameState.isVictory ? '#2ECC71' : '#E74C3C';
     ctx.font = 'bold 48px Arial';
@@ -1478,7 +1482,7 @@ function drawGameOver(ctx: CanvasRenderingContext2D, gameState: GameState): void
   ctx.fillStyle = '#FFFFFF';
   ctx.font = 'bold 16px Arial';
   ctx.textAlign = 'center';
-  ctx.fillText('🔄 JOGAR NOVAMENTE', 0, 5);
+  ctx.fillText(isFinalVictory ? '➡️ NÍVEL 11 (INFINITO)' : '🔄 JOGAR NOVAMENTE', 0, 5);
   ctx.restore();
 
   // Botão de compartilhar no X (Twitter)
@@ -1508,6 +1512,33 @@ function drawGameOver(ctx: CanvasRenderingContext2D, gameState: GameState): void
   ctx.fillText('𝕏 COMPARTILHAR SCORE', 0, 5);
   ctx.restore();
 
+  // Botão de compartilhar no WhatsApp
+  ctx.save();
+  ctx.translate(width / 2, boxY + boxHeight + 150); // 50px abaixo do botão do Twitter
+  ctx.scale(buttonPulse, buttonPulse);
+
+  const whatsappGradient = ctx.createLinearGradient(-100, -20, -100, 20);
+  whatsappGradient.addColorStop(0, '#25D366');
+  whatsappGradient.addColorStop(1, '#128C7E');
+
+  ctx.fillStyle = whatsappGradient;
+  ctx.beginPath();
+  ctx.roundRect(-100, -20, 200, 40, 20);
+  ctx.fill();
+
+  ctx.shadowColor = '#25D366';
+  ctx.shadowBlur = 10;
+  ctx.strokeStyle = '#50E386';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = 'bold 15px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('📱 COMPARTILHAR ZAP', 0, 5);
+  ctx.restore();
+
   // Guardar posição do botão de share para detecção de clique
   shareButtonBounds = {
     x: width / 2 - 100,
@@ -1515,13 +1546,25 @@ function drawGameOver(ctx: CanvasRenderingContext2D, gameState: GameState): void
     width: 200,
     height: 40
   };
+
+  whatsappButtonBounds = {
+    x: width / 2 - 100,
+    y: boxY + boxHeight + 150 - 20,
+    width: 200,
+    height: 40
+  };
 }
 
 // Bounds do botão de compartilhar
 let shareButtonBounds = { x: 0, y: 0, width: 0, height: 0 };
+let whatsappButtonBounds = { x: 0, y: 0, width: 0, height: 0 };
 
 export function getShareButtonBounds(): { x: number; y: number; width: number; height: number } {
   return shareButtonBounds;
+}
+
+export function getWhatsAppButtonBounds(): { x: number; y: number; width: number; height: number } {
+  return whatsappButtonBounds;
 }
 
 export function shareOnX(gameState: GameState): void {
@@ -1529,6 +1572,14 @@ export function shareOnX(gameState: GameState): void {
   const url = window.location.href;
   const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
   window.open(tweetUrl, '_blank', 'width=550,height=420');
+}
+
+export function shareOnWhatsApp(gameState: GameState): void {
+  const text = `🎮 Crowd Runner - Warrior X Horde!\n\n🏆 Score: ${gameState.score}\n👑 High Score: ${gameState.highScore}\n🔥 Max Combo: ${gameState.maxCombo}x\n📊 Level: ${gameState.currentLevel}\n\nConsegue superar? Jogue agora!`;
+  const url = window.location.href;
+  const fullText = `${text}\n${url}`;
+  const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(fullText)}`;
+  window.open(whatsappUrl, '_blank');
 }
 
 // Desenhar Super Cannon beam
