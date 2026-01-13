@@ -1,5 +1,8 @@
 // types.ts - Sistema de Crowd Runner
 
+export type SoldierType = 'normal' | 'super' | 'bazooka' | 'rambo' | 'laser';
+export type BulletType = 'normal' | 'rocket' | 'laser' | 'plasma';
+
 export interface Particle {
   x: number;
   y: number;
@@ -61,8 +64,9 @@ export interface Soldier {
   animOffset: number;
   hp: number;
   maxHp: number;
-  isSuper?: boolean; // Super guerreiro
+  type: SoldierType;
   personalFireRate?: number; // Fire rate individual (para super guerreiros)
+  lastShotTime?: number; // Para controlar fire rate individual
 }
 
 export interface Army {
@@ -109,7 +113,7 @@ export interface Gate {
   y: number;
   width: number;
   height: number;
-  type: 'add' | 'multiply' | 'subtract' | 'divide' | 'firerate' | 'damage' | 'superwarrior';
+  type: 'add' | 'multiply' | 'subtract' | 'divide' | 'firerate' | 'damage' | 'superwarrior' | 'bazooka' | 'rambo' | 'laser';
   value: number;
   color: string;
   side: 'left' | 'right';
@@ -145,6 +149,7 @@ export interface Bullet {
   speed: number;
   damage: number;
   isEnemy: boolean;
+  type: BulletType;
 }
 
 export interface Boss {

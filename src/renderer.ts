@@ -1,5 +1,5 @@
 // renderer.ts - Renderização do jogo estilo Crowd Runner
-import { Entities, GameState, FloatingText, Army, EnemyHorde, Gate, Boss, Bullet, Particle, MysteryBox } from './types';
+import { Entities, GameState, FloatingText, Army, EnemyHorde, Gate, Boss, Bullet, Particle, MysteryBox, Soldier } from './types';
 import { ObjectPool } from './pool';
 
 const floatingTexts: FloatingText[] = [];
@@ -489,7 +489,8 @@ function drawAlienShip(ctx: CanvasRenderingContext2D, x: number, y: number, time
   ctx.restore();
 }
 
-function drawSoldier3D(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, color: string, animOffset: number, time: number): void {
+function drawSoldier3D(ctx: CanvasRenderingContext2D, soldier: Soldier, time: number): void {
+  const { x, y, size, color, animOffset, type } = soldier;
   const bounce = Math.sin(time * 0.008 + animOffset) * 3;
   const scale = Math.max(0.5, 1 - (800 - y) / 1500); // Escala baseada na posição Y (perspectiva)
   const actualSize = size * scale;
@@ -500,31 +501,120 @@ function drawSoldier3D(ctx: CanvasRenderingContext2D, x: number, y: number, size
   ctx.ellipse(x, y + actualSize * 0.8, actualSize * 0.6, actualSize * 0.2, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Corpo (círculo principal)
-  const bodyGradient = ctx.createRadialGradient(x - actualSize * 0.2, y - actualSize * 0.2 + bounce, 0, x, y + bounce, actualSize);
-  bodyGradient.addColorStop(0, color);
-  bodyGradient.addColorStop(1, shadeColor(color, -30));
+  // Visuals based on type
 
-  ctx.fillStyle = bodyGradient;
-  ctx.beginPath();
-  ctx.arc(x, y + bounce, actualSize * 0.7, 0, Math.PI * 2);
-  ctx.fill();
+  if (type === 'bazooka') {
+     // Bazooka visuals: Green/Camo, big tube
+      const bodyGradient = ctx.createRadialGradient(x - actualSize * 0.2, y - actualSize * 0.2 + bounce, 0, x, y + bounce, actualSize);
+      bodyGradient.addColorStop(0, color);
+      bodyGradient.addColorStop(1, shadeColor(color, -30));
 
-  // Cabeça
-  const headGradient = ctx.createRadialGradient(x - actualSize * 0.1, y - actualSize * 0.6 + bounce, 0, x, y - actualSize * 0.5 + bounce, actualSize * 0.4);
-  headGradient.addColorStop(0, '#FFE4C4');
-  headGradient.addColorStop(1, '#DEB887');
+      ctx.fillStyle = bodyGradient;
+      ctx.beginPath();
+      ctx.arc(x, y + bounce, actualSize * 0.8, 0, Math.PI * 2);
+      ctx.fill();
 
-  ctx.fillStyle = headGradient;
-  ctx.beginPath();
-  ctx.arc(x, y - actualSize * 0.5 + bounce, actualSize * 0.4, 0, Math.PI * 2);
-  ctx.fill();
+      // Helmet (Camo pattern ish)
+      ctx.fillStyle = shadeColor(color, -40);
+      ctx.beginPath();
+      ctx.arc(x, y - actualSize * 0.6 + bounce, actualSize * 0.4, Math.PI, 0);
+      ctx.fill();
 
-  // Capacete
-  ctx.fillStyle = shadeColor(color, -40);
-  ctx.beginPath();
-  ctx.arc(x, y - actualSize * 0.6 + bounce, actualSize * 0.35, Math.PI, 0);
-  ctx.fill();
+      // Bazooka tube on shoulder
+      ctx.fillStyle = '#333';
+      ctx.save();
+      ctx.translate(x + actualSize * 0.3, y - actualSize * 0.2 + bounce);
+      ctx.rotate(-Math.PI / 4);
+      ctx.fillRect(0, 0, actualSize * 0.3, actualSize * 1.2);
+      ctx.restore();
+
+  } else if (type === 'rambo') {
+      // Rambo visuals: Red headband
+      const bodyGradient = ctx.createRadialGradient(x - actualSize * 0.2, y - actualSize * 0.2 + bounce, 0, x, y + bounce, actualSize);
+      bodyGradient.addColorStop(0, '#D4AF37'); // Skin color ish? No, user said Rambo. Let's stick to base color or skin tone with clothes.
+      // Let's use the soldier color which is set to red in entity creation
+      bodyGradient.addColorStop(0, color);
+      bodyGradient.addColorStop(1, shadeColor(color, -30));
+      ctx.fillStyle = bodyGradient;
+      ctx.beginPath();
+      ctx.arc(x, y + bounce, actualSize * 0.7, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Head (Skin)
+      const headGradient = ctx.createRadialGradient(x - actualSize * 0.1, y - actualSize * 0.6 + bounce, 0, x, y - actualSize * 0.5 + bounce, actualSize * 0.4);
+      headGradient.addColorStop(0, '#FFE4C4');
+      headGradient.addColorStop(1, '#DEB887');
+      ctx.fillStyle = headGradient;
+      ctx.beginPath();
+      ctx.arc(x, y - actualSize * 0.5 + bounce, actualSize * 0.4, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Red Headband
+      ctx.fillStyle = '#FF0000';
+      ctx.beginPath();
+      ctx.rect(x - actualSize * 0.4, y - actualSize * 0.8 + bounce, actualSize * 0.8, actualSize * 0.15);
+      ctx.fill();
+      // Bandana knot
+      ctx.beginPath();
+      ctx.arc(x + actualSize * 0.4, y - actualSize * 0.75 + bounce, actualSize * 0.1, 0, Math.PI*2);
+      ctx.fill();
+
+  } else if (type === 'laser') {
+      // Laser visuals: Sci-fi visor
+      const bodyGradient = ctx.createRadialGradient(x - actualSize * 0.2, y - actualSize * 0.2 + bounce, 0, x, y + bounce, actualSize);
+      bodyGradient.addColorStop(0, color);
+      bodyGradient.addColorStop(1, shadeColor(color, -30));
+      ctx.fillStyle = bodyGradient;
+      ctx.beginPath();
+      ctx.arc(x, y + bounce, actualSize * 0.7, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Head
+       const headGradient = ctx.createRadialGradient(x - actualSize * 0.1, y - actualSize * 0.6 + bounce, 0, x, y - actualSize * 0.5 + bounce, actualSize * 0.4);
+      headGradient.addColorStop(0, '#FFE4C4');
+      headGradient.addColorStop(1, '#DEB887');
+      ctx.fillStyle = headGradient;
+      ctx.beginPath();
+      ctx.arc(x, y - actualSize * 0.5 + bounce, actualSize * 0.4, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Visor (Cyan/White glowing)
+      ctx.fillStyle = '#E0FFFF';
+      ctx.shadowColor = '#00FFFF';
+      ctx.shadowBlur = 5;
+      ctx.beginPath();
+      ctx.roundRect(x - actualSize * 0.3, y - actualSize * 0.7 + bounce, actualSize * 0.6, actualSize * 0.2, 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+  } else {
+    // Normal/Super (Super handled outside for aura)
+    // Corpo (círculo principal)
+    const bodyGradient = ctx.createRadialGradient(x - actualSize * 0.2, y - actualSize * 0.2 + bounce, 0, x, y + bounce, actualSize);
+    bodyGradient.addColorStop(0, color);
+    bodyGradient.addColorStop(1, shadeColor(color, -30));
+
+    ctx.fillStyle = bodyGradient;
+    ctx.beginPath();
+    ctx.arc(x, y + bounce, actualSize * 0.7, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Cabeça
+    const headGradient = ctx.createRadialGradient(x - actualSize * 0.1, y - actualSize * 0.6 + bounce, 0, x, y - actualSize * 0.5 + bounce, actualSize * 0.4);
+    headGradient.addColorStop(0, '#FFE4C4');
+    headGradient.addColorStop(1, '#DEB887');
+
+    ctx.fillStyle = headGradient;
+    ctx.beginPath();
+    ctx.arc(x, y - actualSize * 0.5 + bounce, actualSize * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Capacete
+    ctx.fillStyle = shadeColor(color, -40);
+    ctx.beginPath();
+    ctx.arc(x, y - actualSize * 0.6 + bounce, actualSize * 0.35, Math.PI, 0);
+    ctx.fill();
+  }
 }
 
 function shadeColor(color: string, percent: number): string {
@@ -561,24 +651,24 @@ function drawArmy(ctx: CanvasRenderingContext2D, army: Army, time: number): void
   // Priorizar super guerreiros e soldados mais visíveis (mais próximos do centro)
   if (sortedSoldiers.length > MAX_RENDERED_SOLDIERS) {
     // Separar super guerreiros (sempre renderizar)
-    const superSoldiers = sortedSoldiers.filter(s => s.isSuper);
-    const normalSoldiers = sortedSoldiers.filter(s => !s.isSuper);
+    const specialSoldiers = sortedSoldiers.filter(s => s.type !== 'normal');
+    const normalSoldiers = sortedSoldiers.filter(s => s.type === 'normal');
 
     // Pegar os mais próximos do centro da tela
-    const remainingSlots = MAX_RENDERED_SOLDIERS - superSoldiers.length;
+    const remainingSlots = MAX_RENDERED_SOLDIERS - specialSoldiers.length;
     const selectedNormal = normalSoldiers.slice(0, Math.max(0, remainingSlots));
 
-    sortedSoldiers = [...superSoldiers, ...selectedNormal].sort((a, b) => a.y - b.y);
+    sortedSoldiers = [...specialSoldiers, ...selectedNormal].sort((a, b) => a.y - b.y);
   }
 
   for (const soldier of sortedSoldiers) {
     // Super guerreiros são desenhados com efeito especial (dourados e maiores)
-    if (soldier.isSuper) {
+    if (soldier.type === 'super') {
       // Aura dourada
       ctx.save();
       ctx.shadowColor = '#FFD700';
       ctx.shadowBlur = 15;
-      drawSoldier3D(ctx, soldier.x, soldier.y, soldier.size, '#FFD700', soldier.animOffset, time);
+      drawSoldier3D(ctx, soldier, time);
       ctx.restore();
 
       // Estrela acima do super guerreiro
@@ -587,7 +677,7 @@ function drawArmy(ctx: CanvasRenderingContext2D, army: Army, time: number): void
       ctx.textAlign = 'center';
       ctx.fillText('⭐', soldier.x, soldier.y - soldier.size - 5);
     } else {
-      drawSoldier3D(ctx, soldier.x, soldier.y, soldier.size, soldier.color, soldier.animOffset, time);
+      drawSoldier3D(ctx, soldier, time);
     }
   }
 
@@ -650,7 +740,7 @@ function drawEnemyHorde(ctx: CanvasRenderingContext2D, horde: EnemyHorde, time: 
   ctx.globalAlpha = hordeAlpha;
 
   for (const soldier of sortedSoldiers) {
-    drawSoldier3D(ctx, soldier.x, soldier.y, soldier.size, soldier.color, soldier.animOffset, time);
+    drawSoldier3D(ctx, soldier, time);
   }
 
   // Contador de inimigos (usa contagem REAL, não a renderizada)
@@ -793,6 +883,9 @@ function drawGate(ctx: CanvasRenderingContext2D, gate: Gate): void {
     case 'firerate': text = `🔥×${gate.value}`; break;
     case 'damage': text = `⚔️×${gate.value}`; break;
     case 'superwarrior': text = `⭐×${gate.value}`; break;
+    case 'bazooka': text = `🚀×${gate.value}`; break;
+    case 'rambo': text = `💪×${gate.value}`; break;
+    case 'laser': text = `⚡×${gate.value}`; break;
   }
 
   ctx.fillText(text, x + width / 2, gate.y + height / 2);
@@ -1237,21 +1330,46 @@ function drawBossAtmosphere(ctx: CanvasRenderingContext2D, width: number, height
 
 function drawBullets(ctx: CanvasRenderingContext2D, bullets: Bullet[]): void {
   for (const bullet of bullets) {
-    // Brilho
-    const gradient = ctx.createRadialGradient(bullet.x, bullet.y, 0, bullet.x, bullet.y, 8);
-    gradient.addColorStop(0, bullet.isEnemy ? '#FF6B6B' : '#FFD700');
-    gradient.addColorStop(1, 'rgba(255, 215, 0, 0)');
+    if (bullet.type === 'laser') {
+        // Laser effect
+        ctx.save();
+        ctx.shadowColor = '#00FFFF';
+        ctx.shadowBlur = 10;
+        ctx.fillStyle = '#E0FFFF';
+        ctx.beginPath();
+        // Elongated bullet
+        ctx.ellipse(bullet.x, bullet.y, 3, 15, 0, 0, Math.PI*2);
+        ctx.fill();
+        ctx.restore();
+    } else if (bullet.type === 'rocket') {
+        // Rocket effect
+        ctx.fillStyle = '#333';
+        ctx.beginPath();
+        ctx.ellipse(bullet.x, bullet.y, 5, 8, 0, 0, Math.PI*2);
+        ctx.fill();
+        // Flame
+        ctx.fillStyle = '#FFA500';
+        ctx.beginPath();
+        ctx.arc(bullet.x, bullet.y + 8, 4, 0, Math.PI*2);
+        ctx.fill();
+    } else {
+        // Normal bullet
+        // Brilho
+        const gradient = ctx.createRadialGradient(bullet.x, bullet.y, 0, bullet.x, bullet.y, 8);
+        gradient.addColorStop(0, bullet.isEnemy ? '#FF6B6B' : '#FFD700');
+        gradient.addColorStop(1, 'rgba(255, 215, 0, 0)');
 
-    ctx.fillStyle = gradient;
-    ctx.beginPath();
-    ctx.arc(bullet.x, bullet.y, 8, 0, Math.PI * 2);
-    ctx.fill();
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(bullet.x, bullet.y, 8, 0, Math.PI * 2);
+        ctx.fill();
 
-    // Núcleo
-    ctx.fillStyle = bullet.isEnemy ? '#E74C3C' : '#FFF';
-    ctx.beginPath();
-    ctx.arc(bullet.x, bullet.y, 3, 0, Math.PI * 2);
-    ctx.fill();
+        // Núcleo
+        ctx.fillStyle = bullet.isEnemy ? '#E74C3C' : '#FFF';
+        ctx.beginPath();
+        ctx.arc(bullet.x, bullet.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+    }
   }
 }
 

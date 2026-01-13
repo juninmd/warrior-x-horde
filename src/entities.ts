@@ -1,5 +1,5 @@
 // entities.ts - Criação de entidades
-import { Army, Soldier, EnemyHorde, Gate, Boss, Entities, MiniBoss, MysteryBox, MAX_HEROES, MAX_ENEMIES } from './types';
+import { Army, Soldier, EnemyHorde, Gate, Boss, Entities, MiniBoss, MysteryBox, MAX_HEROES, MAX_ENEMIES, SoldierType } from './types';
 
 let soldierIdCounter = 0;
 let hordeIdCounter = 0;
@@ -20,7 +20,7 @@ export function createSoldier(x: number, y: number, color: string, hp: number = 
     animOffset: Math.random() * Math.PI * 2,
     hp,
     maxHp: hp,
-    isSuper: false,
+    type: 'normal',
   };
 }
 
@@ -38,8 +38,66 @@ export function createSuperSoldier(x: number, y: number): Soldier {
     animOffset: Math.random() * Math.PI * 2,
     hp: 5, // 5x mais vida
     maxHp: 5,
-    isSuper: true,
+    type: 'super',
     personalFireRate: 100, // Atira 2x mais rápido
+    lastShotTime: 0
+  };
+}
+
+export function createBazookaSoldier(x: number, y: number): Soldier {
+  return {
+    id: soldierIdCounter++,
+    x,
+    y,
+    targetX: x,
+    targetY: y,
+    color: '#2E7D32', // Dark Green
+    size: 22, // Bigger
+    isAlive: true,
+    animOffset: Math.random() * Math.PI * 2,
+    hp: 8,
+    maxHp: 8,
+    type: 'bazooka',
+    personalFireRate: 1500, // Slow fire rate
+    lastShotTime: 0
+  };
+}
+
+export function createRamboSoldier(x: number, y: number): Soldier {
+  return {
+    id: soldierIdCounter++,
+    x,
+    y,
+    targetX: x,
+    targetY: y,
+    color: '#D32F2F', // Red
+    size: 18,
+    isAlive: true,
+    animOffset: Math.random() * Math.PI * 2,
+    hp: 6,
+    maxHp: 6,
+    type: 'rambo',
+    personalFireRate: 100, // Very fast fire rate
+    lastShotTime: 0
+  };
+}
+
+export function createLaserSoldier(x: number, y: number): Soldier {
+  return {
+    id: soldierIdCounter++,
+    x,
+    y,
+    targetX: x,
+    targetY: y,
+    color: '#00E5FF', // Cyan
+    size: 18,
+    isAlive: true,
+    animOffset: Math.random() * Math.PI * 2,
+    hp: 4,
+    maxHp: 4,
+    type: 'laser',
+    personalFireRate: 800,
+    lastShotTime: 0
   };
 }
 
@@ -112,6 +170,11 @@ export function removeSoldiersFromArmy(army: Army, count: number): void {
 
 // Adicionar super guerreiros ao exército
 export function addSuperSoldiersToArmy(army: Army, count: number): void {
+  addSpecialSoldiersToArmy(army, count, 'super');
+}
+
+// Adicionar guerreiros especiais ao exército
+export function addSpecialSoldiersToArmy(army: Army, count: number, type: SoldierType): void {
   const baseCount = army.soldiers.length;
   // Limitar ao máximo de heróis
   const maxToAdd = Math.max(0, MAX_HEROES - baseCount);
@@ -126,10 +189,19 @@ export function addSuperSoldiersToArmy(army: Army, count: number): void {
     const angle = (positionInRing / soldiersInRing) * Math.PI * 2 + ring * 0.5;
     const radius = 15 + ring * 12;
 
-    army.soldiers.push(createSuperSoldier(
-      army.centerX + Math.cos(angle) * radius,
-      army.centerY + Math.sin(angle) * radius * 0.6
-    ));
+    const x = army.centerX + Math.cos(angle) * radius;
+    const y = army.centerY + Math.sin(angle) * radius * 0.6;
+
+    let soldier;
+    switch (type) {
+        case 'super': soldier = createSuperSoldier(x, y); break;
+        case 'bazooka': soldier = createBazookaSoldier(x, y); break;
+        case 'rambo': soldier = createRamboSoldier(x, y); break;
+        case 'laser': soldier = createLaserSoldier(x, y); break;
+        default: soldier = createSoldier(x, y, army.color);
+    }
+
+    army.soldiers.push(soldier);
   }
 }
 
@@ -192,7 +264,7 @@ export function createGate(canvasWidth: number, y: number, side: 'left' | 'right
   const gateWidth = canvasWidth / 2 - 30;
   let roll = Math.random();
 
-  let type: 'add' | 'multiply' | 'subtract' | 'divide' | 'firerate' | 'damage' | 'superwarrior';
+  let type: 'add' | 'multiply' | 'subtract' | 'divide' | 'firerate' | 'damage' | 'superwarrior' | 'bazooka' | 'rambo' | 'laser';
   let value: number;
   let color: string;
 
@@ -261,38 +333,53 @@ export function createGate(canvasWidth: number, y: number, side: 'left' | 'right
     const baseAdd = Math.floor((3 + level * 1) * scaleFactor);
     const maxAdd = Math.floor((baseAdd + 5 + level * 2) * scaleFactor);
 
-    if (roll < 0.50) {
-      // 50% - Adicionar soldados (escala com emergência + level)
+    if (roll < 0.40) {
+      // 40% - Adicionar soldados (escala com emergência + level)
       type = 'add';
       value = Math.floor(Math.random() * (maxAdd - baseAdd + 1)) + baseAdd;
       color = '#2ECC71';
-    } else if (roll < 0.65) {
+    } else if (roll < 0.55) {
       // 15% - Multiplicar soldados - mais conservador
       type = 'multiply';
       // Level 1: x1.15-x1.3, Level 10: x1.4-x2.0
       const baseMultiplier = 1.1 + level * 0.03;
       value = Math.min(2.5, baseMultiplier * (scaleFactor > 1 ? 1 + (scaleFactor - 1) * 0.25 : 1));
       color = '#3498DB';
-    } else if (roll < 0.73) {
+    } else if (roll < 0.63) {
       // 8% - Buff de firerate
       type = 'firerate';
       // Level 1: 0.92, Level 10: 0.85
       value = Math.max(0.80, 0.93 - level * 0.008);
       color = '#F39C12';
-    } else if (roll < 0.80) {
+    } else if (roll < 0.70) {
       // 7% - Buff de dano - mais conservador
       type = 'damage';
       // Level 1: +1, Level 10: +3, em emergência até +6
       value = Math.max(1, Math.floor((1 + Math.floor(level / 4)) * Math.min(2, scaleFactor)));
       color = '#9900ffff';
-    } else if (roll < 0.94) {
-      // 14% - Super Guerreiro - mais conservador no L1
+    } else if (roll < 0.82) {
+      // 12% - Super Guerreiro - mais conservador no L1
       type = 'superwarrior';
       // Level 1: 1-2, Level 5: 2-4, Level 10: 3-8
       const baseSuperWarriors = Math.max(1, Math.floor((1 + Math.floor(level / 3)) * scaleFactor));
       const maxSuperWarriors = Math.max(baseSuperWarriors + 1, Math.floor((baseSuperWarriors + 2 + Math.floor(level / 2)) * scaleFactor));
       value = Math.floor(Math.random() * (maxSuperWarriors - baseSuperWarriors + 1)) + baseSuperWarriors;
       color = '#FFD700'; // Dourado
+    } else if (roll < 0.86) {
+        // 4% - Bazooka
+        type = 'bazooka';
+        value = Math.floor(Math.random() * 2) + 1;
+        color = '#2E7D32';
+    } else if (roll < 0.90) {
+        // 4% - Rambo
+        type = 'rambo';
+        value = Math.floor(Math.random() * 2) + 1;
+        color = '#D32F2F';
+    } else if (roll < 0.94) {
+        // 4% - Laser
+        type = 'laser';
+        value = Math.floor(Math.random() * 2) + 1;
+        color = '#00E5FF';
     } else if (roll < 0.97) {
       // 3% - Subtrair soldados (valores baixos)
       type = 'subtract';
@@ -328,10 +415,9 @@ export function createGatePair(canvasWidth: number, y: number, level: number = 1
   const atMaxHeroes = currentHeroCount >= MAX_HEROES;
 
   // Tipos que aumentam heróis (excluir se no máximo)
-  const heroIncreaseTypes = ['add', 'multiply', 'superwarrior'];
   const goodTypes = atMaxHeroes
     ? ['firerate', 'damage'] // Apenas buffs que não aumentam heróis
-    : ['add', 'multiply', 'firerate', 'damage', 'superwarrior'];
+    : ['add', 'multiply', 'firerate', 'damage', 'superwarrior', 'bazooka', 'rambo', 'laser'];
 
   const leftIsGood = goodTypes.includes(leftGate.type);
   const rightIsGood = goodTypes.includes(rightGate.type);
@@ -358,22 +444,38 @@ export function createGatePair(canvasWidth: number, y: number, level: number = 1
         leftGate.color = '#9900ffff';
       }
     } else {
-      if (buffRoll < 0.4) {
+      if (buffRoll < 0.3) {
         leftGate.type = 'add';
         leftGate.value = Math.floor(Math.random() * 4) + 2; // 2-5
         leftGate.color = '#2ECC71';
-      } else if (buffRoll < 0.65) {
+      } else if (buffRoll < 0.5) {
         leftGate.type = 'multiply';
         leftGate.value = 1.5; // Sempre x1.5
         leftGate.color = '#3498DB';
-      } else if (buffRoll < 0.85) {
+      } else if (buffRoll < 0.7) {
         leftGate.type = 'firerate';
         leftGate.value = 0.92;
         leftGate.color = '#F39C12';
-      } else {
+      } else if (buffRoll < 0.8) {
         leftGate.type = 'superwarrior';
         leftGate.value = 1;
         leftGate.color = '#FFD700';
+      } else {
+        // Special soldiers chance
+        const specialRoll = Math.random();
+        if (specialRoll < 0.33) {
+             leftGate.type = 'bazooka';
+             leftGate.value = 1;
+             leftGate.color = '#2E7D32';
+        } else if (specialRoll < 0.66) {
+             leftGate.type = 'rambo';
+             leftGate.value = 1;
+             leftGate.color = '#D32F2F';
+        } else {
+             leftGate.type = 'laser';
+             leftGate.value = 1;
+             leftGate.color = '#00E5FF';
+        }
       }
     }
   }
