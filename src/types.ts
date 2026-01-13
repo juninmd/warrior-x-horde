@@ -158,7 +158,7 @@ export interface Boss {
   color: string;
   spawnTime: number; // Timestamp de quando o boss spawnou
   isMoving: boolean; // Se já começou a se mover
-  type: 'normal' | 'mothership'; // Tipo de boss - mothership é a nave final
+  type: 'normal' | 'beast' | 'machine' | 'demon' | 'mothership'; // Tipo de boss
   vx?: number; // Velocidade horizontal (para mothership)
   vy?: number; // Velocidade vertical (para mothership)
 }
