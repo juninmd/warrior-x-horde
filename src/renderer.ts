@@ -1,5 +1,5 @@
 // renderer.ts - Renderização do jogo estilo Crowd Runner
-import { Entities, GameState, FloatingText, Army, EnemyHorde, Gate, Boss, Bullet, Particle } from './types';
+import { Entities, GameState, FloatingText, Army, EnemyHorde, Gate, Boss, Bullet, Particle, MysteryBox } from './types';
 import { ObjectPool } from './pool';
 
 const floatingTexts: FloatingText[] = [];
@@ -682,6 +682,55 @@ function drawEnemyHorde(ctx: CanvasRenderingContext2D, horde: EnemyHorde, time: 
     ctx.textBaseline = 'middle';
     ctx.fillText(count.toString(), horde.x, horde.y - 48);
   }
+
+  ctx.restore();
+}
+
+function drawMysteryBox(ctx: CanvasRenderingContext2D, box: MysteryBox, time: number): void {
+  if (box.passed) return;
+
+  const scale = Math.max(0.5, 1 - (800 - box.y) / 1500);
+  const width = box.width * scale;
+  const height = box.height * scale;
+  const x = box.x - width / 2;
+  const y = box.y;
+
+  // Flutuação
+  const hover = Math.sin(time * 0.005) * 5;
+
+  ctx.save();
+  ctx.translate(x + width / 2, y + height / 2 + hover);
+  // Rotação leve
+  ctx.rotate(Math.sin(time * 0.003) * 0.1);
+
+  // Sombra
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.beginPath();
+  ctx.ellipse(0, height, width * 0.6, height * 0.2, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Caixa
+  const gradient = ctx.createLinearGradient(-width / 2, -height / 2, width / 2, height / 2);
+  gradient.addColorStop(0, '#9B59B6'); // Roxo
+  gradient.addColorStop(0.5, '#8E44AD');
+  gradient.addColorStop(1, '#6C3483');
+
+  ctx.fillStyle = gradient;
+  ctx.beginPath();
+  ctx.roundRect(-width / 2, -height / 2, width, height, 8);
+  ctx.fill();
+
+  // Borda brilhante
+  ctx.strokeStyle = '#E056FD';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  // Ponto de interrogação
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = `bold ${Math.floor(30 * scale)}px Arial`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('?', 0, 0);
 
   ctx.restore();
 }
@@ -1578,6 +1627,11 @@ export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameSt
     if (horde.isActive) {
       drawEnemyHorde(ctx, horde, time);
     }
+  }
+
+  // Desenhar Mystery Boxes
+  for (const box of entities.mysteryBoxes) {
+    drawMysteryBox(ctx, box, time);
   }
 
   // Desenhar mini-bosses

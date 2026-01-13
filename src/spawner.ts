@@ -1,6 +1,16 @@
 // spawner.ts - Gerador de obstáculos e inimigos
 import { Entities, GameState, MAX_ENEMIES } from './types';
-import { createGatePair, createEnemyHorde, createBoss, createMiniBoss } from './entities';
+import { createGatePair, createEnemyHorde, createBoss, createMiniBoss, createMysteryBox } from './entities';
+
+export function spawnMysteryBoxes(entities: Entities, canvasWidth: number, _gameState: GameState): void {
+  // Remover caixas que já passaram
+  entities.mysteryBoxes = entities.mysteryBoxes.filter(box => !box.passed && box.y < 1200);
+
+  // Chance de spawn (raro)
+  if (Math.random() < 0.002 && entities.mysteryBoxes.length < 1) { // 0.2% chance por frame
+    entities.mysteryBoxes.push(createMysteryBox(canvasWidth, -100));
+  }
+}
 
 export function spawnGates(entities: Entities, canvasWidth: number, gameState: GameState): void {
   // Spawnar gates - espaçamento maior para dar tempo de decisão
@@ -129,5 +139,6 @@ export function updateSpawns(entities: Entities, canvasWidth: number, gameState:
   spawnGates(entities, canvasWidth, gameState);
   spawnEnemies(entities, canvasWidth, gameState, canvasHeight);
   spawnMiniBoss(entities, canvasWidth, gameState, canvasHeight);
+  spawnMysteryBoxes(entities, canvasWidth, gameState);
   checkBossSpawn(entities, canvasWidth, gameState, canvasHeight);
 }
