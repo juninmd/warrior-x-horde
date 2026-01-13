@@ -1,10 +1,11 @@
 // entities.ts - Criação de entidades
-import { Army, Soldier, EnemyHorde, Gate, Boss, Entities, MiniBoss, MAX_HEROES, MAX_ENEMIES } from './types';
+import { Army, Soldier, EnemyHorde, Gate, Boss, Entities, MiniBoss, MysteryBox, MAX_HEROES, MAX_ENEMIES } from './types';
 
 let soldierIdCounter = 0;
 let hordeIdCounter = 0;
 let gateIdCounter = 0;
 let miniBossIdCounter = 0;
+let mysteryBoxIdCounter = 0;
 
 export function createSoldier(x: number, y: number, color: string, hp: number = 1): Soldier {
   return {
@@ -446,6 +447,21 @@ export function createMiniBoss(canvasWidth: number, y: number, level: number): M
   };
 }
 
+export function createMysteryBox(canvasWidth: number, y: number): MysteryBox {
+  // Posicionar aleatoriamente na largura da estrada
+  const roadWidth = canvasWidth * 0.5; // Aproximação
+  const x = canvasWidth / 2 + (Math.random() - 0.5) * roadWidth;
+
+  return {
+    id: mysteryBoxIdCounter++,
+    x,
+    y,
+    width: 50,
+    height: 50,
+    passed: false,
+  };
+}
+
 export function createInitialEntities(canvasWidth: number, canvasHeight: number): Entities {
   // Criar hordas iniciais com mínimo de 15
   const initialHordes = [];
@@ -463,6 +479,7 @@ export function createInitialEntities(canvasWidth: number, canvasHeight: number)
     enemyHordes: initialHordes,
     gates: [],
     weapons: [],
+    mysteryBoxes: [],
     bullets: [],
     boss: null,
     miniBosses: [],

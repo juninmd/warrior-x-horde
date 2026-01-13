@@ -1,5 +1,5 @@
 // collisions.ts - Sistema de colisões
-import { Entities, GameState, Army, EnemyHorde, Gate, MiniBoss } from './types';
+import { Entities, GameState, Army, EnemyHorde, Gate, MiniBoss, MysteryBox } from './types';
 import { addSoldiersToArmy, multiplySoldiersInArmy, removeSoldiersFromArmy, addSuperSoldiersToArmy } from './entities';
 import { addFloatingText, addExplosion, addParticle } from './renderer';
 import { playSound, audioManager } from './audio';
@@ -304,6 +304,62 @@ function checkBossCollision(army: Army, entities: Entities): boolean {
     bounds.left < boss.x + boss.width;
 }
 
+function checkMysteryBoxCollision(army: Army, box: MysteryBox): boolean {
+  if (box.passed) return false;
+  const bounds = getArmyBounds(army);
+
+  return bounds.bottom > box.y &&
+    bounds.top < box.y + box.height &&
+    bounds.right > box.x &&
+    bounds.left < box.x + box.width;
+}
+
+function applyMysteryBoxEffect(army: Army, box: MysteryBox, gameState: GameState, entities: Entities): void {
+  const effects = [
+    'reinforcements',
+    'nuke',
+    'double',
+    'speed', // Temporário
+    'invincible' // Temporário (só visual/score por enquanto)
+  ];
+
+  const effect = effects[Math.floor(Math.random() * effects.length)];
+
+  switch (effect) {
+    case 'reinforcements':
+      addSoldiersToArmy(army, 30);
+      addFloatingText('REINFORCEMENTS!', box.x, box.y, '#2ECC71');
+      break;
+    case 'nuke':
+      // Matar todos os inimigos na tela
+      entities.enemyHordes.forEach(h => {
+        if (h.isActive && h.y > 0 && h.y < 800) {
+          h.isActive = false;
+          addExplosion(h.x, h.y, '#FFD700');
+        }
+      });
+      addFloatingText('NUKE!', box.x, box.y, '#F1C40F');
+      break;
+    case 'double':
+      multiplySoldiersInArmy(army, 2);
+      addFloatingText('DOUBLE TROUBLE!', box.x, box.y, '#9B59B6');
+      break;
+    case 'speed':
+      // Apenas um bônus de score e visual por enquanto
+      gameState.score += 500;
+      addFloatingText('BONUS POINTS!', box.x, box.y, '#3498DB');
+      break;
+    case 'invincible':
+      addSuperSoldiersToArmy(army, 5);
+      addFloatingText('HERO SQUAD!', box.x, box.y, '#E74C3C');
+      break;
+  }
+
+  box.passed = true;
+  playSound(audioManager.powerUp); // Reutilizar som de powerup
+  addParticle(box.x + box.width/2, box.y + box.height/2, 'star', '#FFFFFF', 10);
+}
+
 export function checkCollisions(entities: Entities, gameState: GameState): void {
   const army = entities.playerArmy;
 
@@ -334,6 +390,13 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
     if (checkMiniBossCollision(army, miniBoss)) {
       gameState.isBattling = true;
       processMiniBossBattle(army, miniBoss, gameState);
+    }
+  }
+
+  // Checar colisão com Mystery Boxes
+  for (const box of entities.mysteryBoxes) {
+    if (checkMysteryBoxCollision(army, box)) {
+      applyMysteryBoxEffect(army, box, gameState, entities);
     }
   }
 

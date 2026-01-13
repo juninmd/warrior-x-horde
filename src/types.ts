@@ -128,6 +128,15 @@ export interface Weapon {
   passed: boolean;
 }
 
+export interface MysteryBox {
+  id: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  passed: boolean;
+}
+
 export interface Bullet {
   x: number;
   y: number;
@@ -159,6 +168,7 @@ export interface Entities {
   enemyHordes: EnemyHorde[];
   gates: Gate[];
   weapons: Weapon[];
+  mysteryBoxes: MysteryBox[];
   bullets: Bullet[];
   boss: Boss | null;
   miniBosses: MiniBoss[];

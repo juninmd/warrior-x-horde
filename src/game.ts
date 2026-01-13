@@ -1,7 +1,7 @@
 // game.ts - Loop principal do jogo Crowd Runner
 import { Entities } from './types';
 import { gameState, resetGameState } from './gameState';
-import { createInitialEntities, createEnemyHorde, createSoldier } from './entities';
+import { createInitialEntities, createEnemyHorde, createSoldier, createMysteryBox } from './entities';
 import { render, getShareButtonBounds, shareOnX } from './renderer';
 import { checkCollisions } from './collisions';
 import { updateSpawns } from './spawner';
@@ -240,6 +240,13 @@ function gameLoop(currentTime: number = 0): void {
 
   // Atualizar movimento
   updateMovement(entities, gameState, canvas.width, getMouseX());
+
+  // Atualizar movimento das Mystery Boxes
+  for (const box of entities.mysteryBoxes) {
+    box.y += gameState.gameSpeed;
+  }
+  // Limpar boxes que saíram da tela
+  entities.mysteryBoxes = entities.mysteryBoxes.filter(box => !box.passed && box.y < 1200);
 
   // Sistema de tiro
   updateShooting(entities, gameState);
