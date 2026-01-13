@@ -13,7 +13,7 @@ export const gameState: GameState = {
   gameSpeed: 0.5,
   baseGameSpeed: 0.5,
   distanceTraveled: 0,
-  levelDistance: 5000,
+  levelDistance: 5000, // Levels mais curtos e dinâmicos
   isBattling: false,
   battleTimer: 0,
   screenShakeActive: false,
@@ -24,11 +24,18 @@ export const gameState: GameState = {
   // Super Cannon
   superCannonActive: false,
   superCannonTimer: 0,
-  superCannonDuration: 3000, // 3 segundos de duração
-  superCannonCooldown: 10000, // 10 segundos de cooldown
+  superCannonDuration: 3000,
+  superCannonCooldown: 63000, // 1 minuto e 3 segundos entre disparos
   superCannonLastUsed: 0,
   superCannonReady: true,
   superCannonDamageMultiplier: 5,
+  // Combo system
+  combo: 0,
+  comboTimer: 0,
+  maxCombo: 0,
+  // Boss Atmosphere
+  bossActive: false,
+  bossAtmosphereIntensity: 0,
 };
 
 export function resetGameState(): void {
@@ -36,6 +43,8 @@ export function resetGameState(): void {
   gameState.isGameOver = false;
   gameState.isVictory = false;
   gameState.isPaused = false;
+  gameState.currentLevel = 1; // Reiniciar do level 1
+  gameState.levelDistance = 5000; // Reset da distância do level
   gameState.score = 0;
   gameState.coins = 0;
   gameState.gameSpeed = gameState.baseGameSpeed;
@@ -46,4 +55,9 @@ export function resetGameState(): void {
   gameState.superCannonTimer = 0;
   gameState.superCannonReady = true;
   gameState.superCannonLastUsed = 0;
+  gameState.combo = 0;
+  gameState.comboTimer = 0;
+  gameState.maxCombo = 0;
+  gameState.bossActive = false;
+  gameState.bossAtmosphereIntensity = 0;
 }

@@ -1,5 +1,17 @@
 // types.ts - Sistema de Crowd Runner
 
+export interface Particle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  color: string;
+  size: number;
+  life: number;
+  maxLife: number;
+  type: 'explosion' | 'trail' | 'spark' | 'star';
+}
+
 export interface GameState {
   isGameOver: boolean;
   isVictory: boolean;
@@ -28,6 +40,13 @@ export interface GameState {
   superCannonLastUsed: number;
   superCannonReady: boolean;
   superCannonDamageMultiplier: number;
+  // Combo system
+  combo: number;
+  comboTimer: number;
+  maxCombo: number;
+  // Boss Atmosphere
+  bossActive: boolean;
+  bossAtmosphereIntensity: number;
 }
 
 export interface Soldier {
@@ -40,6 +59,10 @@ export interface Soldier {
   size: number;
   isAlive: boolean;
   animOffset: number;
+  hp: number;
+  maxHp: number;
+  isSuper?: boolean; // Super guerreiro
+  personalFireRate?: number; // Fire rate individual (para super guerreiros)
 }
 
 export interface Army {
@@ -65,6 +88,19 @@ export interface EnemyHorde {
   color: string;
   speed: number;
   isActive: boolean;
+  isMini?: boolean; // Mini-boss horde
+}
+
+export interface MiniBoss {
+  id: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  hp: number;
+  maxHp: number;
+  isActive: boolean;
+  color: string;
 }
 
 export interface Gate {
@@ -73,7 +109,7 @@ export interface Gate {
   y: number;
   width: number;
   height: number;
-  type: 'add' | 'multiply' | 'subtract' | 'divide' | 'firerate' | 'damage' | 'speed';
+  type: 'add' | 'multiply' | 'subtract' | 'divide' | 'firerate' | 'damage' | 'superwarrior';
   value: number;
   color: string;
   side: 'left' | 'right';
@@ -111,6 +147,11 @@ export interface Boss {
   maxHp: number;
   isActive: boolean;
   color: string;
+  spawnTime: number; // Timestamp de quando o boss spawnou
+  isMoving: boolean; // Se já começou a se mover
+  type: 'normal' | 'mothership'; // Tipo de boss - mothership é a nave final
+  vx?: number; // Velocidade horizontal (para mothership)
+  vy?: number; // Velocidade vertical (para mothership)
 }
 
 export interface Entities {
@@ -120,7 +161,12 @@ export interface Entities {
   weapons: Weapon[];
   bullets: Bullet[];
   boss: Boss | null;
+  miniBosses: MiniBoss[];
 }
+
+// Limites de entidades para performance
+export const MAX_HEROES = 10000; // Aumentado para 10k (renderização limitada a 100 protege performance)
+export const MAX_ENEMIES = 20000;
 
 export interface FloatingText {
   text: string;
