@@ -144,7 +144,7 @@ export function addSoldiersToArmy(army: Army, count: number): void {
     const soldiersInRing = Math.max(6, ring * 6); // Mais soldados por anel externo
     const positionInRing = index - (ring > 0 ? Math.floor((ring * (ring - 1) / 2) * 6) : 0);
     const angle = (positionInRing / soldiersInRing) * Math.PI * 2 + ring * 0.5; // Offset por anel
-    const radius = 15 + ring * 12; // Raio aumenta por anel
+    const radius = 10 + ring * 4; // Raio aumenta por anel
 
     army.soldiers.push(createSoldier(
       army.centerX + Math.cos(angle) * radius,
@@ -187,7 +187,7 @@ export function addSpecialSoldiersToArmy(army: Army, count: number, type: Soldie
     const soldiersInRing = Math.max(6, ring * 6);
     const positionInRing = index - (ring > 0 ? Math.floor((ring * (ring - 1) / 2) * 6) : 0);
     const angle = (positionInRing / soldiersInRing) * Math.PI * 2 + ring * 0.5;
-    const radius = 15 + ring * 12;
+    const radius = 10 + ring * 4;
 
     const x = army.centerX + Math.cos(angle) * radius;
     const y = army.centerY + Math.sin(angle) * radius * 0.6;
@@ -495,10 +495,8 @@ export function createGatePair(canvasWidth: number, y: number, level: number = 1
 }
 
 export function createBoss(canvasWidth: number, level: number): Boss {
-  // Level 10 = Boss final (Nave Mãe)
-  const isMothership = level >= 10;
-
-  if (isMothership) {
+  // Level 10+ = Boss final (Nave Mãe)
+  if (level >= 10) {
     // Nave mãe - boss final com vida desafiadora mas alcançável
     const bossHp = 5000 + (level - 10) * 2000; // 5000 HP base + 2000 por level acima de 10
     return {
@@ -518,6 +516,22 @@ export function createBoss(canvasWidth: number, level: number): Boss {
 
   // Boss normal - HP reduzido para ser mais justo
   const bossHp = (30 + level * 20) * 20; // Reduzido de 30x para 20x
+
+  // Determinar o tipo de boss baseado no nível
+  let type: Boss['type'] = 'beast';
+  let color = '#8B0000';
+
+  if (level >= 7) {
+    type = 'demon';
+    color = '#FF2020'; // Vermelho vivo
+  } else if (level >= 4) {
+    type = 'machine';
+    color = '#708090'; // Cinza metálico
+  } else {
+    type = 'beast';
+    color = '#8B4513'; // Marrom besta
+  }
+
   return {
     x: canvasWidth / 2 - 50,
     y: -200,
@@ -526,10 +540,10 @@ export function createBoss(canvasWidth: number, level: number): Boss {
     hp: bossHp,
     maxHp: bossHp,
     isActive: true,
-    color: '#8B0000',
+    color,
     spawnTime: Date.now(),
     isMoving: false,
-    type: 'normal',
+    type,
   };
 }
 

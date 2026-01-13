@@ -2,7 +2,7 @@
 import { Entities } from './types';
 import { gameState, resetGameState } from './gameState';
 import { createInitialEntities, createEnemyHorde, createSoldier, createMysteryBox } from './entities';
-import { render, getShareButtonBounds, shareOnX } from './renderer';
+import { render, getShareButtonBounds, getWhatsAppButtonBounds, shareOnX, shareOnWhatsApp } from './renderer';
 import { checkCollisions } from './collisions';
 import { updateSpawns } from './spawner';
 import { updateMovement } from './movement';
@@ -281,8 +281,14 @@ function gameLoop(currentTime: number = 0): void {
 
   // Checar progresso de nível (vitória do boss = próximo nível)
   if (gameState.isVictory) {
-    // Após level 10, continua em modo infinito!
-    advanceToNextLevel();
+    if (gameState.currentLevel === 10 && !gameState.isGameOver) {
+      // Parar o jogo no nível 10 para mostrar a tela de vitória
+      gameState.isGameOver = true;
+      playSound(audioManager.victory);
+    } else if (gameState.currentLevel !== 10) {
+      // Avançar normal para outros níveis
+      advanceToNextLevel();
+    }
   }
 
   // Renderizar
@@ -358,16 +364,34 @@ function startGame(): void {
 canvas.addEventListener('click', (e) => {
   if (gameState.isGameOver) {
     const { x, y } = screenToCanvas(e.clientX, e.clientY);
-    const bounds = getShareButtonBounds();
 
-    // Verificar se clicou no botão de compartilhar
-    if (x >= bounds.x && x <= bounds.x + bounds.width &&
-      y >= bounds.y && y <= bounds.y + bounds.height) {
+    // Verificar se clicou no botão de compartilhar X (Twitter)
+    const xBounds = getShareButtonBounds();
+    if (x >= xBounds.x && x <= xBounds.x + xBounds.width &&
+      y >= xBounds.y && y <= xBounds.y + xBounds.height) {
       shareOnX(gameState);
       return;
     }
 
-    startGame();
+    // Verificar se clicou no botão de compartilhar WhatsApp
+    const waBounds = getWhatsAppButtonBounds();
+    if (x >= waBounds.x && x <= waBounds.x + waBounds.width &&
+      y >= waBounds.y && y <= waBounds.y + waBounds.height) {
+      shareOnWhatsApp(gameState);
+      return;
+    }
+
+    // Lógica para continuar ou reiniciar
+    if (gameState.isVictory && gameState.currentLevel === 10) {
+      // Continuar para nível 11 (Infinito)
+      advanceToNextLevel();
+      gameState.isGameOver = false;
+      gameState.isStarted = true;
+      requestAnimationFrame(gameLoop);
+    } else {
+      // Reiniciar jogo
+      startGame();
+    }
   }
 });
 
@@ -376,16 +400,34 @@ canvas.addEventListener('touchstart', (e) => {
     e.preventDefault();
     const touch = e.touches[0];
     const { x, y } = screenToCanvas(touch.clientX, touch.clientY);
-    const bounds = getShareButtonBounds();
 
-    // Verificar se clicou no botão de compartilhar
-    if (x >= bounds.x && x <= bounds.x + bounds.width &&
-      y >= bounds.y && y <= bounds.y + bounds.height) {
+    // Verificar se clicou no botão de compartilhar X (Twitter)
+    const xBounds = getShareButtonBounds();
+    if (x >= xBounds.x && x <= xBounds.x + xBounds.width &&
+      y >= xBounds.y && y <= xBounds.y + xBounds.height) {
       shareOnX(gameState);
       return;
     }
 
-    startGame();
+    // Verificar se clicou no botão de compartilhar WhatsApp
+    const waBounds = getWhatsAppButtonBounds();
+    if (x >= waBounds.x && x <= waBounds.x + waBounds.width &&
+      y >= waBounds.y && y <= waBounds.y + waBounds.height) {
+      shareOnWhatsApp(gameState);
+      return;
+    }
+
+    // Lógica para continuar ou reiniciar
+    if (gameState.isVictory && gameState.currentLevel === 10) {
+      // Continuar para nível 11 (Infinito)
+      advanceToNextLevel();
+      gameState.isGameOver = false;
+      gameState.isStarted = true;
+      requestAnimationFrame(gameLoop);
+    } else {
+      // Reiniciar jogo
+      startGame();
+    }
   }
 }, { passive: false });
 
