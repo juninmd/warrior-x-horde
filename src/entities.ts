@@ -86,7 +86,7 @@ export function addSoldiersToArmy(army: Army, count: number): void {
     const soldiersInRing = Math.max(6, ring * 6); // Mais soldados por anel externo
     const positionInRing = index - (ring > 0 ? Math.floor((ring * (ring - 1) / 2) * 6) : 0);
     const angle = (positionInRing / soldiersInRing) * Math.PI * 2 + ring * 0.5; // Offset por anel
-    const radius = 15 + ring * 12; // Raio aumenta por anel
+    const radius = 10 + ring * 4; // Raio aumenta por anel
 
     army.soldiers.push(createSoldier(
       army.centerX + Math.cos(angle) * radius,
@@ -124,7 +124,7 @@ export function addSuperSoldiersToArmy(army: Army, count: number): void {
     const soldiersInRing = Math.max(6, ring * 6);
     const positionInRing = index - (ring > 0 ? Math.floor((ring * (ring - 1) / 2) * 6) : 0);
     const angle = (positionInRing / soldiersInRing) * Math.PI * 2 + ring * 0.5;
-    const radius = 15 + ring * 12;
+    const radius = 10 + ring * 4;
 
     army.soldiers.push(createSuperSoldier(
       army.centerX + Math.cos(angle) * radius,
