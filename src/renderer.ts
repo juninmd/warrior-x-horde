@@ -1,8 +1,25 @@
 // renderer.ts - Renderização do jogo estilo Crowd Runner
 import { Entities, GameState, FloatingText, Army, EnemyHorde, Gate, Boss, Bullet, Particle } from './types';
+import { ObjectPool } from './pool';
 
 const floatingTexts: FloatingText[] = [];
 const particles: Particle[] = [];
+
+// Pool de partículas
+const particlePool = new ObjectPool<Particle>(
+  () => ({ x: 0, y: 0, vx: 0, vy: 0, color: '#FFF', size: 0, life: 0, maxLife: 0, type: 'spark' }),
+  (p) => {
+    p.x = 0;
+    p.y = 0;
+    p.vx = 0;
+    p.vy = 0;
+    p.color = '#FFF';
+    p.size = 0;
+    p.life = 0;
+    p.maxLife = 0;
+    p.type = 'spark';
+  }
+);
 
 // Limite máximo de partículas para evitar travamentos
 const MAX_PARTICLES = 50; // Reduzido de 100 para 50
@@ -22,17 +39,19 @@ export function addParticle(x: number, y: number, type: Particle['type'], color:
   for (let i = 0; i < actualCount; i++) {
     const angle = Math.random() * Math.PI * 2;
     const speed = type === 'explosion' ? 1.5 + Math.random() * 2.5 : 0.8 + Math.random() * 1.5;
-    particles.push({
-      x,
-      y,
-      vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed - (type === 'star' ? 1.5 : 0),
-      color,
-      size: type === 'explosion' ? 2 + Math.random() * 2.5 : 1.5 + Math.random() * 2,
-      life: 1,
-      maxLife: 1,
-      type,
-    });
+
+    const p = particlePool.get();
+    p.x = x;
+    p.y = y;
+    p.vx = Math.cos(angle) * speed;
+    p.vy = Math.sin(angle) * speed - (type === 'star' ? 1.5 : 0);
+    p.color = color;
+    p.size = type === 'explosion' ? 2 + Math.random() * 2.5 : 1.5 + Math.random() * 2;
+    p.life = 1;
+    p.maxLife = 1;
+    p.type = type;
+
+    particles.push(p);
   }
 }
 
@@ -57,6 +76,7 @@ function updateParticles(): void {
     p.size *= 0.97;
 
     if (p.life <= 0 || p.size < 0.5) {
+      particlePool.release(p);
       particles.splice(i, 1);
     }
   }

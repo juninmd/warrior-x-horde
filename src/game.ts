@@ -74,35 +74,13 @@ export function getScale(): number {
 // Entidades do jogo
 let entities: Entities;
 
-// Botão de início
-const startButton = document.createElement('button');
-startButton.innerText = 'INICIAR JOGO';
-startButton.style.cssText = `
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  padding: 20px 40px;
-  font-size: 24px;
-  font-weight: bold;
-  background: linear-gradient(180deg, #4A90D9 0%, #2E5A8E 100%);
-  color: white;
-  border: none;
-  border-radius: 15px;
-  cursor: pointer;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-  z-index: 100;
-  transition: transform 0.2s, box-shadow 0.2s;
-`;
-startButton.onmouseover = () => {
-  startButton.style.transform = 'translate(-50%, -50%) scale(1.05)';
-  startButton.style.boxShadow = '0 8px 25px rgba(0,0,0,0.4)';
-};
-startButton.onmouseout = () => {
-  startButton.style.transform = 'translate(-50%, -50%)';
-  startButton.style.boxShadow = '0 6px 20px rgba(0,0,0,0.3)';
-};
-document.body.appendChild(startButton);
+// Obter referência ao overlay de início
+const startScreen = document.getElementById('startScreen');
+const startBtnOverlay = document.getElementById('startBtnOverlay');
+
+// Remover o botão antigo se existir (código legado)
+// const startButton = document.createElement('button');
+// ...
 
 // Container para o botão Super Cannon
 const superCannonContainer = document.getElementById('superCannonContainer');
@@ -356,7 +334,10 @@ function startGame(): void {
   setGameStateRef(gameState); // Configurar referência para input de Super Cannon
   wasInBossFight = false; // Resetar flag de boss
   gameState.isStarted = true;
-  startButton.style.display = 'none';
+
+  // Esconder overlay de start
+  if (startScreen) startScreen.classList.remove('active');
+
   superCannonButton.style.display = 'block'; // Mostrar botão do Super Cannon
 
   // Iniciar música
@@ -402,7 +383,9 @@ canvas.addEventListener('touchstart', (e) => {
 }, { passive: false });
 
 // Event listeners
-startButton.addEventListener('click', startGame);
+if (startBtnOverlay) {
+  startBtnOverlay.addEventListener('click', startGame);
+}
 
 // Resize handler
 window.addEventListener('resize', resizeCanvas);
