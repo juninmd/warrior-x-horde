@@ -39,7 +39,7 @@ export function createSuperSoldier(x: number, y: number): Soldier {
     hp: 5, // 5x mais vida
     maxHp: 5,
     type: 'super',
-    personalFireRate: 100, // Atira 2x mais rápido
+    personalFireRate: 250, // Atira 2x mais rápido (base 500)
     lastShotTime: 0
   };
 }
@@ -96,7 +96,7 @@ export function createLaserSoldier(x: number, y: number): Soldier {
     hp: 4,
     maxHp: 4,
     type: 'laser',
-    personalFireRate: 800,
+    personalFireRate: 400, // Faster than base (500)
     lastShotTime: 0
   };
 }

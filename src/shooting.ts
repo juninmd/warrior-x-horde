@@ -149,14 +149,14 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
           damage *= 2;
           dispersion = 0;
       } else if (shooter.type === 'bazooka') {
-          damage *= 5; // High damage
+          damage *= 4; // High damage (reduced from 5 to account for AoE)
           type = 'rocket';
           dispersion = (Math.random() - 0.5) * 5; // Less accurate
       } else if (shooter.type === 'rambo') {
-          damage *= 0.8; // Slightly less damage per shot but high ROF
+          damage *= 0.4; // Reduced damage per shot (high ROF balances it)
           dispersion = (Math.random() - 0.5) * 10; // Spray and pray
       } else if (shooter.type === 'laser') {
-          damage *= 1.5;
+          damage *= 3.0; // High single target damage
           type = 'laser';
           dispersion = 0; // Perfect accuracy
       }
