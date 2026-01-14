@@ -654,6 +654,33 @@ function drawSoldier3D(ctx: CanvasRenderingContext2D, soldier: Soldier, time: nu
     ctx.beginPath();
     ctx.arc(x, y - actualSize * 0.6 + bounce, actualSize * 0.35, Math.PI, 0);
     ctx.fill();
+
+    // Detalhes extras para normais (skins)
+    const isPlayer = color === '#4A90D9' || color === '#FFD700';
+    if (isPlayer) {
+      // Detalhe: Espada (linha simples)
+      ctx.strokeStyle = '#DDD';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x + actualSize * 0.3, y + bounce);
+      ctx.lineTo(x + actualSize * 0.8, y + bounce - actualSize * 0.4);
+      ctx.stroke();
+    } else {
+      // Detalhe Inimigo: Espinhos
+      ctx.fillStyle = shadeColor(color, -50);
+      // Espinho esquerdo
+      ctx.beginPath();
+      ctx.moveTo(x - actualSize * 0.6, y + bounce - actualSize * 0.2);
+      ctx.lineTo(x - actualSize * 0.9, y + bounce - actualSize * 0.5);
+      ctx.lineTo(x - actualSize * 0.4, y + bounce - actualSize * 0.4);
+      ctx.fill();
+      // Espinho direito
+      ctx.beginPath();
+      ctx.moveTo(x + actualSize * 0.6, y + bounce - actualSize * 0.2);
+      ctx.lineTo(x + actualSize * 0.9, y + bounce - actualSize * 0.5);
+      ctx.lineTo(x + actualSize * 0.4, y + bounce - actualSize * 0.4);
+      ctx.fill();
+    }
   }
 }
 
