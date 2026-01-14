@@ -2047,6 +2047,10 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
   const rateWidth = 100;
   drawGlassBadge(ctx, 10, progressY + progressHeight + 15, rateWidth, 28, `🔥 ${shotsPerSec}/s`, '#F39C12');
 
+  // 5. High Score (Top Right, under progress bar) - Motivates competition
+  const highScoreWidth = 110;
+  drawGlassBadge(ctx, width - highScoreWidth - 10, progressY + progressHeight + 15, highScoreWidth, 28, `👑 ${gameState.highScore}`, '#9B59B6');
+
   ctx.restore();
 
   // Combo indicator (se houver combo ativo)
