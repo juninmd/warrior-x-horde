@@ -2084,8 +2084,8 @@ function drawGlassBadge(ctx: CanvasRenderingContext2D, x: number, y: number, w: 
   ctx.fillStyle = 'rgba(10, 10, 20, 0.7)';
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
   ctx.lineWidth = 1;
-  // @ts-ignore - backdropFilter é experimental em Canvas
-  if (ctx.backdropFilter) ctx.backdropFilter = 'blur(4px)';
+  // @ts-expect-error - backdropFilter é experimental em Canvas e pode não estar na definição de tipo
+  if ((ctx as any).backdropFilter) (ctx as any).backdropFilter = 'blur(4px)';
 
   ctx.beginPath();
   ctx.roundRect(x, y, w, h, 12);
