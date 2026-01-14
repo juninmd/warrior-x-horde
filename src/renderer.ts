@@ -1983,57 +1983,71 @@ function drawBullets(ctx: CanvasRenderingContext2D, bullets: Bullet[]): void {
   }
 }
 
-function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: number): void {
+function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: number, fireRate: number): void {
   const { width, height } = ctx.canvas;
 
-  // Badges pequenos nos cantos inferiores (sem fundo escuro grande)
-  const bottomY = height - 25;
-  const badgeHeight = 22;
+  // === GLASSMORPHISM HUD ===
 
-  // Level badge - canto inferior esquerdo
-  ctx.fillStyle = 'rgba(52, 152, 219, 0.9)';
-  ctx.beginPath();
-  ctx.roundRect(5, bottomY - badgeHeight/2, 70, badgeHeight, 11);
-  ctx.fill();
-  ctx.fillStyle = '#FFF';
-  ctx.font = 'bold 11px Arial';
-  ctx.textAlign = 'center';
-  ctx.fillText(`Level ${gameState.currentLevel}`, 40, bottomY + 4);
+  // Configuração comum
+  const padding = 10;
+  const bottomY = height - 30;
+  const badgeHeight = 36;
+  const glassColor = 'rgba(20, 20, 30, 0.6)';
+  const glassBorder = 'rgba(255, 255, 255, 0.2)';
+  const textColor = '#FFF';
 
-  // Score - centro inferior
-  ctx.fillStyle = 'rgba(46, 204, 113, 0.9)';
-  ctx.beginPath();
-  ctx.roundRect(width / 2 - 40, bottomY - badgeHeight/2, 80, badgeHeight, 11);
-  ctx.fill();
-  ctx.fillStyle = '#FFF';
-  ctx.fillText(`${gameState.score}`, width / 2, bottomY + 4);
+  ctx.save();
 
-  // Contador de exército - canto inferior direito
-  ctx.fillStyle = 'rgba(231, 76, 60, 0.9)';
-  ctx.beginPath();
-  ctx.roundRect(width - 75, bottomY - badgeHeight/2, 70, badgeHeight, 11);
-  ctx.fill();
-  ctx.fillStyle = '#FFF';
-  ctx.fillText(`⚔️ ${armyCount}`, width - 40, bottomY + 4);
-
-  // Barra de progresso fina no topo da tela
-  const progressWidth = width - 20;
+  // --- Barra de Progresso Superior ---
+  const progressWidth = width - 40;
+  const progressX = 20;
+  const progressY = 15;
+  const progressHeight = 8;
   const progress = Math.min(gameState.distanceTraveled / gameState.levelDistance, 1);
-  const progressY = 5;
 
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+  // Fundo da barra (Glass)
+  ctx.fillStyle = glassColor;
+  ctx.strokeStyle = glassBorder;
+  ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.roundRect(10, progressY, progressWidth, 5, 2);
+  ctx.roundRect(progressX - 4, progressY - 4, progressWidth + 8, progressHeight + 8, 8);
   ctx.fill();
+  ctx.stroke();
 
-  const progressGradient = ctx.createLinearGradient(10, progressY, 10 + progressWidth, progressY);
-  progressGradient.addColorStop(0, '#2ECC71');
-  progressGradient.addColorStop(1, '#27AE60');
+  // Barra de preenchimento
+  const progressGradient = ctx.createLinearGradient(progressX, 0, progressX + progressWidth, 0);
+  progressGradient.addColorStop(0, '#00C9FF');
+  progressGradient.addColorStop(1, '#92FE9D');
 
   ctx.fillStyle = progressGradient;
+  ctx.shadowColor = '#92FE9D';
+  ctx.shadowBlur = 10;
   ctx.beginPath();
-  ctx.roundRect(10, progressY, progressWidth * progress, 5, 2);
+  ctx.roundRect(progressX, progressY, progressWidth * progress, progressHeight, 4);
   ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // --- Badges Inferiores ---
+
+  // 1. Level (Esquerda)
+  const levelWidth = 80;
+  drawGlassBadge(ctx, 10, bottomY - badgeHeight/2, levelWidth, badgeHeight, `Lv. ${gameState.currentLevel}`, '#4A90D9');
+
+  // 2. Score (Centro)
+  const scoreWidth = 100;
+  drawGlassBadge(ctx, width / 2 - scoreWidth / 2, bottomY - badgeHeight/2, scoreWidth, badgeHeight, `${gameState.score}`, '#F1C40F');
+
+  // 3. Army (Direita)
+  const armyWidth = 90;
+  drawGlassBadge(ctx, width - armyWidth - 10, bottomY - badgeHeight/2, armyWidth, badgeHeight, `⚔️ ${armyCount}`, '#E74C3C');
+
+  // 4. Fire Rate (Top Left, under progress bar)
+  // Converter delay para shots/sec: 1000 / fireRate
+  const shotsPerSec = (1000 / fireRate).toFixed(1);
+  const rateWidth = 100;
+  drawGlassBadge(ctx, 10, progressY + progressHeight + 15, rateWidth, 28, `🔥 ${shotsPerSec}/s`, '#F39C12');
+
+  ctx.restore();
 
   // Combo indicator (se houver combo ativo)
   if (gameState.combo > 1) {
@@ -2063,6 +2077,32 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
 
     ctx.restore();
   }
+}
+
+function drawGlassBadge(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, text: string, accentColor: string): void {
+  // Fundo Glass
+  ctx.fillStyle = 'rgba(10, 10, 20, 0.7)';
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+  ctx.lineWidth = 1;
+  ctx.backdropFilter = 'blur(4px)'; // Nota: Nem todos browsers suportam isso em Canvas ainda, mas vale tentar
+
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, 12);
+  ctx.fill();
+  ctx.stroke();
+
+  // Accent Line (Bottom)
+  ctx.fillStyle = accentColor;
+  ctx.beginPath();
+  ctx.roundRect(x + 10, y + h - 4, w - 20, 2, 1);
+  ctx.fill();
+
+  // Texto
+  ctx.fillStyle = '#FFF';
+  ctx.font = 'bold 14px "Segoe UI", Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, x + w / 2, y + h / 2 - 2);
 }
 
 function getComboColor(combo: number): string {
@@ -2448,7 +2488,7 @@ export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameSt
   }
 
   // UI
-  drawUI(ctx, gameState, entities.playerArmy.soldiers.filter(s => s.isAlive).length);
+  drawUI(ctx, gameState, entities.playerArmy.soldiers.filter(s => s.isAlive).length, entities.playerArmy.fireRate);
 
   // Floating texts
   updateFloatingTexts();

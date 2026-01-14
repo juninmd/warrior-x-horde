@@ -109,9 +109,9 @@ export function createPlayerArmy(canvasWidth: number, canvasHeight: number): Arm
     targetX: centerX,
     color: '#4A90D9',
     isPlayer: true,
-    fireRate: 500, // FireRate base: 500ms (mais rápido - era 600)
+    fireRate: 700, // FireRate base: 700ms (mais lento para equilibrar)
     lastShotTime: 0,
-    damage: 4, // Dano base aumentado para 4 (era 3)
+    damage: 3, // Dano base reduzido para 3
   };
 }
 
@@ -214,8 +214,8 @@ export function createEnemyHorde(canvasWidth: number, y: number, count: number, 
 
   const soldiers: Soldier[] = [];
 
-  // HP dos inimigos aumenta LEVEMENTE com o level (+25% por level ao invés de 50%)
-  const enemyHp = 1 + Math.floor((level - 1) * 0.25);
+  // HP dos inimigos aumenta com o level (+60% por level) - Aumentado
+  const enemyHp = 3 + Math.floor((level - 1) * 0.6);
 
   // Formação em círculos concêntricos (igual ao exército do jogador)
   let soldierIndex = 0;
@@ -314,16 +314,15 @@ export function createGate(canvasWidth: number, y: number, side: 'left' | 'right
             : 0.3; // Reduzido de 0.4
 
     // Fator de level - começa baixo no L1, cresce com levels
-    // Level 1: 0.7x, Level 5: 1.0x, Level 10: 1.4x (Reduzido)
-    const levelFactor = 0.7 + (level - 1) * 0.08;
+    // Level 1: 0.6x, Level 5: 0.9x, Level 10: 1.2x
+    const levelFactor = 0.6 + (level - 1) * 0.06;
 
     // Combinar os três fatores - máximo mais baixo
-    const scaleFactor = Math.min(2.0, emergencyFactor * armySizeFactor * levelFactor); // Máximo 2x (era 3x)
+    const scaleFactor = Math.min(1.8, emergencyFactor * armySizeFactor * levelFactor); // Máximo 1.8x
 
-    // Valores base REDUZIDOS devido à maior frequência de gates
-    // Level 1: base 2-4, Level 5: base 4-8
-    const baseAdd = Math.max(1, Math.floor((2 + level * 0.5) * scaleFactor));
-    const maxAdd = Math.max(2, Math.floor((baseAdd + 3 + level * 1) * scaleFactor));
+    // Valores base REDUZIDOS
+    const baseAdd = Math.max(1, Math.floor((1 + level * 0.4) * scaleFactor));
+    const maxAdd = Math.max(2, Math.floor((baseAdd + 2 + level * 0.8) * scaleFactor));
 
     if (roll < 0.50) {
       // 50% - Adicionar soldados (escala com emergência + level)
@@ -331,23 +330,23 @@ export function createGate(canvasWidth: number, y: number, side: 'left' | 'right
       value = Math.floor(Math.random() * (maxAdd - baseAdd + 1)) + baseAdd;
       color = '#2ECC71';
     } else if (roll < 0.65) {
-      // 15% - Multiplicar soldados - mais conservador
+      // 15% - Multiplicar soldados - muito conservador
       type = 'multiply';
-      // Level 1: x1.05-x1.15, Level 10: x1.2-x1.5
-      const baseMultiplier = 1.05 + level * 0.02;
-      value = Math.min(2.0, baseMultiplier * (scaleFactor > 1 ? 1 + (scaleFactor - 1) * 0.2 : 1)); // Max 2.0
+      // Level 1: x1.02-x1.1, Level 10: x1.15
+      const baseMultiplier = 1.02 + level * 0.015;
+      value = Math.min(1.8, baseMultiplier * (scaleFactor > 1 ? 1 + (scaleFactor - 1) * 0.15 : 1)); // Max 1.8
       color = '#3498DB';
     } else if (roll < 0.73) {
       // 8% - Buff de firerate
       type = 'firerate';
-      // Level 1: 0.95, Level 10: 0.90 (menos agressivo)
-      value = Math.max(0.88, 0.95 - level * 0.005);
+      // Redução leve: Level 1: 0.98, Level 10: 0.95
+      value = Math.max(0.92, 0.98 - level * 0.003);
       color = '#F39C12';
     } else if (roll < 0.80) {
       // 7% - Buff de dano - mais conservador
       type = 'damage';
-      // Level 1: +1.1x, Level 10: +1.5x (mudado para multiplicador pequeno)
-      value = 1.1 + (level * 0.02); // 1.1x a 1.3x de dano
+      // Apenas +5% a +10% de dano
+      value = 1.05 + (level * 0.01);
       color = '#9900ffff';
     } else if (roll < 0.94) {
       // 14% - Super Guerreiro - mais conservador
@@ -505,8 +504,8 @@ export function createBoss(canvasWidth: number, level: number): Boss {
     };
   }
 
-  // Boss normal - HP reduzido para ser mais justo
-  const bossHp = (30 + level * 20) * 20; // Reduzido de 30x para 20x
+  // Boss normal - HP (Aumentado drasticamente)
+  const bossHp = (80 + level * 30) * 30; // Aumentado para desafiar mais
 
   // Determinar o tipo de boss baseado no nível (1-9)
   let type: Boss['type'] = 'beast';
@@ -570,8 +569,8 @@ export function createBoss(canvasWidth: number, level: number): Boss {
 }
 
 export function createMiniBoss(canvasWidth: number, y: number, level: number): MiniBoss {
-  // Vida do mini-boss reduzida para 3x (era 5x)
-  const miniBossHp = (15 + level * 10) * 3;
+  // Vida do mini-boss aumentada drasticamente
+  const miniBossHp = (30 + level * 15) * 8;
   const types: MiniBoss['type'][] = ['normal', 'armored', 'speed', 'spiky'];
   const type = types[Math.floor(Math.random() * types.length)];
 
