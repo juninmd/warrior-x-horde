@@ -1983,7 +1983,7 @@ function drawBullets(ctx: CanvasRenderingContext2D, bullets: Bullet[]): void {
   }
 }
 
-function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: number, fireRate: number): void {
+function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: number, fireRate: number, damage: number): void {
   const { width, height } = ctx.canvas;
 
   // === GLASSMORPHISM HUD ===
@@ -2035,7 +2035,11 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
 
   // 2. Score (Centro)
   const scoreWidth = 100;
-  drawGlassBadge(ctx, width / 2 - scoreWidth / 2, bottomY - badgeHeight/2, scoreWidth, badgeHeight, `${gameState.score}`, '#F1C40F');
+  drawGlassBadge(ctx, width / 2 - scoreWidth / 2 - 60, bottomY - badgeHeight/2, scoreWidth, badgeHeight, `${gameState.score}`, '#F1C40F');
+
+  // 2.5 Coins (Centro Direita)
+  const coinsWidth = 100;
+  drawGlassBadge(ctx, width / 2 + 50, bottomY - badgeHeight/2, coinsWidth, badgeHeight, `💰 ${gameState.coins}`, '#FFD700');
 
   // 3. Army (Direita)
   const armyWidth = 90;
@@ -2046,6 +2050,10 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
   const shotsPerSec = (1000 / fireRate).toFixed(1);
   const rateWidth = 100;
   drawGlassBadge(ctx, 10, progressY + progressHeight + 15, rateWidth, 28, `🔥 ${shotsPerSec}/s`, '#F39C12');
+
+  // 5. Damage (Next to Fire Rate)
+  const dmgWidth = 80;
+  drawGlassBadge(ctx, 10 + rateWidth + 10, progressY + progressHeight + 15, dmgWidth, 28, `⚔️ ${damage.toFixed(1)}`, '#E91E63');
 
   ctx.restore();
 
@@ -2488,7 +2496,7 @@ export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameSt
   }
 
   // UI
-  drawUI(ctx, gameState, entities.playerArmy.soldiers.filter(s => s.isAlive).length, entities.playerArmy.fireRate);
+  drawUI(ctx, gameState, entities.playerArmy.soldiers.filter(s => s.isAlive).length, entities.playerArmy.fireRate, entities.playerArmy.damage);
 
   // Floating texts
   updateFloatingTexts();

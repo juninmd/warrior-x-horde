@@ -1,7 +1,7 @@
 // game.ts - Loop principal do jogo Crowd Runner
 import { Entities, GameState, Soldier } from './types';
 import { gameState, resetGameState } from './gameState';
-import { createInitialEntities, createEnemyHorde, createSoldier, createMysteryBox, addSpecialSoldiersToArmy } from './entities';
+import { createInitialEntities, createEnemyHorde, createSoldier, createMysteryBox, addSpecialSoldiersToArmy, addSoldiersToArmy } from './entities';
 import { render, getShareButtonBounds, getWhatsAppButtonBounds, shareOnX, shareOnWhatsApp, addFloatingText } from './renderer';
 import { checkCollisions } from './collisions';
 import { updateSpawns } from './spawner';
@@ -138,17 +138,42 @@ function createShopButton(type: 'bazooka' | 'rambo' | 'laser', price: number, co
 const bazookaBtn = createShopButton('bazooka', 50, '#27ae60', '🚀');
 const ramboBtn = createShopButton('rambo', 100, '#e74c3c', '💪');
 const laserBtn = createShopButton('laser', 150, '#00ffff', '⚡');
+const soldierBtn = createShopButton('soldier', 50, '#4A90D9', '🛡️');
+const nukeBtn = createShopButton('nuke', 500, '#F1C40F', '☢️');
 
+// Customize buttons
+soldierBtn.innerHTML = `<span style="font-size: 18px;">🛡️ +10</span><br><span style="font-size: 12px;">💰 50</span>`;
+nukeBtn.innerHTML = `<span style="font-size: 18px;">☢️ NUKE</span><br><span style="font-size: 12px;">💰 500</span>`;
+
+shopContainer.appendChild(soldierBtn);
 shopContainer.appendChild(bazookaBtn);
 shopContainer.appendChild(ramboBtn);
 shopContainer.appendChild(laserBtn);
+shopContainer.appendChild(nukeBtn);
 
-function buyUnit(type: 'bazooka' | 'rambo' | 'laser', cost: number): void {
+function buyUnit(type: 'bazooka' | 'rambo' | 'laser' | 'soldier' | 'nuke', cost: number): void {
   if (gameState.coins >= cost) {
     gameState.coins -= cost;
-    addSpecialSoldiersToArmy(entities.playerArmy, type, 1);
-    addFloatingText(`+1 ${type.toUpperCase()}`, entities.playerArmy.centerX, entities.playerArmy.centerY, '#00FF00');
-    playSound(audioManager.powerUp);
+
+    if (type === 'nuke') {
+      // Logic for Nuke
+      entities.enemyHordes.forEach(h => {
+        if (h.isActive) {
+          h.isActive = false;
+          addExplosion(h.x, h.y, '#FFD700');
+        }
+      });
+      addFloatingText('NUKE!', entities.playerArmy.centerX, entities.playerArmy.centerY - 100, '#F1C40F');
+      playSound(audioManager.superCannon); // Reusing intense sound
+    } else if (type === 'soldier') {
+      addSoldiersToArmy(entities.playerArmy, 10);
+      addFloatingText('+10 Soldiers', entities.playerArmy.centerX, entities.playerArmy.centerY, '#4A90D9');
+      playSound(audioManager.powerUp);
+    } else {
+      addSpecialSoldiersToArmy(entities.playerArmy, type, 1);
+      addFloatingText(`+1 ${type.toUpperCase()}`, entities.playerArmy.centerX, entities.playerArmy.centerY, '#00FF00');
+      playSound(audioManager.powerUp);
+    }
   } else {
     // Feedback negativo (som de erro)
     playSound(audioManager.nerf); // Usando som de nerf como erro
@@ -158,11 +183,15 @@ function buyUnit(type: 'bazooka' | 'rambo' | 'laser', cost: number): void {
 bazookaBtn.addEventListener('click', (e) => { e.stopPropagation(); buyUnit('bazooka', 50); });
 ramboBtn.addEventListener('click', (e) => { e.stopPropagation(); buyUnit('rambo', 100); });
 laserBtn.addEventListener('click', (e) => { e.stopPropagation(); buyUnit('laser', 150); });
+soldierBtn.addEventListener('click', (e) => { e.stopPropagation(); buyUnit('soldier', 50); });
+nukeBtn.addEventListener('click', (e) => { e.stopPropagation(); buyUnit('nuke', 500); });
 
 // Touchstart específico para mobile para garantir resposta rápida
 bazookaBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); buyUnit('bazooka', 50); }, { passive: true });
 ramboBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); buyUnit('rambo', 100); }, { passive: true });
 laserBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); buyUnit('laser', 150); }, { passive: true });
+soldierBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); buyUnit('soldier', 50); }, { passive: true });
+nukeBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); buyUnit('nuke', 500); }, { passive: true });
 
 function updateShopUI(): void {
   if (!gameState.isStarted || gameState.isGameOver) {
@@ -187,6 +216,8 @@ function updateShopUI(): void {
   updateBtn(bazookaBtn, 50);
   updateBtn(ramboBtn, 100);
   updateBtn(laserBtn, 150);
+  updateBtn(soldierBtn, 50);
+  updateBtn(nukeBtn, 500);
 }
 
 // Botão de Super Cannon para mobile (dentro do layout, não fixed)

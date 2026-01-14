@@ -276,9 +276,12 @@ function processMiniBossBattle(army: Army, miniBoss: MiniBoss, gameState: GameSt
   if (miniBoss.hp <= 0) {
     miniBoss.isActive = false;
     gameState.score += 300;
+    // Reward coins
+    gameState.coins += 50;
     addExplosion(miniBoss.x + miniBoss.width / 2, miniBoss.y + miniBoss.height / 2, '#FF4500');
     addParticle(miniBoss.x + miniBoss.width / 2, miniBoss.y + miniBoss.height / 2, 'star', '#FF4500', 10);
     addFloatingText('MINI-BOSS DEFEATED!', miniBoss.x + miniBoss.width / 2, miniBoss.y, '#FF4500');
+    addFloatingText('+$50', miniBoss.x + miniBoss.width / 2, miniBoss.y - 30, '#FFD700');
   }
 
   // Screen shake menor para mini-boss
@@ -497,7 +500,10 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
       entities.boss.isActive = false;
       gameState.isVictory = true;
       gameState.score += 1000;
+      // Reward coins
+      gameState.coins += 500;
       addFloatingText('BOSS DEFEATED!', entities.boss.x + 50, entities.boss.y, '#FFD700');
+      addFloatingText('+$500', entities.boss.x + 50, entities.boss.y - 40, '#FFD700');
     }
   }
 

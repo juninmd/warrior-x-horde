@@ -6,27 +6,7 @@ export function spawnCoins(entities: Entities, canvasWidth: number, gameState: G
   // Remover moedas que já passaram
   entities.coins = entities.coins.filter(coin => !coin.passed && coin.y < 1200);
 
-  // Chance de spawn de moedas
-  // Spawnar em grupos (linhas ou arcos)
-  if (Math.random() < 0.015) { // 1.5% chance por frame
-    const pattern = Math.random() > 0.5 ? 'line' : 'arc';
-    const startX = 50 + Math.random() * (canvasWidth - 100);
-    const startY = -50;
-
-    if (pattern === 'line') {
-      // Linha vertical de moedas
-      for (let i = 0; i < 5; i++) {
-        entities.coins.push(createCoin(startX, startY - i * 40));
-      }
-    } else {
-      // Arco/V de moedas
-      for (let i = 0; i < 5; i++) {
-        const xOffset = (i - 2) * 20;
-        const yOffset = Math.abs(i - 2) * 10;
-        entities.coins.push(createCoin(startX + xOffset, startY - yOffset, 1));
-      }
-    }
-  }
+  // Moedas não spawnam mais no chão, apenas dropam de bosses
 }
 
 export function spawnMysteryBoxes(entities: Entities, canvasWidth: number, _gameState: GameState): void {
