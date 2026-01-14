@@ -322,12 +322,17 @@ function applyMysteryBoxEffect(army: Army, box: MysteryBox, gameState: GameState
     'invincible',
     'bazooka',
     'rambo',
-    'laser'
+    'laser',
+    'divide',
+    'subtract',
+    'slow'
   ];
 
   const effect = effects[Math.floor(Math.random() * effects.length)];
+  let isGood = true;
 
   switch (effect) {
+    // Efeitos Bons
     case 'reinforcements':
       addSoldiersToArmy(army, 30);
       addFloatingText('REINFORCEMENTS!', box.x, box.y, '#2ECC71');
@@ -362,11 +367,28 @@ function applyMysteryBoxEffect(army: Army, box: MysteryBox, gameState: GameState
       addSpecialSoldiersToArmy(army, 'laser', 6);
       addFloatingText('LASER SQUAD!', box.x, box.y, '#00ffff');
       break;
+
+    // Efeitos Ruins (Nerfs)
+    case 'divide':
+      removeSoldiersFromArmy(army, Math.floor(army.soldiers.length * 0.5));
+      addFloatingText('DIVIDE & CONQUERED!', box.x, box.y, '#FF0000');
+      isGood = false;
+      break;
+    case 'subtract':
+      removeSoldiersFromArmy(army, 15);
+      addFloatingText('AMBUSH!', box.x, box.y, '#FF0000');
+      isGood = false;
+      break;
+    case 'slow':
+      army.fireRate = Math.min(1000, army.fireRate * 1.5); // Atira mais devagar
+      addFloatingText('JAMMED WEAPONS!', box.x, box.y, '#FF0000');
+      isGood = false;
+      break;
   }
 
   box.passed = true;
-  playSound(audioManager.powerUp); // Reutilizar som de powerup
-  addParticle(box.x + box.width/2, box.y + box.height/2, 'star', '#FFFFFF', 10);
+  playSound(isGood ? audioManager.powerUp : audioManager.nerf);
+  addParticle(box.x + box.width/2, box.y + box.height/2, 'star', isGood ? '#FFFFFF' : '#FF0000', 10);
 }
 
 export function checkCollisions(entities: Entities, gameState: GameState): void {
@@ -409,11 +431,51 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
     }
   }
 
+  // Checar tiros nas Mystery Boxes (para destruir)
+  entities.mysteryBoxes.forEach(box => {
+    if (!box.passed) {
+       entities.bullets.forEach(bullet => {
+         if (!bullet.isEnemy &&
+             bullet.x > box.x && bullet.x < box.x + box.width &&
+             bullet.y > box.y && bullet.y < box.y + box.height) {
+
+           box.hp -= bullet.damage;
+           bullet.y = -1000; // Remover bala
+
+           if (box.hp <= 0 && !box.passed) {
+             box.passed = true;
+             addExplosion(box.x + box.width/2, box.y + box.height/2, '#FFFFFF');
+             addFloatingText('DESTROYED!', box.x, box.y, '#FFFFFF');
+           }
+         }
+       });
+    }
+  });
+
   // Checar colisão com boss
   if (checkBossCollision(army, entities) && entities.boss) {
-    // Dano ao boss baseado no número de soldados atirando
-    const damage = army.soldiers.filter(s => s.isAlive).length * army.damage * 0.1;
-    entities.boss.hp -= damage;
+    gameState.isBattling = true;
+
+    // Boss causa dano ao jogador ao contato (esmagamento)
+    if (entities.playerArmy.soldiers.length > 0) {
+        const casualties = 2; // Mata 2 por frame
+        for (let i = 0; i < casualties && army.soldiers.length > 0; i++) {
+            const idx = army.soldiers.findIndex(s => s.isAlive);
+            if (idx >= 0) {
+              const soldier = army.soldiers[idx];
+              addExplosion(soldier.x, soldier.y, '#4A90D9');
+              army.soldiers[idx].isAlive = false;
+            }
+        }
+        // Limpar soldados mortos
+        army.soldiers = army.soldiers.filter(s => s.isAlive);
+    }
+
+    // Dano ao boss baseado no número de soldados atirando (contato também dá dano?)
+    // O usuário disse "dar dano e receber ao encostar".
+    // Recebe dano por contato físico (tipo ataque suicida ou melee)
+    const contactDamage = 5;
+    entities.boss.hp -= contactDamage;
 
     if (entities.boss.hp <= 0) {
       entities.boss.isActive = false;

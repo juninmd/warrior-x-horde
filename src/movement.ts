@@ -157,13 +157,31 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState): void
       } else if (timeSinceSpawn > waitTime) {
         // Após 10 segundos, começa a avançar igual aos inimigos comuns
         boss.isMoving = true;
-        boss.y += enemySpeed * 0.8; // Um pouco mais lento que inimigos normais
+
+        // Calcular limite inferior para o boss não ultrapassar o exército
+        const armyTopY = entities.playerArmy.centerY - 50;
+
+        // Só avança se estiver acima do exército
+        if (boss.y + boss.height < armyTopY) {
+           boss.y += enemySpeed * 0.8; // Um pouco mais lento que inimigos normais
+        } else {
+           // Se chegou no exército, mantém posição relativa (não ultrapassa)
+           // Na verdade, ele deve tentar "esmagar", então fica colado
+           boss.y = Math.min(boss.y + enemySpeed * 0.8, armyTopY - boss.height + 20); // +20 para overlapping visual
+        }
 
         // Boss também persegue o jogador horizontalmente (lentamente)
         const targetX = entities.playerArmy.centerX - boss.width / 2;
         const dx = targetX - boss.x;
         boss.x += dx * 0.01;
       }
+    }
+  }
+
+  // Mover Mystery Boxes (mesma velocidade das gates/mundo)
+  for (const box of entities.mysteryBoxes) {
+    if (!box.passed) {
+      box.y += gateSpeed;
     }
   }
 
