@@ -2041,10 +2041,6 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
   const coinsWidth = 100;
   drawGlassBadge(ctx, width / 2 + 50, bottomY - badgeHeight/2, coinsWidth, badgeHeight, `💰 ${gameState.coins}`, '#FFD700');
 
-  // 3. Army (Direita)
-  const armyWidth = 90;
-  drawGlassBadge(ctx, width - armyWidth - 10, bottomY - badgeHeight/2, armyWidth, badgeHeight, `⚔️ ${armyCount}`, '#E74C3C');
-
   // 4. Fire Rate (Top Left, under progress bar)
   // Converter delay para shots/sec: 1000 / fireRate
   const shotsPerSec = (1000 / fireRate).toFixed(1);
