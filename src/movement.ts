@@ -58,8 +58,8 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState): void
   if (gameState.isVictory) return;
 
   const baseSpeed = gameState.gameSpeed;
-  // Gates começam lentos e ficam mais rápidos com o level (1.5x no level 1, até 3x no level 10+)
-  const gateSpeedMultiplier = Math.min(3, 1.5 + (gameState.currentLevel - 1) * 0.15);
+  // Gates começam lentos e ficam mais rápidos com o level (2.5x no level 1, até 5x no level 10+)
+  const gateSpeedMultiplier = Math.min(5, 2.5 + (gameState.currentLevel - 1) * 0.25);
   const gateSpeed = baseSpeed * gateSpeedMultiplier;
 
   // Inimigos começam BEM lentos e aceleram aos poucos com o level
