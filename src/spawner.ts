@@ -15,9 +15,9 @@ export function spawnMysteryBoxes(entities: Entities, canvasWidth: number, _game
 export function spawnGates(entities: Entities, canvasWidth: number, gameState: GameState): void {
   // Spawnar gates - espaçamento maior para dar tempo de decisão
   const spawnY = -100;
-  const baseSpacing = 1200; // Mais espaçados
-  const levelReduction = Math.min(400, (gameState.currentLevel - 1) * 40);
-  const gateSpacing = Math.max(700, baseSpacing - levelReduction); // Mínimo 700
+  const baseSpacing = 700; // Mais frequentes (reduzido de 1200)
+  const levelReduction = Math.min(200, (gameState.currentLevel - 1) * 20);
+  const gateSpacing = Math.max(500, baseSpacing - levelReduction); // Mínimo 500
 
   // Remover gates que já passaram
   entities.gates = entities.gates.filter(gate => gate.y < 1200);
@@ -51,17 +51,15 @@ export function spawnEnemies(entities: Entities, canvasWidth: number, gameState:
   // Inimigos nascem do céu (da nave alienígena)
   const spawnY = -50; // Acima da tela, vindo da nave
 
-  // Verificar limite de inimigos
-  const currentEnemyCount = getTotalEnemyCount(entities);
-  if (currentEnemyCount >= MAX_ENEMIES) return;
+  // SISTEMA ANTI-ASTOLFO: Sem limite de inimigos
+  // Apenas removemos hordas que saíram da tela
+  entities.enemyHordes = entities.enemyHordes.filter(horde => horde.isActive && horde.y < 1200);
 
   // Espaçamento menor = hordas mais frequentes
   const baseSpacing = 80; // Reduzido de 180 para spawnar mais rápido
-  const levelReduction = Math.min(40, (gameState.currentLevel - 1) * 4);
-  const hordeSpacing = Math.max(40, baseSpacing - levelReduction); // Mínimo 40 (era 100)
-
-  // Remover hordas inativas ou que já passaram
-  entities.enemyHordes = entities.enemyHordes.filter(horde => horde.isActive && horde.y < 1200);
+  // Redução de espaçamento sem limite (pode chegar a spawnar colado)
+  const levelReduction = (gameState.currentLevel - 1) * 4;
+  const hordeSpacing = Math.max(20, baseSpacing - levelReduction); // Mínimo 20 (era 40)
 
   // Spawnar novas hordas
   const lowestHordeY = entities.enemyHordes.length > 0
@@ -75,20 +73,22 @@ export function spawnEnemies(entities: Entities, canvasWidth: number, gameState:
     // Balancear inimigos baseado no tamanho do exército
     const playerCount = entities.playerArmy.soldiers.filter(s => s.isAlive).length;
 
-    // Multiplicador menor = grupos menores mas mais frequentes
-    const baseMultiplier = 0.3 + Math.random() * 0.5; // 0.3x a 0.8x (era 0.5x a 1.5x)
-    const levelBonus = 1 + (gameState.currentLevel - 1) * 0.05; // +5% por level (era 8%)
+    // Multiplicador escala infinitamente com o nível
+    const baseMultiplier = 0.3 + Math.random() * 0.5;
+    // Bônus exponencial suave para garantir dificuldade crescente
+    const levelBonus = 1 + (gameState.currentLevel - 1) * 0.1; // +10% por level
 
     const multiplier = baseMultiplier * levelBonus;
     const baseEnemies = Math.floor(playerCount * multiplier);
 
-    // Limites de inimigos - grupos menores
-    const minEnemies = Math.min(15, 8 + gameState.currentLevel); // 9 no level 1, até 15
-    const maxEnemies = Math.min(300, 50 + gameState.currentLevel * 25); // 75 no level 1, até 300
+    // Limites de inimigos - escala infinita
+    const minEnemies = 8 + gameState.currentLevel * 2; // Sempre aumenta o mínimo
 
-    // Garantir que não excedemos o limite global
-    const availableSpace = MAX_ENEMIES - currentEnemyCount;
-    const enemyCount = Math.min(availableSpace, maxEnemies, Math.max(minEnemies, baseEnemies));
+    // Máximo escala sem teto fixo
+    const maxEnemies = 100 + gameState.currentLevel * 50;
+
+    // Calcula quantidade final sem restrição global
+    const enemyCount = Math.floor(Math.min(maxEnemies, Math.max(minEnemies, baseEnemies)));
 
     if (enemyCount > 0) {
       // Spawn acima da tela (vindo da nave alienígena)
@@ -101,16 +101,33 @@ export function spawnEnemies(entities: Entities, canvasWidth: number, gameState:
 let lastMiniBossSpawn = 0;
 
 export function spawnMiniBoss(entities: Entities, canvasWidth: number, gameState: GameState, _canvasHeight: number = 800): void {
-  // Spawnar mini-boss a cada 25% da distância do level
-  const miniBossInterval = gameState.levelDistance * 0.25;
+  // Spawnar mini-boss
+  // Se for level > 11 (Sistema Anti-Astolfo), spawna muito mais frequente
+  let intervalFactor = 0.25; // Padrão: a cada 25% do level
+  let maxConcurrent = 5;
+
+  if (gameState.currentLevel > 11) {
+    // Escala agressiva pós-level 11
+    const levelsPast11 = gameState.currentLevel - 11;
+    intervalFactor = Math.max(0.05, 0.20 - levelsPast11 * 0.02); // Diminui até 5% (spawn frenético)
+    maxConcurrent = 5 + levelsPast11 * 2; // Aumenta limite de simultâneos
+  }
+
+  const miniBossInterval = gameState.levelDistance * intervalFactor;
   const miniBossThreshold = Math.floor(gameState.distanceTraveled / miniBossInterval);
 
   if (miniBossThreshold > lastMiniBossSpawn && !entities.boss) {
-    // Permitir até 5 mini-bosses ativos ao mesmo tempo
+    // Permitir até maxConcurrent mini-bosses ativos ao mesmo tempo
     const activeMiniBosses = entities.miniBosses.filter(mb => mb.isActive).length;
-    if (activeMiniBosses < 5) {
-      // Spawn do céu (da nave alienígena)
-      entities.miniBosses.push(createMiniBoss(canvasWidth, -100, gameState.currentLevel));
+    if (activeMiniBosses < maxConcurrent) {
+      // No modo infinito (>11), pode spawnar múltiplos de uma vez
+      const spawnCount = gameState.currentLevel > 11 ? Math.min(3, 1 + Math.floor((gameState.currentLevel - 11) / 5)) : 1;
+
+      for(let i=0; i<spawnCount; i++) {
+         // Spawn do céu (da nave alienígena) com leve variação Y
+         entities.miniBosses.push(createMiniBoss(canvasWidth, -100 - (i * 150), gameState.currentLevel));
+      }
+
       lastMiniBossSpawn = miniBossThreshold;
     }
   }

@@ -1,5 +1,5 @@
 // renderer.ts - Renderização do jogo estilo Crowd Runner
-import { Entities, GameState, FloatingText, Army, EnemyHorde, Gate, Boss, Bullet, Particle, MysteryBox, Soldier } from './types';
+import { Entities, GameState, FloatingText, Army, EnemyHorde, Gate, Boss, Bullet, Particle, MysteryBox } from './types';
 import { ObjectPool } from './pool';
 
 const floatingTexts: FloatingText[] = [];
@@ -524,11 +524,11 @@ function drawAlienShip(ctx: CanvasRenderingContext2D, x: number, y: number, time
   ctx.restore();
 }
 
-function drawSoldier3D(ctx: CanvasRenderingContext2D, soldier: Soldier, time: number): void {
-  const { x, y, size, color, animOffset, type } = soldier;
+function drawSoldier3D(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, color: string, animOffset: number, time: number, type: Soldier['type'] = 'normal'): void {
   const bounce = Math.sin(time * 0.008 + animOffset) * 3;
   const scale = Math.max(0.5, 1 - (800 - y) / 1500); // Escala baseada na posição Y (perspectiva)
   const actualSize = size * scale;
+  const isPlayer = color === '#4A90D9' || color === '#FFD700' || type !== 'normal'; // Player (azul), Super ou Especial
 
   // Sombra
   ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
@@ -536,128 +536,46 @@ function drawSoldier3D(ctx: CanvasRenderingContext2D, soldier: Soldier, time: nu
   ctx.ellipse(x, y + actualSize * 0.8, actualSize * 0.6, actualSize * 0.2, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Visuals based on type
+  // Corpo (círculo principal)
+  const bodyGradient = ctx.createRadialGradient(x - actualSize * 0.2, y - actualSize * 0.2 + bounce, 0, x, y + bounce, actualSize);
+  bodyGradient.addColorStop(0, color);
+  bodyGradient.addColorStop(1, shadeColor(color, -30));
 
-  if (type === 'bazooka') {
-     // Bazooka visuals: Green/Camo, big tube
-      const bodyGradient = ctx.createRadialGradient(x - actualSize * 0.2, y - actualSize * 0.2 + bounce, 0, x, y + bounce, actualSize);
-      bodyGradient.addColorStop(0, color);
-      bodyGradient.addColorStop(1, shadeColor(color, -30));
+  ctx.fillStyle = bodyGradient;
+  ctx.beginPath();
+  ctx.arc(x, y + bounce, actualSize * 0.7, 0, Math.PI * 2);
+  ctx.fill();
 
-      ctx.fillStyle = bodyGradient;
+  if (isPlayer) {
+    // Acessórios baseados no tipo
+    if (type === 'bazooka') {
+      // Bazooka nas costas
+      ctx.fillStyle = '#2c3e50';
       ctx.beginPath();
-      ctx.arc(x, y + bounce, actualSize * 0.8, 0, Math.PI * 2);
+      ctx.roundRect(x - actualSize * 0.6, y + bounce - actualSize * 0.8, actualSize * 0.4, actualSize * 1.2, 2);
       ctx.fill();
-
-      // Helmet (Camo pattern ish)
-      ctx.fillStyle = shadeColor(color, -40);
-      ctx.beginPath();
-      ctx.arc(x, y - actualSize * 0.6 + bounce, actualSize * 0.4, Math.PI, 0);
-      ctx.fill();
-
-      // Bazooka tube on shoulder
-      ctx.fillStyle = '#333';
-      ctx.save();
-      ctx.translate(x + actualSize * 0.3, y - actualSize * 0.2 + bounce);
-      ctx.rotate(-Math.PI / 4);
-      ctx.fillRect(0, 0, actualSize * 0.3, actualSize * 1.2);
-      ctx.restore();
-
-  } else if (type === 'rambo') {
-      // Rambo visuals: Red headband
-      const bodyGradient = ctx.createRadialGradient(x - actualSize * 0.2, y - actualSize * 0.2 + bounce, 0, x, y + bounce, actualSize);
-      bodyGradient.addColorStop(0, color);
-      bodyGradient.addColorStop(1, shadeColor(color, -30));
-      ctx.fillStyle = bodyGradient;
-      ctx.beginPath();
-      ctx.arc(x, y + bounce, actualSize * 0.7, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Head (Skin)
-      const headGradient = ctx.createRadialGradient(x - actualSize * 0.1, y - actualSize * 0.6 + bounce, 0, x, y - actualSize * 0.5 + bounce, actualSize * 0.4);
-      headGradient.addColorStop(0, '#FFE4C4');
-      headGradient.addColorStop(1, '#DEB887');
-      ctx.fillStyle = headGradient;
-      ctx.beginPath();
-      ctx.arc(x, y - actualSize * 0.5 + bounce, actualSize * 0.4, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Red Headband
-      ctx.fillStyle = '#FF0000';
-      ctx.beginPath();
-      ctx.rect(x - actualSize * 0.4, y - actualSize * 0.8 + bounce, actualSize * 0.8, actualSize * 0.15);
-      ctx.fill();
-      // Bandana knot
-      ctx.beginPath();
-      ctx.arc(x + actualSize * 0.4, y - actualSize * 0.75 + bounce, actualSize * 0.1, 0, Math.PI*2);
-      ctx.fill();
-
-  } else if (type === 'laser') {
-      // Laser visuals: Sci-fi visor
-      const bodyGradient = ctx.createRadialGradient(x - actualSize * 0.2, y - actualSize * 0.2 + bounce, 0, x, y + bounce, actualSize);
-      bodyGradient.addColorStop(0, color);
-      bodyGradient.addColorStop(1, shadeColor(color, -30));
-      ctx.fillStyle = bodyGradient;
-      ctx.beginPath();
-      ctx.arc(x, y + bounce, actualSize * 0.7, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Head
-       const headGradient = ctx.createRadialGradient(x - actualSize * 0.1, y - actualSize * 0.6 + bounce, 0, x, y - actualSize * 0.5 + bounce, actualSize * 0.4);
-      headGradient.addColorStop(0, '#FFE4C4');
-      headGradient.addColorStop(1, '#DEB887');
-      ctx.fillStyle = headGradient;
-      ctx.beginPath();
-      ctx.arc(x, y - actualSize * 0.5 + bounce, actualSize * 0.4, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Visor (Cyan/White glowing)
-      ctx.fillStyle = '#E0FFFF';
-      ctx.shadowColor = '#00FFFF';
-      ctx.shadowBlur = 5;
-      ctx.beginPath();
-      ctx.roundRect(x - actualSize * 0.3, y - actualSize * 0.7 + bounce, actualSize * 0.6, actualSize * 0.2, 2);
-      ctx.fill();
-      ctx.shadowBlur = 0;
-
-  } else {
-    // Normal/Super (Super handled outside for aura)
-    // Corpo (círculo principal)
-    const bodyGradient = ctx.createRadialGradient(x - actualSize * 0.2, y - actualSize * 0.2 + bounce, 0, x, y + bounce, actualSize);
-    bodyGradient.addColorStop(0, color);
-    bodyGradient.addColorStop(1, shadeColor(color, -30));
-
-    ctx.fillStyle = bodyGradient;
-    ctx.beginPath();
-    ctx.arc(x, y + bounce, actualSize * 0.7, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Cabeça
-    const headGradient = ctx.createRadialGradient(x - actualSize * 0.1, y - actualSize * 0.6 + bounce, 0, x, y - actualSize * 0.5 + bounce, actualSize * 0.4);
-    if (color !== '#4A90D9' && color !== '#FFD700') {
-        // Enemy skin (Green/Grey)
-        headGradient.addColorStop(0, '#90EE90');
-        headGradient.addColorStop(1, '#2E8B57');
+    } else if (type === 'rambo') {
+      // Faixa vermelha na cabeça (desenhada depois)
+      // Metralhadora
+      ctx.fillStyle = '#111';
+      ctx.fillRect(x + actualSize * 0.3, y + bounce, actualSize * 0.8, actualSize * 0.2);
+    } else if (type === 'laser') {
+      // Óculos futurista (desenhado depois)
+      // Arma laser
+      ctx.fillStyle = '#FFF';
+      ctx.fillRect(x + actualSize * 0.3, y + bounce, actualSize * 0.6, actualSize * 0.15);
+      ctx.strokeStyle = '#00ffff';
+      ctx.strokeRect(x + actualSize * 0.3, y + bounce, actualSize * 0.6, actualSize * 0.15);
     } else {
-        // Player skin
-        headGradient.addColorStop(0, '#FFE4C4');
-        headGradient.addColorStop(1, '#DEB887');
-    }
+      // Detalhe Normal: Escudo pequeno
+      ctx.fillStyle = shadeColor(color, 20);
+      ctx.beginPath();
+      ctx.arc(x - actualSize * 0.4, y + bounce + actualSize * 0.2, actualSize * 0.3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#FFF';
+      ctx.lineWidth = 1;
+      ctx.stroke();
 
-    ctx.fillStyle = headGradient;
-    ctx.beginPath();
-    ctx.arc(x, y - actualSize * 0.5 + bounce, actualSize * 0.4, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Capacete
-    ctx.fillStyle = shadeColor(color, -40);
-    ctx.beginPath();
-    ctx.arc(x, y - actualSize * 0.6 + bounce, actualSize * 0.35, Math.PI, 0);
-    ctx.fill();
-
-    // Detalhes extras para normais (skins)
-    const isPlayer = color === '#4A90D9' || color === '#FFD700';
-    if (isPlayer) {
       // Detalhe: Espada (linha simples)
       ctx.strokeStyle = '#DDD';
       ctx.lineWidth = 2;
@@ -665,22 +583,68 @@ function drawSoldier3D(ctx: CanvasRenderingContext2D, soldier: Soldier, time: nu
       ctx.moveTo(x + actualSize * 0.3, y + bounce);
       ctx.lineTo(x + actualSize * 0.8, y + bounce - actualSize * 0.4);
       ctx.stroke();
-    } else {
-      // Detalhe Inimigo: Espinhos
-      ctx.fillStyle = shadeColor(color, -50);
-      // Espinho esquerdo
-      ctx.beginPath();
-      ctx.moveTo(x - actualSize * 0.6, y + bounce - actualSize * 0.2);
-      ctx.lineTo(x - actualSize * 0.9, y + bounce - actualSize * 0.5);
-      ctx.lineTo(x - actualSize * 0.4, y + bounce - actualSize * 0.4);
-      ctx.fill();
-      // Espinho direito
-      ctx.beginPath();
-      ctx.moveTo(x + actualSize * 0.6, y + bounce - actualSize * 0.2);
-      ctx.lineTo(x + actualSize * 0.9, y + bounce - actualSize * 0.5);
-      ctx.lineTo(x + actualSize * 0.4, y + bounce - actualSize * 0.4);
-      ctx.fill();
     }
+  } else {
+    // Detalhe Inimigo: Espinhos
+    ctx.fillStyle = shadeColor(color, -50);
+    // Espinho esquerdo
+    ctx.beginPath();
+    ctx.moveTo(x - actualSize * 0.6, y + bounce - actualSize * 0.2);
+    ctx.lineTo(x - actualSize * 0.9, y + bounce - actualSize * 0.5);
+    ctx.lineTo(x - actualSize * 0.4, y + bounce - actualSize * 0.4);
+    ctx.fill();
+    // Espinho direito
+    ctx.beginPath();
+    ctx.moveTo(x + actualSize * 0.6, y + bounce - actualSize * 0.2);
+    ctx.lineTo(x + actualSize * 0.9, y + bounce - actualSize * 0.5);
+    ctx.lineTo(x + actualSize * 0.4, y + bounce - actualSize * 0.4);
+    ctx.fill();
+  }
+
+  // Cabeça
+  const headGradient = ctx.createRadialGradient(x - actualSize * 0.1, y - actualSize * 0.6 + bounce, 0, x, y - actualSize * 0.5 + bounce, actualSize * 0.4);
+  // Inimigos têm pele diferente (esverdeada/cinza) se não forem o player
+  if (isPlayer) {
+    headGradient.addColorStop(0, '#FFE4C4');
+    headGradient.addColorStop(1, '#DEB887');
+  } else {
+    headGradient.addColorStop(0, '#90EE90'); // Pele monstro claro
+    headGradient.addColorStop(1, '#2E8B57'); // Pele monstro escuro
+  }
+
+  ctx.fillStyle = headGradient;
+  ctx.beginPath();
+  ctx.arc(x, y - actualSize * 0.5 + bounce, actualSize * 0.4, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Capacete
+  ctx.fillStyle = shadeColor(color, -40);
+  ctx.beginPath();
+  ctx.arc(x, y - actualSize * 0.6 + bounce, actualSize * 0.35, Math.PI, 0);
+  ctx.fill();
+
+  // Detalhes extras de cabeça
+  if (type === 'rambo') {
+    // Faixa vermelha
+    ctx.strokeStyle = '#ff0000';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(x - actualSize * 0.35, y - actualSize * 0.7 + bounce);
+    ctx.lineTo(x + actualSize * 0.35, y - actualSize * 0.7 + bounce);
+    ctx.stroke();
+  } else if (type === 'laser') {
+    // Visor
+    ctx.fillStyle = '#00ffff';
+    ctx.fillRect(x - actualSize * 0.25, y - actualSize * 0.65 + bounce, actualSize * 0.5, actualSize * 0.15);
+  }
+
+  // Olhos brilhantes para inimigos
+  if (!isPlayer) {
+    ctx.fillStyle = '#FFD700'; // Olhos amarelos
+    ctx.beginPath();
+    ctx.arc(x - actualSize * 0.15, y - actualSize * 0.5 + bounce, actualSize * 0.1, 0, Math.PI * 2);
+    ctx.arc(x + actualSize * 0.15, y - actualSize * 0.5 + bounce, actualSize * 0.1, 0, Math.PI * 2);
+    ctx.fill();
   }
 }
 
@@ -718,24 +682,24 @@ function drawArmy(ctx: CanvasRenderingContext2D, army: Army, time: number): void
   // Priorizar super guerreiros e soldados mais visíveis (mais próximos do centro)
   if (sortedSoldiers.length > MAX_RENDERED_SOLDIERS) {
     // Separar super guerreiros (sempre renderizar)
-    const specialSoldiers = sortedSoldiers.filter(s => s.type !== 'normal');
-    const normalSoldiers = sortedSoldiers.filter(s => s.type === 'normal');
+    const superSoldiers = sortedSoldiers.filter(s => s.isSuper);
+    const normalSoldiers = sortedSoldiers.filter(s => !s.isSuper);
 
     // Pegar os mais próximos do centro da tela
-    const remainingSlots = MAX_RENDERED_SOLDIERS - specialSoldiers.length;
+    const remainingSlots = MAX_RENDERED_SOLDIERS - superSoldiers.length;
     const selectedNormal = normalSoldiers.slice(0, Math.max(0, remainingSlots));
 
-    sortedSoldiers = [...specialSoldiers, ...selectedNormal].sort((a, b) => a.y - b.y);
+    sortedSoldiers = [...superSoldiers, ...selectedNormal].sort((a, b) => a.y - b.y);
   }
 
   for (const soldier of sortedSoldiers) {
     // Super guerreiros são desenhados com efeito especial (dourados e maiores)
-    if (soldier.type === 'super') {
+    if (soldier.isSuper) {
       // Aura dourada
       ctx.save();
       ctx.shadowColor = '#FFD700';
       ctx.shadowBlur = 15;
-      drawSoldier3D(ctx, soldier, time);
+      drawSoldier3D(ctx, soldier.x, soldier.y, soldier.size, '#FFD700', soldier.animOffset, time, soldier.type);
       ctx.restore();
 
       // Estrela acima do super guerreiro
@@ -744,7 +708,7 @@ function drawArmy(ctx: CanvasRenderingContext2D, army: Army, time: number): void
       ctx.textAlign = 'center';
       ctx.fillText('⭐', soldier.x, soldier.y - soldier.size - 5);
     } else {
-      drawSoldier3D(ctx, soldier, time);
+      drawSoldier3D(ctx, soldier.x, soldier.y, soldier.size, soldier.color, soldier.animOffset, time, soldier.type);
     }
   }
 
@@ -807,7 +771,7 @@ function drawEnemyHorde(ctx: CanvasRenderingContext2D, horde: EnemyHorde, time: 
   ctx.globalAlpha = hordeAlpha;
 
   for (const soldier of sortedSoldiers) {
-    drawSoldier3D(ctx, soldier, time);
+    drawSoldier3D(ctx, soldier.x, soldier.y, soldier.size, soldier.color, soldier.animOffset, time, soldier.type);
   }
 
   // Contador de inimigos (usa contagem REAL, não a renderizada)
@@ -942,17 +906,19 @@ function drawGate(ctx: CanvasRenderingContext2D, gate: Gate): void {
   ctx.textBaseline = 'middle';
 
   let text = '';
-  switch (gate.type) {
-    case 'add': text = `+${gate.value}`; break;
-    case 'multiply': text = `×${gate.value}`; break;
-    case 'subtract': text = `-${gate.value}`; break;
-    case 'divide': text = `÷${gate.value}`; break;
-    case 'firerate': text = `🔥×${gate.value}`; break;
-    case 'damage': text = `⚔️×${gate.value}`; break;
-    case 'superwarrior': text = `⭐×${gate.value}`; break;
-    case 'bazooka': text = `🚀×${gate.value}`; break;
-    case 'rambo': text = `💪×${gate.value}`; break;
-    case 'laser': text = `⚡×${gate.value}`; break;
+  if (gate.customText) {
+    text = gate.customText;
+    ctx.font = `bold ${Math.floor(22 * scale)}px Arial`; // Fonte menor para caber a equação
+  } else {
+    switch (gate.type) {
+      case 'add': text = `+${gate.value}`; break;
+      case 'multiply': text = `×${gate.value}`; break;
+      case 'subtract': text = `-${gate.value}`; break;
+      case 'divide': text = `÷${gate.value}`; break;
+      case 'firerate': text = `🔥×${gate.value}`; break;
+      case 'damage': text = `⚔️×${gate.value}`; break;
+      case 'superwarrior': text = `⭐×${gate.value}`; break;
+    }
   }
 
   ctx.fillText(text, x + width / 2, gate.y + height / 2);
@@ -1303,6 +1269,179 @@ function drawBossDemon(ctx: CanvasRenderingContext2D, boss: Boss, time: number):
   ctx.shadowBlur = 0;
 }
 
+function drawBossSlime(ctx: CanvasRenderingContext2D, boss: Boss, time: number): void {
+  const cx = boss.x + boss.width / 2;
+  const cy = boss.y + boss.height / 2;
+  const wobble = Math.sin(time * 0.005 + cx) * 5;
+
+  ctx.fillStyle = '#00FF00';
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + 10, 45 + wobble, 35 - wobble, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Olhos
+  ctx.fillStyle = '#FFF';
+  ctx.beginPath();
+  ctx.arc(cx - 15, cy, 10, 0, Math.PI * 2);
+  ctx.arc(cx + 15, cy, 10, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.arc(cx - 15, cy, 4, 0, Math.PI * 2);
+  ctx.arc(cx + 15, cy, 4, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawBossEye(ctx: CanvasRenderingContext2D, boss: Boss, time: number): void {
+  const cx = boss.x + boss.width / 2;
+  const cy = boss.y + boss.height / 2;
+
+  // Globo ocular
+  ctx.fillStyle = '#FFF';
+  ctx.beginPath();
+  ctx.arc(cx, cy, 40, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Íris
+  ctx.fillStyle = '#FF0000';
+  ctx.beginPath();
+  ctx.arc(cx, cy, 20, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Pupila
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.arc(cx, cy, 10, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Veias
+  ctx.strokeStyle = '#FFCCCC';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(cx - 40, cy);
+  ctx.lineTo(cx - 20, cy);
+  ctx.moveTo(cx + 40, cy);
+  ctx.lineTo(cx + 20, cy);
+  ctx.moveTo(cx, cy - 40);
+  ctx.lineTo(cx, cy - 20);
+  ctx.moveTo(cx, cy + 40);
+  ctx.lineTo(cx, cy + 20);
+  ctx.stroke();
+}
+
+function drawBossSpider(ctx: CanvasRenderingContext2D, boss: Boss, time: number): void {
+  const cx = boss.x + boss.width / 2;
+  const cy = boss.y + boss.height / 2;
+
+  // Pernas
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 4;
+  for(let i=0; i<8; i++) {
+    const angle = (i / 8) * Math.PI * 2;
+    const legX = cx + Math.cos(angle) * 60;
+    const legY = cy + Math.sin(angle) * 60;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(legX, legY);
+    ctx.stroke();
+  }
+
+  // Corpo
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.arc(cx, cy, 30, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Olhos múltiplos
+  ctx.fillStyle = '#F00';
+  for(let i=0; i<4; i++) {
+    ctx.beginPath();
+    ctx.arc(cx - 10 + i * 6, cy - 5, 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawBossSkull(ctx: CanvasRenderingContext2D, boss: Boss, time: number): void {
+  const cx = boss.x + boss.width / 2;
+  const cy = boss.y + boss.height / 2;
+
+  ctx.fillStyle = '#F0F0F0';
+  ctx.beginPath();
+  ctx.arc(cx, cy - 10, 30, 0, Math.PI * 2); // Crânio
+  ctx.fillRect(cx - 20, cy + 10, 40, 20); // Maxilar
+  ctx.fill();
+
+  // Órbitas
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.arc(cx - 12, cy - 10, 8, 0, Math.PI * 2);
+  ctx.arc(cx + 12, cy - 10, 8, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Nariz
+  ctx.beginPath();
+  ctx.moveTo(cx, cy + 5);
+  ctx.lineTo(cx - 5, cy + 15);
+  ctx.lineTo(cx + 5, cy + 15);
+  ctx.fill();
+}
+
+function drawBossGhost(ctx: CanvasRenderingContext2D, boss: Boss, time: number): void {
+  const cx = boss.x + boss.width / 2;
+  const cy = boss.y + boss.height / 2;
+  const float = Math.sin(time * 0.003) * 10;
+
+  ctx.save();
+  ctx.globalAlpha = 0.7;
+  ctx.fillStyle = '#ADD8E6';
+  ctx.beginPath();
+  ctx.arc(cx, cy + float - 10, 30, Math.PI, 0);
+  ctx.lineTo(cx + 30, cy + float + 30);
+  for(let i=0; i<3; i++) {
+    ctx.lineTo(cx + 20 - i * 20, cy + float + 20);
+    ctx.lineTo(cx + 10 - i * 20, cy + float + 30);
+  }
+  ctx.lineTo(cx - 30, cy + float + 30);
+  ctx.fill();
+  ctx.restore();
+
+  // Olhos
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.arc(cx - 10, cy + float - 10, 4, 0, Math.PI * 2);
+  ctx.arc(cx + 10, cy + float - 10, 4, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawBossCrystal(ctx: CanvasRenderingContext2D, boss: Boss, time: number): void {
+  const cx = boss.x + boss.width / 2;
+  const cy = boss.y + boss.height / 2;
+  const rot = time * 0.001;
+
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(rot);
+
+  ctx.fillStyle = '#00FFFF';
+  ctx.beginPath();
+  ctx.moveTo(0, -40);
+  ctx.lineTo(30, 0);
+  ctx.lineTo(0, 40);
+  ctx.lineTo(-30, 0);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+  ctx.beginPath();
+  ctx.moveTo(0, -40);
+  ctx.lineTo(15, -10);
+  ctx.lineTo(0, 0);
+  ctx.fill();
+
+  ctx.restore();
+}
+
 function drawBoss(ctx: CanvasRenderingContext2D, boss: Boss, time: number): void {
   // Sombra genérica base
   const cx = boss.x + boss.width / 2;
@@ -1314,18 +1453,18 @@ function drawBoss(ctx: CanvasRenderingContext2D, boss: Boss, time: number): void
   ctx.fill();
 
   // Dispatch para tipo específico
-  if (boss.type === 'mothership') {
-    drawMothershipBoss(ctx, boss, time);
-    return;
-  } else if (boss.type === 'machine') {
-    drawBossMachine(ctx, boss, time);
-  } else if (boss.type === 'demon') {
-    drawBossDemon(ctx, boss, time);
-  } else if (boss.type === 'beast') {
-    drawBossBeast(ctx, boss, time);
-  } else {
-    // Fallback: Normal (código original simplificado ou reutilizar Demon/Beast)
-    drawBossBeast(ctx, boss, time);
+  switch (boss.type) {
+    case 'mothership': drawMothershipBoss(ctx, boss, time); return;
+    case 'machine': drawBossMachine(ctx, boss, time); break;
+    case 'demon': drawBossDemon(ctx, boss, time); break;
+    case 'beast': drawBossBeast(ctx, boss, time); break;
+    case 'slime': drawBossSlime(ctx, boss, time); break;
+    case 'eye': drawBossEye(ctx, boss, time); break;
+    case 'spider': drawBossSpider(ctx, boss, time); break;
+    case 'skull': drawBossSkull(ctx, boss, time); break;
+    case 'ghost': drawBossGhost(ctx, boss, time); break;
+    case 'crystal': drawBossCrystal(ctx, boss, time); break;
+    default: drawBossBeast(ctx, boss, time); break;
   }
 
   // Barra de vida comum para bosses não-mothership
@@ -1366,11 +1505,17 @@ function drawBoss(ctx: CanvasRenderingContext2D, boss: Boss, time: number): void
   if (boss.type === 'machine') bossName = 'MECHA TANK';
   else if (boss.type === 'demon') bossName = 'DEMON LORD';
   else if (boss.type === 'beast') bossName = 'GIANT BEAST';
+  else if (boss.type === 'slime') bossName = 'TOXIC SLIME';
+  else if (boss.type === 'eye') bossName = 'THE WATCHER';
+  else if (boss.type === 'spider') bossName = 'WIDOWMAKER';
+  else if (boss.type === 'skull') bossName = 'BONE KING';
+  else if (boss.type === 'ghost') bossName = 'PHANTOM';
+  else if (boss.type === 'crystal') bossName = 'PRISM CORE';
 
   ctx.fillText(`${bossName}: ${Math.ceil(boss.hp)}`, barX + barWidth / 2, barY + barHeight / 2 + 4);
 }
 
-function drawMiniBoss(ctx: CanvasRenderingContext2D, miniBoss: { x: number; y: number; width: number; height: number; hp: number; maxHp: number; isActive: boolean; color: string }, time: number): void {
+function drawMiniBoss(ctx: CanvasRenderingContext2D, miniBoss: MiniBoss, time: number): void {
   if (!miniBoss.isActive) return;
 
   const pulse = Math.sin(time * 0.008) * 5;
@@ -1381,20 +1526,39 @@ function drawMiniBoss(ctx: CanvasRenderingContext2D, miniBoss: { x: number; y: n
   ctx.ellipse(miniBoss.x + miniBoss.width / 2, miniBoss.y + miniBoss.height + 10, miniBoss.width / 2, 12, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Corpo do mini-boss
-  const bossGradient = ctx.createRadialGradient(
-    miniBoss.x + miniBoss.width / 2 - 10, miniBoss.y + miniBoss.height / 2 - 10, 0,
-    miniBoss.x + miniBoss.width / 2, miniBoss.y + miniBoss.height / 2, miniBoss.width / 2 + pulse
-  );
-  bossGradient.addColorStop(0, '#FF6347');
-  bossGradient.addColorStop(1, '#FF4500');
+  const cx = miniBoss.x + miniBoss.width / 2;
+  const cy = miniBoss.y + miniBoss.height / 2;
+  const r = (miniBoss.width / 2) + pulse;
 
-  ctx.fillStyle = bossGradient;
-  ctx.beginPath();
-  ctx.arc(miniBoss.x + miniBoss.width / 2, miniBoss.y + miniBoss.height / 2, miniBoss.width / 2 + pulse, 0, Math.PI * 2);
-  ctx.fill();
+  // Corpo do mini-boss baseado no tipo
+  ctx.fillStyle = miniBoss.color;
 
-  // Olhos
+  if (miniBoss.type === 'armored') {
+    // Quadrado
+    ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+    // Borda metálica
+    ctx.strokeStyle = '#CCC';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(cx - r, cy - r, r * 2, r * 2);
+  } else if (miniBoss.type === 'speed') {
+    // Triângulo
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - r);
+    ctx.lineTo(cx + r, cy + r);
+    ctx.lineTo(cx - r, cy + r);
+    ctx.fill();
+  } else if (miniBoss.type === 'spiky') {
+    // Estrela/Espinhoso
+    drawStar(ctx, cx, cy, 6, r, r * 0.5);
+    ctx.fill();
+  } else {
+    // Normal (Círculo)
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Olhos comuns
   ctx.fillStyle = '#FFFFFF';
   ctx.beginPath();
   ctx.arc(miniBoss.x + miniBoss.width * 0.35, miniBoss.y + miniBoss.height * 0.4, 8, 0, Math.PI * 2);
@@ -1495,46 +1659,21 @@ function drawBossAtmosphere(ctx: CanvasRenderingContext2D, width: number, height
 
 function drawBullets(ctx: CanvasRenderingContext2D, bullets: Bullet[]): void {
   for (const bullet of bullets) {
-    if (bullet.type === 'laser') {
-        // Laser effect
-        ctx.save();
-        ctx.shadowColor = '#00FFFF';
-        ctx.shadowBlur = 10;
-        ctx.fillStyle = '#E0FFFF';
-        ctx.beginPath();
-        // Elongated bullet
-        ctx.ellipse(bullet.x, bullet.y, 3, 15, 0, 0, Math.PI*2);
-        ctx.fill();
-        ctx.restore();
-    } else if (bullet.type === 'rocket') {
-        // Rocket effect
-        ctx.fillStyle = '#333';
-        ctx.beginPath();
-        ctx.ellipse(bullet.x, bullet.y, 5, 8, 0, 0, Math.PI*2);
-        ctx.fill();
-        // Flame
-        ctx.fillStyle = '#FFA500';
-        ctx.beginPath();
-        ctx.arc(bullet.x, bullet.y + 8, 4, 0, Math.PI*2);
-        ctx.fill();
-    } else {
-        // Normal bullet
-        // Brilho
-        const gradient = ctx.createRadialGradient(bullet.x, bullet.y, 0, bullet.x, bullet.y, 8);
-        gradient.addColorStop(0, bullet.isEnemy ? '#FF6B6B' : '#FFD700');
-        gradient.addColorStop(1, 'rgba(255, 215, 0, 0)');
+    // Brilho
+    const gradient = ctx.createRadialGradient(bullet.x, bullet.y, 0, bullet.x, bullet.y, 8);
+    gradient.addColorStop(0, bullet.isEnemy ? '#FF6B6B' : '#FFD700');
+    gradient.addColorStop(1, 'rgba(255, 215, 0, 0)');
 
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.arc(bullet.x, bullet.y, 8, 0, Math.PI * 2);
-        ctx.fill();
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(bullet.x, bullet.y, 8, 0, Math.PI * 2);
+    ctx.fill();
 
-        // Núcleo
-        ctx.fillStyle = bullet.isEnemy ? '#E74C3C' : '#FFF';
-        ctx.beginPath();
-        ctx.arc(bullet.x, bullet.y, 3, 0, Math.PI * 2);
-        ctx.fill();
-    }
+    // Núcleo
+    ctx.fillStyle = bullet.isEnemy ? '#E74C3C' : '#FFF';
+    ctx.beginPath();
+    ctx.arc(bullet.x, bullet.y, 3, 0, Math.PI * 2);
+    ctx.fill();
   }
 }
 
@@ -1669,15 +1808,19 @@ function drawGameOver(ctx: CanvasRenderingContext2D, gameState: GameState): void
   if (isFinalVictory) {
     // Vitória final épica!
     ctx.fillStyle = '#00FF88';
-    ctx.font = 'bold 36px Arial';
+    ctx.font = 'bold 28px Arial';
     ctx.textAlign = 'center';
     ctx.shadowColor = '#00FF88';
     ctx.shadowBlur = 30;
-    ctx.fillText('🛸 NAVE MÃE DESTRUÍDA! 🛸', 0, -30);
+    ctx.fillText('🛸 NAVE MÃE DESTRUÍDA! 🛸', 0, -40);
+
     ctx.fillStyle = '#FFD700';
-    ctx.font = 'bold 48px Arial';
+    ctx.font = 'bold 32px Arial';
     ctx.shadowColor = '#FFD700';
-    ctx.fillText('🎉 VITÓRIA FINAL! 🎉', 0, 30);
+    ctx.fillText('🎉 PARABÉNS! 🎉', 0, 10);
+
+    ctx.font = 'bold 24px Arial';
+    ctx.fillText('VOCÊ SALVOU O MUNDO', 0, 50);
   } else {
     ctx.fillStyle = gameState.isVictory ? '#2ECC71' : '#E74C3C';
     ctx.font = 'bold 48px Arial';
@@ -1761,7 +1904,7 @@ function drawGameOver(ctx: CanvasRenderingContext2D, gameState: GameState): void
   ctx.fillStyle = '#FFFFFF';
   ctx.font = 'bold 16px Arial';
   ctx.textAlign = 'center';
-  ctx.fillText('🔄 JOGAR NOVAMENTE', 0, 5);
+  ctx.fillText(isFinalVictory ? '➡️ NÍVEL 11 (INFINITO)' : '🔄 JOGAR NOVAMENTE', 0, 5);
   ctx.restore();
 
   // Botão de compartilhar no X (Twitter)
@@ -1791,10 +1934,44 @@ function drawGameOver(ctx: CanvasRenderingContext2D, gameState: GameState): void
   ctx.fillText('𝕏 COMPARTILHAR SCORE', 0, 5);
   ctx.restore();
 
+  // Botão de compartilhar no WhatsApp
+  ctx.save();
+  ctx.translate(width / 2, boxY + boxHeight + 150); // 50px abaixo do botão do Twitter
+  ctx.scale(buttonPulse, buttonPulse);
+
+  const whatsappGradient = ctx.createLinearGradient(-100, -20, -100, 20);
+  whatsappGradient.addColorStop(0, '#25D366');
+  whatsappGradient.addColorStop(1, '#128C7E');
+
+  ctx.fillStyle = whatsappGradient;
+  ctx.beginPath();
+  ctx.roundRect(-100, -20, 200, 40, 20);
+  ctx.fill();
+
+  ctx.shadowColor = '#25D366';
+  ctx.shadowBlur = 10;
+  ctx.strokeStyle = '#50E386';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = 'bold 15px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('📱 COMPARTILHAR ZAP', 0, 5);
+  ctx.restore();
+
   // Guardar posição do botão de share para detecção de clique
   shareButtonBounds = {
     x: width / 2 - 100,
     y: boxY + boxHeight + 100 - 20,
+    width: 200,
+    height: 40
+  };
+
+  whatsappButtonBounds = {
+    x: width / 2 - 100,
+    y: boxY + boxHeight + 150 - 20,
     width: 200,
     height: 40
   };

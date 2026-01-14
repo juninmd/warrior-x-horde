@@ -1,8 +1,5 @@
 // types.ts - Sistema de Crowd Runner
 
-export type SoldierType = 'normal' | 'super' | 'bazooka' | 'rambo' | 'laser';
-export type BulletType = 'normal' | 'rocket' | 'laser' | 'plasma';
-
 export interface Particle {
   x: number;
   y: number;
@@ -64,9 +61,9 @@ export interface Soldier {
   animOffset: number;
   hp: number;
   maxHp: number;
-  type: SoldierType;
+  isSuper?: boolean; // Super guerreiro
   personalFireRate?: number; // Fire rate individual (para super guerreiros)
-  lastShotTime?: number; // Para controlar fire rate individual
+  type: 'normal' | 'bazooka' | 'rambo' | 'laser';
 }
 
 export interface Army {
@@ -105,6 +102,7 @@ export interface MiniBoss {
   maxHp: number;
   isActive: boolean;
   color: string;
+  type: 'normal' | 'armored' | 'speed' | 'spiky';
 }
 
 export interface Gate {
@@ -113,11 +111,12 @@ export interface Gate {
   y: number;
   width: number;
   height: number;
-  type: 'add' | 'multiply' | 'subtract' | 'divide' | 'firerate' | 'damage' | 'superwarrior' | 'bazooka' | 'rambo' | 'laser';
+  type: 'add' | 'multiply' | 'subtract' | 'divide' | 'firerate' | 'damage' | 'superwarrior';
   value: number;
   color: string;
   side: 'left' | 'right';
   passed: boolean;
+  customText?: string;
 }
 
 export interface Weapon {
@@ -149,7 +148,6 @@ export interface Bullet {
   speed: number;
   damage: number;
   isEnemy: boolean;
-  type: BulletType;
 }
 
 export interface Boss {
@@ -163,7 +161,7 @@ export interface Boss {
   color: string;
   spawnTime: number; // Timestamp de quando o boss spawnou
   isMoving: boolean; // Se já começou a se mover
-  type: 'normal' | 'beast' | 'machine' | 'demon' | 'mothership'; // Tipo de boss
+  type: 'normal' | 'beast' | 'machine' | 'demon' | 'mothership' | 'slime' | 'eye' | 'spider' | 'skull' | 'ghost' | 'crystal'; // Tipo de boss
   vx?: number; // Velocidade horizontal (para mothership)
   vy?: number; // Velocidade vertical (para mothership)
 }
@@ -180,7 +178,7 @@ export interface Entities {
 }
 
 // Limites de entidades para performance
-export const MAX_HEROES = 10000; // Aumentado para 10k (renderização limitada a 100 protege performance)
+export const MAX_HEROES = 20000; // Aumentado para 20k
 export const MAX_ENEMIES = 20000;
 
 export interface FloatingText {

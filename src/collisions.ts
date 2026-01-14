@@ -1,6 +1,6 @@
 // collisions.ts - Sistema de colisões
 import { Entities, GameState, Army, EnemyHorde, Gate, MiniBoss, MysteryBox } from './types';
-import { addSoldiersToArmy, multiplySoldiersInArmy, removeSoldiersFromArmy, addSuperSoldiersToArmy } from './entities';
+import { addSoldiersToArmy, multiplySoldiersInArmy, removeSoldiersFromArmy, addSuperSoldiersToArmy, addSpecialSoldiersToArmy } from './entities';
 import { addFloatingText, addExplosion, addParticle } from './renderer';
 import { playSound, audioManager } from './audio';
 
@@ -319,8 +319,10 @@ function applyMysteryBoxEffect(army: Army, box: MysteryBox, gameState: GameState
     'reinforcements',
     'nuke',
     'double',
-    'speed', // Temporário
-    'invincible' // Temporário (só visual/score por enquanto)
+    'invincible',
+    'bazooka',
+    'rambo',
+    'laser'
   ];
 
   const effect = effects[Math.floor(Math.random() * effects.length)];
@@ -344,14 +346,21 @@ function applyMysteryBoxEffect(army: Army, box: MysteryBox, gameState: GameState
       multiplySoldiersInArmy(army, 2);
       addFloatingText('DOUBLE TROUBLE!', box.x, box.y, '#9B59B6');
       break;
-    case 'speed':
-      // Apenas um bônus de score e visual por enquanto
-      gameState.score += 500;
-      addFloatingText('BONUS POINTS!', box.x, box.y, '#3498DB');
-      break;
     case 'invincible':
       addSuperSoldiersToArmy(army, 5);
-      addFloatingText('HERO SQUAD!', box.x, box.y, '#E74C3C');
+      addFloatingText('HERO SQUAD!', box.x, box.y, '#FFD700');
+      break;
+    case 'bazooka':
+      addSpecialSoldiersToArmy(army, 'bazooka', 8);
+      addFloatingText('BAZOOKA SQUAD!', box.x, box.y, '#27ae60');
+      break;
+    case 'rambo':
+      addSpecialSoldiersToArmy(army, 'rambo', 5);
+      addFloatingText('RAMBO SQUAD!', box.x, box.y, '#e74c3c');
+      break;
+    case 'laser':
+      addSpecialSoldiersToArmy(army, 'laser', 6);
+      addFloatingText('LASER SQUAD!', box.x, box.y, '#00ffff');
       break;
   }
 

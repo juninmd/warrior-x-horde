@@ -1,10 +1,10 @@
 // shooting.ts - Sistema de tiro automatico e Super Cannon
-import { Entities, GameState, Bullet, EnemyHorde, Boss, Soldier, MiniBoss, BulletType } from './types';
+import { Entities, GameState, Bullet, Army, EnemyHorde, Boss, Soldier, MiniBoss } from './types';
 import { addFloatingText, addExplosion, addParticle } from './renderer';
 import { ObjectPool } from './pool';
 
 const bulletPool = new ObjectPool<Bullet>(
-  () => ({ x: 0, y: 0, targetX: 0, targetY: 0, speed: 0, damage: 0, isEnemy: false, type: 'normal' }),
+  () => ({ x: 0, y: 0, targetX: 0, targetY: 0, speed: 0, damage: 0, isEnemy: false }),
   (b) => {
     b.x = 0;
     b.y = 0;
@@ -13,27 +13,18 @@ const bulletPool = new ObjectPool<Bullet>(
     b.speed = 0;
     b.damage = 0;
     b.isEnemy = false;
-    b.type = 'normal';
   }
 );
 
-export function createBullet(x: number, y: number, targetX: number, targetY: number, damage: number, isEnemy: boolean, type: BulletType = 'normal'): Bullet {
+export function createBullet(x: number, y: number, targetX: number, targetY: number, damage: number, isEnemy: boolean): Bullet {
   const bullet = bulletPool.get();
   bullet.x = x;
   bullet.y = y;
   bullet.targetX = targetX;
   bullet.targetY = targetY;
   bullet.speed = isEnemy ? 3 : -12; // Tiros do jogador mais rápidos
-
-  if (type === 'rocket') {
-      bullet.speed = -8; // Rockets are slower
-  } else if (type === 'laser') {
-      bullet.speed = -20; // Lasers are very fast
-  }
-
   bullet.damage = damage;
   bullet.isEnemy = isEnemy;
-  bullet.type = type;
   return bullet;
 }
 
@@ -86,7 +77,7 @@ function findNearestTarget(shooter: Soldier, hordes: EnemyHorde[], boss: Boss | 
 
 function checkBulletSoldierCollision(bullet: Bullet, soldier: Soldier): boolean {
   const soldierRadius = soldier.size;
-  const bulletRadius = bullet.type === 'rocket' ? 10 : 5; // Rockets have larger hit area (direct hit)
+  const bulletRadius = 5;
   const dx = bullet.x - soldier.x;
   const dy = bullet.y - soldier.y;
   const dist = Math.sqrt(dx * dx + dy * dy);
@@ -99,86 +90,84 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
   const army = entities.playerArmy;
   const now = Date.now();
 
-  // Army fire rate check for normal soldiers
-  const canArmyShoot = now - army.lastShotTime >= army.fireRate;
+  if (now - army.lastShotTime < army.fireRate) return;
 
   const aliveSoldiers = army.soldiers.filter(s => s.isAlive);
   if (aliveSoldiers.length === 0) return;
 
   // Mais soldados atiram baseado no tamanho do exército
-  // We need to iterate all soldiers to check individual fire rates for special units
-  // For normal units, we still use the group logic to save performance, but maybe we should allow specials to always shoot?
+  // Aumentado para 30 para permitir que classes especiais tenham mais chance de atirar
+  const shootersCount = Math.min(Math.ceil(aliveSoldiers.length / 5), 30);
 
-  const shootersCount = Math.min(Math.ceil(aliveSoldiers.length / 5), 20); // Até 20 atiradores normais
-  let normalShootersCount = 0;
+  // Priorizar soldados especiais e super soldados
+  // Ordenação: Special/Super primeiro, depois por posição Y (frente)
+  const sortedSoldiers = [...aliveSoldiers].sort((a, b) => {
+    // Definir prioridade: Laser > Bazooka > Rambo > Super > Normal
+    const getPriority = (s: Soldier) => {
+      if (s.type === 'laser') return 5;
+      if (s.type === 'bazooka') return 4;
+      if (s.type === 'rambo') return 3;
+      if (s.isSuper) return 2;
+      return 1;
+    };
 
-  // Sort soldiers by Y (frontline first)
-  const sortedSoldiers = [...aliveSoldiers].sort((a, b) => a.y - b.y);
+    const prioA = getPriority(a);
+    const prioB = getPriority(b);
 
-  for (const shooter of sortedSoldiers) {
-      let canShoot = false;
+    if (prioA !== prioB) return prioB - prioA; // Maior prioridade primeiro
+    return a.y - b.y; // Se igual, quem está mais na frente
+  });
 
-      // Special soldiers have individual fire rates
-      if (shooter.type !== 'normal') {
-          if (!shooter.lastShotTime) shooter.lastShotTime = 0;
-          const fireRate = shooter.personalFireRate || army.fireRate;
-          if (now - shooter.lastShotTime >= fireRate) {
-              canShoot = true;
-          }
-      } else {
-          // Normal soldiers follow army fire rate and limit
-          if (canArmyShoot && normalShootersCount < shootersCount) {
-              canShoot = true;
-              normalShootersCount++;
-          }
-      }
+  const shooters = sortedSoldiers.slice(0, shootersCount);
 
-      if (!canShoot) continue;
+  for (const shooter of shooters) {
+    // Cada atirador procura seu alvo mais próximo
+    const target = findNearestTarget(shooter, entities.enemyHordes, entities.boss, entities.miniBosses);
+    if (!target) continue;
 
-      // Find target
-      const target = findNearestTarget(shooter, entities.enemyHordes, entities.boss, entities.miniBosses);
-      if (!target) continue;
+    // TODOS os tiros saem do centro do exército
+    const bulletX = army.centerX;
+    const dispersion = (shooter.isSuper || shooter.type !== 'normal') ? 0 : (Math.random() - 0.5) * 3;
 
-      const bulletX = army.centerX; // All bullets start from center? Maybe special units should shoot from their position if we want to be fancy, but keep center for consistency as per code comments
+    // Customizar tiro baseada na classe
+    let damage = army.damage;
+    let speed = 0; // Se 0, usa padrão do createBullet (-12)
 
-      let damage = army.damage;
-      let type: BulletType = 'normal';
-      let dispersion = (Math.random() - 0.5) * 3;
+    if (shooter.isSuper) damage *= 2;
 
-      if (shooter.type === 'super') {
-          damage *= 2;
-          dispersion = 0;
-      } else if (shooter.type === 'bazooka') {
-          damage *= 4; // High damage (reduced from 5 to account for AoE)
-          type = 'rocket';
-          dispersion = (Math.random() - 0.5) * 5; // Less accurate
-      } else if (shooter.type === 'rambo') {
-          damage *= 0.4; // Reduced damage per shot (high ROF balances it)
-          dispersion = (Math.random() - 0.5) * 10; // Spray and pray
-      } else if (shooter.type === 'laser') {
-          damage *= 3.0; // High single target damage
-          type = 'laser';
-          dispersion = 0; // Perfect accuracy
-      }
+    // Bônus de classe
+    switch (shooter.type) {
+      case 'bazooka':
+        damage *= 5; // Dano massivo
+        // Bazooka poderia ser mais lenta, mas createBullet controla speed.
+        // Vamos deixar speed padrão mas muito dano.
+        break;
+      case 'rambo':
+        damage *= 1.5; // Dano moderado
+        // Rambo atira rápido (já garantido por estar na lista de shooters prioritários)
+        break;
+      case 'laser':
+        damage *= 3;
+        speed = -25; // Tiro ultra rápido
+        break;
+    }
 
-      entities.bullets.push(createBullet(
-        bulletX,
-        army.centerY - 20,
-        target.x + dispersion,
-        target.y,
-        damage,
-        false,
-        type
-      ));
+    const bullet = createBullet(
+      bulletX,
+      army.centerY - 20,
+      target.x + dispersion,
+      target.y,
+      damage,
+      false
+    );
 
-      if (shooter.type !== 'normal') {
-          shooter.lastShotTime = now;
-      }
+    // Sobrescrever speed se definido
+    if (speed !== 0) bullet.speed = speed;
+
+    entities.bullets.push(bullet);
   }
 
-  if (canArmyShoot && normalShootersCount > 0) {
-      army.lastShotTime = now;
-  }
+  army.lastShotTime = now;
 }
 
 export function activateSuperCannon(gameState: GameState): void {
@@ -295,27 +284,6 @@ export function updateBullets(entities: Entities, gameState: GameState): void {
           // Efeito visual de impacto
           addExplosion(soldier.x, soldier.y, '#E74C3C');
 
-          if (bullet.type === 'rocket') {
-              // Area Damage
-              // Find other soldiers near this one
-              const explosionRadius = 40;
-              for (let k = horde.soldiers.length - 1; k >= 0; k--) {
-                  if (k === j) continue; // Skip the direct hit one (already damaged)
-                  const otherSoldier = horde.soldiers[k];
-                  const dx = otherSoldier.x - soldier.x;
-                  const dy = otherSoldier.y - soldier.y;
-                  if (dx*dx + dy*dy < explosionRadius*explosionRadius) {
-                      otherSoldier.hp -= bullet.damage * 0.5; // 50% splash damage
-                      if (otherSoldier.hp <= 0) {
-                          horde.soldiers.splice(k, 1);
-                          if (k < j) j--; // Adjust index if we removed an element before current
-                      }
-                  }
-              }
-              // Add big explosion effect
-              addParticle(soldier.x, soldier.y, 'explosion', '#FFA500', 5);
-          }
-
           // Só remove se HP <= 0
           if (soldier.hp <= 0) {
             horde.soldiers.splice(j, 1);
@@ -330,18 +298,9 @@ export function updateBullets(entities: Entities, gameState: GameState): void {
             }
           }
 
-          if (bullet.type !== 'laser') { // Lasers pierce? maybe not for now to keep it simple, or make them pierce
-            bulletPool.release(bullet);
-            entities.bullets.splice(i, 1);
-            bulletHit = true;
-          } else {
-             // Laser hits but continues? Let's say it pierces 1 enemy then dies, or just dies for now.
-             // To implement pierce properly we need a "hit list" on the bullet.
-             // For simplicity, let's make laser just hit once for now but have high velocity/accuracy.
-             bulletPool.release(bullet);
-             entities.bullets.splice(i, 1);
-             bulletHit = true;
-          }
+          bulletPool.release(bullet);
+          entities.bullets.splice(i, 1);
+          bulletHit = true;
           break;
         }
       }
@@ -359,15 +318,8 @@ export function updateBullets(entities: Entities, gameState: GameState): void {
       if (bullet.x > miniBoss.x && bullet.x < miniBoss.x + miniBoss.width &&
           bullet.y > miniBoss.y && bullet.y < miniBoss.y + miniBoss.height) {
         miniBoss.hp -= bullet.damage;
-
-        if (bullet.type !== 'laser') {
-            bulletPool.release(bullet);
-            entities.bullets.splice(i, 1);
-        } else {
-            // Laser hits once per frame effectively if we don't remove it, which is bad.
-            bulletPool.release(bullet);
-            entities.bullets.splice(i, 1);
-        }
+        bulletPool.release(bullet);
+        entities.bullets.splice(i, 1);
 
         // Efeito de impacto
         addExplosion(bullet.x, bullet.y, '#FF4500');
