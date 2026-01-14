@@ -214,8 +214,8 @@ export function createEnemyHorde(canvasWidth: number, y: number, count: number, 
 
   const soldiers: Soldier[] = [];
 
-  // HP dos inimigos aumenta com o level (+40% por level)
-  const enemyHp = 2 + Math.floor((level - 1) * 0.4);
+  // HP dos inimigos aumenta com o level (+60% por level) - Aumentado
+  const enemyHp = 3 + Math.floor((level - 1) * 0.6);
 
   // Formação em círculos concêntricos (igual ao exército do jogador)
   let soldierIndex = 0;
@@ -504,8 +504,8 @@ export function createBoss(canvasWidth: number, level: number): Boss {
     };
   }
 
-  // Boss normal - HP
-  const bossHp = (50 + level * 25) * 25; // Aumentado para desafiar mais
+  // Boss normal - HP (Aumentado drasticamente)
+  const bossHp = (80 + level * 30) * 30; // Aumentado para desafiar mais
 
   // Determinar o tipo de boss baseado no nível (1-9)
   let type: Boss['type'] = 'beast';
@@ -569,8 +569,8 @@ export function createBoss(canvasWidth: number, level: number): Boss {
 }
 
 export function createMiniBoss(canvasWidth: number, y: number, level: number): MiniBoss {
-  // Vida do mini-boss aumentada
-  const miniBossHp = (20 + level * 12) * 5;
+  // Vida do mini-boss aumentada drasticamente
+  const miniBossHp = (30 + level * 15) * 8;
   const types: MiniBoss['type'][] = ['normal', 'armored', 'speed', 'spiky'];
   const type = types[Math.floor(Math.random() * types.length)];
 

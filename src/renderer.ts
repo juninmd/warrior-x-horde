@@ -1983,7 +1983,7 @@ function drawBullets(ctx: CanvasRenderingContext2D, bullets: Bullet[]): void {
   }
 }
 
-function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: number): void {
+function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: number, fireRate: number): void {
   const { width, height } = ctx.canvas;
 
   // === GLASSMORPHISM HUD ===
@@ -2040,6 +2040,12 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
   // 3. Army (Direita)
   const armyWidth = 90;
   drawGlassBadge(ctx, width - armyWidth - 10, bottomY - badgeHeight/2, armyWidth, badgeHeight, `⚔️ ${armyCount}`, '#E74C3C');
+
+  // 4. Fire Rate (Top Left, under progress bar)
+  // Converter delay para shots/sec: 1000 / fireRate
+  const shotsPerSec = (1000 / fireRate).toFixed(1);
+  const rateWidth = 100;
+  drawGlassBadge(ctx, 10, progressY + progressHeight + 15, rateWidth, 28, `🔥 ${shotsPerSec}/s`, '#F39C12');
 
   ctx.restore();
 
@@ -2482,7 +2488,7 @@ export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameSt
   }
 
   // UI
-  drawUI(ctx, gameState, entities.playerArmy.soldiers.filter(s => s.isAlive).length);
+  drawUI(ctx, gameState, entities.playerArmy.soldiers.filter(s => s.isAlive).length, entities.playerArmy.fireRate);
 
   // Floating texts
   updateFloatingTexts();
