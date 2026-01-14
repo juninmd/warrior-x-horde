@@ -1,5 +1,5 @@
 // collisions.ts - Sistema de colisões
-import { Entities, GameState, Army, EnemyHorde, Gate, MiniBoss, MysteryBox } from './types';
+import { Entities, GameState, Army, EnemyHorde, Gate, MiniBoss, MysteryBox, Coin } from './types';
 import { addSoldiersToArmy, multiplySoldiersInArmy, removeSoldiersFromArmy, addSuperSoldiersToArmy, addSpecialSoldiersToArmy } from './entities';
 import { addFloatingText, addExplosion, addParticle } from './renderer';
 import { playSound, audioManager } from './audio';
@@ -298,6 +298,16 @@ function checkBossCollision(army: Army, entities: Entities, bounds: { left: numb
     bounds.left < boss.x + boss.width;
 }
 
+function checkCoinCollision(army: Army, coin: Coin, bounds: { left: number; right: number; top: number; bottom: number }): boolean {
+  if (coin.passed) return false;
+
+  // Simple bounding box check
+  return bounds.bottom > coin.y - coin.height/2 &&
+         bounds.top < coin.y + coin.height/2 &&
+         bounds.right > coin.x - coin.width/2 &&
+         bounds.left < coin.x + coin.width/2;
+}
+
 function checkMysteryBoxCollision(army: Army, box: MysteryBox, bounds: { left: number; right: number; top: number; bottom: number }): boolean {
   if (box.passed) return false;
 
@@ -423,6 +433,17 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
   for (const box of entities.mysteryBoxes) {
     if (checkMysteryBoxCollision(army, box, bounds)) {
       applyMysteryBoxEffect(army, box, gameState, entities);
+    }
+  }
+
+  // Checar colisão com Coins
+  for (const coin of entities.coins) {
+    if (checkCoinCollision(army, coin, bounds)) {
+      coin.passed = true;
+      gameState.coins += coin.value;
+      playSound(audioManager.powerUp); // Reusing powerUp sound for now
+      addFloatingText(`+$${coin.value}`, coin.x, coin.y, '#FFD700');
+      addParticle(coin.x, coin.y, 'spark', '#FFD700', 3);
     }
   }
 

@@ -1,6 +1,33 @@
 // spawner.ts - Gerador de obstáculos e inimigos
 import { Entities, GameState, MAX_ENEMIES } from './types';
-import { createGatePair, createEnemyHorde, createBoss, createMiniBoss, createMysteryBox } from './entities';
+import { createGatePair, createEnemyHorde, createBoss, createMiniBoss, createMysteryBox, createCoin } from './entities';
+
+export function spawnCoins(entities: Entities, canvasWidth: number, gameState: GameState): void {
+  // Remover moedas que já passaram
+  entities.coins = entities.coins.filter(coin => !coin.passed && coin.y < 1200);
+
+  // Chance de spawn de moedas
+  // Spawnar em grupos (linhas ou arcos)
+  if (Math.random() < 0.015) { // 1.5% chance por frame
+    const pattern = Math.random() > 0.5 ? 'line' : 'arc';
+    const startX = 50 + Math.random() * (canvasWidth - 100);
+    const startY = -50;
+
+    if (pattern === 'line') {
+      // Linha vertical de moedas
+      for (let i = 0; i < 5; i++) {
+        entities.coins.push(createCoin(startX, startY - i * 40));
+      }
+    } else {
+      // Arco/V de moedas
+      for (let i = 0; i < 5; i++) {
+        const xOffset = (i - 2) * 20;
+        const yOffset = Math.abs(i - 2) * 10;
+        entities.coins.push(createCoin(startX + xOffset, startY - yOffset, 1));
+      }
+    }
+  }
+}
 
 export function spawnMysteryBoxes(entities: Entities, canvasWidth: number, _gameState: GameState): void {
   // Remover caixas que já passaram
@@ -157,5 +184,6 @@ export function updateSpawns(entities: Entities, canvasWidth: number, gameState:
   spawnEnemies(entities, canvasWidth, gameState, canvasHeight);
   spawnMiniBoss(entities, canvasWidth, gameState, canvasHeight);
   spawnMysteryBoxes(entities, canvasWidth, gameState);
+  spawnCoins(entities, canvasWidth, gameState);
   checkBossSpawn(entities, canvasWidth, gameState, canvasHeight);
 }

@@ -1,8 +1,8 @@
 // game.ts - Loop principal do jogo Crowd Runner
-import { Entities } from './types';
+import { Entities, GameState, Soldier } from './types';
 import { gameState, resetGameState } from './gameState';
-import { createInitialEntities, createEnemyHorde, createSoldier, createMysteryBox } from './entities';
-import { render, getShareButtonBounds, getWhatsAppButtonBounds, shareOnX, shareOnWhatsApp } from './renderer';
+import { createInitialEntities, createEnemyHorde, createSoldier, createMysteryBox, addSpecialSoldiersToArmy } from './entities';
+import { render, getShareButtonBounds, getWhatsAppButtonBounds, shareOnX, shareOnWhatsApp, addFloatingText } from './renderer';
 import { checkCollisions } from './collisions';
 import { updateSpawns } from './spawner';
 import { updateMovement } from './movement';
@@ -84,6 +84,110 @@ const startBtnOverlay = document.getElementById('startBtnOverlay');
 
 // Container para o botão Super Cannon
 const superCannonContainer = document.getElementById('superCannonContainer');
+
+// --- Shop UI ---
+const shopContainer = document.createElement('div');
+shopContainer.id = 'shopContainer';
+shopContainer.style.cssText = `
+  position: absolute;
+  top: 150px;
+  right: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 10;
+  display: none; /* Hidden by default */
+`;
+document.body.appendChild(shopContainer);
+
+function createShopButton(type: 'bazooka' | 'rambo' | 'laser', price: number, color: string, label: string): HTMLButtonElement {
+  const btn = document.createElement('button');
+  btn.innerHTML = `<span style="font-size: 18px;">${label}</span><br><span style="font-size: 12px;">💰 ${price}</span>`;
+  btn.style.cssText = `
+    width: 70px;
+    height: 70px;
+    padding: 5px;
+    font-size: 12px;
+    font-weight: bold;
+    background: rgba(20, 20, 30, 0.8);
+    color: #FFF;
+    border: 2px solid ${color};
+    border-radius: 10px;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+    user-select: none;
+    transition: transform 0.1s, opacity 0.2s;
+  `;
+
+  // Efeito de clique
+  btn.addEventListener('mousedown', () => btn.style.transform = 'scale(0.95)');
+  btn.addEventListener('mouseup', () => btn.style.transform = 'scale(1)');
+  btn.addEventListener('mouseleave', () => btn.style.transform = 'scale(1)');
+  btn.addEventListener('touchstart', () => btn.style.transform = 'scale(0.95)', { passive: true });
+  btn.addEventListener('touchend', () => btn.style.transform = 'scale(1)', { passive: true });
+
+  return btn;
+}
+
+const bazookaBtn = createShopButton('bazooka', 50, '#27ae60', '🚀');
+const ramboBtn = createShopButton('rambo', 100, '#e74c3c', '💪');
+const laserBtn = createShopButton('laser', 150, '#00ffff', '⚡');
+
+shopContainer.appendChild(bazookaBtn);
+shopContainer.appendChild(ramboBtn);
+shopContainer.appendChild(laserBtn);
+
+function buyUnit(type: 'bazooka' | 'rambo' | 'laser', cost: number): void {
+  if (gameState.coins >= cost) {
+    gameState.coins -= cost;
+    addSpecialSoldiersToArmy(entities.playerArmy, type, 1);
+    addFloatingText(`+1 ${type.toUpperCase()}`, entities.playerArmy.centerX, entities.playerArmy.centerY, '#00FF00');
+    playSound(audioManager.powerUp);
+  } else {
+    // Feedback negativo (som de erro)
+    playSound(audioManager.nerf); // Usando som de nerf como erro
+  }
+}
+
+bazookaBtn.addEventListener('click', (e) => { e.stopPropagation(); buyUnit('bazooka', 50); });
+ramboBtn.addEventListener('click', (e) => { e.stopPropagation(); buyUnit('rambo', 100); });
+laserBtn.addEventListener('click', (e) => { e.stopPropagation(); buyUnit('laser', 150); });
+
+// Touchstart específico para mobile para garantir resposta rápida
+bazookaBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); buyUnit('bazooka', 50); }, { passive: true });
+ramboBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); buyUnit('rambo', 100); }, { passive: true });
+laserBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); buyUnit('laser', 150); }, { passive: true });
+
+function updateShopUI(): void {
+  if (!gameState.isStarted || gameState.isGameOver) {
+    shopContainer.style.display = 'none';
+    return;
+  }
+  shopContainer.style.display = 'flex';
+
+  // Atualizar estado (habilitado/desabilitado)
+  const updateBtn = (btn: HTMLButtonElement, cost: number) => {
+    if (gameState.coins >= cost) {
+      btn.style.opacity = '1';
+      btn.style.filter = 'grayscale(0%)';
+      btn.disabled = false;
+    } else {
+      btn.style.opacity = '0.5';
+      btn.style.filter = 'grayscale(100%)';
+      btn.disabled = true; // Desabilitar clique real se quiser, ou deixar para feedback sonoro
+    }
+  };
+
+  updateBtn(bazookaBtn, 50);
+  updateBtn(ramboBtn, 100);
+  updateBtn(laserBtn, 150);
+}
 
 // Botão de Super Cannon para mobile (dentro do layout, não fixed)
 const superCannonButton = document.createElement('button');
@@ -256,6 +360,7 @@ function gameLoop(currentTime: number = 0): void {
   // Atualizar botão do Super Cannon
   updateSuperCannonButton();
   updateSuperButtonInline();
+  updateShopUI(); // Atualizar loja
 
   // Spawnar elementos
   updateSpawns(entities, canvas.width, gameState, canvas.height);

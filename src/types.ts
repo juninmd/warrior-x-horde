@@ -142,6 +142,17 @@ export interface MysteryBox {
   passed: boolean;
 }
 
+export interface Coin {
+  id: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  value: number;
+  passed: boolean;
+  bounceOffset: number;
+}
+
 export interface Bullet {
   x: number;
   y: number;
@@ -174,6 +185,7 @@ export interface Entities {
   gates: Gate[];
   weapons: Weapon[];
   mysteryBoxes: MysteryBox[];
+  coins: Coin[];
   bullets: Bullet[];
   boss: Boss | null;
   miniBosses: MiniBoss[];
