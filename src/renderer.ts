@@ -1,5 +1,5 @@
 // renderer.ts - Renderização do jogo estilo Crowd Runner
-import { Entities, GameState, FloatingText, Army, EnemyHorde, Gate, Boss, Bullet, Particle, MysteryBox, Soldier } from './types';
+import { Entities, GameState, FloatingText, Army, EnemyHorde, Gate, Boss, Bullet, Particle, MysteryBox, Soldier, MiniBoss } from './types';
 import { ObjectPool } from './pool';
 
 // --- Sprite Caching System ---
@@ -2084,7 +2084,8 @@ function drawGlassBadge(ctx: CanvasRenderingContext2D, x: number, y: number, w: 
   ctx.fillStyle = 'rgba(10, 10, 20, 0.7)';
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
   ctx.lineWidth = 1;
-  ctx.backdropFilter = 'blur(4px)'; // Nota: Nem todos browsers suportam isso em Canvas ainda, mas vale tentar
+  // @ts-ignore - backdropFilter é experimental em Canvas
+  if (ctx.backdropFilter) ctx.backdropFilter = 'blur(4px)';
 
   ctx.beginPath();
   ctx.roundRect(x, y, w, h, 12);
@@ -2225,32 +2226,32 @@ function drawGameOver(ctx: CanvasRenderingContext2D, gameState: GameState): void
   ctx.textAlign = 'right';
   ctx.fillText(`${gameState.currentLevel}`, boxX + boxWidth - 20, boxY + 140);
 
-  // Botão de restart animado
+  // Botão de restart animado (Maior para Mobile)
   const buttonPulse = 1 + Math.sin(Date.now() * 0.005) * 0.03;
   ctx.save();
-  ctx.translate(width / 2, boxY + boxHeight + 45);
+  ctx.translate(width / 2, boxY + boxHeight + 60); // Mais espaço
   ctx.scale(buttonPulse, buttonPulse);
 
-  const buttonGradient = ctx.createLinearGradient(-100, -22, -100, 22);
-  buttonGradient.addColorStop(0, '#4A90D9');
-  buttonGradient.addColorStop(1, '#2E5A8E');
+  const buttonGradient = ctx.createLinearGradient(-120, -30, -120, 30); // Botão maior (240x60)
+  buttonGradient.addColorStop(0, '#2ECC71'); // Verde para ação principal
+  buttonGradient.addColorStop(1, '#27ae60');
 
   ctx.fillStyle = buttonGradient;
   ctx.beginPath();
-  ctx.roundRect(-100, -22, 200, 44, 22);
+  ctx.roundRect(-120, -30, 240, 60, 30);
   ctx.fill();
 
-  ctx.shadowColor = '#4A90D9';
-  ctx.shadowBlur = 15;
-  ctx.strokeStyle = '#6BB3F0';
-  ctx.lineWidth = 2;
+  ctx.shadowColor = '#2ECC71';
+  ctx.shadowBlur = 20;
+  ctx.strokeStyle = '#69F0AE';
+  ctx.lineWidth = 3;
   ctx.stroke();
   ctx.shadowBlur = 0;
 
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 16px Arial';
+  ctx.font = 'bold 20px Arial';
   ctx.textAlign = 'center';
-  ctx.fillText(isFinalVictory ? '➡️ NÍVEL 11 (INFINITO)' : '🔄 JOGAR NOVAMENTE', 0, 5);
+  ctx.fillText(isFinalVictory ? '➡️ NÍVEL 11 (INFINITO)' : '🔄 JOGAR NOVAMENTE', 0, 8);
   ctx.restore();
 
   // Botão de compartilhar no X (Twitter)

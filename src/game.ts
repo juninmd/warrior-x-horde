@@ -9,6 +9,7 @@ import { updateMovement } from './movement';
 import { setupInput, getMouseX, initializeMousePosition, setGameStateRef, setInputScale } from './input';
 import { updateShooting, updateBullets, updateSuperCannon, activateSuperCannon } from './shooting';
 import { initAudio, playMusic, playSound, stopAllMusic, audioManager } from './audio';
+import { enemyGrid } from './spatial';
 
 // Canvas setup
 export const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
@@ -259,6 +260,10 @@ function gameLoop(currentTime: number = 0): void {
 
   // Spawnar elementos
   updateSpawns(entities, canvas.width, gameState, canvas.height);
+
+  // Atualizar Grid Espacial (Performance)
+  enemyGrid.clear();
+  enemyGrid.insertEnemies(entities.enemyHordes);
 
   // Verificar colisões
   checkCollisions(entities, gameState);

@@ -2,6 +2,7 @@
 import { Entities, GameState, Bullet, Army, EnemyHorde, Boss, Soldier, MiniBoss } from './types';
 import { addFloatingText, addExplosion, addParticle } from './renderer';
 import { ObjectPool } from './pool';
+import { enemyGrid } from './spatial';
 
 const bulletPool = new ObjectPool<Bullet>(
   () => ({ x: 0, y: 0, targetX: 0, targetY: 0, speed: 0, damage: 0, isEnemy: false }),
@@ -31,36 +32,36 @@ export function createBullet(x: number, y: number, targetX: number, targetY: num
 function findNearestTarget(shooter: Soldier, hordes: EnemyHorde[], boss: Boss | null, miniBosses: MiniBoss[]): { x: number; y: number } | null {
   let nearestDist = Infinity;
   let nearest: { x: number; y: number } | null = null;
+  const MAX_TARGET_DIST = 600;
 
-  // OTIMIZAÇÃO: Checar distância da horda primeiro
-  const MAX_TARGET_DIST = 600; // Não atirar se muito longe
+  // OTIMIZAÇÃO: Usar Spatial Grid para encontrar inimigos próximos
+  // Procurar numa área à frente do soldado
+  const lookAheadY = shooter.y - 150; // Olhar 150px para frente
+  const searchRadius = 300; // Raio de busca
 
-  // Procurar inimigos nas hordas
-  for (const horde of hordes) {
-    if (!horde.isActive || horde.soldiers.length === 0) continue;
+  // Buscar candidatos na grid
+  const candidates = enemyGrid.queryArea(shooter.x, lookAheadY, searchRadius);
 
-    // Se horda estiver muito longe, nem checar soldados
-    const hordeDist = Math.abs(horde.y - shooter.y);
-    if (hordeDist > MAX_TARGET_DIST) continue;
+  // Se não achou na grid, fallback para buscar em todas as hordas (apenas se a grid estiver vazia ou bugada)
+  // Mas vamos confiar na grid. Se estiver vazia, não tem inimigo perto.
 
-    // Encontrar o soldado inimigo mais próximo, não apenas o centro da horda
-    for (const enemy of horde.soldiers) {
-      if (!enemy.isAlive) continue;
-      const dy = enemy.y - shooter.y;
-      // Só mirar em inimigos que estão na frente (acima)
-      if (dy >= 0) continue;
+  for (const enemy of candidates) {
+    if (!enemy.isAlive) continue;
 
-      const dx = enemy.x - shooter.x;
-      const dist = Math.sqrt(dx * dx + dy * dy);
+    const dy = enemy.y - shooter.y;
+    // Só mirar em inimigos que estão na frente (acima) ou muito perto
+    if (dy > 20) continue; // Pode atirar um pouco para trás se estiver muito perto
 
-      if (dist < nearestDist) {
-        nearestDist = dist;
-        nearest = { x: enemy.x, y: enemy.y };
-      }
+    const dx = enemy.x - shooter.x;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    if (dist < nearestDist && dist < MAX_TARGET_DIST) {
+      nearestDist = dist;
+      nearest = { x: enemy.x, y: enemy.y };
     }
   }
 
-  // Verificar mini-bosses
+  // Verificar mini-bosses (estes não estão na grid por enquanto)
   for (const miniBoss of miniBosses) {
     if (!miniBoss.isActive) continue;
     const dx = miniBoss.x + miniBoss.width / 2 - shooter.x;
@@ -273,46 +274,65 @@ export function updateBullets(entities: Entities, gameState: GameState): void {
 
     let bulletHit = false;
 
-    // Colisão com hordas (só inimigos visíveis - y > 100)
-    for (const horde of entities.enemyHordes) {
-      if (!horde.isActive || bulletHit) continue;
+    // OTIMIZAÇÃO: Usar Spatial Grid para colisão de balas
+    // Consultar apenas inimigos na mesma célula da bala
+    // Pequena margem de segurança
+    const potentialTargets = enemyGrid.query(bullet.x, bullet.y);
 
-      // Horda precisa estar visível (abaixo da área de fadeIn)
-      if (horde.y < 100) continue;
+    // Se a bala está rápida, verificar célula anterior também poderia ser útil,
+    // mas dado o volume de balas, verificar apenas a célula atual é um bom compromisso
+    // Se a célula estiver vazia e a bala for muito rápida, tente queryArea pequena
+    const targetsToCheck = potentialTargets.length > 0
+      ? potentialTargets
+      : enemyGrid.queryArea(bullet.x, bullet.y, 20); // Check neighborhood if empty
 
-      for (let j = horde.soldiers.length - 1; j >= 0; j--) {
-        const soldier = horde.soldiers[j];
-        if (!soldier.isAlive) continue;
+    for (const soldier of targetsToCheck) {
+      if (!soldier.isAlive) continue;
+      // Soldado precisa estar visível
+      if (soldier.y < 100) continue;
 
-        // Soldado precisa estar visível
-        if (soldier.y < 100) continue;
+      if (checkBulletSoldierCollision(bullet, soldier)) {
+        // Encontrar a horda a que este soldado pertence para remover e atualizar
+        // Isso é um pouco custoso (procura reversa), mas acontece apenas no HIT
+        // Podemos otimizar adicionando referência da horda no soldado, mas vamos tentar assim
 
-        if (checkBulletSoldierCollision(bullet, soldier)) {
-          // Aplicar dano ao HP do inimigo
-          soldier.hp -= bullet.damage;
+        // Aplicar dano
+        soldier.hp -= bullet.damage;
 
-          // Efeito visual de impacto
-          addExplosion(soldier.x, soldier.y, '#E74C3C');
+        // Efeito visual
+        addExplosion(soldier.x, soldier.y, '#E74C3C');
 
-          // Só remove se HP <= 0
-          if (soldier.hp <= 0) {
-            horde.soldiers.splice(j, 1);
-            horde.count = horde.soldiers.length;
-            gameState.score += 10;
+        if (soldier.hp <= 0) {
+          soldier.isAlive = false; // Marcar como morto primeiro
 
-            if (horde.soldiers.length === 0) {
-              horde.isActive = false;
-              gameState.score += 50;
-              addFloatingText('HORDE DESTROYED!', horde.x, horde.y, '#FFD700');
-              addParticle(horde.x, horde.y, 'star', '#FFD700', 8);
+          // Agora precisamos remover da lista da horda correta
+          // Iterar hordas ativas para encontrar o soldado
+          for (const horde of entities.enemyHordes) {
+            if (!horde.isActive) continue;
+            // Verificar bounds da horda primeiro
+            if (soldier.y < horde.y - horde.height/2 - 50 || soldier.y > horde.y + horde.height/2 + 50) continue;
+
+            const idx = horde.soldiers.indexOf(soldier);
+            if (idx !== -1) {
+              horde.soldiers.splice(idx, 1);
+              horde.count = horde.soldiers.length;
+              gameState.score += 10;
+
+              if (horde.soldiers.length === 0) {
+                horde.isActive = false;
+                gameState.score += 50;
+                addFloatingText('HORDE DESTROYED!', horde.x, horde.y, '#FFD700');
+                addParticle(horde.x, horde.y, 'star', '#FFD700', 8);
+              }
+              break; // Achou a horda
             }
           }
-
-          bulletPool.release(bullet);
-          entities.bullets.splice(i, 1);
-          bulletHit = true;
-          break;
         }
+
+        bulletPool.release(bullet);
+        entities.bullets.splice(i, 1);
+        bulletHit = true;
+        break; // Bala atingiu um inimigo, para de checar outros
       }
     }
 
