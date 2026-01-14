@@ -137,6 +137,8 @@ export interface MysteryBox {
   y: number;
   width: number;
   height: number;
+  hp: number;
+  maxHp: number;
   passed: boolean;
 }
 

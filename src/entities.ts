@@ -595,16 +595,26 @@ export function createMiniBoss(canvasWidth: number, y: number, level: number): M
 }
 
 export function createMysteryBox(canvasWidth: number, y: number): MysteryBox {
-  // Posicionar aleatoriamente na largura da estrada
-  const roadWidth = canvasWidth * 0.5; // Aproximação
-  const x = canvasWidth / 2 + (Math.random() - 0.5) * roadWidth;
+  // Posicionar nas laterais (esquerda ou direita)
+  const width = 50;
+  const margin = 40; // Margem para ficar dentro da área jogável
+  const isLeft = Math.random() > 0.5;
+
+  const x = isLeft
+    ? margin
+    : canvasWidth - width - margin;
+
+  // HP para ser destrutível
+  const hp = 5;
 
   return {
     id: mysteryBoxIdCounter++,
     x,
     y,
-    width: 50,
+    width,
     height: 50,
+    hp,
+    maxHp: hp,
     passed: false,
   };
 }
