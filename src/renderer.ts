@@ -870,14 +870,19 @@ function drawGate(ctx: CanvasRenderingContext2D, gate: Gate): void {
   ctx.textBaseline = 'middle';
 
   let text = '';
-  switch (gate.type) {
-    case 'add': text = `+${gate.value}`; break;
-    case 'multiply': text = `×${gate.value}`; break;
-    case 'subtract': text = `-${gate.value}`; break;
-    case 'divide': text = `÷${gate.value}`; break;
-    case 'firerate': text = `🔥×${gate.value}`; break;
-    case 'damage': text = `⚔️×${gate.value}`; break;
-    case 'superwarrior': text = `⭐×${gate.value}`; break;
+  if (gate.customText) {
+    text = gate.customText;
+    ctx.font = `bold ${Math.floor(22 * scale)}px Arial`; // Fonte menor para caber a equação
+  } else {
+    switch (gate.type) {
+      case 'add': text = `+${gate.value}`; break;
+      case 'multiply': text = `×${gate.value}`; break;
+      case 'subtract': text = `-${gate.value}`; break;
+      case 'divide': text = `÷${gate.value}`; break;
+      case 'firerate': text = `🔥×${gate.value}`; break;
+      case 'damage': text = `⚔️×${gate.value}`; break;
+      case 'superwarrior': text = `⭐×${gate.value}`; break;
+    }
   }
 
   ctx.fillText(text, x + width / 2, gate.y + height / 2);
@@ -1228,6 +1233,179 @@ function drawBossDemon(ctx: CanvasRenderingContext2D, boss: Boss, time: number):
   ctx.shadowBlur = 0;
 }
 
+function drawBossSlime(ctx: CanvasRenderingContext2D, boss: Boss, time: number): void {
+  const cx = boss.x + boss.width / 2;
+  const cy = boss.y + boss.height / 2;
+  const wobble = Math.sin(time * 0.005 + cx) * 5;
+
+  ctx.fillStyle = '#00FF00';
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + 10, 45 + wobble, 35 - wobble, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Olhos
+  ctx.fillStyle = '#FFF';
+  ctx.beginPath();
+  ctx.arc(cx - 15, cy, 10, 0, Math.PI * 2);
+  ctx.arc(cx + 15, cy, 10, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.arc(cx - 15, cy, 4, 0, Math.PI * 2);
+  ctx.arc(cx + 15, cy, 4, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawBossEye(ctx: CanvasRenderingContext2D, boss: Boss, time: number): void {
+  const cx = boss.x + boss.width / 2;
+  const cy = boss.y + boss.height / 2;
+
+  // Globo ocular
+  ctx.fillStyle = '#FFF';
+  ctx.beginPath();
+  ctx.arc(cx, cy, 40, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Íris
+  ctx.fillStyle = '#FF0000';
+  ctx.beginPath();
+  ctx.arc(cx, cy, 20, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Pupila
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.arc(cx, cy, 10, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Veias
+  ctx.strokeStyle = '#FFCCCC';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(cx - 40, cy);
+  ctx.lineTo(cx - 20, cy);
+  ctx.moveTo(cx + 40, cy);
+  ctx.lineTo(cx + 20, cy);
+  ctx.moveTo(cx, cy - 40);
+  ctx.lineTo(cx, cy - 20);
+  ctx.moveTo(cx, cy + 40);
+  ctx.lineTo(cx, cy + 20);
+  ctx.stroke();
+}
+
+function drawBossSpider(ctx: CanvasRenderingContext2D, boss: Boss, time: number): void {
+  const cx = boss.x + boss.width / 2;
+  const cy = boss.y + boss.height / 2;
+
+  // Pernas
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 4;
+  for(let i=0; i<8; i++) {
+    const angle = (i / 8) * Math.PI * 2;
+    const legX = cx + Math.cos(angle) * 60;
+    const legY = cy + Math.sin(angle) * 60;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(legX, legY);
+    ctx.stroke();
+  }
+
+  // Corpo
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.arc(cx, cy, 30, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Olhos múltiplos
+  ctx.fillStyle = '#F00';
+  for(let i=0; i<4; i++) {
+    ctx.beginPath();
+    ctx.arc(cx - 10 + i * 6, cy - 5, 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawBossSkull(ctx: CanvasRenderingContext2D, boss: Boss, time: number): void {
+  const cx = boss.x + boss.width / 2;
+  const cy = boss.y + boss.height / 2;
+
+  ctx.fillStyle = '#F0F0F0';
+  ctx.beginPath();
+  ctx.arc(cx, cy - 10, 30, 0, Math.PI * 2); // Crânio
+  ctx.fillRect(cx - 20, cy + 10, 40, 20); // Maxilar
+  ctx.fill();
+
+  // Órbitas
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.arc(cx - 12, cy - 10, 8, 0, Math.PI * 2);
+  ctx.arc(cx + 12, cy - 10, 8, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Nariz
+  ctx.beginPath();
+  ctx.moveTo(cx, cy + 5);
+  ctx.lineTo(cx - 5, cy + 15);
+  ctx.lineTo(cx + 5, cy + 15);
+  ctx.fill();
+}
+
+function drawBossGhost(ctx: CanvasRenderingContext2D, boss: Boss, time: number): void {
+  const cx = boss.x + boss.width / 2;
+  const cy = boss.y + boss.height / 2;
+  const float = Math.sin(time * 0.003) * 10;
+
+  ctx.save();
+  ctx.globalAlpha = 0.7;
+  ctx.fillStyle = '#ADD8E6';
+  ctx.beginPath();
+  ctx.arc(cx, cy + float - 10, 30, Math.PI, 0);
+  ctx.lineTo(cx + 30, cy + float + 30);
+  for(let i=0; i<3; i++) {
+    ctx.lineTo(cx + 20 - i * 20, cy + float + 20);
+    ctx.lineTo(cx + 10 - i * 20, cy + float + 30);
+  }
+  ctx.lineTo(cx - 30, cy + float + 30);
+  ctx.fill();
+  ctx.restore();
+
+  // Olhos
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.arc(cx - 10, cy + float - 10, 4, 0, Math.PI * 2);
+  ctx.arc(cx + 10, cy + float - 10, 4, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawBossCrystal(ctx: CanvasRenderingContext2D, boss: Boss, time: number): void {
+  const cx = boss.x + boss.width / 2;
+  const cy = boss.y + boss.height / 2;
+  const rot = time * 0.001;
+
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(rot);
+
+  ctx.fillStyle = '#00FFFF';
+  ctx.beginPath();
+  ctx.moveTo(0, -40);
+  ctx.lineTo(30, 0);
+  ctx.lineTo(0, 40);
+  ctx.lineTo(-30, 0);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+  ctx.beginPath();
+  ctx.moveTo(0, -40);
+  ctx.lineTo(15, -10);
+  ctx.lineTo(0, 0);
+  ctx.fill();
+
+  ctx.restore();
+}
+
 function drawBoss(ctx: CanvasRenderingContext2D, boss: Boss, time: number): void {
   // Sombra genérica base
   const cx = boss.x + boss.width / 2;
@@ -1239,18 +1417,18 @@ function drawBoss(ctx: CanvasRenderingContext2D, boss: Boss, time: number): void
   ctx.fill();
 
   // Dispatch para tipo específico
-  if (boss.type === 'mothership') {
-    drawMothershipBoss(ctx, boss, time);
-    return;
-  } else if (boss.type === 'machine') {
-    drawBossMachine(ctx, boss, time);
-  } else if (boss.type === 'demon') {
-    drawBossDemon(ctx, boss, time);
-  } else if (boss.type === 'beast') {
-    drawBossBeast(ctx, boss, time);
-  } else {
-    // Fallback: Normal (código original simplificado ou reutilizar Demon/Beast)
-    drawBossBeast(ctx, boss, time);
+  switch (boss.type) {
+    case 'mothership': drawMothershipBoss(ctx, boss, time); return;
+    case 'machine': drawBossMachine(ctx, boss, time); break;
+    case 'demon': drawBossDemon(ctx, boss, time); break;
+    case 'beast': drawBossBeast(ctx, boss, time); break;
+    case 'slime': drawBossSlime(ctx, boss, time); break;
+    case 'eye': drawBossEye(ctx, boss, time); break;
+    case 'spider': drawBossSpider(ctx, boss, time); break;
+    case 'skull': drawBossSkull(ctx, boss, time); break;
+    case 'ghost': drawBossGhost(ctx, boss, time); break;
+    case 'crystal': drawBossCrystal(ctx, boss, time); break;
+    default: drawBossBeast(ctx, boss, time); break;
   }
 
   // Barra de vida comum para bosses não-mothership
@@ -1291,11 +1469,17 @@ function drawBoss(ctx: CanvasRenderingContext2D, boss: Boss, time: number): void
   if (boss.type === 'machine') bossName = 'MECHA TANK';
   else if (boss.type === 'demon') bossName = 'DEMON LORD';
   else if (boss.type === 'beast') bossName = 'GIANT BEAST';
+  else if (boss.type === 'slime') bossName = 'TOXIC SLIME';
+  else if (boss.type === 'eye') bossName = 'THE WATCHER';
+  else if (boss.type === 'spider') bossName = 'WIDOWMAKER';
+  else if (boss.type === 'skull') bossName = 'BONE KING';
+  else if (boss.type === 'ghost') bossName = 'PHANTOM';
+  else if (boss.type === 'crystal') bossName = 'PRISM CORE';
 
   ctx.fillText(`${bossName}: ${Math.ceil(boss.hp)}`, barX + barWidth / 2, barY + barHeight / 2 + 4);
 }
 
-function drawMiniBoss(ctx: CanvasRenderingContext2D, miniBoss: { x: number; y: number; width: number; height: number; hp: number; maxHp: number; isActive: boolean; color: string }, time: number): void {
+function drawMiniBoss(ctx: CanvasRenderingContext2D, miniBoss: MiniBoss, time: number): void {
   if (!miniBoss.isActive) return;
 
   const pulse = Math.sin(time * 0.008) * 5;
@@ -1306,20 +1490,39 @@ function drawMiniBoss(ctx: CanvasRenderingContext2D, miniBoss: { x: number; y: n
   ctx.ellipse(miniBoss.x + miniBoss.width / 2, miniBoss.y + miniBoss.height + 10, miniBoss.width / 2, 12, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Corpo do mini-boss
-  const bossGradient = ctx.createRadialGradient(
-    miniBoss.x + miniBoss.width / 2 - 10, miniBoss.y + miniBoss.height / 2 - 10, 0,
-    miniBoss.x + miniBoss.width / 2, miniBoss.y + miniBoss.height / 2, miniBoss.width / 2 + pulse
-  );
-  bossGradient.addColorStop(0, '#FF6347');
-  bossGradient.addColorStop(1, '#FF4500');
+  const cx = miniBoss.x + miniBoss.width / 2;
+  const cy = miniBoss.y + miniBoss.height / 2;
+  const r = (miniBoss.width / 2) + pulse;
 
-  ctx.fillStyle = bossGradient;
-  ctx.beginPath();
-  ctx.arc(miniBoss.x + miniBoss.width / 2, miniBoss.y + miniBoss.height / 2, miniBoss.width / 2 + pulse, 0, Math.PI * 2);
-  ctx.fill();
+  // Corpo do mini-boss baseado no tipo
+  ctx.fillStyle = miniBoss.color;
 
-  // Olhos
+  if (miniBoss.type === 'armored') {
+    // Quadrado
+    ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+    // Borda metálica
+    ctx.strokeStyle = '#CCC';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(cx - r, cy - r, r * 2, r * 2);
+  } else if (miniBoss.type === 'speed') {
+    // Triângulo
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - r);
+    ctx.lineTo(cx + r, cy + r);
+    ctx.lineTo(cx - r, cy + r);
+    ctx.fill();
+  } else if (miniBoss.type === 'spiky') {
+    // Estrela/Espinhoso
+    drawStar(ctx, cx, cy, 6, r, r * 0.5);
+    ctx.fill();
+  } else {
+    // Normal (Círculo)
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Olhos comuns
   ctx.fillStyle = '#FFFFFF';
   ctx.beginPath();
   ctx.arc(miniBoss.x + miniBoss.width * 0.35, miniBoss.y + miniBoss.height * 0.4, 8, 0, Math.PI * 2);

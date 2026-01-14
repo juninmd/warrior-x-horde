@@ -321,6 +321,32 @@ export function createGate(canvasWidth: number, y: number, side: 'left' | 'right
 }
 
 export function createGatePair(canvasWidth: number, y: number, level: number = 1, currentHeroCount: number = 0, currentEnemyCount: number = 0): Gate[] {
+  // 30% de chance de spawnar um Math Gate (Teste de Tabuada), se não estiver no máximo
+  if (Math.random() < 0.3 && currentHeroCount < MAX_HEROES) {
+    const a = Math.floor(Math.random() * 9) + 1;
+    const b = Math.floor(Math.random() * 9) + 1;
+    const result = a * b;
+    const wrongResult = Math.max(1, result + (Math.random() > 0.5 ? 1 : -1) * (Math.floor(Math.random() * 5) + 1));
+
+    const isLeftCorrect = Math.random() > 0.5;
+
+    // Gate Correto
+    const correctGate = createGate(canvasWidth, y, isLeftCorrect ? 'left' : 'right', level, currentHeroCount, currentEnemyCount);
+    correctGate.type = 'add';
+    correctGate.value = result;
+    correctGate.color = '#2ECC71'; // Verde
+    correctGate.customText = `${a} × ${b} = ${result}`;
+
+    // Gate Incorreto
+    const wrongGate = createGate(canvasWidth, y, isLeftCorrect ? 'right' : 'left', level, currentHeroCount, currentEnemyCount);
+    wrongGate.type = 'subtract';
+    wrongGate.value = Math.floor(result * 0.5) + 1; // Perde metade do que ganharia, ou o resultado
+    wrongGate.color = '#E74C3C'; // Vermelho
+    wrongGate.customText = `${a} × ${b} = ${wrongResult}`;
+
+    return [correctGate, wrongGate];
+  }
+
   const leftGate = createGate(canvasWidth, y, 'left', level, currentHeroCount, currentEnemyCount);
   const rightGate = createGate(canvasWidth, y, 'right', level, currentHeroCount, currentEnemyCount);
 
@@ -415,19 +441,50 @@ export function createBoss(canvasWidth: number, level: number): Boss {
   // Boss normal - HP reduzido para ser mais justo
   const bossHp = (30 + level * 20) * 20; // Reduzido de 30x para 20x
 
-  // Determinar o tipo de boss baseado no nível
+  // Determinar o tipo de boss baseado no nível (1-9)
   let type: Boss['type'] = 'beast';
   let color = '#8B0000';
 
-  if (level >= 7) {
-    type = 'demon';
-    color = '#FF2020'; // Vermelho vivo
-  } else if (level >= 4) {
-    type = 'machine';
-    color = '#708090'; // Cinza metálico
-  } else {
-    type = 'beast';
-    color = '#8B4513'; // Marrom besta
+  switch (level) {
+    case 1:
+      type = 'beast';
+      color = '#8B4513'; // Marrom
+      break;
+    case 2:
+      type = 'slime';
+      color = '#00FF00'; // Verde
+      break;
+    case 3:
+      type = 'eye';
+      color = '#FFFFFF'; // Branco/Vermelho
+      break;
+    case 4:
+      type = 'machine';
+      color = '#708090'; // Cinza
+      break;
+    case 5:
+      type = 'spider';
+      color = '#000000'; // Preto
+      break;
+    case 6:
+      type = 'skull';
+      color = '#F0F0F0'; // Osso
+      break;
+    case 7:
+      type = 'demon';
+      color = '#FF2020'; // Vermelho
+      break;
+    case 8:
+      type = 'ghost';
+      color = '#ADD8E6'; // Azul claro transparente
+      break;
+    case 9:
+      type = 'crystal';
+      color = '#00FFFF'; // Ciano
+      break;
+    default:
+      type = 'beast';
+      color = '#8B4513';
   }
 
   return {
@@ -448,6 +505,14 @@ export function createBoss(canvasWidth: number, level: number): Boss {
 export function createMiniBoss(canvasWidth: number, y: number, level: number): MiniBoss {
   // Vida do mini-boss reduzida para 3x (era 5x)
   const miniBossHp = (15 + level * 10) * 3;
+  const types: MiniBoss['type'][] = ['normal', 'armored', 'speed', 'spiky'];
+  const type = types[Math.floor(Math.random() * types.length)];
+
+  let color = '#FF4500';
+  if (type === 'armored') color = '#555555';
+  if (type === 'speed') color = '#FFFF00';
+  if (type === 'spiky') color = '#800080';
+
   return {
     id: miniBossIdCounter++,
     x: canvasWidth / 2 - 40 + (Math.random() - 0.5) * 100,
@@ -457,7 +522,8 @@ export function createMiniBoss(canvasWidth: number, y: number, level: number): M
     hp: miniBossHp,
     maxHp: miniBossHp,
     isActive: true,
-    color: '#FF4500', // Laranja escuro para mini-boss
+    color,
+    type,
   };
 }
 
