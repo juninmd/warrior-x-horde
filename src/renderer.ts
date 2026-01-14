@@ -524,11 +524,11 @@ function drawAlienShip(ctx: CanvasRenderingContext2D, x: number, y: number, time
   ctx.restore();
 }
 
-function drawSoldier3D(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, color: string, animOffset: number, time: number): void {
+function drawSoldier3D(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, color: string, animOffset: number, time: number, type: Soldier['type'] = 'normal'): void {
   const bounce = Math.sin(time * 0.008 + animOffset) * 3;
   const scale = Math.max(0.5, 1 - (800 - y) / 1500); // Escala baseada na posição Y (perspectiva)
   const actualSize = size * scale;
-  const isPlayer = color === '#4A90D9' || color === '#FFD700'; // Player (azul) ou Super (dourado)
+  const isPlayer = color === '#4A90D9' || color === '#FFD700' || type !== 'normal'; // Player (azul), Super ou Especial
 
   // Sombra
   ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
@@ -547,22 +547,43 @@ function drawSoldier3D(ctx: CanvasRenderingContext2D, x: number, y: number, size
   ctx.fill();
 
   if (isPlayer) {
-    // Detalhe: Escudo pequeno
-    ctx.fillStyle = shadeColor(color, 20);
-    ctx.beginPath();
-    ctx.arc(x - actualSize * 0.4, y + bounce + actualSize * 0.2, actualSize * 0.3, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = '#FFF';
-    ctx.lineWidth = 1;
-    ctx.stroke();
+    // Acessórios baseados no tipo
+    if (type === 'bazooka') {
+      // Bazooka nas costas
+      ctx.fillStyle = '#2c3e50';
+      ctx.beginPath();
+      ctx.roundRect(x - actualSize * 0.6, y + bounce - actualSize * 0.8, actualSize * 0.4, actualSize * 1.2, 2);
+      ctx.fill();
+    } else if (type === 'rambo') {
+      // Faixa vermelha na cabeça (desenhada depois)
+      // Metralhadora
+      ctx.fillStyle = '#111';
+      ctx.fillRect(x + actualSize * 0.3, y + bounce, actualSize * 0.8, actualSize * 0.2);
+    } else if (type === 'laser') {
+      // Óculos futurista (desenhado depois)
+      // Arma laser
+      ctx.fillStyle = '#FFF';
+      ctx.fillRect(x + actualSize * 0.3, y + bounce, actualSize * 0.6, actualSize * 0.15);
+      ctx.strokeStyle = '#00ffff';
+      ctx.strokeRect(x + actualSize * 0.3, y + bounce, actualSize * 0.6, actualSize * 0.15);
+    } else {
+      // Detalhe Normal: Escudo pequeno
+      ctx.fillStyle = shadeColor(color, 20);
+      ctx.beginPath();
+      ctx.arc(x - actualSize * 0.4, y + bounce + actualSize * 0.2, actualSize * 0.3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#FFF';
+      ctx.lineWidth = 1;
+      ctx.stroke();
 
-    // Detalhe: Espada (linha simples)
-    ctx.strokeStyle = '#DDD';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(x + actualSize * 0.3, y + bounce);
-    ctx.lineTo(x + actualSize * 0.8, y + bounce - actualSize * 0.4);
-    ctx.stroke();
+      // Detalhe: Espada (linha simples)
+      ctx.strokeStyle = '#DDD';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x + actualSize * 0.3, y + bounce);
+      ctx.lineTo(x + actualSize * 0.8, y + bounce - actualSize * 0.4);
+      ctx.stroke();
+    }
   } else {
     // Detalhe Inimigo: Espinhos
     ctx.fillStyle = shadeColor(color, -50);
@@ -601,6 +622,21 @@ function drawSoldier3D(ctx: CanvasRenderingContext2D, x: number, y: number, size
   ctx.beginPath();
   ctx.arc(x, y - actualSize * 0.6 + bounce, actualSize * 0.35, Math.PI, 0);
   ctx.fill();
+
+  // Detalhes extras de cabeça
+  if (type === 'rambo') {
+    // Faixa vermelha
+    ctx.strokeStyle = '#ff0000';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(x - actualSize * 0.35, y - actualSize * 0.7 + bounce);
+    ctx.lineTo(x + actualSize * 0.35, y - actualSize * 0.7 + bounce);
+    ctx.stroke();
+  } else if (type === 'laser') {
+    // Visor
+    ctx.fillStyle = '#00ffff';
+    ctx.fillRect(x - actualSize * 0.25, y - actualSize * 0.65 + bounce, actualSize * 0.5, actualSize * 0.15);
+  }
 
   // Olhos brilhantes para inimigos
   if (!isPlayer) {
@@ -663,7 +699,7 @@ function drawArmy(ctx: CanvasRenderingContext2D, army: Army, time: number): void
       ctx.save();
       ctx.shadowColor = '#FFD700';
       ctx.shadowBlur = 15;
-      drawSoldier3D(ctx, soldier.x, soldier.y, soldier.size, '#FFD700', soldier.animOffset, time);
+      drawSoldier3D(ctx, soldier.x, soldier.y, soldier.size, '#FFD700', soldier.animOffset, time, soldier.type);
       ctx.restore();
 
       // Estrela acima do super guerreiro
@@ -672,7 +708,7 @@ function drawArmy(ctx: CanvasRenderingContext2D, army: Army, time: number): void
       ctx.textAlign = 'center';
       ctx.fillText('⭐', soldier.x, soldier.y - soldier.size - 5);
     } else {
-      drawSoldier3D(ctx, soldier.x, soldier.y, soldier.size, soldier.color, soldier.animOffset, time);
+      drawSoldier3D(ctx, soldier.x, soldier.y, soldier.size, soldier.color, soldier.animOffset, time, soldier.type);
     }
   }
 
@@ -735,7 +771,7 @@ function drawEnemyHorde(ctx: CanvasRenderingContext2D, horde: EnemyHorde, time: 
   ctx.globalAlpha = hordeAlpha;
 
   for (const soldier of sortedSoldiers) {
-    drawSoldier3D(ctx, soldier.x, soldier.y, soldier.size, soldier.color, soldier.animOffset, time);
+    drawSoldier3D(ctx, soldier.x, soldier.y, soldier.size, soldier.color, soldier.animOffset, time, soldier.type);
   }
 
   // Contador de inimigos (usa contagem REAL, não a renderizada)

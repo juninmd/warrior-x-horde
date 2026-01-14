@@ -63,6 +63,7 @@ export interface Soldier {
   maxHp: number;
   isSuper?: boolean; // Super guerreiro
   personalFireRate?: number; // Fire rate individual (para super guerreiros)
+  type: 'normal' | 'bazooka' | 'rambo' | 'laser';
 }
 
 export interface Army {

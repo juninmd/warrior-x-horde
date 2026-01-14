@@ -7,7 +7,7 @@ let gateIdCounter = 0;
 let miniBossIdCounter = 0;
 let mysteryBoxIdCounter = 0;
 
-export function createSoldier(x: number, y: number, color: string, hp: number = 1): Soldier {
+export function createSoldier(x: number, y: number, color: string, hp: number = 1, type: Soldier['type'] = 'normal'): Soldier {
   return {
     id: soldierIdCounter++,
     x,
@@ -21,6 +21,7 @@ export function createSoldier(x: number, y: number, color: string, hp: number = 
     hp,
     maxHp: hp,
     isSuper: false,
+    type,
   };
 }
 
@@ -40,6 +41,48 @@ export function createSuperSoldier(x: number, y: number): Soldier {
     maxHp: 5,
     isSuper: true,
     personalFireRate: 100, // Atira 2x mais rápido
+    type: 'normal', // Considerado normal, mas com flag isSuper
+  };
+}
+
+// Criar soldados especiais
+export function createSpecialSoldier(x: number, y: number, type: Soldier['type']): Soldier {
+  let color = '#4A90D9';
+  let size = 18;
+  let hp = 2;
+
+  switch (type) {
+    case 'bazooka':
+      color = '#27ae60'; // Verde escuro
+      size = 19;
+      hp = 3;
+      break;
+    case 'rambo':
+      color = '#e74c3c'; // Vermelho
+      size = 18;
+      hp = 4;
+      break;
+    case 'laser':
+      color = '#00ffff'; // Ciano
+      size = 18;
+      hp = 2;
+      break;
+  }
+
+  return {
+    id: soldierIdCounter++,
+    x,
+    y,
+    targetX: x,
+    targetY: y,
+    color,
+    size,
+    isAlive: true,
+    animOffset: Math.random() * Math.PI * 2,
+    hp,
+    maxHp: hp,
+    isSuper: false,
+    type,
   };
 }
 
@@ -92,6 +135,27 @@ export function addSoldiersToArmy(army: Army, count: number): void {
       army.centerX + Math.cos(angle) * radius,
       army.centerY + Math.sin(angle) * radius * 0.6, // 0.6 para efeito 3D
       army.color
+    ));
+  }
+}
+
+export function addSpecialSoldiersToArmy(army: Army, type: Soldier['type'], count: number): void {
+  const baseCount = army.soldiers.length;
+  const maxToAdd = Math.max(0, MAX_HEROES - baseCount);
+  const actualCount = Math.min(count, maxToAdd);
+
+  for (let i = 0; i < actualCount; i++) {
+    const index = baseCount + i;
+    const ring = Math.floor(Math.sqrt(index / 2));
+    const soldiersInRing = Math.max(6, ring * 6);
+    const positionInRing = index - (ring > 0 ? Math.floor((ring * (ring - 1) / 2) * 6) : 0);
+    const angle = (positionInRing / soldiersInRing) * Math.PI * 2 + ring * 0.5;
+    const radius = 10 + ring * 4;
+
+    army.soldiers.push(createSpecialSoldier(
+      army.centerX + Math.cos(angle) * radius,
+      army.centerY + Math.sin(angle) * radius * 0.6,
+      type
     ));
   }
 }
@@ -240,26 +304,26 @@ export function createGate(canvasWidth: number, y: number, side: 'left' | 'right
 
     // Fator de escala baseado no tamanho do exército - mais conservador
     const armySizeFactor = armySize < 20
-      ? 1.8  // Exército muito pequeno
+      ? 1.5  // Reduzido de 1.8
       : armySize < 50
-        ? 1.4  // Exército pequeno
+        ? 1.2  // Reduzido de 1.4
         : armySize < 150
-          ? 1.0  // Exército médio
+          ? 0.9  // Reduzido de 1.0
           : armySize < 400
-            ? 0.7  // Exército grande
-            : 0.4; // Exército enorme - reduzir muito
+            ? 0.6  // Reduzido de 0.7
+            : 0.3; // Reduzido de 0.4
 
     // Fator de level - começa baixo no L1, cresce com levels
-    // Level 1: 0.8x, Level 5: 1.2x, Level 10: 1.7x
-    const levelFactor = 0.8 + (level - 1) * 0.1;
+    // Level 1: 0.7x, Level 5: 1.0x, Level 10: 1.4x (Reduzido)
+    const levelFactor = 0.7 + (level - 1) * 0.08;
 
     // Combinar os três fatores - máximo mais baixo
-    const scaleFactor = Math.min(3.0, emergencyFactor * armySizeFactor * levelFactor); // Máximo 3x
+    const scaleFactor = Math.min(2.0, emergencyFactor * armySizeFactor * levelFactor); // Máximo 2x (era 3x)
 
-    // Valores base mais baixos, crescem com level
-    // Level 1: base 3-8, Level 5: base 7-17, Level 10: base 13-30
-    const baseAdd = Math.floor((3 + level * 1) * scaleFactor);
-    const maxAdd = Math.floor((baseAdd + 5 + level * 2) * scaleFactor);
+    // Valores base REDUZIDOS devido à maior frequência de gates
+    // Level 1: base 2-4, Level 5: base 4-8
+    const baseAdd = Math.max(1, Math.floor((2 + level * 0.5) * scaleFactor));
+    const maxAdd = Math.max(2, Math.floor((baseAdd + 3 + level * 1) * scaleFactor));
 
     if (roll < 0.50) {
       // 50% - Adicionar soldados (escala com emergência + level)
@@ -269,28 +333,28 @@ export function createGate(canvasWidth: number, y: number, side: 'left' | 'right
     } else if (roll < 0.65) {
       // 15% - Multiplicar soldados - mais conservador
       type = 'multiply';
-      // Level 1: x1.15-x1.3, Level 10: x1.4-x2.0
-      const baseMultiplier = 1.1 + level * 0.03;
-      value = Math.min(2.5, baseMultiplier * (scaleFactor > 1 ? 1 + (scaleFactor - 1) * 0.25 : 1));
+      // Level 1: x1.05-x1.15, Level 10: x1.2-x1.5
+      const baseMultiplier = 1.05 + level * 0.02;
+      value = Math.min(2.0, baseMultiplier * (scaleFactor > 1 ? 1 + (scaleFactor - 1) * 0.2 : 1)); // Max 2.0
       color = '#3498DB';
     } else if (roll < 0.73) {
       // 8% - Buff de firerate
       type = 'firerate';
-      // Level 1: 0.92, Level 10: 0.85
-      value = Math.max(0.80, 0.93 - level * 0.008);
+      // Level 1: 0.95, Level 10: 0.90 (menos agressivo)
+      value = Math.max(0.88, 0.95 - level * 0.005);
       color = '#F39C12';
     } else if (roll < 0.80) {
       // 7% - Buff de dano - mais conservador
       type = 'damage';
-      // Level 1: +1, Level 10: +3, em emergência até +6
-      value = Math.max(1, Math.floor((1 + Math.floor(level / 4)) * Math.min(2, scaleFactor)));
+      // Level 1: +1.1x, Level 10: +1.5x (mudado para multiplicador pequeno)
+      value = 1.1 + (level * 0.02); // 1.1x a 1.3x de dano
       color = '#9900ffff';
     } else if (roll < 0.94) {
-      // 14% - Super Guerreiro - mais conservador no L1
+      // 14% - Super Guerreiro - mais conservador
       type = 'superwarrior';
-      // Level 1: 1-2, Level 5: 2-4, Level 10: 3-8
-      const baseSuperWarriors = Math.max(1, Math.floor((1 + Math.floor(level / 3)) * scaleFactor));
-      const maxSuperWarriors = Math.max(baseSuperWarriors + 1, Math.floor((baseSuperWarriors + 2 + Math.floor(level / 2)) * scaleFactor));
+      // Level 1: 1, Level 5: 1-2, Level 10: 2-4
+      const baseSuperWarriors = Math.max(1, Math.floor((0.5 + Math.floor(level / 4)) * scaleFactor));
+      const maxSuperWarriors = Math.max(baseSuperWarriors, Math.floor((baseSuperWarriors + 1 + Math.floor(level / 3)) * scaleFactor));
       value = Math.floor(Math.random() * (maxSuperWarriors - baseSuperWarriors + 1)) + baseSuperWarriors;
       color = '#FFD700'; // Dourado
     } else if (roll < 0.97) {
@@ -340,7 +404,10 @@ export function createGatePair(canvasWidth: number, y: number, level: number = 1
     // Gate Incorreto
     const wrongGate = createGate(canvasWidth, y, isLeftCorrect ? 'right' : 'left', level, currentHeroCount, currentEnemyCount);
     wrongGate.type = 'subtract';
-    wrongGate.value = Math.floor(result * 0.5) + 1; // Perde metade do que ganharia, ou o resultado
+    // Penalidade é a "quantidade que errou" (diferença absoluta entre o resultado correto e o exibido)
+    // Se o resultado exibido é 7 e o correto é 9, perde 2. Se exibido é 100, perde 91.
+    // Para garantir punição justa, garantimos que a diferença seja pelo menos 1
+    wrongGate.value = Math.max(1, Math.abs(result - wrongResult));
     wrongGate.color = '#E74C3C'; // Vermelho
     wrongGate.customText = `${a} × ${b} = ${wrongResult}`;
 

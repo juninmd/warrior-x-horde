@@ -96,10 +96,28 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
   if (aliveSoldiers.length === 0) return;
 
   // Mais soldados atiram baseado no tamanho do exército
-  const shootersCount = Math.min(Math.ceil(aliveSoldiers.length / 5), 20); // Até 20 atiradores
+  // Aumentado para 30 para permitir que classes especiais tenham mais chance de atirar
+  const shootersCount = Math.min(Math.ceil(aliveSoldiers.length / 5), 30);
 
-  // Selecionar atiradores da frente do exército (menores Y)
-  const sortedSoldiers = [...aliveSoldiers].sort((a, b) => a.y - b.y);
+  // Priorizar soldados especiais e super soldados
+  // Ordenação: Special/Super primeiro, depois por posição Y (frente)
+  const sortedSoldiers = [...aliveSoldiers].sort((a, b) => {
+    // Definir prioridade: Laser > Bazooka > Rambo > Super > Normal
+    const getPriority = (s: Soldier) => {
+      if (s.type === 'laser') return 5;
+      if (s.type === 'bazooka') return 4;
+      if (s.type === 'rambo') return 3;
+      if (s.isSuper) return 2;
+      return 1;
+    };
+
+    const prioA = getPriority(a);
+    const prioB = getPriority(b);
+
+    if (prioA !== prioB) return prioB - prioA; // Maior prioridade primeiro
+    return a.y - b.y; // Se igual, quem está mais na frente
+  });
+
   const shooters = sortedSoldiers.slice(0, shootersCount);
 
   for (const shooter of shooters) {
@@ -107,19 +125,46 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
     const target = findNearestTarget(shooter, entities.enemyHordes, entities.boss, entities.miniBosses);
     if (!target) continue;
 
-    // TODOS os tiros saem do centro do exército (como o Super Cannon)
-    // Super guerreiros têm precisão perfeita, normais têm dispersão mínima
+    // TODOS os tiros saem do centro do exército
     const bulletX = army.centerX;
-    const dispersion = shooter.isSuper ? 0 : (Math.random() - 0.5) * 3; // 0 dispersão para super, mínima para normal
+    const dispersion = (shooter.isSuper || shooter.type !== 'normal') ? 0 : (Math.random() - 0.5) * 3;
 
-    entities.bullets.push(createBullet(
+    // Customizar tiro baseada na classe
+    let damage = army.damage;
+    let speed = 0; // Se 0, usa padrão do createBullet (-12)
+
+    if (shooter.isSuper) damage *= 2;
+
+    // Bônus de classe
+    switch (shooter.type) {
+      case 'bazooka':
+        damage *= 5; // Dano massivo
+        // Bazooka poderia ser mais lenta, mas createBullet controla speed.
+        // Vamos deixar speed padrão mas muito dano.
+        break;
+      case 'rambo':
+        damage *= 1.5; // Dano moderado
+        // Rambo atira rápido (já garantido por estar na lista de shooters prioritários)
+        break;
+      case 'laser':
+        damage *= 3;
+        speed = -25; // Tiro ultra rápido
+        break;
+    }
+
+    const bullet = createBullet(
       bulletX,
-      army.centerY - 20, // Sai do centro do exército
-      target.x + dispersion, // Tiros mais centralizados
+      army.centerY - 20,
+      target.x + dispersion,
       target.y,
-      shooter.isSuper ? army.damage * 2 : army.damage, // Super causa 2x dano
+      damage,
       false
-    ));
+    );
+
+    // Sobrescrever speed se definido
+    if (speed !== 0) bullet.speed = speed;
+
+    entities.bullets.push(bullet);
   }
 
   army.lastShotTime = now;

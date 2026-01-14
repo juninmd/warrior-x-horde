@@ -15,9 +15,9 @@ export function spawnMysteryBoxes(entities: Entities, canvasWidth: number, _game
 export function spawnGates(entities: Entities, canvasWidth: number, gameState: GameState): void {
   // Spawnar gates - espaçamento maior para dar tempo de decisão
   const spawnY = -100;
-  const baseSpacing = 1200; // Mais espaçados
-  const levelReduction = Math.min(400, (gameState.currentLevel - 1) * 40);
-  const gateSpacing = Math.max(700, baseSpacing - levelReduction); // Mínimo 700
+  const baseSpacing = 700; // Mais frequentes (reduzido de 1200)
+  const levelReduction = Math.min(200, (gameState.currentLevel - 1) * 20);
+  const gateSpacing = Math.max(500, baseSpacing - levelReduction); // Mínimo 500
 
   // Remover gates que já passaram
   entities.gates = entities.gates.filter(gate => gate.y < 1200);
