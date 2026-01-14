@@ -32,18 +32,28 @@ function findNearestTarget(shooter: Soldier, hordes: EnemyHorde[], boss: Boss | 
   let nearestDist = Infinity;
   let nearest: { x: number; y: number } | null = null;
 
+  // OTIMIZAÇÃO: Checar distância da horda primeiro
+  const MAX_TARGET_DIST = 600; // Não atirar se muito longe
+
   // Procurar inimigos nas hordas
   for (const horde of hordes) {
     if (!horde.isActive || horde.soldiers.length === 0) continue;
 
+    // Se horda estiver muito longe, nem checar soldados
+    const hordeDist = Math.abs(horde.y - shooter.y);
+    if (hordeDist > MAX_TARGET_DIST) continue;
+
     // Encontrar o soldado inimigo mais próximo, não apenas o centro da horda
     for (const enemy of horde.soldiers) {
       if (!enemy.isAlive) continue;
-      const dx = enemy.x - shooter.x;
       const dy = enemy.y - shooter.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
       // Só mirar em inimigos que estão na frente (acima)
-      if (dist < nearestDist && enemy.y < shooter.y) {
+      if (dy >= 0) continue;
+
+      const dx = enemy.x - shooter.x;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < nearestDist) {
         nearestDist = dist;
         nearest = { x: enemy.x, y: enemy.y };
       }

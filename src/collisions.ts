@@ -44,9 +44,7 @@ function getGateForArmyCenter(army: Army, gates: Gate[]): Gate | null {
   return null;
 }
 
-function checkGateCollision(army: Army, gate: Gate): boolean {
-  const bounds = getArmyBounds(army);
-
+function checkGateCollision(army: Army, gate: Gate, bounds: { left: number; right: number; top: number; bottom: number }): boolean {
   // Usar o CENTRO do exército para determinar colisão
   const armyCenterX = army.centerX;
 
@@ -122,8 +120,7 @@ function applyGateEffect(army: Army, gate: Gate, gameState: GameState, entities:
   gate.passed = true;
 }
 
-function checkHordeCollision(army: Army, horde: EnemyHorde): boolean {
-  const bounds = getArmyBounds(army);
+function checkHordeCollision(army: Army, horde: EnemyHorde, bounds: { left: number; right: number; top: number; bottom: number }): boolean {
   const hordeTop = horde.y - horde.height / 2;
   const hordeBottom = horde.y + horde.height / 2;
 
@@ -232,10 +229,8 @@ function getComboColor(combo: number): string {
 }
 
 // Verificar colisão com mini-boss
-function checkMiniBossCollision(army: Army, miniBoss: MiniBoss): boolean {
+function checkMiniBossCollision(army: Army, miniBoss: MiniBoss, bounds: { left: number; right: number; top: number; bottom: number }): boolean {
   if (!miniBoss.isActive) return false;
-
-  const bounds = getArmyBounds(army);
 
   return bounds.bottom > miniBoss.y &&
     bounds.top < miniBoss.y + miniBoss.height &&
@@ -292,10 +287,9 @@ function processMiniBossBattle(army: Army, miniBoss: MiniBoss, gameState: GameSt
   gameState.screenShakeDuration = 50;
 }
 
-function checkBossCollision(army: Army, entities: Entities): boolean {
+function checkBossCollision(army: Army, entities: Entities, bounds: { left: number; right: number; top: number; bottom: number }): boolean {
   if (!entities.boss || !entities.boss.isActive) return false;
 
-  const bounds = getArmyBounds(army);
   const boss = entities.boss;
 
   return bounds.bottom > boss.y &&
@@ -304,9 +298,8 @@ function checkBossCollision(army: Army, entities: Entities): boolean {
     bounds.left < boss.x + boss.width;
 }
 
-function checkMysteryBoxCollision(army: Army, box: MysteryBox): boolean {
+function checkMysteryBoxCollision(army: Army, box: MysteryBox, bounds: { left: number; right: number; top: number; bottom: number }): boolean {
   if (box.passed) return false;
-  const bounds = getArmyBounds(army);
 
   return bounds.bottom > box.y &&
     bounds.top < box.y + box.height &&
@@ -393,10 +386,12 @@ function applyMysteryBoxEffect(army: Army, box: MysteryBox, gameState: GameState
 
 export function checkCollisions(entities: Entities, gameState: GameState): void {
   const army = entities.playerArmy;
+  // OTIMIZAÇÃO: Calcular bounds uma vez por frame
+  const bounds = getArmyBounds(army);
 
   // Checar colisão com gates
   for (const gate of entities.gates) {
-    if (checkGateCollision(army, gate)) {
+    if (checkGateCollision(army, gate, bounds)) {
       applyGateEffect(army, gate, gameState, entities);
 
       // Marcar o gate do outro lado como "passed" também (mesmo Y = mesmo par)
@@ -410,7 +405,7 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
 
   // Checar colisão com hordas
   for (const horde of entities.enemyHordes) {
-    if (checkHordeCollision(army, horde)) {
+    if (checkHordeCollision(army, horde, bounds)) {
       gameState.isBattling = true;
       processBattle(army, horde, gameState);
     }
@@ -418,7 +413,7 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
 
   // Checar colisão com mini-bosses (batalha igual às hordas)
   for (const miniBoss of entities.miniBosses) {
-    if (checkMiniBossCollision(army, miniBoss)) {
+    if (checkMiniBossCollision(army, miniBoss, bounds)) {
       gameState.isBattling = true;
       processMiniBossBattle(army, miniBoss, gameState);
     }
@@ -426,7 +421,7 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
 
   // Checar colisão com Mystery Boxes
   for (const box of entities.mysteryBoxes) {
-    if (checkMysteryBoxCollision(army, box)) {
+    if (checkMysteryBoxCollision(army, box, bounds)) {
       applyMysteryBoxEffect(army, box, gameState, entities);
     }
   }
@@ -453,7 +448,7 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
   });
 
   // Checar colisão com boss
-  if (checkBossCollision(army, entities) && entities.boss) {
+  if (checkBossCollision(army, entities, bounds) && entities.boss) {
     gameState.isBattling = true;
 
     // Boss causa dano ao jogador ao contato (esmagamento)
