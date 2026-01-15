@@ -1093,7 +1093,7 @@ function drawEnemyHorde(ctx: CanvasRenderingContext2D, horde: EnemyHorde, time: 
   ctx.save();
   ctx.globalAlpha = hordeAlpha;
 
-  for (const soldier of sortedSoldiers) {
+  for (const soldier of renderList) {
     drawSoldier3D(ctx, soldier.x, soldier.y, soldier.size, soldier.color, soldier.animOffset, time, soldier.type, false);
   }
 
