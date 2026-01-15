@@ -57,30 +57,56 @@ export function setInputScale(scale: number): void {
   currentScale = scale;
 }
 
+// Haptic feedback
+export function vibrate(pattern: number | number[]): void {
+  if (typeof navigator !== 'undefined' && navigator.vibrate) {
+    try {
+      navigator.vibrate(pattern);
+    } catch (e) {
+      // Ignore errors if vibration is not supported or allowed
+    }
+  }
+}
+
 // Converter coordenadas da tela para coordenadas do canvas
 function screenToCanvasX(screenX: number, canvasRect: DOMRect): number {
   return (screenX - canvasRect.left) / currentScale;
+}
+
+function screenToCanvasY(screenY: number, canvasRect: DOMRect): number {
+  return (screenY - canvasRect.top) / currentScale;
 }
 
 export function setupInput(canvas: HTMLCanvasElement): void {
   // Mouse events
   canvas.addEventListener('mousedown', (e) => {
     isDragging = true;
-    mouseX = screenToCanvasX(e.clientX, canvas.getBoundingClientRect());
+    const rect = canvas.getBoundingClientRect();
+    mouseX = screenToCanvasX(e.clientX, rect);
+
+    // Enable joystick for mouse too (great for desktop/testing)
+    const canvasY = screenToCanvasY(e.clientY, rect);
+    virtualJoystick.start(mouseX, canvasY);
   });
 
   canvas.addEventListener('mousemove', (e) => {
     if (isDragging) {
-      mouseX = screenToCanvasX(e.clientX, canvas.getBoundingClientRect());
+      const rect = canvas.getBoundingClientRect();
+      mouseX = screenToCanvasX(e.clientX, rect);
+
+      const canvasY = screenToCanvasY(e.clientY, rect);
+      virtualJoystick.move(mouseX, canvasY);
     }
   });
 
   canvas.addEventListener('mouseup', () => {
     isDragging = false;
+    virtualJoystick.end();
   });
 
   canvas.addEventListener('mouseleave', () => {
     isDragging = false;
+    virtualJoystick.end();
   });
 
   // Touch events
@@ -96,14 +122,16 @@ export function setupInput(canvas: HTMLCanvasElement): void {
 
     if (e.touches.length > 0) {
       const touch = e.touches[0];
-      const canvasX = screenToCanvasX(touch.clientX, canvas.getBoundingClientRect());
+      const rect = canvas.getBoundingClientRect();
+      const canvasX = screenToCanvasX(touch.clientX, rect);
+      const canvasY = screenToCanvasY(touch.clientY, rect);
 
       // Update mouseX directly for absolute positioning (original behavior)
       mouseX = canvasX;
       isDragging = true;
 
-      // Start virtual joystick for relative movement options if we add them later
-      virtualJoystick.start(touch.clientX, touch.clientY);
+      // Start virtual joystick with CANVAS coordinates
+      virtualJoystick.start(canvasX, canvasY);
     }
   }, { passive: false });
 
@@ -114,13 +142,15 @@ export function setupInput(canvas: HTMLCanvasElement): void {
 
     if (e.touches.length > 0) {
       const touch = e.touches[0];
-      const canvasX = screenToCanvasX(touch.clientX, canvas.getBoundingClientRect());
+      const rect = canvas.getBoundingClientRect();
+      const canvasX = screenToCanvasX(touch.clientX, rect);
+      const canvasY = screenToCanvasY(touch.clientY, rect);
 
       // Update mouseX directly
       mouseX = canvasX;
       isDragging = true;
 
-      virtualJoystick.move(touch.clientX, touch.clientY);
+      virtualJoystick.move(canvasX, canvasY);
     }
   }, { passive: false });
 

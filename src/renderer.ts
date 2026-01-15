@@ -1,6 +1,7 @@
 // renderer.ts - Renderização do jogo estilo Crowd Runner
-import { Entities, GameState, FloatingText, Army, EnemyHorde, Gate, Boss, Bullet, Particle, MysteryBox, Soldier } from './types';
+import { Entities, GameState, FloatingText, Army, EnemyHorde, Gate, Boss, Bullet, Particle, MysteryBox, Soldier, MiniBoss } from './types';
 import { ObjectPool } from './pool';
+import { virtualJoystick } from './input';
 
 // --- Sprite Caching System ---
 interface SpriteCache {
@@ -979,24 +980,38 @@ function drawArmy(ctx: CanvasRenderingContext2D, army: Army, time: number): void
   }
   lastArmyX = army.centerX;
 
-  // Ordenar soldados por Y para depth sorting
-  let sortedSoldiers = [...army.soldiers].filter(s => s.isAlive).sort((a, b) => a.y - b.y);
+  // PERFORMANCE OPTIMIZATION:
+  // Instead of sorting ALL soldiers (N log N) then slicing, we sample/slice first then sort.
+  // This is critical for N > 20,000.
 
-  // OTIMIZAÇÃO: Limitar renderização a MAX_RENDERED_SOLDIERS
-  // Priorizar super guerreiros e soldados mais visíveis (mais próximos do centro)
-  if (sortedSoldiers.length > MAX_RENDERED_SOLDIERS) {
-    // Separar super guerreiros (sempre renderizar)
-    const superSoldiers = sortedSoldiers.filter(s => s.isSuper);
-    const normalSoldiers = sortedSoldiers.filter(s => !s.isSuper);
+  const aliveSoldiers = army.soldiers.filter(s => s.isAlive);
+  let renderList: Soldier[] = [];
 
-    // Pegar os mais próximos do centro da tela
-    const remainingSlots = MAX_RENDERED_SOLDIERS - superSoldiers.length;
-    const selectedNormal = normalSoldiers.slice(0, Math.max(0, remainingSlots));
+  if (aliveSoldiers.length > MAX_RENDERED_SOLDIERS) {
+      // 1. Always keep Super Soldiers
+      const superSoldiers = aliveSoldiers.filter(s => s.isSuper);
+      renderList.push(...superSoldiers);
 
-    sortedSoldiers = [...superSoldiers, ...selectedNormal].sort((a, b) => a.y - b.y);
+      // 2. Fill remaining slots with normal soldiers
+      // We pick soldiers distributed across the array to show the "mass"
+      const slotsNeeded = MAX_RENDERED_SOLDIERS - superSoldiers.length;
+
+      if (slotsNeeded > 0) {
+          const normalSoldiers = aliveSoldiers.filter(s => !s.isSuper);
+          const step = Math.max(1, Math.floor(normalSoldiers.length / slotsNeeded));
+
+          for (let i = 0; i < normalSoldiers.length && renderList.length < MAX_RENDERED_SOLDIERS; i += step) {
+              renderList.push(normalSoldiers[i]);
+          }
+      }
+  } else {
+      renderList = aliveSoldiers;
   }
 
-  for (const soldier of sortedSoldiers) {
+  // 3. Sort ONLY the render list
+  renderList.sort((a, b) => a.y - b.y);
+
+  for (const soldier of renderList) {
     // Super guerreiros são desenhados com efeito especial (dourados e maiores)
     if (soldier.isSuper) {
       // Aura dourada
@@ -1052,18 +1067,20 @@ function drawArmy(ctx: CanvasRenderingContext2D, army: Army, time: number): void
 function drawEnemyHorde(ctx: CanvasRenderingContext2D, horde: EnemyHorde, time: number): void {
   if (!spriteCache.initialized) preRenderSprites();
 
-  let sortedSoldiers = [...horde.soldiers].filter(s => s.isAlive).sort((a, b) => a.y - b.y);
+  // PERFORMANCE OPTIMIZATION: Sample before sorting
+  const aliveSoldiers = horde.soldiers.filter(s => s.isAlive);
+  let renderList: Soldier[] = [];
 
-  // OTIMIZAÇÃO: Limitar renderização a MAX_RENDERED_SOLDIERS
-  if (sortedSoldiers.length > MAX_RENDERED_SOLDIERS) {
-    // Pegar uma amostra distribuída uniformemente
-    const step = sortedSoldiers.length / MAX_RENDERED_SOLDIERS;
-    const sampled: typeof sortedSoldiers = [];
-    for (let i = 0; i < MAX_RENDERED_SOLDIERS; i++) {
-      sampled.push(sortedSoldiers[Math.floor(i * step)]);
-    }
-    sortedSoldiers = sampled;
+  if (aliveSoldiers.length > MAX_RENDERED_SOLDIERS) {
+      const step = Math.max(1, Math.floor(aliveSoldiers.length / MAX_RENDERED_SOLDIERS));
+      for (let i = 0; i < aliveSoldiers.length && renderList.length < MAX_RENDERED_SOLDIERS; i += step) {
+          renderList.push(aliveSoldiers[i]);
+      }
+  } else {
+      renderList = aliveSoldiers;
   }
+
+  renderList.sort((a, b) => a.y - b.y);
 
   // FadeIn effect - inimigos aparecem gradualmente quando saem da nave
   const fadeStartY = 100; // Começa a aparecer
@@ -2350,6 +2367,37 @@ export function shareOnWhatsApp(gameState: GameState): void {
   window.open(whatsappUrl, '_blank');
 }
 
+function drawJoystick(ctx: CanvasRenderingContext2D): void {
+  if (!virtualJoystick.active) return;
+
+  const { startX, startY, currentX, currentY, maxRadius } = virtualJoystick;
+
+  // Base
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(startX, startY, maxRadius, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+  ctx.lineWidth = 2;
+  ctx.fill();
+  ctx.stroke();
+
+  // Stick
+  const dx = currentX - startX;
+  const dy = currentY - startY;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+  const angle = Math.atan2(dy, dx);
+
+  const stickX = startX + Math.cos(angle) * Math.min(distance, maxRadius);
+  const stickY = startY + Math.sin(angle) * Math.min(distance, maxRadius);
+
+  ctx.beginPath();
+  ctx.arc(stickX, stickY, 20, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+  ctx.fill();
+  ctx.restore();
+}
+
 // Desenhar Super Cannon beam
 function drawSuperCannonBeam(ctx: CanvasRenderingContext2D, centerX: number, centerY: number, gameState: GameState): void {
   if (!gameState.superCannonActive) return;
@@ -2481,6 +2529,9 @@ export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameSt
   if (gameState.screenShakeActive || gameState.bossActive) {
     ctx.restore();
   }
+
+  // Draw Joystick (before UI, after game world)
+  drawJoystick(ctx);
 
   // Boss atmosphere overlay - escurecer a tela
   if (gameState.bossAtmosphereIntensity > 0) {
