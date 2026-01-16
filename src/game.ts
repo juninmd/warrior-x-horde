@@ -9,6 +9,7 @@ import { updateMovement } from './movement';
 import { setupInput, getMouseX, initializeMousePosition, setGameStateRef, setInputScale } from './input';
 import { updateShooting, updateBullets, updateSuperCannon, activateSuperCannon } from './shooting';
 import { initAudio, playMusic, playSound, stopAllMusic, audioManager } from './audio';
+import { addSpecialSoldiersToArmy, addSoldiersToArmy } from './entities';
 
 // Canvas setup
 export const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
@@ -558,15 +559,107 @@ function updateSuperButtonInline(): void {
   }
 }
 
+// === SHOP SYSTEM ===
+const SHOP_ITEMS = [
+  { id: 'soldier_pack', name: 'Soldier Pack', icon: '🪖', cost: 100, type: 'normal', amount: 10, desc: '+10 Soldiers' },
+  { id: 'bazooka', name: 'Bazooka Unit', icon: '🚀', cost: 250, type: 'bazooka', amount: 1, desc: 'Heavy AOE Damage' },
+  { id: 'rambo', name: 'Rambo Unit', icon: '🔫', cost: 400, type: 'rambo', amount: 1, desc: 'Rapid Fire Machine Gun' },
+  { id: 'laser', name: 'Laser Unit', icon: '⚡', cost: 600, type: 'laser', amount: 1, desc: 'High Pierce Damage' },
+  { id: 'nuke', name: 'Tactical Nuke', icon: '☢️', cost: 1000, type: 'nuke', amount: 1, desc: 'Clear All Enemies' }
+];
+
+let isShopOpen = false;
+
+function toggleShop(): void {
+  isShopOpen = !isShopOpen;
+  const shopContainer = document.getElementById('shopContainer');
+  if (shopContainer) {
+    shopContainer.style.display = isShopOpen ? 'flex' : 'none';
+    if (isShopOpen) {
+      updateShopUI();
+      // Pause game when shop opens
+      if (!gameState.isPaused) togglePause();
+    } else {
+      // Resume game when shop closes
+      if (gameState.isPaused) togglePause();
+    }
+  }
+}
+
+function updateShopUI(): void {
+  const shopCoinsDisplay = document.getElementById('shopCoinsDisplay');
+  if (shopCoinsDisplay) shopCoinsDisplay.textContent = gameState.coins.toString();
+
+  const shopGrid = document.getElementById('shopGrid');
+  if (!shopGrid) return;
+
+  shopGrid.innerHTML = '';
+
+  SHOP_ITEMS.forEach(item => {
+    const el = document.createElement('div');
+    el.className = 'shop-item';
+
+    // Check if player can afford
+    const canAfford = gameState.coins >= item.cost;
+    if (!canAfford) el.classList.add('disabled');
+
+    el.onclick = () => buyItem(item);
+
+    el.innerHTML = `
+      <div class="shop-item-icon">${item.icon}</div>
+      <div class="shop-item-name">${item.name}</div>
+      <div class="shop-item-cost">🪙 ${item.cost}</div>
+      <div style="font-size: 10px; color: #aaa;">${item.desc}</div>
+    `;
+    shopGrid.appendChild(el);
+  });
+}
+
+function buyItem(item: any): void {
+  if (gameState.coins < item.cost) {
+    playSound(audioManager.nerf); // Error sound
+    return;
+  }
+
+  // Deduct coins
+  gameState.coins -= item.cost;
+  playSound(audioManager.powerUp); // Success sound
+
+  // Apply effect
+  if (item.id === 'nuke') {
+    // Kill all active enemies
+    entities.enemyHordes.forEach(h => {
+      if (h.isActive && h.y > -100 && h.y < canvas.height + 100) {
+        h.isActive = false;
+      }
+    });
+    entities.miniBosses.forEach(mb => {
+      if (mb.isActive) mb.hp = 0; // Will be cleaned up by collision system logic or next frame
+    });
+    if (entities.boss) {
+      entities.boss.hp -= 500; // Big damage to boss
+    }
+  } else if (item.id === 'soldier_pack') {
+    addSoldiersToArmy(entities.playerArmy, item.amount);
+  } else {
+    // Special units
+    addSpecialSoldiersToArmy(entities.playerArmy, item.type, item.amount);
+  }
+
+  updateShopUI();
+}
+
 // Expor funções globalmente para o HTML acessar
 (window as unknown as {
   debugSetLevel: typeof debugSetLevel;
   togglePause: typeof togglePause;
   triggerSuperCannon: typeof triggerSuperCannon;
+  toggleShop: typeof toggleShop;
 }).debugSetLevel = debugSetLevel;
 
 (window as unknown as { togglePause: typeof togglePause }).togglePause = togglePause;
 (window as unknown as { triggerSuperCannon: typeof triggerSuperCannon }).triggerSuperCannon = triggerSuperCannon;
+(window as unknown as { toggleShop: typeof toggleShop }).toggleShop = toggleShop;
 
 // Adicionar atalho de teclado para pause (P ou Escape)
 document.addEventListener('keydown', (e) => {

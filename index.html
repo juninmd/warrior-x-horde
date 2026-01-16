@@ -205,6 +205,109 @@
       transform: scale(1.05);
     }
 
+    /* Shop UI */
+    #shopContainer {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(20, 20, 30, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 15px;
+      padding: 20px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+      z-index: 100;
+      flex-direction: column;
+      align-items: center;
+      backdrop-filter: blur(10px);
+    }
+
+    .shop-header {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding-bottom: 10px;
+    }
+
+    .shop-title {
+      color: #FFD700;
+      font-size: 24px;
+      font-weight: bold;
+      text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+    }
+
+    .shop-coins {
+      color: #fff;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .shop-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      width: 100%;
+    }
+
+    .shop-item {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      transition: transform 0.2s, background 0.2s;
+      cursor: pointer;
+    }
+
+    .shop-item:hover {
+      transform: translateY(-2px);
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .shop-item.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .shop-item-icon {
+      font-size: 24px;
+      margin-bottom: 5px;
+    }
+
+    .shop-item-name {
+      color: #fff;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .shop-item-cost {
+      color: #FFD700;
+      font-size: 12px;
+    }
+
+    .shop-close-btn {
+      margin-top: 20px;
+      background: linear-gradient(180deg, #e74c3c 0%, #c0392b 100%);
+      color: white;
+      border: none;
+      padding: 8px 30px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
     /* Controles em linha */
     .game-controls {
       display: flex;
@@ -361,6 +464,7 @@
 
     <!-- Controles do jogo em uma linha -->
     <div class="game-controls">
+      <button class="story-btn" onclick="window.toggleShop && window.toggleShop()">🛒 Shop</button>
       <button class="story-btn" onclick="document.getElementById('storyModal').classList.add('active')">📖 História</button>
       <select id="levelSelector">
         <option value="1">Lv 1</option>
@@ -379,6 +483,21 @@
       <button class="pause-btn" id="pauseBtn" onclick="window.togglePause && window.togglePause()">⏸️ Pause</button>
       <button class="super-btn" id="superCannonBtnInline" onclick="window.triggerSuperCannon && window.triggerSuperCannon()">⚡ SUPER</button>
     </div>
+  </div>
+
+  <!-- Shop Container -->
+  <div id="shopContainer">
+    <div class="shop-header">
+      <div class="shop-title">MERCADO NEGRO</div>
+      <div class="shop-coins">
+        <span>🪙</span>
+        <span id="shopCoinsDisplay">0</span>
+      </div>
+    </div>
+    <div class="shop-grid" id="shopGrid">
+      <!-- Items will be injected by JS -->
+    </div>
+    <button class="shop-close-btn" onclick="window.toggleShop && window.toggleShop()">FECHAR</button>
   </div>
 
   <!-- Story Modal -->
