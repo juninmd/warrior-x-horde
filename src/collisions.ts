@@ -142,6 +142,15 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
     if (enemyCount <= 0) {
       horde.isActive = false;
 
+      // Coins reward
+      if (horde.isMini) { // Assuming mini-boss hordes (if flag exists) or just generic reward?
+         // Actually mini-bosses are separate entities. Regular hordes don't give coins in memory description?
+         // "The currency system awards coins directly upon defeating Bosses (+500) and Mini-Bosses (+50)... replacing previous road-spawning"
+         // It doesn't say normal hordes give coins. But let's add small amount for hordes to make game playable/fun if needed?
+         // The prompt said "funcionalidade de moedas... sumiu".
+         // If I only add for Bosses, it matches memory.
+      }
+
       // Aumentar combo quando derrotar uma horda
       gameState.combo++;
       gameState.comboTimer = 4000; // 4 segundos para manter o combo (era 2s)
@@ -281,9 +290,10 @@ function processMiniBossBattle(army: Army, miniBoss: MiniBoss, gameState: GameSt
   if (miniBoss.hp <= 0) {
     miniBoss.isActive = false;
     gameState.score += 300;
+    gameState.coins += 50; // Coin reward
     addExplosion(miniBoss.x + miniBoss.width / 2, miniBoss.y + miniBoss.height / 2, '#FF4500');
     addParticle(miniBoss.x + miniBoss.width / 2, miniBoss.y + miniBoss.height / 2, 'star', '#FF4500', 10);
-    addFloatingText('MINI-BOSS DEFEATED!', miniBoss.x + miniBoss.width / 2, miniBoss.y, '#FF4500');
+    addFloatingText('MINI-BOSS DEFEATED! +50 Coins', miniBoss.x + miniBoss.width / 2, miniBoss.y, '#FF4500');
     vibrate(200);
   }
 
@@ -482,7 +492,8 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
       entities.boss.isActive = false;
       gameState.isVictory = true;
       gameState.score += 1000;
-      addFloatingText('BOSS DEFEATED!', entities.boss.x + 50, entities.boss.y, '#FFD700');
+      gameState.coins += 500; // Coin reward
+      addFloatingText('BOSS DEFEATED! +500 Coins', entities.boss.x + 50, entities.boss.y, '#FFD700');
       vibrate([100, 50, 100, 50, 200]); // Victory vibration pattern
     }
   }
