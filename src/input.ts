@@ -62,6 +62,16 @@ function screenToCanvasX(screenX: number, canvasRect: DOMRect): number {
   return (screenX - canvasRect.left) / currentScale;
 }
 
+export function vibrate(ms: number): void {
+  if (typeof navigator !== 'undefined' && navigator.vibrate) {
+    try {
+      navigator.vibrate(ms);
+    } catch (e) {
+      // Ignore vibration errors (user interaction requirements, etc)
+    }
+  }
+}
+
 export function setupInput(canvas: HTMLCanvasElement): void {
   // Mouse events
   canvas.addEventListener('mousedown', (e) => {
