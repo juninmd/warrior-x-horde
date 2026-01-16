@@ -154,6 +154,7 @@ function renderSoldierToCache(type: Soldier['type'], color: string, size: number
     ctx.lineTo(x - actualSize * 0.9, y - actualSize * 0.5);
     ctx.lineTo(x - actualSize * 0.4, y - actualSize * 0.4);
     ctx.fill();
+    // Espinho direito
     ctx.beginPath();
     ctx.moveTo(x + actualSize * 0.6, y - actualSize * 0.2);
     ctx.lineTo(x + actualSize * 0.9, y - actualSize * 0.5);
@@ -197,7 +198,7 @@ function renderSoldierToCache(type: Soldier['type'], color: string, size: number
 
   // Olhos brilhantes para inimigos
   if (!isPlayer) {
-    ctx.fillStyle = '#FFD700';
+    ctx.fillStyle = '#FFD700'; // Olhos amarelos
     ctx.beginPath();
     ctx.arc(x - actualSize * 0.15, y - actualSize * 0.5, actualSize * 0.1, 0, Math.PI * 2);
     ctx.arc(x + actualSize * 0.15, y - actualSize * 0.5, actualSize * 0.1, 0, Math.PI * 2);
@@ -2386,10 +2387,19 @@ function drawJoystick(ctx: CanvasRenderingContext2D): void {
   const dx = currentX - startX;
   const dy = currentY - startY;
   const distance = Math.sqrt(dx * dx + dy * dy);
-  const angle = Math.atan2(dy, dx);
+  // const angle = Math.atan2(dy, dx);
 
-  const stickX = startX + Math.cos(angle) * Math.min(distance, maxRadius);
-  const stickY = startY + Math.sin(angle) * Math.min(distance, maxRadius);
+  let stickX = currentX;
+  let stickY = currentY;
+
+  if (distance > maxRadius) {
+    const angle = Math.atan2(dy, dx);
+    stickX = startX + Math.cos(angle) * maxRadius;
+    stickY = startY + Math.sin(angle) * maxRadius;
+  }
+
+  // const stickX = startX + Math.cos(angle) * Math.min(distance, maxRadius);
+  // const stickY = startY + Math.sin(angle) * Math.min(distance, maxRadius);
 
   ctx.beginPath();
   ctx.arc(stickX, stickY, 20, 0, Math.PI * 2);
@@ -2530,9 +2540,6 @@ export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameSt
     ctx.restore();
   }
 
-  // Draw Joystick (before UI, after game world)
-  drawJoystick(ctx);
-
   // Boss atmosphere overlay - escurecer a tela
   if (gameState.bossAtmosphereIntensity > 0) {
     drawBossAtmosphere(ctx, width, height, gameState.bossAtmosphereIntensity, time);
@@ -2540,6 +2547,9 @@ export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameSt
 
   // UI
   drawUI(ctx, gameState, entities.playerArmy.soldiers.filter(s => s.isAlive).length, entities.playerArmy.fireRate);
+
+  // Joystick Virtual (Mobile)
+  drawJoystick(ctx);
 
   // Floating texts
   updateFloatingTexts();

@@ -143,12 +143,8 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
       horde.isActive = false;
 
       // Coins reward
-      if (horde.isMini) { // Assuming mini-boss hordes (if flag exists) or just generic reward?
-         // Actually mini-bosses are separate entities. Regular hordes don't give coins in memory description?
-         // "The currency system awards coins directly upon defeating Bosses (+500) and Mini-Bosses (+50)... replacing previous road-spawning"
-         // It doesn't say normal hordes give coins. But let's add small amount for hordes to make game playable/fun if needed?
-         // The prompt said "funcionalidade de moedas... sumiu".
-         // If I only add for Bosses, it matches memory.
+      if (horde.isMini) {
+         // Logic for mini hordes if needed
       }
 
       // Aumentar combo quando derrotar uma horda
@@ -260,9 +256,11 @@ function processMiniBossBattle(army: Army, miniBoss: MiniBoss, gameState: GameSt
     if (miniBoss.hp <= 0) {
       miniBoss.isActive = false;
       gameState.score += 300;
+      gameState.coins += 50; // Coin reward
       addExplosion(miniBoss.x + miniBoss.width / 2, miniBoss.y + miniBoss.height / 2, '#FF4500');
-      addParticle(miniBoss.x + miniBoss.width / 2, miniBoss.y + miniBoss.height / 2, 'star', '#FF4500', 8);
-      addFloatingText('MINI-BOSS DEFEATED!', miniBoss.x + miniBoss.width / 2, miniBoss.y, '#FF4500');
+      addParticle(miniBoss.x + miniBoss.width / 2, miniBoss.y + miniBoss.height / 2, 'star', '#FF4500', 10);
+      addFloatingText('MINI-BOSS DEFEATED! +50 Coins', miniBoss.x + miniBoss.width / 2, miniBoss.y, '#FF4500');
+      vibrate(200);
     }
     return;
   }
