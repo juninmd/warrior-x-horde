@@ -2351,6 +2351,41 @@ export function shareOnWhatsApp(gameState: GameState): void {
   window.open(whatsappUrl, '_blank');
 }
 
+function drawJoystick(ctx: CanvasRenderingContext2D): void {
+  if (!virtualJoystick.active) return;
+
+  const { startX, startY, currentX, currentY, maxRadius } = virtualJoystick;
+
+  // Base
+  ctx.beginPath();
+  ctx.arc(startX, startY, maxRadius, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+  ctx.lineWidth = 2;
+  ctx.fill();
+  ctx.stroke();
+
+  // Stick
+  // Calculate clamped stick position
+  const dx = currentX - startX;
+  const dy = currentY - startY;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+
+  let stickX = currentX;
+  let stickY = currentY;
+
+  if (distance > maxRadius) {
+    const angle = Math.atan2(dy, dx);
+    stickX = startX + Math.cos(angle) * maxRadius;
+    stickY = startY + Math.sin(angle) * maxRadius;
+  }
+
+  ctx.beginPath();
+  ctx.arc(stickX, stickY, 20, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+  ctx.fill();
+}
+
 // Desenhar Super Cannon beam
 function drawSuperCannonBeam(ctx: CanvasRenderingContext2D, centerX: number, centerY: number, gameState: GameState): void {
   if (!gameState.superCannonActive) return;
