@@ -1,6 +1,7 @@
 // renderer.ts - Renderização do jogo estilo Crowd Runner
 import { Entities, GameState, FloatingText, Army, EnemyHorde, Gate, Boss, Bullet, Particle, MysteryBox, Soldier } from './types';
 import { ObjectPool } from './pool';
+import { virtualJoystick } from './input';
 
 // --- Sprite Caching System ---
 interface SpriteCache {
@@ -2489,6 +2490,9 @@ export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameSt
 
   // UI
   drawUI(ctx, gameState, entities.playerArmy.soldiers.filter(s => s.isAlive).length, entities.playerArmy.fireRate);
+
+  // Joystick Virtual (Mobile)
+  drawJoystick(ctx);
 
   // Floating texts
   updateFloatingTexts();

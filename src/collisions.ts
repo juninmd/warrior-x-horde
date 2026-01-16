@@ -3,6 +3,7 @@ import { Entities, GameState, Army, EnemyHorde, Gate, MiniBoss, MysteryBox } fro
 import { addSoldiersToArmy, multiplySoldiersInArmy, removeSoldiersFromArmy, addSuperSoldiersToArmy, addSpecialSoldiersToArmy } from './entities';
 import { addFloatingText, addExplosion, addParticle } from './renderer';
 import { playSound, audioManager } from './audio';
+import { vibrate } from './input';
 
 function getArmyBounds(army: Army): { left: number; right: number; top: number; bottom: number } {
   if (army.soldiers.length === 0) {
@@ -112,8 +113,10 @@ function applyGateEffect(army: Army, gate: Gate, gameState: GameState, entities:
   // Tocar som apropriado
   if (isPositive) {
     playSound(audioManager.powerUp);
+    vibrate(20);
   } else {
     playSound(audioManager.nerf);
+    vibrate(40);
   }
 
   gameState.score += Math.max(0, afterCount - beforeCount) * 10;
@@ -156,6 +159,7 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
       // Efeito visual épico de vitória
       addExplosion(horde.x, horde.y, '#FFD700');
       addParticle(horde.x, horde.y, 'star', '#FFD700', 3);
+      vibrate(30);
 
       // Mostrar combo a partir de 2x
       if (gameState.combo >= 2) {
@@ -212,6 +216,7 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
     addExplosion(horde.x, horde.y, '#FFD700');
     addParticle(horde.x, horde.y, 'star', '#FFD700', 8);
     addFloatingText('VICTORY!', horde.x, horde.y, '#FFD700');
+    vibrate(30);
   }
 
   // Screen shake
@@ -279,6 +284,7 @@ function processMiniBossBattle(army: Army, miniBoss: MiniBoss, gameState: GameSt
     addExplosion(miniBoss.x + miniBoss.width / 2, miniBoss.y + miniBoss.height / 2, '#FF4500');
     addParticle(miniBoss.x + miniBoss.width / 2, miniBoss.y + miniBoss.height / 2, 'star', '#FF4500', 10);
     addFloatingText('MINI-BOSS DEFEATED!', miniBoss.x + miniBoss.width / 2, miniBoss.y, '#FF4500');
+    vibrate(50);
   }
 
   // Screen shake menor para mini-boss
@@ -477,12 +483,14 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
       gameState.isVictory = true;
       gameState.score += 1000;
       addFloatingText('BOSS DEFEATED!', entities.boss.x + 50, entities.boss.y, '#FFD700');
+      vibrate(100);
     }
   }
 
   // Checar game over
   if (army.soldiers.filter(s => s.isAlive).length <= 0) {
     gameState.isGameOver = true;
+    vibrate(200);
     if (gameState.score > gameState.highScore) {
       gameState.highScore = gameState.score;
       localStorage.setItem('crowdHighScore', gameState.highScore.toString());
