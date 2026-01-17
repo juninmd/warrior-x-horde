@@ -500,6 +500,7 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
   if (army.soldiers.filter(s => s.isAlive).length <= 0) {
     if (!gameState.isGameOver) vibrate(500); // Game over vibration
     gameState.isGameOver = true;
+    vibrate(200);
     if (gameState.score > gameState.highScore) {
       gameState.highScore = gameState.score;
       localStorage.setItem('crowdHighScore', gameState.highScore.toString());
