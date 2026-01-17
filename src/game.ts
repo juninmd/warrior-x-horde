@@ -8,7 +8,7 @@ import { updateSpawns } from './spawner';
 import { updateMovement } from './movement';
 import { setupInput, getMouseX, initializeMousePosition, setGameStateRef, setInputScale } from './input';
 import { updateShooting, updateBullets, updateSuperCannon, activateSuperCannon } from './shooting';
-import { initAudio, playMusic, playSound, stopAllMusic, audioManager } from './audio';
+import { initAudio, playMusic, playSound, stopAllMusic, audioManager, toggleMute, isMusicMuted } from './audio';
 
 // Canvas setup
 export const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
@@ -584,6 +584,12 @@ setupInput(canvas);
 initializeMousePosition(canvas.width);
 initAudio(); // Inicializar sistema de áudio
 
+// Atualizar botão de mute inicial
+const muteBtn = document.getElementById('muteBtn');
+if (muteBtn) {
+  muteBtn.textContent = isMusicMuted() ? '🔇' : '🔊';
+}
+
 // Desenhar tela inicial
 entities = createInitialEntities(canvas.width, canvas.height);
 render(ctx, entities, gameState);
@@ -658,6 +664,26 @@ function togglePause(): void {
   console.log(`⏸️ Jogo ${gameState.isPaused ? 'pausado' : 'retomado'}`);
 }
 
+function toggleMuteUI(): void {
+  const muted = toggleMute();
+  const btn = document.getElementById('muteBtn');
+  if (btn) {
+    btn.textContent = muted ? '🔇' : '🔊';
+  }
+}
+
+function toggleFullscreen(): void {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(err => {
+      console.log(`Error attempting to enable fullscreen: ${err.message}`);
+    });
+  } else {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    }
+  }
+}
+
 // Função para ativar super cannon (exposta para HTML)
 function triggerSuperCannon(): void {
   if (gameState.isStarted && !gameState.isGameOver && !gameState.isPaused) {
@@ -699,10 +725,14 @@ function updateSuperButtonInline(): void {
   debugSetLevel: typeof debugSetLevel;
   togglePause: typeof togglePause;
   triggerSuperCannon: typeof triggerSuperCannon;
+  toggleMuteUI: typeof toggleMuteUI;
+  toggleFullscreen: typeof toggleFullscreen;
 }).debugSetLevel = debugSetLevel;
 
 (window as unknown as { togglePause: typeof togglePause }).togglePause = togglePause;
 (window as unknown as { triggerSuperCannon: typeof triggerSuperCannon }).triggerSuperCannon = triggerSuperCannon;
+(window as unknown as { toggleMuteUI: typeof toggleMuteUI }).toggleMuteUI = toggleMuteUI;
+(window as unknown as { toggleFullscreen: typeof toggleFullscreen }).toggleFullscreen = toggleFullscreen;
 
 // Adicionar atalho de teclado para pause (P ou Escape)
 document.addEventListener('keydown', (e) => {
