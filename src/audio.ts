@@ -36,6 +36,16 @@ export const audioManager: AudioManager = {
 export function initAudio(): void {
   if (audioInitialized) return;
 
+  // Carregar estado de mute salvo
+  try {
+    const savedMute = localStorage.getItem('crowdRunnerMute');
+    if (savedMute === 'true') {
+      isMuted = true;
+    }
+  } catch (e) {
+    console.warn('LocalStorage access denied', e);
+  }
+
   // Pré-carregar todos os áudios
   Object.values(audioManager).forEach(audio => {
     audio.load();
@@ -80,8 +90,17 @@ export function stopAllMusic(): void {
 export function toggleMute(): boolean {
   isMuted = !isMuted;
 
+  try {
+    localStorage.setItem('crowdRunnerMute', isMuted.toString());
+  } catch (e) {
+    // Ignore
+  }
+
   if (isMuted) {
     stopAllMusic();
+  } else {
+    // Se desmutar durante o jogo, retomar música?
+    // Melhor deixar para o próximo evento de música ou chamada explícita
   }
 
   return isMuted;

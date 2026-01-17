@@ -1,15 +1,14 @@
 // game.ts - Loop principal do jogo Crowd Runner
-import { Entities } from './types';
+import { Entities, GameState, Soldier } from './types';
 import { gameState, resetGameState } from './gameState';
-import { createInitialEntities, createEnemyHorde, createSoldier, createMysteryBox } from './entities';
-import { render, getShareButtonBounds, getWhatsAppButtonBounds, shareOnX, shareOnWhatsApp } from './renderer';
+import { createInitialEntities, createEnemyHorde, createSoldier, createMysteryBox, addSpecialSoldiersToArmy, addSoldiersToArmy } from './entities';
+import { render, getShareButtonBounds, getWhatsAppButtonBounds, shareOnX, shareOnWhatsApp, addFloatingText } from './renderer';
 import { checkCollisions } from './collisions';
 import { updateSpawns } from './spawner';
 import { updateMovement } from './movement';
 import { setupInput, getMouseX, initializeMousePosition, setGameStateRef, setInputScale } from './input';
 import { updateShooting, updateBullets, updateSuperCannon, activateSuperCannon } from './shooting';
-import { initAudio, playMusic, playSound, stopAllMusic, audioManager } from './audio';
-import { enemyGrid } from './spatial';
+import { initAudio, playMusic, playSound, stopAllMusic, audioManager, toggleMute, isMusicMuted } from './audio';
 
 // Canvas setup
 export const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
@@ -85,6 +84,141 @@ const startBtnOverlay = document.getElementById('startBtnOverlay');
 
 // Container para o botão Super Cannon
 const superCannonContainer = document.getElementById('superCannonContainer');
+
+// --- Shop UI ---
+const shopContainer = document.createElement('div');
+shopContainer.id = 'shopContainer';
+shopContainer.style.cssText = `
+  position: absolute;
+  top: 150px;
+  right: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 10;
+  display: none; /* Hidden by default */
+`;
+document.body.appendChild(shopContainer);
+
+function createShopButton(type: 'bazooka' | 'rambo' | 'laser', price: number, color: string, label: string): HTMLButtonElement {
+  const btn = document.createElement('button');
+  btn.innerHTML = `<span style="font-size: 18px;">${label}</span><br><span style="font-size: 12px;">💰 ${price}</span>`;
+  btn.style.cssText = `
+    width: 70px;
+    height: 70px;
+    padding: 5px;
+    font-size: 12px;
+    font-weight: bold;
+    background: rgba(20, 20, 30, 0.8);
+    color: #FFF;
+    border: 2px solid ${color};
+    border-radius: 10px;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+    user-select: none;
+    transition: transform 0.1s, opacity 0.2s;
+  `;
+
+  // Efeito de clique
+  btn.addEventListener('mousedown', () => btn.style.transform = 'scale(0.95)');
+  btn.addEventListener('mouseup', () => btn.style.transform = 'scale(1)');
+  btn.addEventListener('mouseleave', () => btn.style.transform = 'scale(1)');
+  btn.addEventListener('touchstart', () => btn.style.transform = 'scale(0.95)', { passive: true });
+  btn.addEventListener('touchend', () => btn.style.transform = 'scale(1)', { passive: true });
+
+  return btn;
+}
+
+const bazookaBtn = createShopButton('bazooka', 50, '#27ae60', '🚀');
+const ramboBtn = createShopButton('rambo', 100, '#e74c3c', '💪');
+const laserBtn = createShopButton('laser', 150, '#00ffff', '⚡');
+const soldierBtn = createShopButton('soldier', 50, '#4A90D9', '🛡️');
+const nukeBtn = createShopButton('nuke', 500, '#F1C40F', '☢️');
+
+// Customize buttons
+soldierBtn.innerHTML = `<span style="font-size: 18px;">🛡️ +10</span><br><span style="font-size: 12px;">💰 50</span>`;
+nukeBtn.innerHTML = `<span style="font-size: 18px;">☢️ NUKE</span><br><span style="font-size: 12px;">💰 500</span>`;
+
+shopContainer.appendChild(soldierBtn);
+shopContainer.appendChild(bazookaBtn);
+shopContainer.appendChild(ramboBtn);
+shopContainer.appendChild(laserBtn);
+shopContainer.appendChild(nukeBtn);
+
+function buyUnit(type: 'bazooka' | 'rambo' | 'laser' | 'soldier' | 'nuke', cost: number): void {
+  if (gameState.coins >= cost) {
+    gameState.coins -= cost;
+
+    if (type === 'nuke') {
+      // Logic for Nuke
+      entities.enemyHordes.forEach(h => {
+        if (h.isActive) {
+          h.isActive = false;
+          addExplosion(h.x, h.y, '#FFD700');
+        }
+      });
+      addFloatingText('NUKE!', entities.playerArmy.centerX, entities.playerArmy.centerY - 100, '#F1C40F');
+      playSound(audioManager.superCannon); // Reusing intense sound
+    } else if (type === 'soldier') {
+      addSoldiersToArmy(entities.playerArmy, 10);
+      addFloatingText('+10 Soldiers', entities.playerArmy.centerX, entities.playerArmy.centerY, '#4A90D9');
+      playSound(audioManager.powerUp);
+    } else {
+      addSpecialSoldiersToArmy(entities.playerArmy, type, 1);
+      addFloatingText(`+1 ${type.toUpperCase()}`, entities.playerArmy.centerX, entities.playerArmy.centerY, '#00FF00');
+      playSound(audioManager.powerUp);
+    }
+  } else {
+    // Feedback negativo (som de erro)
+    playSound(audioManager.nerf); // Usando som de nerf como erro
+  }
+}
+
+bazookaBtn.addEventListener('click', (e) => { e.stopPropagation(); buyUnit('bazooka', 50); });
+ramboBtn.addEventListener('click', (e) => { e.stopPropagation(); buyUnit('rambo', 100); });
+laserBtn.addEventListener('click', (e) => { e.stopPropagation(); buyUnit('laser', 150); });
+soldierBtn.addEventListener('click', (e) => { e.stopPropagation(); buyUnit('soldier', 50); });
+nukeBtn.addEventListener('click', (e) => { e.stopPropagation(); buyUnit('nuke', 500); });
+
+// Touchstart específico para mobile para garantir resposta rápida
+bazookaBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); buyUnit('bazooka', 50); }, { passive: true });
+ramboBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); buyUnit('rambo', 100); }, { passive: true });
+laserBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); buyUnit('laser', 150); }, { passive: true });
+soldierBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); buyUnit('soldier', 50); }, { passive: true });
+nukeBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); buyUnit('nuke', 500); }, { passive: true });
+
+function updateShopUI(): void {
+  if (!gameState.isStarted || gameState.isGameOver) {
+    shopContainer.style.display = 'none';
+    return;
+  }
+  shopContainer.style.display = 'flex';
+
+  // Atualizar estado (habilitado/desabilitado)
+  const updateBtn = (btn: HTMLButtonElement, cost: number) => {
+    if (gameState.coins >= cost) {
+      btn.style.opacity = '1';
+      btn.style.filter = 'grayscale(0%)';
+      btn.disabled = false;
+    } else {
+      btn.style.opacity = '0.5';
+      btn.style.filter = 'grayscale(100%)';
+      btn.disabled = true; // Desabilitar clique real se quiser, ou deixar para feedback sonoro
+    }
+  };
+
+  updateBtn(bazookaBtn, 50);
+  updateBtn(ramboBtn, 100);
+  updateBtn(laserBtn, 150);
+  updateBtn(soldierBtn, 50);
+  updateBtn(nukeBtn, 500);
+}
 
 // Botão de Super Cannon para mobile (dentro do layout, não fixed)
 const superCannonButton = document.createElement('button');
@@ -257,6 +391,7 @@ function gameLoop(currentTime: number = 0): void {
   // Atualizar botão do Super Cannon
   updateSuperCannonButton();
   updateSuperButtonInline();
+  updateShopUI(); // Atualizar loja
 
   // Spawnar elementos
   updateSpawns(entities, canvas.width, gameState, canvas.height);
@@ -453,6 +588,12 @@ setupInput(canvas);
 initializeMousePosition(canvas.width);
 initAudio(); // Inicializar sistema de áudio
 
+// Atualizar botão de mute inicial
+const muteBtn = document.getElementById('muteBtn');
+if (muteBtn) {
+  muteBtn.textContent = isMusicMuted() ? '🔇' : '🔊';
+}
+
 // Desenhar tela inicial
 entities = createInitialEntities(canvas.width, canvas.height);
 render(ctx, entities, gameState);
@@ -527,6 +668,26 @@ function togglePause(): void {
   console.log(`⏸️ Jogo ${gameState.isPaused ? 'pausado' : 'retomado'}`);
 }
 
+function toggleMuteUI(): void {
+  const muted = toggleMute();
+  const btn = document.getElementById('muteBtn');
+  if (btn) {
+    btn.textContent = muted ? '🔇' : '🔊';
+  }
+}
+
+function toggleFullscreen(): void {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(err => {
+      console.log(`Error attempting to enable fullscreen: ${err.message}`);
+    });
+  } else {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    }
+  }
+}
+
 // Função para ativar super cannon (exposta para HTML)
 function triggerSuperCannon(): void {
   if (gameState.isStarted && !gameState.isGameOver && !gameState.isPaused) {
@@ -568,10 +729,14 @@ function updateSuperButtonInline(): void {
   debugSetLevel: typeof debugSetLevel;
   togglePause: typeof togglePause;
   triggerSuperCannon: typeof triggerSuperCannon;
+  toggleMuteUI: typeof toggleMuteUI;
+  toggleFullscreen: typeof toggleFullscreen;
 }).debugSetLevel = debugSetLevel;
 
 (window as unknown as { togglePause: typeof togglePause }).togglePause = togglePause;
 (window as unknown as { triggerSuperCannon: typeof triggerSuperCannon }).triggerSuperCannon = triggerSuperCannon;
+(window as unknown as { toggleMuteUI: typeof toggleMuteUI }).toggleMuteUI = toggleMuteUI;
+(window as unknown as { toggleFullscreen: typeof toggleFullscreen }).toggleFullscreen = toggleFullscreen;
 
 // Adicionar atalho de teclado para pause (P ou Escape)
 document.addEventListener('keydown', (e) => {

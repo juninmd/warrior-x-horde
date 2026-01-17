@@ -3,6 +3,10 @@ import { Entities, GameState, Bullet, Army, EnemyHorde, Boss, Soldier, MiniBoss 
 import { addFloatingText, addExplosion, addParticle } from './renderer';
 import { ObjectPool } from './pool';
 import { enemyGrid } from './spatial';
+import { SpatialHashGrid } from './spatial';
+
+// Grid espacial para otimização de colisão (Célula de 120px cobre bem grupos de inimigos)
+const enemyGrid = new SpatialHashGrid(120);
 
 const bulletPool = new ObjectPool<Bullet>(
   () => ({ x: 0, y: 0, targetX: 0, targetY: 0, speed: 0, damage: 0, isEnemy: false }),
@@ -268,6 +272,47 @@ export function updateBullets(entities: Entities, gameState: GameState): void {
     }
   }
 
+  const playerBullets = entities.bullets.filter(b => !b.isEnemy);
+  // Se não houver balas do jogador, não precisamos popular a grid nem verificar colisões complexas
+  // Mas ainda precisamos processar colisões das balas inimigas com o jogador?
+  // O código original de colisão bala inimiga x jogador NÃO estava nesta função, mas sim em checkCollisions (talvez?)
+  // Verificando o código original... Não, checkBulletSoldierCollision era usado aqui.
+  // ESPERA! O loop original iterava sobre TODAS as balas e dava "continue" se bullet.isEnemy.
+  // Então aqui só processamos balas do jogador acertando inimigos.
+
+  if (playerBullets.length > 0) {
+    // 1. Popular a Grid Espacial com Inimigos (Soldados e MiniBosses)
+    enemyGrid.clear();
+
+    // Hordas
+    for (const horde of entities.enemyHordes) {
+      if (!horde.isActive || horde.y < 100) continue;
+      for (const soldier of horde.soldiers) {
+        if (soldier.isAlive && soldier.y >= 100) {
+          enemyGrid.insert({
+            x: soldier.x - soldier.size,
+            y: soldier.y - soldier.size,
+            width: soldier.size * 2,
+            height: soldier.size * 2,
+            ref: { type: 'soldier', obj: soldier, horde: horde }
+          });
+        }
+      }
+    }
+
+    // MiniBosses
+    for (const mb of entities.miniBosses) {
+      if (!mb.isActive || mb.y < 50) continue;
+      enemyGrid.insert({
+        x: mb.x,
+        y: mb.y,
+        width: mb.width,
+        height: mb.height,
+        ref: { type: 'miniboss', obj: mb }
+      });
+    }
+  }
+
   for (let i = entities.bullets.length - 1; i >= 0; i--) {
     const bullet = entities.bullets[i];
     if (bullet.isEnemy) continue;
@@ -314,6 +359,26 @@ export function updateBullets(entities: Entities, gameState: GameState): void {
 
             const idx = horde.soldiers.indexOf(soldier);
             if (idx !== -1) {
+    // Usar a Grid para buscar candidatos a colisão
+    // Área de consulta: Posição da bala +/- 10px
+    const nearby = enemyGrid.query(bullet.x - 10, bullet.y - 10, 20, 20);
+
+    for (const item of nearby) {
+      if (bulletHit) break;
+
+      if (item.ref.type === 'soldier') {
+        const soldier = item.ref.obj as Soldier;
+        const horde = item.ref.horde as EnemyHorde;
+
+        if (horde.isActive && soldier.isAlive && checkBulletSoldierCollision(bullet, soldier)) {
+          // Aplicar dano
+          soldier.hp -= bullet.damage;
+          addExplosion(soldier.x, soldier.y, '#E74C3C');
+
+          if (soldier.hp <= 0) {
+            // Encontrar index para remover (pode ser lento, mas só acontece na morte)
+            const idx = horde.soldiers.indexOf(soldier);
+            if (idx > -1) {
               horde.soldiers.splice(idx, 1);
               horde.count = horde.soldiers.length;
               gameState.score += 10;
@@ -338,41 +403,34 @@ export function updateBullets(entities: Entities, gameState: GameState): void {
 
     if (bulletHit) continue;
 
-    // Colisão com mini-bosses (só se visíveis)
-    for (const miniBoss of entities.miniBosses) {
-      if (!miniBoss.isActive || bulletHit) continue;
+        // Colisão AABB simples para MiniBoss
+        if (bullet.x > miniBoss.x && bullet.x < miniBoss.x + miniBoss.width &&
+            bullet.y > miniBoss.y && bullet.y < miniBoss.y + miniBoss.height) {
 
-      // Mini-boss precisa estar visível
-      if (miniBoss.y < 50) continue;
+          miniBoss.hp -= bullet.damage;
+          addExplosion(bullet.x, bullet.y, '#FF4500');
 
-      if (bullet.x > miniBoss.x && bullet.x < miniBoss.x + miniBoss.width &&
-          bullet.y > miniBoss.y && bullet.y < miniBoss.y + miniBoss.height) {
-        miniBoss.hp -= bullet.damage;
-        bulletPool.release(bullet);
-        entities.bullets.splice(i, 1);
-
-        // Efeito de impacto
-        addExplosion(bullet.x, bullet.y, '#FF4500');
-
-        if (miniBoss.hp <= 0) {
-          miniBoss.isActive = false;
-          gameState.score += 200;
-          addFloatingText('MINI-BOSS!', miniBoss.x + miniBoss.width / 2, miniBoss.y, '#FF4500');
-          // Explosão do mini-boss
-          for (let k = 0; k < 3; k++) {
-            setTimeout(() => {
-              addExplosion(miniBoss.x + Math.random() * miniBoss.width, miniBoss.y + Math.random() * miniBoss.height, '#FF4500');
-            }, k * 50);
+          if (miniBoss.hp <= 0) {
+            miniBoss.isActive = false;
+            gameState.score += 200;
+            addFloatingText('MINI-BOSS!', miniBoss.x + miniBoss.width / 2, miniBoss.y, '#FF4500');
+            for (let k = 0; k < 3; k++) {
+              setTimeout(() => {
+                addExplosion(miniBoss.x + Math.random() * miniBoss.width, miniBoss.y + Math.random() * miniBoss.height, '#FF4500');
+              }, k * 50);
+            }
           }
+
+          bulletPool.release(bullet);
+          entities.bullets.splice(i, 1);
+          bulletHit = true;
         }
-        bulletHit = true;
-        break;
       }
     }
 
     if (bulletHit) continue;
 
-    // Colisão com boss
+    // Colisão com boss (separado da grid pois é único e grande)
     if (entities.boss && entities.boss.isActive) {
       const boss = entities.boss;
 
