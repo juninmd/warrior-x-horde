@@ -1,11 +1,12 @@
 // entities.ts - Criação de entidades
-import { Army, Soldier, EnemyHorde, Gate, Boss, Entities, MiniBoss, MysteryBox, MAX_HEROES, MAX_ENEMIES } from './types';
+import { Army, Soldier, EnemyHorde, Gate, Boss, Entities, MiniBoss, MysteryBox, Coin, MAX_HEROES, MAX_ENEMIES } from './types';
 
 let soldierIdCounter = 0;
 let hordeIdCounter = 0;
 let gateIdCounter = 0;
 let miniBossIdCounter = 0;
 let mysteryBoxIdCounter = 0;
+let coinIdCounter = 0;
 
 export function createSoldier(x: number, y: number, color: string, hp: number = 1, type: Soldier['type'] = 'normal'): Soldier {
   return {
@@ -384,8 +385,8 @@ export function createGate(canvasWidth: number, y: number, side: 'left' | 'right
 }
 
 export function createGatePair(canvasWidth: number, y: number, level: number = 1, currentHeroCount: number = 0, currentEnemyCount: number = 0): Gate[] {
-  // 30% de chance de spawnar um Math Gate (Teste de Tabuada), se não estiver no máximo
-  if (Math.random() < 0.3 && currentHeroCount < MAX_HEROES) {
+  // 40% de chance de spawnar um Math Gate (Teste de Tabuada) - Aumentado para trabalhar a lógica
+  if (Math.random() < 0.4 && currentHeroCount < MAX_HEROES) {
     const a = Math.floor(Math.random() * 9) + 1;
     const b = Math.floor(Math.random() * 9) + 1;
     const result = a * b;
@@ -618,6 +619,19 @@ export function createMysteryBox(canvasWidth: number, y: number): MysteryBox {
   };
 }
 
+export function createCoin(x: number, y: number, value: number = 1): Coin {
+  return {
+    id: coinIdCounter++,
+    x,
+    y,
+    width: 20,
+    height: 20,
+    value,
+    passed: false,
+    bounceOffset: Math.random() * Math.PI * 2,
+  };
+}
+
 export function createInitialEntities(canvasWidth: number, canvasHeight: number): Entities {
   // Criar hordas iniciais com mínimo de 15
   const initialHordes = [];
@@ -636,6 +650,7 @@ export function createInitialEntities(canvasWidth: number, canvasHeight: number)
     gates: [],
     weapons: [],
     mysteryBoxes: [],
+    coins: [],
     bullets: [],
     boss: null,
     miniBosses: [],

@@ -1,6 +1,13 @@
 // spawner.ts - Gerador de obstáculos e inimigos
 import { Entities, GameState, MAX_ENEMIES } from './types';
-import { createGatePair, createEnemyHorde, createBoss, createMiniBoss, createMysteryBox } from './entities';
+import { createGatePair, createEnemyHorde, createBoss, createMiniBoss, createMysteryBox, createCoin } from './entities';
+
+export function spawnCoins(entities: Entities, canvasWidth: number, gameState: GameState): void {
+  // Remover moedas que já passaram
+  entities.coins = entities.coins.filter(coin => !coin.passed && coin.y < 1200);
+
+  // Moedas não spawnam mais no chão, apenas dropam de bosses
+}
 
 export function spawnMysteryBoxes(entities: Entities, canvasWidth: number, _gameState: GameState): void {
   // Remover caixas que já passaram
@@ -157,5 +164,6 @@ export function updateSpawns(entities: Entities, canvasWidth: number, gameState:
   spawnEnemies(entities, canvasWidth, gameState, canvasHeight);
   spawnMiniBoss(entities, canvasWidth, gameState, canvasHeight);
   spawnMysteryBoxes(entities, canvasWidth, gameState);
+  spawnCoins(entities, canvasWidth, gameState);
   checkBossSpawn(entities, canvasWidth, gameState, canvasHeight);
 }

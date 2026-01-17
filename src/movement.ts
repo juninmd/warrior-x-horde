@@ -186,6 +186,13 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState): void
     }
   }
 
+  // Mover Moedas (mesma velocidade das gates)
+  for (const coin of entities.coins) {
+    if (!coin.passed) {
+      coin.y += gateSpeed;
+    }
+  }
+
   // Mover mini-bosses (mais lentos que as hordas normais)
   for (const miniBoss of entities.miniBosses) {
     if (!miniBoss.isActive) continue;
