@@ -1,6 +1,264 @@
 // renderer.ts - Renderização do jogo estilo Crowd Runner
-import { Entities, GameState, FloatingText, Army, EnemyHorde, Gate, Boss, Bullet, Particle, MysteryBox } from './types';
+import { Entities, GameState, FloatingText, Army, EnemyHorde, Gate, Boss, Bullet, Particle, MysteryBox, Soldier } from './types';
 import { ObjectPool } from './pool';
+import { virtualJoystick } from './input';
+
+// --- Sprite Caching System ---
+interface SpriteCache {
+  images: Map<string, HTMLCanvasElement | OffscreenCanvas>;
+  initialized: boolean;
+}
+
+const spriteCache: SpriteCache = {
+  images: new Map(),
+  initialized: false
+};
+
+// Helper to generate a key
+const getSpriteKey = (type: string, color: string, size: number, isSuper: boolean = false): string => {
+  return `${type}_${color}_${size}_${isSuper}`;
+};
+
+// Function to pre-render sprites
+export function preRenderSprites(): void {
+  if (spriteCache.initialized) return;
+
+  // Types of soldiers to cache
+  const types: Soldier['type'][] = ['normal', 'bazooka', 'rambo', 'laser'];
+  // Common colors
+  const colors = [
+    '#4A90D9', // Player Normal
+    '#E74C3C', // Enemy
+    '#FFD700', // Super/Gold
+    '#27ae60', // Bazooka Green
+    '#e74c3c', // Rambo Red (same as enemy, but context matters)
+    '#00ffff', // Laser Cyan
+    // Shade colors for enemies might be needed too if we use exact colors
+  ];
+  const sizes = [16, 18, 19, 20]; // Sizes from entities.ts
+
+  // Render Soldier Sprites
+  for (const type of types) {
+    for (const color of colors) {
+      for (const size of sizes) {
+        // Normal version
+        renderSoldierToCache(type, color, size, false);
+        // Super version (mostly for 'normal' type but applied generally just in case)
+        renderSoldierToCache(type, color, size, true);
+      }
+    }
+  }
+
+  // Render Particle Sprites
+  renderParticleToCache('spark', '#FFF');
+  renderParticleToCache('spark', '#FFD700');
+  renderParticleToCache('star', '#FFD700');
+  renderParticleToCache('star', '#FF4500');
+  renderParticleToCache('trail', '#4A90D9');
+  renderParticleToCache('explosion', '#E74C3C');
+  renderParticleToCache('explosion', '#FFD700');
+  renderParticleToCache('explosion', '#4A90D9');
+
+  spriteCache.initialized = true;
+  console.log('Sprites pre-rendered. Cache size:', spriteCache.images.size);
+}
+
+function renderSoldierToCache(type: Soldier['type'], color: string, size: number, isSuper: boolean) {
+  const key = getSpriteKey(type, color, size, isSuper);
+  if (spriteCache.images.has(key)) return;
+
+  // Padding for drawing (shadows, accessories sticking out)
+  const padding = size * 1.5;
+  const canvasSize = size * 2 + padding * 2;
+  const center = canvasSize / 2;
+
+  // Use OffscreenCanvas if available, otherwise regular canvas
+  let canvas: HTMLCanvasElement | OffscreenCanvas;
+  let ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null;
+
+  if (typeof OffscreenCanvas !== 'undefined') {
+    canvas = new OffscreenCanvas(canvasSize, canvasSize);
+    ctx = canvas.getContext('2d');
+  } else {
+    canvas = document.createElement('canvas');
+    canvas.width = canvasSize;
+    canvas.height = canvasSize;
+    ctx = canvas.getContext('2d');
+  }
+
+  if (!ctx) return;
+
+  // Draw soldier centered at (center, center)
+  // We use 0 as bounce and animOffset because those are dynamic transforms applied at draw time
+  // However, drawSoldier3D uses y-position for scaling, which we handle at draw time.
+  // We draw the "base" soldier here.
+
+  const actualSize = size; // No scaling here, 1:1 sprite
+  const x = center;
+  const y = center;
+
+  const isPlayer = color === '#4A90D9' || color === '#FFD700' || color === '#27ae60' || color === '#00ffff' || type !== 'normal'; // Approximation of player check logic from original code
+
+  // Sombra (static relative to body)
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+  ctx.beginPath();
+  ctx.ellipse(x, y + actualSize * 0.8, actualSize * 0.6, actualSize * 0.2, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Corpo (círculo principal)
+  // Gradients need to be relative to canvas
+  const bodyGradient = ctx.createRadialGradient(x - actualSize * 0.2, y - actualSize * 0.2, 0, x, y, actualSize);
+  bodyGradient.addColorStop(0, color);
+  bodyGradient.addColorStop(1, shadeColor(color, -30));
+
+  ctx.fillStyle = bodyGradient;
+  ctx.beginPath();
+  ctx.arc(x, y, actualSize * 0.7, 0, Math.PI * 2);
+  ctx.fill();
+
+  if (isPlayer) {
+    if (type === 'bazooka') {
+      ctx.fillStyle = '#2c3e50';
+      ctx.beginPath();
+      ctx.roundRect(x - actualSize * 0.6, y - actualSize * 0.8, actualSize * 0.4, actualSize * 1.2, 2);
+      ctx.fill();
+    } else if (type === 'rambo') {
+      ctx.fillStyle = '#111';
+      ctx.fillRect(x + actualSize * 0.3, y, actualSize * 0.8, actualSize * 0.2);
+    } else if (type === 'laser') {
+      ctx.fillStyle = '#FFF';
+      ctx.fillRect(x + actualSize * 0.3, y, actualSize * 0.6, actualSize * 0.15);
+      ctx.strokeStyle = '#00ffff';
+      ctx.strokeRect(x + actualSize * 0.3, y, actualSize * 0.6, actualSize * 0.15);
+    } else {
+      ctx.fillStyle = shadeColor(color, 20);
+      ctx.beginPath();
+      ctx.arc(x - actualSize * 0.4, y + actualSize * 0.2, actualSize * 0.3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#FFF';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.strokeStyle = '#DDD';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x + actualSize * 0.3, y);
+      ctx.lineTo(x + actualSize * 0.8, y - actualSize * 0.4);
+      ctx.stroke();
+    }
+  } else {
+    // Enemy Spikes
+    ctx.fillStyle = shadeColor(color, -50);
+    ctx.beginPath();
+    ctx.moveTo(x - actualSize * 0.6, y - actualSize * 0.2);
+    ctx.lineTo(x - actualSize * 0.9, y - actualSize * 0.5);
+    ctx.lineTo(x - actualSize * 0.4, y - actualSize * 0.4);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(x + actualSize * 0.6, y - actualSize * 0.2);
+    ctx.lineTo(x + actualSize * 0.9, y - actualSize * 0.5);
+    ctx.lineTo(x + actualSize * 0.4, y - actualSize * 0.4);
+    ctx.fill();
+  }
+
+  // Cabeça
+  const headGradient = ctx.createRadialGradient(x - actualSize * 0.1, y - actualSize * 0.6, 0, x, y - actualSize * 0.5, actualSize * 0.4);
+  if (isPlayer) {
+    headGradient.addColorStop(0, '#FFE4C4');
+    headGradient.addColorStop(1, '#DEB887');
+  } else {
+    headGradient.addColorStop(0, '#90EE90');
+    headGradient.addColorStop(1, '#2E8B57');
+  }
+
+  ctx.fillStyle = headGradient;
+  ctx.beginPath();
+  ctx.arc(x, y - actualSize * 0.5, actualSize * 0.4, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Capacete
+  ctx.fillStyle = shadeColor(color, -40);
+  ctx.beginPath();
+  ctx.arc(x, y - actualSize * 0.6, actualSize * 0.35, Math.PI, 0);
+  ctx.fill();
+
+  // Detalhes extras de cabeça
+  if (type === 'rambo') {
+    ctx.strokeStyle = '#ff0000';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(x - actualSize * 0.35, y - actualSize * 0.7);
+    ctx.lineTo(x + actualSize * 0.35, y - actualSize * 0.7);
+    ctx.stroke();
+  } else if (type === 'laser') {
+    ctx.fillStyle = '#00ffff';
+    ctx.fillRect(x - actualSize * 0.25, y - actualSize * 0.65, actualSize * 0.5, actualSize * 0.15);
+  }
+
+  // Olhos brilhantes para inimigos
+  if (!isPlayer) {
+    ctx.fillStyle = '#FFD700';
+    ctx.beginPath();
+    ctx.arc(x - actualSize * 0.15, y - actualSize * 0.5, actualSize * 0.1, 0, Math.PI * 2);
+    ctx.arc(x + actualSize * 0.15, y - actualSize * 0.5, actualSize * 0.1, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Super effect overlay (baked in)
+  if (isSuper) {
+    ctx.strokeStyle = '#FFD700';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(x, y, actualSize + 2, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  spriteCache.images.set(key, canvas);
+}
+
+function renderParticleToCache(type: Particle['type'], color: string) {
+  const key = `particle_${type}_${color}`;
+  if (spriteCache.images.has(key)) return;
+
+  const size = 10; // Base size for rendering
+  const canvasSize = size * 4; // Plenty of room for glows
+  const center = canvasSize / 2;
+
+  let canvas: HTMLCanvasElement | OffscreenCanvas;
+  let ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null;
+
+  if (typeof OffscreenCanvas !== 'undefined') {
+    canvas = new OffscreenCanvas(canvasSize, canvasSize);
+    ctx = canvas.getContext('2d');
+  } else {
+    canvas = document.createElement('canvas');
+    canvas.width = canvasSize;
+    canvas.height = canvasSize;
+    ctx = canvas.getContext('2d');
+  }
+
+  if (!ctx) return;
+
+  const p = { x: center, y: center, size: size, color: color, type: type };
+
+  if (p.type === 'spark' || p.type === 'star') {
+      ctx.shadowColor = p.color;
+      ctx.shadowBlur = 10;
+  }
+
+  ctx.fillStyle = p.color;
+  ctx.beginPath();
+
+  if (p.type === 'star') {
+    drawStar(ctx as CanvasRenderingContext2D, p.x, p.y, 5, p.size, p.size / 2);
+  } else {
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+  }
+  ctx.fill();
+
+  spriteCache.images.set(key, canvas);
+}
+// ------------------------------
 
 const floatingTexts: FloatingText[] = [];
 const particles: Particle[] = [];
@@ -84,26 +342,46 @@ function updateParticles(): void {
 
 function drawParticles(ctx: CanvasRenderingContext2D): void {
   for (const p of particles) {
-    ctx.save();
-    ctx.globalAlpha = p.life;
+    const key = `particle_${p.type}_${p.color}`;
+    const cachedCanvas = spriteCache.images.get(key);
 
-    if (p.type === 'spark' || p.type === 'star') {
-      // Brilho
-      ctx.shadowColor = p.color;
-      ctx.shadowBlur = 10;
-    }
+    if (cachedCanvas) {
+      ctx.save();
+      ctx.globalAlpha = p.life;
 
-    ctx.fillStyle = p.color;
-    ctx.beginPath();
+      const size = 10; // Base size used in cache
+      const scale = p.size / size;
+      const canvasSize = cachedCanvas.width;
 
-    if (p.type === 'star') {
-      // Desenhar estrela
-      drawStar(ctx, p.x, p.y, 5, p.size, p.size / 2);
+      // Draw centered
+      ctx.translate(p.x, p.y);
+      ctx.scale(scale, scale);
+      ctx.drawImage(cachedCanvas, -canvasSize/2, -canvasSize/2);
+
+      ctx.restore();
     } else {
-      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      // Fallback if not cached
+      ctx.save();
+      ctx.globalAlpha = p.life;
+
+      if (p.type === 'spark' || p.type === 'star') {
+        // Brilho
+        ctx.shadowColor = p.color;
+        ctx.shadowBlur = 10;
+      }
+
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+
+      if (p.type === 'star') {
+        // Desenhar estrela
+        drawStar(ctx, p.x, p.y, 5, p.size, p.size / 2);
+      } else {
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      }
+      ctx.fill();
+      ctx.restore();
     }
-    ctx.fill();
-    ctx.restore();
   }
 }
 
@@ -524,10 +802,29 @@ function drawAlienShip(ctx: CanvasRenderingContext2D, x: number, y: number, time
   ctx.restore();
 }
 
-function drawSoldier3D(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, color: string, animOffset: number, time: number, type: Soldier['type'] = 'normal'): void {
+function drawSoldier3D(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, color: string, animOffset: number, time: number, type: Soldier['type'] = 'normal', isSuper: boolean = false): void {
+  // Attempt to use cached sprite
+  const key = getSpriteKey(type, color, size, isSuper);
+  const cachedCanvas = spriteCache.images.get(key);
+
   const bounce = Math.sin(time * 0.008 + animOffset) * 3;
   const scale = Math.max(0.5, 1 - (800 - y) / 1500); // Escala baseada na posição Y (perspectiva)
   const actualSize = size * scale;
+
+  if (cachedCanvas) {
+    // Determine canvas dimensions
+    const canvasSize = cachedCanvas.width;
+
+    // Draw centered
+    ctx.save();
+    ctx.translate(x, y + bounce); // Apply bounce
+    ctx.scale(scale, scale); // Apply scale
+    ctx.drawImage(cachedCanvas, -canvasSize / 2, -canvasSize / 2);
+    ctx.restore();
+    return;
+  }
+
+  // FALLBACK if not cached (mostly identical to original)
   const isPlayer = color === '#4A90D9' || color === '#FFD700' || type !== 'normal'; // Player (azul), Super ou Especial
 
   // Sombra
@@ -649,6 +946,9 @@ function drawSoldier3D(ctx: CanvasRenderingContext2D, x: number, y: number, size
 }
 
 function shadeColor(color: string, percent: number): string {
+  // Basic validation to avoid crashes
+  if (!color || !color.startsWith('#') || color.length < 7) return color;
+
   const num = parseInt(color.replace('#', ''), 16);
   const amt = Math.round(2.55 * percent);
   const R = (num >> 16) + amt;
@@ -663,6 +963,11 @@ function shadeColor(color: string, percent: number): string {
 let lastArmyX = 0;
 
 function drawArmy(ctx: CanvasRenderingContext2D, army: Army, time: number): void {
+  // Trigger sprite pre-rendering if not done yet
+  if (!spriteCache.initialized) {
+    preRenderSprites();
+  }
+
   // Trail effect - adicionar partículas quando se move
   const dx = army.centerX - lastArmyX;
   if (Math.abs(dx) > 2) {
@@ -699,7 +1004,7 @@ function drawArmy(ctx: CanvasRenderingContext2D, army: Army, time: number): void
       ctx.save();
       ctx.shadowColor = '#FFD700';
       ctx.shadowBlur = 15;
-      drawSoldier3D(ctx, soldier.x, soldier.y, soldier.size, '#FFD700', soldier.animOffset, time, soldier.type);
+      drawSoldier3D(ctx, soldier.x, soldier.y, soldier.size, '#FFD700', soldier.animOffset, time, soldier.type, true);
       ctx.restore();
 
       // Estrela acima do super guerreiro
@@ -708,7 +1013,7 @@ function drawArmy(ctx: CanvasRenderingContext2D, army: Army, time: number): void
       ctx.textAlign = 'center';
       ctx.fillText('⭐', soldier.x, soldier.y - soldier.size - 5);
     } else {
-      drawSoldier3D(ctx, soldier.x, soldier.y, soldier.size, soldier.color, soldier.animOffset, time, soldier.type);
+      drawSoldier3D(ctx, soldier.x, soldier.y, soldier.size, soldier.color, soldier.animOffset, time, soldier.type, false);
     }
   }
 
@@ -746,6 +1051,8 @@ function drawArmy(ctx: CanvasRenderingContext2D, army: Army, time: number): void
 }
 
 function drawEnemyHorde(ctx: CanvasRenderingContext2D, horde: EnemyHorde, time: number): void {
+  if (!spriteCache.initialized) preRenderSprites();
+
   let sortedSoldiers = [...horde.soldiers].filter(s => s.isAlive).sort((a, b) => a.y - b.y);
 
   // OTIMIZAÇÃO: Limitar renderização a MAX_RENDERED_SOLDIERS
@@ -771,7 +1078,7 @@ function drawEnemyHorde(ctx: CanvasRenderingContext2D, horde: EnemyHorde, time: 
   ctx.globalAlpha = hordeAlpha;
 
   for (const soldier of sortedSoldiers) {
-    drawSoldier3D(ctx, soldier.x, soldier.y, soldier.size, soldier.color, soldier.animOffset, time, soldier.type);
+    drawSoldier3D(ctx, soldier.x, soldier.y, soldier.size, soldier.color, soldier.animOffset, time, soldier.type, false);
   }
 
   // Contador de inimigos (usa contagem REAL, não a renderizada)
@@ -1677,57 +1984,75 @@ function drawBullets(ctx: CanvasRenderingContext2D, bullets: Bullet[]): void {
   }
 }
 
-function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: number): void {
+function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: number, fireRate: number, damage: number): void {
   const { width, height } = ctx.canvas;
 
-  // Badges pequenos nos cantos inferiores (sem fundo escuro grande)
-  const bottomY = height - 25;
-  const badgeHeight = 22;
+  // === GLASSMORPHISM HUD ===
 
-  // Level badge - canto inferior esquerdo
-  ctx.fillStyle = 'rgba(52, 152, 219, 0.9)';
-  ctx.beginPath();
-  ctx.roundRect(5, bottomY - badgeHeight/2, 70, badgeHeight, 11);
-  ctx.fill();
-  ctx.fillStyle = '#FFF';
-  ctx.font = 'bold 11px Arial';
-  ctx.textAlign = 'center';
-  ctx.fillText(`Level ${gameState.currentLevel}`, 40, bottomY + 4);
+  // Configuração comum
+  const padding = 10;
+  const bottomY = height - 30;
+  const badgeHeight = 36;
+  const glassColor = 'rgba(20, 20, 30, 0.6)';
+  const glassBorder = 'rgba(255, 255, 255, 0.2)';
+  const textColor = '#FFF';
 
-  // Score - centro inferior
-  ctx.fillStyle = 'rgba(46, 204, 113, 0.9)';
-  ctx.beginPath();
-  ctx.roundRect(width / 2 - 40, bottomY - badgeHeight/2, 80, badgeHeight, 11);
-  ctx.fill();
-  ctx.fillStyle = '#FFF';
-  ctx.fillText(`${gameState.score}`, width / 2, bottomY + 4);
+  ctx.save();
 
-  // Contador de exército - canto inferior direito
-  ctx.fillStyle = 'rgba(231, 76, 60, 0.9)';
-  ctx.beginPath();
-  ctx.roundRect(width - 75, bottomY - badgeHeight/2, 70, badgeHeight, 11);
-  ctx.fill();
-  ctx.fillStyle = '#FFF';
-  ctx.fillText(`⚔️ ${armyCount}`, width - 40, bottomY + 4);
-
-  // Barra de progresso fina no topo da tela
-  const progressWidth = width - 20;
+  // --- Barra de Progresso Superior ---
+  const progressWidth = width - 40;
+  const progressX = 20;
+  const progressY = 15;
+  const progressHeight = 8;
   const progress = Math.min(gameState.distanceTraveled / gameState.levelDistance, 1);
-  const progressY = 5;
 
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+  // Fundo da barra (Glass)
+  ctx.fillStyle = glassColor;
+  ctx.strokeStyle = glassBorder;
+  ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.roundRect(10, progressY, progressWidth, 5, 2);
+  ctx.roundRect(progressX - 4, progressY - 4, progressWidth + 8, progressHeight + 8, 8);
   ctx.fill();
+  ctx.stroke();
 
-  const progressGradient = ctx.createLinearGradient(10, progressY, 10 + progressWidth, progressY);
-  progressGradient.addColorStop(0, '#2ECC71');
-  progressGradient.addColorStop(1, '#27AE60');
+  // Barra de preenchimento
+  const progressGradient = ctx.createLinearGradient(progressX, 0, progressX + progressWidth, 0);
+  progressGradient.addColorStop(0, '#00C9FF');
+  progressGradient.addColorStop(1, '#92FE9D');
 
   ctx.fillStyle = progressGradient;
+  ctx.shadowColor = '#92FE9D';
+  ctx.shadowBlur = 10;
   ctx.beginPath();
-  ctx.roundRect(10, progressY, progressWidth * progress, 5, 2);
+  ctx.roundRect(progressX, progressY, progressWidth * progress, progressHeight, 4);
   ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // --- Badges Inferiores ---
+
+  // 1. Level (Esquerda)
+  const levelWidth = 80;
+  drawGlassBadge(ctx, 10, bottomY - badgeHeight/2, levelWidth, badgeHeight, `Lv. ${gameState.currentLevel}`, '#4A90D9');
+
+  // 2. Score (Centro)
+  const scoreWidth = 100;
+  drawGlassBadge(ctx, width / 2 - scoreWidth / 2 - 60, bottomY - badgeHeight/2, scoreWidth, badgeHeight, `${gameState.score}`, '#F1C40F');
+
+  // 2.5 Coins (Centro Direita)
+  const coinsWidth = 100;
+  drawGlassBadge(ctx, width / 2 + 50, bottomY - badgeHeight/2, coinsWidth, badgeHeight, `💰 ${gameState.coins}`, '#FFD700');
+
+  // 4. Fire Rate (Top Left, under progress bar)
+  // Converter delay para shots/sec: 1000 / fireRate
+  const shotsPerSec = (1000 / fireRate).toFixed(1);
+  const rateWidth = 100;
+  drawGlassBadge(ctx, 10, progressY + progressHeight + 15, rateWidth, 28, `🔥 ${shotsPerSec}/s`, '#F39C12');
+
+  // 5. Damage (Next to Fire Rate)
+  const dmgWidth = 80;
+  drawGlassBadge(ctx, 10 + rateWidth + 10, progressY + progressHeight + 15, dmgWidth, 28, `⚔️ ${damage.toFixed(1)}`, '#E91E63');
+
+  ctx.restore();
 
   // Combo indicator (se houver combo ativo)
   if (gameState.combo > 1) {
@@ -1757,6 +2082,32 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
 
     ctx.restore();
   }
+}
+
+function drawGlassBadge(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, text: string, accentColor: string): void {
+  // Fundo Glass
+  ctx.fillStyle = 'rgba(10, 10, 20, 0.7)';
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+  ctx.lineWidth = 1;
+  ctx.backdropFilter = 'blur(4px)'; // Nota: Nem todos browsers suportam isso em Canvas ainda, mas vale tentar
+
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, 12);
+  ctx.fill();
+  ctx.stroke();
+
+  // Accent Line (Bottom)
+  ctx.fillStyle = accentColor;
+  ctx.beginPath();
+  ctx.roundRect(x + 10, y + h - 4, w - 20, 2, 1);
+  ctx.fill();
+
+  // Texto
+  ctx.fillStyle = '#FFF';
+  ctx.font = 'bold 14px "Segoe UI", Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, x + w / 2, y + h / 2 - 2);
 }
 
 function getComboColor(combo: number): string {
@@ -2004,6 +2355,41 @@ export function shareOnWhatsApp(gameState: GameState): void {
   window.open(whatsappUrl, '_blank');
 }
 
+function drawJoystick(ctx: CanvasRenderingContext2D): void {
+  if (!virtualJoystick.active) return;
+
+  const { startX, startY, currentX, currentY, maxRadius } = virtualJoystick;
+
+  // Base
+  ctx.beginPath();
+  ctx.arc(startX, startY, maxRadius, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+  ctx.lineWidth = 2;
+  ctx.fill();
+  ctx.stroke();
+
+  // Stick
+  // Calculate clamped stick position
+  const dx = currentX - startX;
+  const dy = currentY - startY;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+
+  let stickX = currentX;
+  let stickY = currentY;
+
+  if (distance > maxRadius) {
+    const angle = Math.atan2(dy, dx);
+    stickX = startX + Math.cos(angle) * maxRadius;
+    stickY = startY + Math.sin(angle) * maxRadius;
+  }
+
+  ctx.beginPath();
+  ctx.arc(stickX, stickY, 20, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+  ctx.fill();
+}
+
 // Desenhar Super Cannon beam
 function drawSuperCannonBeam(ctx: CanvasRenderingContext2D, centerX: number, centerY: number, gameState: GameState): void {
   if (!gameState.superCannonActive) return;
@@ -2142,7 +2528,10 @@ export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameSt
   }
 
   // UI
-  drawUI(ctx, gameState, entities.playerArmy.soldiers.filter(s => s.isAlive).length);
+  drawUI(ctx, gameState, entities.playerArmy.soldiers.filter(s => s.isAlive).length, entities.playerArmy.fireRate, entities.playerArmy.damage);
+
+  // Joystick Virtual (Mobile)
+  drawJoystick(ctx);
 
   // Floating texts
   updateFloatingTexts();

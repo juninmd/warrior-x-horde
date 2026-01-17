@@ -1,6 +1,13 @@
 // spawner.ts - Gerador de obstáculos e inimigos
 import { Entities, GameState, MAX_ENEMIES } from './types';
-import { createGatePair, createEnemyHorde, createBoss, createMiniBoss, createMysteryBox } from './entities';
+import { createGatePair, createEnemyHorde, createBoss, createMiniBoss, createMysteryBox, createCoin } from './entities';
+
+export function spawnCoins(entities: Entities, canvasWidth: number, gameState: GameState): void {
+  // Remover moedas que já passaram
+  entities.coins = entities.coins.filter(coin => !coin.passed && coin.y < 1200);
+
+  // Moedas não spawnam mais no chão, apenas dropam de bosses
+}
 
 export function spawnMysteryBoxes(entities: Entities, canvasWidth: number, _gameState: GameState): void {
   // Remover caixas que já passaram
@@ -66,26 +73,26 @@ export function spawnEnemies(entities: Entities, canvasWidth: number, gameState:
     ? Math.min(...entities.enemyHordes.map(h => h.y))
     : spawnY + hordeSpacing;
 
-  // Chance de spawn MUITO alta - sempre ter inimigos na tela
-  const spawnChance = Math.min(1.0, 0.95 + (gameState.currentLevel - 1) * 0.01);
+  // Chance de spawn (reduzida para performance)
+  const spawnChance = Math.min(0.8, 0.7 + (gameState.currentLevel - 1) * 0.01);
 
   if (lowestHordeY > spawnY && Math.random() < spawnChance) {
     // Balancear inimigos baseado no tamanho do exército
     const playerCount = entities.playerArmy.soldiers.filter(s => s.isAlive).length;
 
-    // Multiplicador escala infinitamente com o nível
-    const baseMultiplier = 0.3 + Math.random() * 0.5;
+    // Multiplicador REDUZIDO para performance
+    const baseMultiplier = 0.2 + Math.random() * 0.3; // Reduzido de 0.3-0.8 para 0.2-0.5
     // Bônus exponencial suave para garantir dificuldade crescente
     const levelBonus = 1 + (gameState.currentLevel - 1) * 0.1; // +10% por level
 
     const multiplier = baseMultiplier * levelBonus;
     const baseEnemies = Math.floor(playerCount * multiplier);
 
-    // Limites de inimigos - escala infinita
-    const minEnemies = 8 + gameState.currentLevel * 2; // Sempre aumenta o mínimo
+    // Limites de inimigos - escala infinita mas menor quantidade
+    const minEnemies = 5 + gameState.currentLevel * 1; // Reduzido
 
-    // Máximo escala sem teto fixo
-    const maxEnemies = 100 + gameState.currentLevel * 50;
+    // Máximo reduzido para performance
+    const maxEnemies = 60 + gameState.currentLevel * 30; // Reduzido de 100+50*L para 60+30*L
 
     // Calcula quantidade final sem restrição global
     const enemyCount = Math.floor(Math.min(maxEnemies, Math.max(minEnemies, baseEnemies)));
@@ -157,5 +164,6 @@ export function updateSpawns(entities: Entities, canvasWidth: number, gameState:
   spawnEnemies(entities, canvasWidth, gameState, canvasHeight);
   spawnMiniBoss(entities, canvasWidth, gameState, canvasHeight);
   spawnMysteryBoxes(entities, canvasWidth, gameState);
+  spawnCoins(entities, canvasWidth, gameState);
   checkBossSpawn(entities, canvasWidth, gameState, canvasHeight);
 }

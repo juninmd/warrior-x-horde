@@ -1,8 +1,9 @@
 // collisions.ts - Sistema de colisões
-import { Entities, GameState, Army, EnemyHorde, Gate, MiniBoss, MysteryBox } from './types';
+import { Entities, GameState, Army, EnemyHorde, Gate, MiniBoss, MysteryBox, Coin } from './types';
 import { addSoldiersToArmy, multiplySoldiersInArmy, removeSoldiersFromArmy, addSuperSoldiersToArmy, addSpecialSoldiersToArmy } from './entities';
 import { addFloatingText, addExplosion, addParticle } from './renderer';
 import { playSound, audioManager } from './audio';
+import { vibrate } from './input';
 
 function getArmyBounds(army: Army): { left: number; right: number; top: number; bottom: number } {
   if (army.soldiers.length === 0) {
@@ -44,9 +45,7 @@ function getGateForArmyCenter(army: Army, gates: Gate[]): Gate | null {
   return null;
 }
 
-function checkGateCollision(army: Army, gate: Gate): boolean {
-  const bounds = getArmyBounds(army);
-
+function checkGateCollision(army: Army, gate: Gate, bounds: { left: number; right: number; top: number; bottom: number }): boolean {
   // Usar o CENTRO do exército para determinar colisão
   const armyCenterX = army.centerX;
 
@@ -114,16 +113,17 @@ function applyGateEffect(army: Army, gate: Gate, gameState: GameState, entities:
   // Tocar som apropriado
   if (isPositive) {
     playSound(audioManager.powerUp);
+    vibrate(20);
   } else {
     playSound(audioManager.nerf);
+    vibrate(40);
   }
 
   gameState.score += Math.max(0, afterCount - beforeCount) * 10;
   gate.passed = true;
 }
 
-function checkHordeCollision(army: Army, horde: EnemyHorde): boolean {
-  const bounds = getArmyBounds(army);
+function checkHordeCollision(army: Army, horde: EnemyHorde, bounds: { left: number; right: number; top: number; bottom: number }): boolean {
   const hordeTop = horde.y - horde.height / 2;
   const hordeBottom = horde.y + horde.height / 2;
 
@@ -159,6 +159,7 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
       // Efeito visual épico de vitória
       addExplosion(horde.x, horde.y, '#FFD700');
       addParticle(horde.x, horde.y, 'star', '#FFD700', 3);
+      vibrate(30);
 
       // Mostrar combo a partir de 2x
       if (gameState.combo >= 2) {
@@ -215,6 +216,7 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
     addExplosion(horde.x, horde.y, '#FFD700');
     addParticle(horde.x, horde.y, 'star', '#FFD700', 8);
     addFloatingText('VICTORY!', horde.x, horde.y, '#FFD700');
+    vibrate(30);
   }
 
   // Screen shake
@@ -232,10 +234,8 @@ function getComboColor(combo: number): string {
 }
 
 // Verificar colisão com mini-boss
-function checkMiniBossCollision(army: Army, miniBoss: MiniBoss): boolean {
+function checkMiniBossCollision(army: Army, miniBoss: MiniBoss, bounds: { left: number; right: number; top: number; bottom: number }): boolean {
   if (!miniBoss.isActive) return false;
-
-  const bounds = getArmyBounds(army);
 
   return bounds.bottom > miniBoss.y &&
     bounds.top < miniBoss.y + miniBoss.height &&
@@ -281,9 +281,13 @@ function processMiniBossBattle(army: Army, miniBoss: MiniBoss, gameState: GameSt
   if (miniBoss.hp <= 0) {
     miniBoss.isActive = false;
     gameState.score += 300;
+    // Reward coins
+    gameState.coins += 50;
     addExplosion(miniBoss.x + miniBoss.width / 2, miniBoss.y + miniBoss.height / 2, '#FF4500');
     addParticle(miniBoss.x + miniBoss.width / 2, miniBoss.y + miniBoss.height / 2, 'star', '#FF4500', 10);
     addFloatingText('MINI-BOSS DEFEATED!', miniBoss.x + miniBoss.width / 2, miniBoss.y, '#FF4500');
+    addFloatingText('+$50', miniBoss.x + miniBoss.width / 2, miniBoss.y - 30, '#FFD700');
+    vibrate(50);
   }
 
   // Screen shake menor para mini-boss
@@ -292,10 +296,9 @@ function processMiniBossBattle(army: Army, miniBoss: MiniBoss, gameState: GameSt
   gameState.screenShakeDuration = 50;
 }
 
-function checkBossCollision(army: Army, entities: Entities): boolean {
+function checkBossCollision(army: Army, entities: Entities, bounds: { left: number; right: number; top: number; bottom: number }): boolean {
   if (!entities.boss || !entities.boss.isActive) return false;
 
-  const bounds = getArmyBounds(army);
   const boss = entities.boss;
 
   return bounds.bottom > boss.y &&
@@ -304,9 +307,18 @@ function checkBossCollision(army: Army, entities: Entities): boolean {
     bounds.left < boss.x + boss.width;
 }
 
-function checkMysteryBoxCollision(army: Army, box: MysteryBox): boolean {
+function checkCoinCollision(army: Army, coin: Coin, bounds: { left: number; right: number; top: number; bottom: number }): boolean {
+  if (coin.passed) return false;
+
+  // Simple bounding box check
+  return bounds.bottom > coin.y - coin.height/2 &&
+         bounds.top < coin.y + coin.height/2 &&
+         bounds.right > coin.x - coin.width/2 &&
+         bounds.left < coin.x + coin.width/2;
+}
+
+function checkMysteryBoxCollision(army: Army, box: MysteryBox, bounds: { left: number; right: number; top: number; bottom: number }): boolean {
   if (box.passed) return false;
-  const bounds = getArmyBounds(army);
 
   return bounds.bottom > box.y &&
     bounds.top < box.y + box.height &&
@@ -322,12 +334,17 @@ function applyMysteryBoxEffect(army: Army, box: MysteryBox, gameState: GameState
     'invincible',
     'bazooka',
     'rambo',
-    'laser'
+    'laser',
+    'divide',
+    'subtract',
+    'slow'
   ];
 
   const effect = effects[Math.floor(Math.random() * effects.length)];
+  let isGood = true;
 
   switch (effect) {
+    // Efeitos Bons
     case 'reinforcements':
       addSoldiersToArmy(army, 30);
       addFloatingText('REINFORCEMENTS!', box.x, box.y, '#2ECC71');
@@ -362,19 +379,38 @@ function applyMysteryBoxEffect(army: Army, box: MysteryBox, gameState: GameState
       addSpecialSoldiersToArmy(army, 'laser', 6);
       addFloatingText('LASER SQUAD!', box.x, box.y, '#00ffff');
       break;
+
+    // Efeitos Ruins (Nerfs)
+    case 'divide':
+      removeSoldiersFromArmy(army, Math.floor(army.soldiers.length * 0.5));
+      addFloatingText('DIVIDE & CONQUERED!', box.x, box.y, '#FF0000');
+      isGood = false;
+      break;
+    case 'subtract':
+      removeSoldiersFromArmy(army, 15);
+      addFloatingText('AMBUSH!', box.x, box.y, '#FF0000');
+      isGood = false;
+      break;
+    case 'slow':
+      army.fireRate = Math.min(1000, army.fireRate * 1.5); // Atira mais devagar
+      addFloatingText('JAMMED WEAPONS!', box.x, box.y, '#FF0000');
+      isGood = false;
+      break;
   }
 
   box.passed = true;
-  playSound(audioManager.powerUp); // Reutilizar som de powerup
-  addParticle(box.x + box.width/2, box.y + box.height/2, 'star', '#FFFFFF', 10);
+  playSound(isGood ? audioManager.powerUp : audioManager.nerf);
+  addParticle(box.x + box.width/2, box.y + box.height/2, 'star', isGood ? '#FFFFFF' : '#FF0000', 10);
 }
 
 export function checkCollisions(entities: Entities, gameState: GameState): void {
   const army = entities.playerArmy;
+  // OTIMIZAÇÃO: Calcular bounds uma vez por frame
+  const bounds = getArmyBounds(army);
 
   // Checar colisão com gates
   for (const gate of entities.gates) {
-    if (checkGateCollision(army, gate)) {
+    if (checkGateCollision(army, gate, bounds)) {
       applyGateEffect(army, gate, gameState, entities);
 
       // Marcar o gate do outro lado como "passed" também (mesmo Y = mesmo par)
@@ -388,7 +424,7 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
 
   // Checar colisão com hordas
   for (const horde of entities.enemyHordes) {
-    if (checkHordeCollision(army, horde)) {
+    if (checkHordeCollision(army, horde, bounds)) {
       gameState.isBattling = true;
       processBattle(army, horde, gameState);
     }
@@ -396,7 +432,7 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
 
   // Checar colisão com mini-bosses (batalha igual às hordas)
   for (const miniBoss of entities.miniBosses) {
-    if (checkMiniBossCollision(army, miniBoss)) {
+    if (checkMiniBossCollision(army, miniBoss, bounds)) {
       gameState.isBattling = true;
       processMiniBossBattle(army, miniBoss, gameState);
     }
@@ -404,28 +440,84 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
 
   // Checar colisão com Mystery Boxes
   for (const box of entities.mysteryBoxes) {
-    if (checkMysteryBoxCollision(army, box)) {
+    if (checkMysteryBoxCollision(army, box, bounds)) {
       applyMysteryBoxEffect(army, box, gameState, entities);
     }
   }
 
+  // Checar colisão com Coins
+  for (const coin of entities.coins) {
+    if (checkCoinCollision(army, coin, bounds)) {
+      coin.passed = true;
+      gameState.coins += coin.value;
+      playSound(audioManager.powerUp); // Reusing powerUp sound for now
+      addFloatingText(`+$${coin.value}`, coin.x, coin.y, '#FFD700');
+      addParticle(coin.x, coin.y, 'spark', '#FFD700', 3);
+    }
+  }
+
+  // Checar tiros nas Mystery Boxes (para destruir)
+  entities.mysteryBoxes.forEach(box => {
+    if (!box.passed) {
+       entities.bullets.forEach(bullet => {
+         if (!bullet.isEnemy &&
+             bullet.x > box.x && bullet.x < box.x + box.width &&
+             bullet.y > box.y && bullet.y < box.y + box.height) {
+
+           box.hp -= bullet.damage;
+           bullet.y = -1000; // Remover bala
+
+           if (box.hp <= 0 && !box.passed) {
+             box.passed = true;
+             addExplosion(box.x + box.width/2, box.y + box.height/2, '#FFFFFF');
+             addFloatingText('DESTROYED!', box.x, box.y, '#FFFFFF');
+           }
+         }
+       });
+    }
+  });
+
   // Checar colisão com boss
-  if (checkBossCollision(army, entities) && entities.boss) {
-    // Dano ao boss baseado no número de soldados atirando
-    const damage = army.soldiers.filter(s => s.isAlive).length * army.damage * 0.1;
-    entities.boss.hp -= damage;
+  if (checkBossCollision(army, entities, bounds) && entities.boss) {
+    gameState.isBattling = true;
+
+    // Boss causa dano ao jogador ao contato (esmagamento)
+    if (entities.playerArmy.soldiers.length > 0) {
+        const casualties = 2; // Mata 2 por frame
+        for (let i = 0; i < casualties && army.soldiers.length > 0; i++) {
+            const idx = army.soldiers.findIndex(s => s.isAlive);
+            if (idx >= 0) {
+              const soldier = army.soldiers[idx];
+              addExplosion(soldier.x, soldier.y, '#4A90D9');
+              army.soldiers[idx].isAlive = false;
+            }
+        }
+        // Limpar soldados mortos
+        army.soldiers = army.soldiers.filter(s => s.isAlive);
+    }
+
+    // Dano ao boss baseado no número de soldados atirando (contato também dá dano?)
+    // O usuário disse "dar dano e receber ao encostar".
+    // Recebe dano por contato físico (tipo ataque suicida ou melee)
+    const contactDamage = 5;
+    entities.boss.hp -= contactDamage;
 
     if (entities.boss.hp <= 0) {
       entities.boss.isActive = false;
       gameState.isVictory = true;
       gameState.score += 1000;
+      // Reward coins
+      gameState.coins += 500;
       addFloatingText('BOSS DEFEATED!', entities.boss.x + 50, entities.boss.y, '#FFD700');
+      addFloatingText('+$500', entities.boss.x + 50, entities.boss.y - 40, '#FFD700');
+      vibrate(100);
     }
   }
 
   // Checar game over
   if (army.soldiers.filter(s => s.isAlive).length <= 0) {
     gameState.isGameOver = true;
+    vibrate(200);
     if (gameState.score > gameState.highScore) {
       gameState.highScore = gameState.score;
       localStorage.setItem('crowdHighScore', gameState.highScore.toString());

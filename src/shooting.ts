@@ -2,6 +2,10 @@
 import { Entities, GameState, Bullet, Army, EnemyHorde, Boss, Soldier, MiniBoss } from './types';
 import { addFloatingText, addExplosion, addParticle } from './renderer';
 import { ObjectPool } from './pool';
+import { SpatialHashGrid } from './spatial';
+
+// Grid espacial para otimização de colisão (Célula de 120px cobre bem grupos de inimigos)
+const enemyGrid = new SpatialHashGrid(120);
 
 const bulletPool = new ObjectPool<Bullet>(
   () => ({ x: 0, y: 0, targetX: 0, targetY: 0, speed: 0, damage: 0, isEnemy: false }),
@@ -32,18 +36,28 @@ function findNearestTarget(shooter: Soldier, hordes: EnemyHorde[], boss: Boss | 
   let nearestDist = Infinity;
   let nearest: { x: number; y: number } | null = null;
 
+  // OTIMIZAÇÃO: Checar distância da horda primeiro
+  const MAX_TARGET_DIST = 600; // Não atirar se muito longe
+
   // Procurar inimigos nas hordas
   for (const horde of hordes) {
     if (!horde.isActive || horde.soldiers.length === 0) continue;
 
+    // Se horda estiver muito longe, nem checar soldados
+    const hordeDist = Math.abs(horde.y - shooter.y);
+    if (hordeDist > MAX_TARGET_DIST) continue;
+
     // Encontrar o soldado inimigo mais próximo, não apenas o centro da horda
     for (const enemy of horde.soldiers) {
       if (!enemy.isAlive) continue;
-      const dx = enemy.x - shooter.x;
       const dy = enemy.y - shooter.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
       // Só mirar em inimigos que estão na frente (acima)
-      if (dist < nearestDist && enemy.y < shooter.y) {
+      if (dy >= 0) continue;
+
+      const dx = enemy.x - shooter.x;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < nearestDist) {
         nearestDist = dist;
         nearest = { x: enemy.x, y: enemy.y };
       }
@@ -257,92 +271,121 @@ export function updateBullets(entities: Entities, gameState: GameState): void {
     }
   }
 
+  const playerBullets = entities.bullets.filter(b => !b.isEnemy);
+  // Se não houver balas do jogador, não precisamos popular a grid nem verificar colisões complexas
+  // Mas ainda precisamos processar colisões das balas inimigas com o jogador?
+  // O código original de colisão bala inimiga x jogador NÃO estava nesta função, mas sim em checkCollisions (talvez?)
+  // Verificando o código original... Não, checkBulletSoldierCollision era usado aqui.
+  // ESPERA! O loop original iterava sobre TODAS as balas e dava "continue" se bullet.isEnemy.
+  // Então aqui só processamos balas do jogador acertando inimigos.
+
+  if (playerBullets.length > 0) {
+    // 1. Popular a Grid Espacial com Inimigos (Soldados e MiniBosses)
+    enemyGrid.clear();
+
+    // Hordas
+    for (const horde of entities.enemyHordes) {
+      if (!horde.isActive || horde.y < 100) continue;
+      for (const soldier of horde.soldiers) {
+        if (soldier.isAlive && soldier.y >= 100) {
+          enemyGrid.insert({
+            x: soldier.x - soldier.size,
+            y: soldier.y - soldier.size,
+            width: soldier.size * 2,
+            height: soldier.size * 2,
+            ref: { type: 'soldier', obj: soldier, horde: horde }
+          });
+        }
+      }
+    }
+
+    // MiniBosses
+    for (const mb of entities.miniBosses) {
+      if (!mb.isActive || mb.y < 50) continue;
+      enemyGrid.insert({
+        x: mb.x,
+        y: mb.y,
+        width: mb.width,
+        height: mb.height,
+        ref: { type: 'miniboss', obj: mb }
+      });
+    }
+  }
+
   for (let i = entities.bullets.length - 1; i >= 0; i--) {
     const bullet = entities.bullets[i];
     if (bullet.isEnemy) continue;
 
     let bulletHit = false;
 
-    // Colisão com hordas (só inimigos visíveis - y > 100)
-    for (const horde of entities.enemyHordes) {
-      if (!horde.isActive || bulletHit) continue;
+    // Usar a Grid para buscar candidatos a colisão
+    // Área de consulta: Posição da bala +/- 10px
+    const nearby = enemyGrid.query(bullet.x - 10, bullet.y - 10, 20, 20);
 
-      // Horda precisa estar visível (abaixo da área de fadeIn)
-      if (horde.y < 100) continue;
+    for (const item of nearby) {
+      if (bulletHit) break;
 
-      for (let j = horde.soldiers.length - 1; j >= 0; j--) {
-        const soldier = horde.soldiers[j];
-        if (!soldier.isAlive) continue;
+      if (item.ref.type === 'soldier') {
+        const soldier = item.ref.obj as Soldier;
+        const horde = item.ref.horde as EnemyHorde;
 
-        // Soldado precisa estar visível
-        if (soldier.y < 100) continue;
-
-        if (checkBulletSoldierCollision(bullet, soldier)) {
-          // Aplicar dano ao HP do inimigo
+        if (horde.isActive && soldier.isAlive && checkBulletSoldierCollision(bullet, soldier)) {
+          // Aplicar dano
           soldier.hp -= bullet.damage;
-
-          // Efeito visual de impacto
           addExplosion(soldier.x, soldier.y, '#E74C3C');
 
-          // Só remove se HP <= 0
           if (soldier.hp <= 0) {
-            horde.soldiers.splice(j, 1);
-            horde.count = horde.soldiers.length;
-            gameState.score += 10;
+            // Encontrar index para remover (pode ser lento, mas só acontece na morte)
+            const idx = horde.soldiers.indexOf(soldier);
+            if (idx > -1) {
+              horde.soldiers.splice(idx, 1);
+              horde.count = horde.soldiers.length;
+              gameState.score += 10;
 
-            if (horde.soldiers.length === 0) {
-              horde.isActive = false;
-              gameState.score += 50;
-              addFloatingText('HORDE DESTROYED!', horde.x, horde.y, '#FFD700');
-              addParticle(horde.x, horde.y, 'star', '#FFD700', 8);
+              if (horde.soldiers.length === 0) {
+                horde.isActive = false;
+                gameState.score += 50;
+                addFloatingText('HORDE DESTROYED!', horde.x, horde.y, '#FFD700');
+                addParticle(horde.x, horde.y, 'star', '#FFD700', 8);
+              }
             }
           }
 
           bulletPool.release(bullet);
           entities.bullets.splice(i, 1);
           bulletHit = true;
-          break;
         }
-      }
-    }
+      } else if (item.ref.type === 'miniboss') {
+        const miniBoss = item.ref.obj as MiniBoss;
 
-    if (bulletHit) continue;
+        // Colisão AABB simples para MiniBoss
+        if (bullet.x > miniBoss.x && bullet.x < miniBoss.x + miniBoss.width &&
+            bullet.y > miniBoss.y && bullet.y < miniBoss.y + miniBoss.height) {
 
-    // Colisão com mini-bosses (só se visíveis)
-    for (const miniBoss of entities.miniBosses) {
-      if (!miniBoss.isActive || bulletHit) continue;
+          miniBoss.hp -= bullet.damage;
+          addExplosion(bullet.x, bullet.y, '#FF4500');
 
-      // Mini-boss precisa estar visível
-      if (miniBoss.y < 50) continue;
-
-      if (bullet.x > miniBoss.x && bullet.x < miniBoss.x + miniBoss.width &&
-          bullet.y > miniBoss.y && bullet.y < miniBoss.y + miniBoss.height) {
-        miniBoss.hp -= bullet.damage;
-        bulletPool.release(bullet);
-        entities.bullets.splice(i, 1);
-
-        // Efeito de impacto
-        addExplosion(bullet.x, bullet.y, '#FF4500');
-
-        if (miniBoss.hp <= 0) {
-          miniBoss.isActive = false;
-          gameState.score += 200;
-          addFloatingText('MINI-BOSS!', miniBoss.x + miniBoss.width / 2, miniBoss.y, '#FF4500');
-          // Explosão do mini-boss
-          for (let k = 0; k < 3; k++) {
-            setTimeout(() => {
-              addExplosion(miniBoss.x + Math.random() * miniBoss.width, miniBoss.y + Math.random() * miniBoss.height, '#FF4500');
-            }, k * 50);
+          if (miniBoss.hp <= 0) {
+            miniBoss.isActive = false;
+            gameState.score += 200;
+            addFloatingText('MINI-BOSS!', miniBoss.x + miniBoss.width / 2, miniBoss.y, '#FF4500');
+            for (let k = 0; k < 3; k++) {
+              setTimeout(() => {
+                addExplosion(miniBoss.x + Math.random() * miniBoss.width, miniBoss.y + Math.random() * miniBoss.height, '#FF4500');
+              }, k * 50);
+            }
           }
+
+          bulletPool.release(bullet);
+          entities.bullets.splice(i, 1);
+          bulletHit = true;
         }
-        bulletHit = true;
-        break;
       }
     }
 
     if (bulletHit) continue;
 
-    // Colisão com boss
+    // Colisão com boss (separado da grid pois é único e grande)
     if (entities.boss && entities.boss.isActive) {
       const boss = entities.boss;
 
