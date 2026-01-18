@@ -65,13 +65,13 @@ function applyGateEffect(army: Army, gate: Gate, gameState: GameState, entities:
     case 'add': {
       addSoldiersToArmy(army, gate.value);
       afterCount = army.soldiers.length;
-      addFloatingText(`+${gate.value}`, gate.x + gate.width / 2, gate.y, '#2ECC71');
+      addFloatingText(`+${gate.value}`, gate.x + gate.width / 2, gate.y, '#2ECC71', 1.2);
       break;
     }
     case 'multiply': {
       multiplySoldiersInArmy(army, gate.value);
       afterCount = army.soldiers.length;
-      addFloatingText(`×${gate.value}`, gate.x + gate.width / 2, gate.y, '#3498DB');
+      addFloatingText(`×${gate.value}`, gate.x + gate.width / 2, gate.y, '#3498DB', 1.3);
       break;
     }
     case 'subtract':
@@ -92,7 +92,7 @@ function applyGateEffect(army: Army, gate: Gate, gameState: GameState, entities:
       // Multiplica o fireRate pelo valor (0.92 = ~8% mais rápido por gate)
       // Limite mínimo de 40ms para máxima cadência
       army.fireRate = Math.max(40, army.fireRate * gate.value);
-      addFloatingText(`🔥 Fire Rate UP!`, gate.x + gate.width / 2, gate.y, '#F39C12');
+      addFloatingText(`🔥 Fire Rate UP!`, gate.x + gate.width / 2, gate.y, '#F39C12', 1.2);
       break;
     }
     case 'damage': {
@@ -163,7 +163,8 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
 
       // Mostrar combo a partir de 2x
       if (gameState.combo >= 2) {
-        addFloatingText(`${gameState.combo}x COMBO! +${scoreGain}`, horde.x, horde.y - 30, getComboColor(gameState.combo));
+        const isBigCombo = gameState.combo >= 5;
+        addFloatingText(`${gameState.combo}x COMBO! +${scoreGain}`, horde.x, horde.y - 30, getComboColor(gameState.combo), isBigCombo ? 1.5 : 1.1);
       } else {
         addFloatingText(`+${scoreGain}`, horde.x, horde.y, '#FFD700');
       }
@@ -215,7 +216,7 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
 
     addExplosion(horde.x, horde.y, '#FFD700');
     addParticle(horde.x, horde.y, 'star', '#FFD700', 8);
-    addFloatingText('VICTORY!', horde.x, horde.y, '#FFD700');
+    addFloatingText('VICTORY!', horde.x, horde.y, '#FFD700', 1.3);
     vibrate(30);
   }
 
@@ -253,7 +254,7 @@ function processMiniBossBattle(army: Army, miniBoss: MiniBoss, gameState: GameSt
       gameState.score += 300;
       addExplosion(miniBoss.x + miniBoss.width / 2, miniBoss.y + miniBoss.height / 2, '#FF4500');
       addParticle(miniBoss.x + miniBoss.width / 2, miniBoss.y + miniBoss.height / 2, 'star', '#FF4500', 8);
-      addFloatingText('MINI-BOSS DEFEATED!', miniBoss.x + miniBoss.width / 2, miniBoss.y, '#FF4500');
+      addFloatingText('MINI-BOSS DEFEATED!', miniBoss.x + miniBoss.width / 2, miniBoss.y, '#FF4500', 1.4);
     }
     return;
   }
@@ -285,8 +286,8 @@ function processMiniBossBattle(army: Army, miniBoss: MiniBoss, gameState: GameSt
     gameState.coins += 50;
     addExplosion(miniBoss.x + miniBoss.width / 2, miniBoss.y + miniBoss.height / 2, '#FF4500');
     addParticle(miniBoss.x + miniBoss.width / 2, miniBoss.y + miniBoss.height / 2, 'star', '#FF4500', 10);
-    addFloatingText('MINI-BOSS DEFEATED!', miniBoss.x + miniBoss.width / 2, miniBoss.y, '#FF4500');
-    addFloatingText('+$50', miniBoss.x + miniBoss.width / 2, miniBoss.y - 30, '#FFD700');
+    addFloatingText('MINI-BOSS DEFEATED!', miniBoss.x + miniBoss.width / 2, miniBoss.y, '#FF4500', 1.4);
+    addFloatingText('+$50', miniBoss.x + miniBoss.width / 2, miniBoss.y - 30, '#FFD700', 1.5);
     vibrate(50);
   }
 
@@ -347,7 +348,7 @@ function applyMysteryBoxEffect(army: Army, box: MysteryBox, gameState: GameState
     // Efeitos Bons
     case 'reinforcements':
       addSoldiersToArmy(army, 30);
-      addFloatingText('REINFORCEMENTS!', box.x, box.y, '#2ECC71');
+      addFloatingText('REINFORCEMENTS!', box.x, box.y, '#2ECC71', 1.2);
       break;
     case 'nuke':
       // Matar todos os inimigos na tela
@@ -357,27 +358,30 @@ function applyMysteryBoxEffect(army: Army, box: MysteryBox, gameState: GameState
           addExplosion(h.x, h.y, '#FFD700');
         }
       });
-      addFloatingText('NUKE!', box.x, box.y, '#F1C40F');
+      addFloatingText('NUKE!', box.x, box.y, '#F1C40F', 2.0);
+      gameState.screenShakeActive = true;
+      gameState.screenShakeIntensity = 10;
+      gameState.screenShakeDuration = 500;
       break;
     case 'double':
       multiplySoldiersInArmy(army, 2);
-      addFloatingText('DOUBLE TROUBLE!', box.x, box.y, '#9B59B6');
+      addFloatingText('DOUBLE TROUBLE!', box.x, box.y, '#9B59B6', 1.4);
       break;
     case 'invincible':
       addSuperSoldiersToArmy(army, 5);
-      addFloatingText('HERO SQUAD!', box.x, box.y, '#FFD700');
+      addFloatingText('HERO SQUAD!', box.x, box.y, '#FFD700', 1.3);
       break;
     case 'bazooka':
       addSpecialSoldiersToArmy(army, 'bazooka', 8);
-      addFloatingText('BAZOOKA SQUAD!', box.x, box.y, '#27ae60');
+      addFloatingText('BAZOOKA SQUAD!', box.x, box.y, '#27ae60', 1.3);
       break;
     case 'rambo':
       addSpecialSoldiersToArmy(army, 'rambo', 5);
-      addFloatingText('RAMBO SQUAD!', box.x, box.y, '#e74c3c');
+      addFloatingText('RAMBO SQUAD!', box.x, box.y, '#e74c3c', 1.3);
       break;
     case 'laser':
       addSpecialSoldiersToArmy(army, 'laser', 6);
-      addFloatingText('LASER SQUAD!', box.x, box.y, '#00ffff');
+      addFloatingText('LASER SQUAD!', box.x, box.y, '#00ffff', 1.3);
       break;
 
     // Efeitos Ruins (Nerfs)
@@ -508,8 +512,8 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
       gameState.score += 1000;
       // Reward coins
       gameState.coins += 500;
-      addFloatingText('BOSS DEFEATED!', entities.boss.x + 50, entities.boss.y, '#FFD700');
-      addFloatingText('+$500', entities.boss.x + 50, entities.boss.y - 40, '#FFD700');
+      addFloatingText('BOSS DEFEATED!', entities.boss.x + 50, entities.boss.y, '#FFD700', 2.0);
+      addFloatingText('+$500', entities.boss.x + 50, entities.boss.y - 40, '#FFD700', 1.8);
       vibrate(100);
     }
   }
