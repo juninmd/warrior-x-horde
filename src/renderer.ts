@@ -263,6 +263,19 @@ function renderParticleToCache(type: Particle['type'], color: string) {
 const floatingTexts: FloatingText[] = [];
 const particles: Particle[] = [];
 
+// Pool de floating texts
+const floatingTextPool = new ObjectPool<FloatingText>(
+  () => ({ text: '', x: 0, y: 0, color: '#FFF', alpha: 1, scale: 1 }),
+  (t) => {
+    t.text = '';
+    t.x = 0;
+    t.y = 0;
+    t.color = '#FFF';
+    t.alpha = 1;
+    t.scale = 1;
+  }
+);
+
 // Pool de partículas
 const particlePool = new ObjectPool<Particle>(
   () => ({ x: 0, y: 0, vx: 0, vy: 0, color: '#FFF', size: 0, life: 0, maxLife: 0, type: 'spark' }),
@@ -402,8 +415,15 @@ function drawStar(ctx: CanvasRenderingContext2D, cx: number, cy: number, spikes:
   ctx.closePath();
 }
 
-export function addFloatingText(text: string, x: number, y: number, color: string): void {
-  floatingTexts.push({ text, x, y, color, alpha: 1, scale: 1 });
+export function addFloatingText(text: string, x: number, y: number, color: string, sizeMultiplier: number = 1): void {
+  const ft = floatingTextPool.get();
+  ft.text = text;
+  ft.x = x;
+  ft.y = y;
+  ft.color = color;
+  ft.alpha = 1;
+  ft.scale = 1 * sizeMultiplier;
+  floatingTexts.push(ft);
 }
 
 function updateFloatingTexts(): void {
@@ -412,6 +432,7 @@ function updateFloatingTexts(): void {
     floatingTexts[i].alpha -= 0.02;
     floatingTexts[i].scale += 0.02;
     if (floatingTexts[i].alpha <= 0) {
+      floatingTextPool.release(floatingTexts[i]);
       floatingTexts.splice(i, 1);
     }
   }
@@ -2442,6 +2463,65 @@ function drawSuperCannonBeam(ctx: CanvasRenderingContext2D, centerX: number, cen
   ctx.fillRect(barX, barY, barWidth, barHeight);
   ctx.fillStyle = '#FFD700';
   ctx.fillRect(barX, barY, barWidth * progress, barHeight);
+}
+
+export function drawPauseScreen(ctx: CanvasRenderingContext2D, width: number, height: number): void {
+  // Desenhar overlay de PAUSADO (Estilo Glassmorphism)
+  ctx.save();
+
+  // Fundo escurecido com blur (simulado)
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+  ctx.fillRect(0, 0, width, height);
+
+  // Painel Central
+  const panelW = 300;
+  const panelH = 180;
+  const panelX = width / 2 - panelW / 2;
+  const panelY = height / 2 - panelH / 2;
+
+  // Fundo do painel
+  ctx.fillStyle = 'rgba(30, 30, 45, 0.9)';
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(panelX, panelY, panelW, panelH, 20);
+  ctx.fill();
+  ctx.stroke();
+
+  // Título
+  ctx.fillStyle = '#FFD700';
+  ctx.font = 'bold 36px Arial';
+  ctx.textAlign = 'center';
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+  ctx.shadowBlur = 10;
+  ctx.fillText('⏸️ PAUSADO', width / 2, panelY + 60);
+  ctx.shadowBlur = 0;
+
+  // Instrução
+  ctx.fillStyle = '#CCC';
+  ctx.font = '16px Arial';
+  ctx.fillText('Toque em "Resume" para voltar', width / 2, panelY + 100);
+
+  // Botão Resume (Visual)
+  const btnW = 160;
+  const btnH = 40;
+  const btnX = width / 2 - btnW / 2;
+  const btnY = panelY + 120;
+
+  const btnGradient = ctx.createLinearGradient(btnX, btnY, btnX, btnY + btnH);
+  btnGradient.addColorStop(0, '#27ae60');
+  btnGradient.addColorStop(1, '#219150');
+
+  ctx.fillStyle = btnGradient;
+  ctx.beginPath();
+  ctx.roundRect(btnX, btnY, btnW, btnH, 20);
+  ctx.fill();
+
+  ctx.fillStyle = '#FFF';
+  ctx.font = 'bold 18px Arial';
+  ctx.fillText('▶️ RESUME', width / 2, btnY + 26);
+
+  ctx.restore();
 }
 
 export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameState: GameState): void {

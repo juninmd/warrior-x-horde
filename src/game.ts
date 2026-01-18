@@ -2,7 +2,7 @@
 import { Entities, GameState, Soldier } from './types';
 import { gameState, resetGameState } from './gameState';
 import { createInitialEntities, createEnemyHorde, createSoldier, createMysteryBox, addSpecialSoldiersToArmy, addSoldiersToArmy } from './entities';
-import { render, getShareButtonBounds, getWhatsAppButtonBounds, shareOnX, shareOnWhatsApp, addFloatingText } from './renderer';
+import { render, getShareButtonBounds, getWhatsAppButtonBounds, shareOnX, shareOnWhatsApp, addFloatingText, drawPauseScreen } from './renderer';
 import { checkCollisions } from './collisions';
 import { updateSpawns } from './spawner';
 import { updateMovement } from './movement';
@@ -432,11 +432,23 @@ function gameLoop(currentTime: number = 0): void {
 
   // Continuar loop
   if (!gameState.isGameOver) {
+    // Checar High Score em tempo real para feedback
+    if (gameState.score > gameState.highScore && gameState.highScore > 0) {
+      // Pequeno efeito visual ou som se bateu o recorde agora
+      // Poderíamos adicionar uma flag "hasBeatenHighScoreThisRun" para tocar som uma vez só
+    }
+
     requestAnimationFrame(gameLoop);
   } else {
     // Esconder botão do Super Cannon no game over
     superCannonButton.style.display = 'none';
-    superCannonButton.style.display = 'none';
+
+    // Salvar high score
+    if (gameState.score > gameState.highScore) {
+      gameState.highScore = gameState.score;
+      localStorage.setItem('crowdHighScore', gameState.highScore.toString());
+      // Efeito sonoro extra de high score poderia ser adicionado aqui
+    }
 
     // Mostrar tela de game over
     render(ctx, entities, gameState);
@@ -444,12 +456,6 @@ function gameLoop(currentTime: number = 0): void {
     // Parar música e tocar som de game over
     stopAllMusic();
     playSound(audioManager.gameOver);
-
-    // Salvar high score
-    if (gameState.score > gameState.highScore) {
-      gameState.highScore = gameState.score;
-      localStorage.setItem('crowdHighScore', gameState.highScore.toString());
-    }
   }
 }
 
@@ -498,9 +504,24 @@ function startGame(): void {
 
 // Restart no clique após game over
 canvas.addEventListener('click', (e) => {
-  if (gameState.isGameOver) {
-    const { x, y } = screenToCanvas(e.clientX, e.clientY);
+  const { x, y } = screenToCanvas(e.clientX, e.clientY);
 
+  // Se pausado, verificar clique no botão Resume
+  if (gameState.isPaused) {
+    const panelH = 180;
+    const panelY = canvas.height / 2 - panelH / 2;
+    const btnW = 160;
+    const btnH = 40;
+    const btnX = canvas.width / 2 - btnW / 2;
+    const btnY = panelY + 120;
+
+    if (x >= btnX && x <= btnX + btnW && y >= btnY && y <= btnY + btnH) {
+      togglePause();
+    }
+    return;
+  }
+
+  if (gameState.isGameOver) {
     // Verificar se clicou no botão de compartilhar X (Twitter)
     const xBounds = getShareButtonBounds();
     if (x >= xBounds.x && x <= xBounds.x + xBounds.width &&
@@ -532,11 +553,26 @@ canvas.addEventListener('click', (e) => {
 });
 
 canvas.addEventListener('touchstart', (e) => {
+  const touch = e.touches[0];
+  const { x, y } = screenToCanvas(touch.clientX, touch.clientY);
+
+  if (gameState.isPaused) {
+    e.preventDefault(); // Evitar scroll/zoom
+    const panelH = 180;
+    const panelY = canvas.height / 2 - panelH / 2;
+    const btnW = 160;
+    const btnH = 40;
+    const btnX = canvas.width / 2 - btnW / 2;
+    const btnY = panelY + 120;
+
+    if (x >= btnX && x <= btnX + btnW && y >= btnY && y <= btnY + btnH) {
+      togglePause();
+    }
+    return;
+  }
+
   if (gameState.isGameOver) {
     e.preventDefault();
-    const touch = e.touches[0];
-    const { x, y } = screenToCanvas(touch.clientX, touch.clientY);
-
     // Verificar se clicou no botão de compartilhar X (Twitter)
     const xBounds = getShareButtonBounds();
     if (x >= xBounds.x && x <= xBounds.x + xBounds.width &&
@@ -583,6 +619,13 @@ resizeCanvas(); // Configurar tamanho inicial
 setupInput(canvas);
 initializeMousePosition(canvas.width);
 initAudio(); // Inicializar sistema de áudio
+
+// Auto-pause quando a aba for trocada ou minimizada (Mobile friendly)
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && gameState.isStarted && !gameState.isGameOver && !gameState.isPaused) {
+    togglePause();
+  }
+});
 
 // Atualizar botão de mute inicial
 const muteBtn = document.getElementById('muteBtn');
