@@ -140,19 +140,36 @@ const ramboBtn = createShopButton('rambo', 100, '#e74c3c', '💪');
 const laserBtn = createShopButton('laser', 150, '#00ffff', '⚡');
 const soldierBtn = createShopButton('soldier', 50, '#4A90D9', '🛡️');
 const nukeBtn = createShopButton('nuke', 500, '#F1C40F', '☢️');
+const rechargeBtn = createShopButton('laser' /* dummy */, 200, '#FFD700', '🔋'); // Using dummy type
 
 // Customize buttons
 soldierBtn.innerHTML = `<span style="font-size: 18px;">🛡️ +10</span><br><span style="font-size: 12px;">💰 50</span>`;
 nukeBtn.innerHTML = `<span style="font-size: 18px;">☢️ NUKE</span><br><span style="font-size: 12px;">💰 500</span>`;
+rechargeBtn.innerHTML = `<span style="font-size: 18px;">🔋 RECARGA</span><br><span style="font-size: 12px;">💰 200</span>`;
 
 shopContainer.appendChild(soldierBtn);
 shopContainer.appendChild(bazookaBtn);
 shopContainer.appendChild(ramboBtn);
 shopContainer.appendChild(laserBtn);
 shopContainer.appendChild(nukeBtn);
+shopContainer.appendChild(rechargeBtn);
 
-function buyUnit(type: 'bazooka' | 'rambo' | 'laser' | 'soldier' | 'nuke', cost: number): void {
+function buyUnit(type: 'bazooka' | 'rambo' | 'laser' | 'soldier' | 'nuke' | 'recharge_super', cost: number): void {
   if (gameState.coins >= cost) {
+    if (type === 'recharge_super' && gameState.superCannonReady && !gameState.superCannonActive) {
+       // Se já está pronto e não está ativo, não faz sentido recarregar
+       // Mas o usuário pode querer comprar mesmo assim? Melhor avisar ou impedir?
+       // Vamos permitir, mas idealmente seria bom feedback visual.
+       // Ou melhor: se cooldown < 1s, nem compra.
+       const now = Date.now();
+       const cooldownRemaining = Math.max(0, gameState.superCannonCooldown - (now - gameState.superCannonLastUsed));
+       if (cooldownRemaining <= 0) {
+          // Já está pronto, não gasta dinheiro
+          addFloatingText('READY!', entities.playerArmy.centerX, entities.playerArmy.centerY, '#FFD700');
+          return;
+       }
+    }
+
     gameState.coins -= cost;
 
     if (type === 'nuke') {
@@ -168,6 +185,11 @@ function buyUnit(type: 'bazooka' | 'rambo' | 'laser' | 'soldier' | 'nuke', cost:
     } else if (type === 'soldier') {
       addSoldiersToArmy(entities.playerArmy, 10);
       addFloatingText('+10 Soldiers', entities.playerArmy.centerX, entities.playerArmy.centerY, '#4A90D9');
+      playSound(audioManager.powerUp);
+    } else if (type === 'recharge_super') {
+      gameState.superCannonLastUsed = 0; // Reset cooldown
+      gameState.superCannonReady = true;
+      addFloatingText('SUPER READY!', entities.playerArmy.centerX, entities.playerArmy.centerY, '#FFD700');
       playSound(audioManager.powerUp);
     } else {
       addSpecialSoldiersToArmy(entities.playerArmy, type, 1);
@@ -185,6 +207,7 @@ ramboBtn.addEventListener('click', (e) => { e.stopPropagation(); buyUnit('rambo'
 laserBtn.addEventListener('click', (e) => { e.stopPropagation(); buyUnit('laser', 150); });
 soldierBtn.addEventListener('click', (e) => { e.stopPropagation(); buyUnit('soldier', 50); });
 nukeBtn.addEventListener('click', (e) => { e.stopPropagation(); buyUnit('nuke', 500); });
+rechargeBtn.addEventListener('click', (e) => { e.stopPropagation(); buyUnit('recharge_super', 200); });
 
 // Touchstart específico para mobile para garantir resposta rápida
 bazookaBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); buyUnit('bazooka', 50); }, { passive: true });
@@ -192,6 +215,7 @@ ramboBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); buyUnit('r
 laserBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); buyUnit('laser', 150); }, { passive: true });
 soldierBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); buyUnit('soldier', 50); }, { passive: true });
 nukeBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); buyUnit('nuke', 500); }, { passive: true });
+rechargeBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); buyUnit('recharge_super', 200); }, { passive: true });
 
 function updateShopUI(): void {
   if (!gameState.isStarted || gameState.isGameOver) {
@@ -218,6 +242,7 @@ function updateShopUI(): void {
   updateBtn(laserBtn, 150);
   updateBtn(soldierBtn, 50);
   updateBtn(nukeBtn, 500);
+  updateBtn(rechargeBtn, 200);
 }
 
 // Botão de Super Cannon para mobile (dentro do layout, não fixed)
