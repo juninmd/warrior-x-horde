@@ -2,7 +2,7 @@
 import { Entities, GameState, FloatingText, Army, EnemyHorde, Gate, Bullet, Particle, MysteryBox, Soldier, MiniBoss } from './types';
 import { ObjectPool } from './pool';
 import { shadeColor, getBiomeColors } from './utils';
-import { COLORS, MAX_PARTICLES, MAX_RENDERED_SOLDIERS } from './constants';
+import { COLORS, MAX_PARTICLES, MAX_RENDERED_SOLDIERS, ThemeConfig } from './constants';
 import { drawGlassBadge, drawStar, drawJoystick, getComboColor } from './renderer-utils';
 import { drawBoss } from './renderer-boss';
 
@@ -412,63 +412,70 @@ function updateFloatingTexts(): void {
   }
 }
 
-function drawRoad(ctx: CanvasRenderingContext2D, gameState: GameState): void {
-  const { width, height } = ctx.canvas;
-  const time = Date.now();
-  const colors = getBiomeColors(gameState.currentLevel);
+// --- Map / Background Rendering ---
+const HORIZON_RATIO = 0.22;
 
-  // Definir linha do horizonte
-  const horizonY = height * 0.22;
-
-  // Céu com gradiente dinâmico
+function drawSky(ctx: CanvasRenderingContext2D, width: number, height: number, theme: ThemeConfig): void {
+  const horizonY = height * HORIZON_RATIO;
   const skyGradient = ctx.createLinearGradient(0, 0, 0, horizonY);
-  skyGradient.addColorStop(0, colors.sky[0]);
-  skyGradient.addColorStop(1, colors.sky[1]);
+  skyGradient.addColorStop(0, theme.colors.sky[0]);
+  skyGradient.addColorStop(1, theme.colors.sky[1]);
   ctx.fillStyle = skyGradient;
   ctx.fillRect(0, 0, width, horizonY + 10);
+}
 
-  // Sol ou Lua
-  if (gameState.currentLevel < 7) {
-    // Sol
-    const sunX = width * 0.82;
-    const sunY = height * 0.08;
-    const sunGlow = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 60);
-    sunGlow.addColorStop(0, 'rgba(255, 255, 220, 1)');
-    sunGlow.addColorStop(0.2, 'rgba(255, 240, 180, 0.9)');
-    sunGlow.addColorStop(0.5, 'rgba(255, 220, 150, 0.4)');
-    sunGlow.addColorStop(1, 'rgba(255, 200, 100, 0)');
+function drawCelestialBody(ctx: CanvasRenderingContext2D, width: number, height: number, theme: ThemeConfig): void {
+  if (theme.celestial.type === 'none') return;
+
+  const x = width * 0.82;
+  const y = height * 0.08;
+
+  if (theme.celestial.type === 'sun') {
+    const sunGlow = ctx.createRadialGradient(x, y, 0, x, y, 60);
+    sunGlow.addColorStop(0, theme.celestial.color);
+    sunGlow.addColorStop(0.2, shadeColor(theme.celestial.color, 20));
+    sunGlow.addColorStop(0.5, 'rgba(255, 255, 255, 0.2)');
+    sunGlow.addColorStop(1, 'rgba(255, 255, 255, 0)');
     ctx.fillStyle = sunGlow;
     ctx.beginPath();
-    ctx.arc(sunX, sunY, 60, 0, Math.PI * 2);
+    ctx.arc(x, y, 60, 0, Math.PI * 2);
     ctx.fill();
   } else {
-    // Lua vermelha ou roxa
-    const moonX = width * 0.82;
-    const moonY = height * 0.08;
-    ctx.fillStyle = gameState.currentLevel >= 10 ? '#E0B0FF' : '#FF4444';
-    ctx.shadowColor = gameState.currentLevel >= 10 ? '#E0B0FF' : '#FF0000';
-    ctx.shadowBlur = 20;
+    // Moon
+    ctx.fillStyle = theme.celestial.color;
+    if (theme.celestial.shadowColor) {
+      ctx.shadowColor = theme.celestial.shadowColor;
+      ctx.shadowBlur = 20;
+    }
     ctx.beginPath();
-    ctx.arc(moonX, moonY, 30, 0, Math.PI * 2);
+    ctx.arc(x, y, 30, 0, Math.PI * 2);
     ctx.fill();
     ctx.shadowBlur = 0;
   }
+}
 
-  // Nuvens ou fumaça
-  ctx.fillStyle = gameState.currentLevel >= 7 ? 'rgba(50, 0, 0, 0.5)' : 'rgba(255, 255, 255, 0.7)';
+function drawClouds(ctx: CanvasRenderingContext2D, width: number, time: number, theme: ThemeConfig): void {
+  ctx.fillStyle = theme.colors.clouds;
   const cloudOffset = (time * 0.01) % (width + 300);
+
   for (let i = 0; i < 4; i++) {
     const cx = ((i * 200 + cloudOffset) % (width + 150)) - 75;
     const cy = 25 + i * 15 + Math.sin(i) * 10;
+
+    // Simple cloud shape
     ctx.beginPath();
     ctx.ellipse(cx, cy, 40, 15, 0, 0, Math.PI * 2);
     ctx.ellipse(cx + 25, cy - 5, 30, 12, 0, 0, Math.PI * 2);
     ctx.ellipse(cx - 20, cy + 2, 25, 10, 0, 0, Math.PI * 2);
     ctx.fill();
   }
+}
 
-  // Montanhas distantes no horizonte
-  ctx.fillStyle = gameState.currentLevel >= 7 ? '#200000' : '#A8C4D8';
+function drawMountains(ctx: CanvasRenderingContext2D, width: number, height: number, theme: ThemeConfig): void {
+  const horizonY = height * HORIZON_RATIO;
+
+  // Distant mountains
+  ctx.fillStyle = theme.colors.mountain.far;
   ctx.beginPath();
   ctx.moveTo(0, horizonY);
   for (let i = 0; i <= width; i += 40) {
@@ -479,8 +486,8 @@ function drawRoad(ctx: CanvasRenderingContext2D, gameState: GameState): void {
   ctx.closePath();
   ctx.fill();
 
-  // Camada mais próxima de montanhas
-  ctx.fillStyle = gameState.currentLevel >= 7 ? '#400000' : '#7BA3BD';
+  // Near mountains
+  ctx.fillStyle = theme.colors.mountain.near;
   ctx.beginPath();
   ctx.moveTo(0, horizonY);
   for (let i = 0; i <= width; i += 50) {
@@ -490,30 +497,23 @@ function drawRoad(ctx: CanvasRenderingContext2D, gameState: GameState): void {
   ctx.lineTo(width, horizonY);
   ctx.closePath();
   ctx.fill();
+}
 
-  // === NAVE ALIENÍGENA NO CÉU (Decorativa) ===
-  if (gameState.currentLevel < 10) {
-    const shipX = width / 2;
-    const shipY = 25;
-    // Simplified ship drawing here or use the boss renderer if possible?
-    // Since it's decor, let's keep it simple here to avoid importing boss renderer for decor
-    // Actually, let's just not draw it or simplify it greatly.
-    // For now, I will omit the detailed decor ship to save space, or implement a very simple one.
-  }
+function drawGround(ctx: CanvasRenderingContext2D, width: number, height: number, theme: ThemeConfig): void {
+  const horizonY = height * HORIZON_RATIO;
 
-  // Área do chão
   const groundGradient = ctx.createLinearGradient(0, horizonY, 0, height);
-  groundGradient.addColorStop(0, colors.ground[0]);
-  groundGradient.addColorStop(1, colors.ground[1]);
+  groundGradient.addColorStop(0, theme.colors.ground[0]);
+  groundGradient.addColorStop(1, theme.colors.ground[1]);
   ctx.fillStyle = groundGradient;
   ctx.fillRect(0, horizonY, width, height - horizonY);
 
-  // Detalhes do chão
-  ctx.strokeStyle = gameState.currentLevel >= 7 ? 'rgba(255, 100, 0, 0.2)' : 'rgba(50, 100, 50, 0.15)';
+  // Ground details (textures/lines)
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
   ctx.lineWidth = 1;
   for (let y = horizonY + 20; y < height; y += 30) {
     for (let x = 0; x < width; x += 15) {
-      if (Math.random() > 0.7) {
+      if (Math.random() > 0.8) {
         ctx.beginPath();
         ctx.moveTo(x, y);
         ctx.lineTo(x + 3, y - 5);
@@ -521,16 +521,19 @@ function drawRoad(ctx: CanvasRenderingContext2D, gameState: GameState): void {
       }
     }
   }
+}
 
-  // === ESTRADA PRINCIPAL ===
+function drawRoadSurface(ctx: CanvasRenderingContext2D, width: number, height: number, theme: ThemeConfig): void {
+  const horizonY = height * HORIZON_RATIO;
   const roadStartY = horizonY;
   const roadHorizonWidth = width * 0.18;
   const roadBottomWidth = width * 0.95;
 
-  // Asfalto
+  // Road Asphalt
   const roadGradient = ctx.createLinearGradient(0, roadStartY, 0, height);
-  roadGradient.addColorStop(0, colors.road[0]);
-  roadGradient.addColorStop(1, colors.road[1]);
+  roadGradient.addColorStop(0, theme.colors.road[0]);
+  roadGradient.addColorStop(1, theme.colors.road[1]);
+
   ctx.fillStyle = roadGradient;
   ctx.beginPath();
   ctx.moveTo(width / 2 - roadHorizonWidth / 2, roadStartY);
@@ -540,10 +543,11 @@ function drawRoad(ctx: CanvasRenderingContext2D, gameState: GameState): void {
   ctx.closePath();
   ctx.fill();
 
-  // Bordas da estrada
-  ctx.fillStyle = gameState.currentLevel >= 7 ? '#1a0500' : '#8B8B7A';
+  // Road Borders
+  ctx.fillStyle = shadeColor(theme.colors.road[1], -30); // Darker border
   const borderWidth = 8;
-  // Borda esquerda
+
+  // Left border
   ctx.beginPath();
   ctx.moveTo(width / 2 - roadHorizonWidth / 2, roadStartY);
   ctx.lineTo(width / 2 - roadHorizonWidth / 2 - 3, roadStartY);
@@ -551,7 +555,8 @@ function drawRoad(ctx: CanvasRenderingContext2D, gameState: GameState): void {
   ctx.lineTo(width / 2 - roadBottomWidth / 2, height);
   ctx.closePath();
   ctx.fill();
-  // Borda direita
+
+  // Right border
   ctx.beginPath();
   ctx.moveTo(width / 2 + roadHorizonWidth / 2, roadStartY);
   ctx.lineTo(width / 2 + roadHorizonWidth / 2 + 3, roadStartY);
@@ -560,8 +565,8 @@ function drawRoad(ctx: CanvasRenderingContext2D, gameState: GameState): void {
   ctx.closePath();
   ctx.fill();
 
-  // Faixas
-  ctx.strokeStyle = '#FFD700';
+  // Center Lines
+  ctx.strokeStyle = '#FFD700'; // Standard yellow line, could be themed
   ctx.lineWidth = 4;
   ctx.setLineDash([30, 40]);
   ctx.beginPath();
@@ -570,7 +575,7 @@ function drawRoad(ctx: CanvasRenderingContext2D, gameState: GameState): void {
   ctx.stroke();
   ctx.setLineDash([]);
 
-  // Linhas laterais
+  // Side Lines
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
   ctx.lineWidth = 2;
   ctx.setLineDash([20, 30]);
@@ -583,39 +588,70 @@ function drawRoad(ctx: CanvasRenderingContext2D, gameState: GameState): void {
   ctx.lineTo(width / 2 + roadBottomWidth / 2 - 30, height);
   ctx.stroke();
   ctx.setLineDash([]);
+}
 
-  // Árvores nas laterais
+function drawDecorations(ctx: CanvasRenderingContext2D, width: number, height: number, theme: ThemeConfig): void {
+  const horizonY = height * HORIZON_RATIO;
+  const roadStartY = horizonY;
+  const roadHorizonWidth = width * 0.18;
+  const roadBottomWidth = width * 0.95;
+
   for (let i = 0; i < 8; i++) {
     const treeY = horizonY + 50 + i * 85;
     if (treeY > height - 80) continue;
+
     const progress = (treeY - horizonY) / (height - horizonY);
     const treeSize = 10 + progress * 25;
     const treeProgress = (treeY - roadStartY) / (height - roadStartY);
     const roadWidthAtY = roadHorizonWidth + (roadBottomWidth - roadHorizonWidth) * treeProgress;
+
     const leftX = (width - roadWidthAtY) / 2 - 30 - progress * 20;
-    if (leftX > 15) drawTree(ctx, leftX, treeY, treeSize, colors.tree);
+    if (leftX > 15) drawTree(ctx, leftX, treeY, treeSize, theme.colors.tree);
+
     const rightX = (width + roadWidthAtY) / 2 + 30 + progress * 20;
-    if (rightX < width - 15) drawTree(ctx, rightX, treeY, treeSize, colors.tree);
+    if (rightX < width - 15) drawTree(ctx, rightX, treeY, treeSize, theme.colors.tree);
   }
 }
 
-function drawTree(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, color: string = '#2d5a2d'): void {
+function drawTree(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, color: string): void {
+  // Shadow
   ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
   ctx.beginPath();
   ctx.ellipse(x + size * 0.2, y + size * 0.45, size * 0.35, size * 0.1, 0, 0, Math.PI * 2);
   ctx.fill();
+
+  // Trunk
   ctx.fillStyle = '#2c1e14';
   ctx.fillRect(x - size * 0.1, y, size * 0.2, size * 0.4);
+
+  // Foliage
   ctx.fillStyle = color;
   ctx.beginPath();
   ctx.arc(x, y - size * 0.2, size * 0.4, 0, Math.PI * 2);
   ctx.fill();
+
+  // Highlight
   ctx.fillStyle = shadeColor(color, 20);
   ctx.beginPath();
   ctx.arc(x - size * 0.15, y - size * 0.1, size * 0.3, 0, Math.PI * 2);
   ctx.arc(x + size * 0.15, y - size * 0.1, size * 0.3, 0, Math.PI * 2);
   ctx.fill();
 }
+
+function drawRoad(ctx: CanvasRenderingContext2D, gameState: GameState): void {
+  const { width, height } = ctx.canvas;
+  const time = Date.now();
+  const theme = getBiomeColors(gameState.currentLevel);
+
+  drawSky(ctx, width, height, theme);
+  drawCelestialBody(ctx, width, height, theme);
+  drawClouds(ctx, width, time, theme);
+  drawMountains(ctx, width, height, theme);
+  drawGround(ctx, width, height, theme);
+  drawRoadSurface(ctx, width, height, theme);
+  drawDecorations(ctx, width, height, theme);
+}
+// ------------------------------
 
 function drawSoldier3D(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, color: string, animOffset: number, time: number, type: Soldier['type'] = 'normal', isSuper: boolean = false): void {
   // Attempt to use cached sprite
