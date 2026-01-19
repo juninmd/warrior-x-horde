@@ -97,16 +97,10 @@ const handleBuy: BuyAction = (type, cost) => {
           entities.enemyHordes.forEach(h => {
             if (h.isActive) {
               h.isActive = false;
-              // Visual effect handled in entities/renderer, but we need an explosion helper here?
-              // The original code called addExplosion directly.
-              // We should ideally let the collision system handle death or expose addExplosion.
-              // For now, simpler: just deactivate. The renderer handles explosions usually.
-              // Actually, original code imported addExplosion from renderer.
-              // We will rely on the fact that h.isActive = false cleans them up.
-              // To add explosion, we'd need to import it. Let's import it to keep feature parity.
             }
           });
           addFloatingText('NUKE!', entities.playerArmy.centerX, entities.playerArmy.centerY - 100, '#F1C40F');
+          triggerScreenShake(15, 600);
           playSound(audioManager.superCannon);
         } else if (type === 'soldier') {
           addSoldiersToArmy(entities.playerArmy, 10);
@@ -165,7 +159,7 @@ function gameLoop(currentTime: number = 0): void {
     ctx.fillText('⏸️ PAUSADO', canvas.width / 2, canvas.height / 2);
     ctx.font = '18px Arial';
     ctx.fillStyle = '#FFF';
-    ctx.fillText('Pressione P ou ESC para continuar', canvas.width / 2, canvas.height / 2 + 40);
+    ctx.fillText('Toque para continuar', canvas.width / 2, canvas.height / 2 + 40);
     ctx.restore();
     return; // Não continua o loop enquanto pausado
   }
@@ -174,19 +168,33 @@ function gameLoop(currentTime: number = 0): void {
   const deltaTime = lastTime ? currentTime - lastTime : 16;
   lastTime = currentTime;
 
+  // Normalizar delta time (base 60 FPS)
+  // Se rodar a 60fps, dtFactor = 1.
+  // Se rodar a 120fps, dtFactor = 0.5 (move metade por frame, mas tem o dobro de frames = mesma velocidade)
+  const dtFactor = deltaTime / 16.67;
+
+  // Atualizar screen shake (decay)
+  if (gameState.screenShakeTimer > 0) {
+    gameState.screenShakeTimer -= deltaTime;
+    if (gameState.screenShakeTimer <= 0) {
+      gameState.screenShakeActive = false;
+      gameState.screenShakeIntensity = 0;
+    }
+  }
+
   // Atualizar movimento
-  updateMovement(entities, gameState, canvas.width, getMouseX());
+  updateMovement(entities, gameState, canvas.width, getMouseX(), dtFactor);
 
   // Atualizar movimento das Mystery Boxes
   for (const box of entities.mysteryBoxes) {
-    box.y += gameState.gameSpeed;
+    box.y += gameState.gameSpeed * dtFactor;
   }
   // Limpar boxes que saíram da tela
   entities.mysteryBoxes = entities.mysteryBoxes.filter(box => !box.passed && box.y < 1200);
 
   // Sistema de tiro
   updateShooting(entities, gameState);
-  updateBullets(entities, gameState);
+  updateBullets(entities, gameState, dtFactor);
   updateSuperCannon(entities, gameState, deltaTime);
 
   // UI Updates
@@ -195,7 +203,7 @@ function gameLoop(currentTime: number = 0): void {
   updateShopUI(gameState);
 
   // Spawnar elementos
-  updateSpawns(entities, canvas.width, gameState, canvas.height);
+  updateSpawns(entities, canvas.width, gameState, canvas.height, dtFactor);
 
   // Verificar colisões
   checkCollisions(entities, gameState);
@@ -301,22 +309,22 @@ function startGame(): void {
   requestAnimationFrame(gameLoop);
 }
 
+// Helper function to trigger screen shake (exported to be used by other modules)
+export function triggerScreenShake(intensity: number, duration: number): void {
+  gameState.screenShakeActive = true;
+  gameState.screenShakeIntensity = intensity;
+  gameState.screenShakeDuration = duration;
+  gameState.screenShakeTimer = duration; // Timer starts at duration and counts down
+}
+
 // Restart no clique após game over
 canvas.addEventListener('click', (e) => {
   const { x, y } = screenToCanvas(e.clientX, e.clientY);
 
   // Se pausado, verificar clique no botão Resume
   if (gameState.isPaused) {
-    const panelH = 180;
-    const panelY = canvas.height / 2 - panelH / 2;
-    const btnW = 160;
-    const btnH = 40;
-    const btnX = canvas.width / 2 - btnW / 2;
-    const btnY = panelY + 120;
-
-    if (x >= btnX && x <= btnX + btnW && y >= btnY && y <= btnY + btnH) {
-      togglePause();
-    }
+    // Área central para despausar
+    togglePause();
     return;
   }
 
@@ -357,16 +365,7 @@ canvas.addEventListener('touchstart', (e) => {
 
   if (gameState.isPaused) {
     e.preventDefault(); // Evitar scroll/zoom
-    const panelH = 180;
-    const panelY = canvas.height / 2 - panelH / 2;
-    const btnW = 160;
-    const btnH = 40;
-    const btnX = canvas.width / 2 - btnW / 2;
-    const btnY = panelY + 120;
-
-    if (x >= btnX && x <= btnX + btnW && y >= btnY && y <= btnY + btnH) {
-      togglePause();
-    }
+    togglePause();
     return;
   }
 
@@ -495,7 +494,7 @@ function togglePause(): void {
   // Atualizar botão de pause
   const pauseBtn = document.getElementById('pauseBtn');
   if (pauseBtn) {
-    pauseBtn.textContent = gameState.isPaused ? '▶️ Play' : '⏸️ Pause';
+    pauseBtn.textContent = gameState.isPaused ? '▶️' : '⏸️'; // Icon only for mobile space
   }
 
   // Se despausou, continuar o game loop
@@ -569,12 +568,14 @@ function updateSuperButtonInline(): void {
   triggerSuperCannon: typeof triggerSuperCannon;
   toggleMuteUI: typeof toggleMuteUI;
   toggleFullscreen: typeof toggleFullscreen;
+  triggerScreenShake: typeof triggerScreenShake;
 }).debugSetLevel = debugSetLevel;
 
 (window as unknown as { togglePause: typeof togglePause }).togglePause = togglePause;
 (window as unknown as { triggerSuperCannon: typeof triggerSuperCannon }).triggerSuperCannon = triggerSuperCannon;
 (window as unknown as { toggleMuteUI: typeof toggleMuteUI }).toggleMuteUI = toggleMuteUI;
 (window as unknown as { toggleFullscreen: typeof toggleFullscreen }).toggleFullscreen = toggleFullscreen;
+(window as unknown as { triggerScreenShake: typeof triggerScreenShake }).triggerScreenShake = triggerScreenShake;
 
 // Adicionar atalho de teclado para pause (P ou Escape)
 document.addEventListener('keydown', (e) => {

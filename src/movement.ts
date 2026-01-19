@@ -1,21 +1,21 @@
 // movement.ts - Sistema de movimento
 import { Entities, GameState, Army } from './types';
 
-export function updateArmyPosition(army: Army, targetX: number, canvasWidth: number): void {
+export function updateArmyPosition(army: Army, targetX: number, canvasWidth: number, dtFactor: number): void {
   // Limitar movimento horizontal
   const minX = 50;
   const maxX = canvasWidth - 50;
   army.targetX = Math.max(minX, Math.min(maxX, targetX));
 
-  // Mover centro do exército suavemente para o target
+  // Mover centro do exército suavemente para o target (ajustado por delta time)
   const dx = army.targetX - army.centerX;
-  army.centerX += dx * 0.1;
+  army.centerX += dx * 0.1 * dtFactor;
 
   // Atualizar posição de cada soldado
-  updateSoldierFormation(army);
+  updateSoldierFormation(army, dtFactor);
 }
 
-export function updateSoldierFormation(army: Army): void {
+export function updateSoldierFormation(army: Army, dtFactor: number): void {
   const aliveSoldiers = army.soldiers.filter(s => s.isAlive);
   const count = aliveSoldiers.length;
 
@@ -42,8 +42,8 @@ export function updateSoldierFormation(army: Army): void {
       soldier.targetY = army.centerY + Math.sin(angle) * ringRadius * 0.6; // 0.6 para efeito 3D
 
       // Movimento suave para a posição alvo
-      soldier.x += (soldier.targetX - soldier.x) * 0.15;
-      soldier.y += (soldier.targetY - soldier.y) * 0.15;
+      soldier.x += (soldier.targetX - soldier.x) * 0.15 * dtFactor;
+      soldier.y += (soldier.targetY - soldier.y) * 0.15 * dtFactor;
 
       soldierIndex++;
     }
@@ -51,7 +51,7 @@ export function updateSoldierFormation(army: Army): void {
   }
 }
 
-export function moveEntitiesDown(entities: Entities, gameState: GameState): void {
+export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFactor: number): void {
   if (gameState.isGameOver || gameState.isPaused) return;
 
   // Não mover se está em vitória (transição de nível)
@@ -61,12 +61,12 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState): void
   // Gates começam lentos e ficam mais rápidos com o level (2.5x no level 1, até 5x no level 10+)
   // Limite máximo de velocidade (4.0x) para não ficar impossível de pegar
   const gateSpeedMultiplier = Math.min(4.0, 2.5 + (gameState.currentLevel - 1) * 0.25);
-  const gateSpeed = baseSpeed * gateSpeedMultiplier;
+  const gateSpeed = baseSpeed * gateSpeedMultiplier * dtFactor;
 
   // Inimigos começam BEM lentos e aceleram aos poucos com o level
   // Level 1: 0.25x, Level 5: 0.45x, Level 10: 0.70x
   const enemySpeedMultiplier = Math.min(0.8, 0.25 + (gameState.currentLevel - 1) * 0.05);
-  const enemySpeed = baseSpeed * enemySpeedMultiplier;
+  const enemySpeed = baseSpeed * enemySpeedMultiplier * dtFactor;
 
   const canvasHeight = 800;
   const pursuitThreshold = canvasHeight * 0.6;
@@ -92,14 +92,14 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState): void
     if (horde.y > pursuitThreshold && horde.isActive) {
       const targetX = entities.playerArmy.centerX;
       const dx = targetX - horde.x;
-      horde.x += dx * 0.03;
+      horde.x += dx * 0.03 * dtFactor;
 
       // Limitar dentro da estrada
       horde.x = Math.max(roadMinX, Math.min(roadMaxX, horde.x));
     }
 
     // Atualizar formação circular dos soldados da horda
-    updateHordeFormation(horde, enemySpeed);
+    updateHordeFormation(horde, enemySpeed, dtFactor);
   }
 
   // Mover boss - comportamento diferente para nave mãe
@@ -114,8 +114,8 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState): void
       if (boss.vy === undefined) boss.vy = (Math.random() - 0.5) * 0.5;
 
       // Movimento suave
-      boss.x += boss.vx;
-      boss.y += boss.vy;
+      boss.x += boss.vx * dtFactor;
+      boss.y += boss.vy * dtFactor;
 
       // Limites horizontais (margem de 20px)
       const minX = 20;
@@ -139,8 +139,8 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState): void
         boss.vy = -Math.abs(boss.vy) * (0.8 + Math.random() * 0.4);
       }
 
-      // Mudança aleatória de direção ocasional
-      if (Math.random() < 0.02) {
+      // Mudança aleatória de direção ocasional (ajustada para delta time)
+      if (Math.random() < 0.02 * dtFactor) {
         boss.vx += (Math.random() - 0.5) * 0.5;
         boss.vy += (Math.random() - 0.5) * 0.2;
         // Limitar velocidade máxima
@@ -154,7 +154,7 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState): void
 
       // Primeiro, mover até a posição inicial (y = 100)
       if (boss.y < 100) {
-        boss.y += baseSpeed;
+        boss.y += baseSpeed * dtFactor;
       } else if (timeSinceSpawn > waitTime) {
         // Após 10 segundos, começa a avançar igual aos inimigos comuns
         boss.isMoving = true;
@@ -174,7 +174,7 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState): void
         // Boss também persegue o jogador horizontalmente (lentamente)
         const targetX = entities.playerArmy.centerX - boss.width / 2;
         const dx = targetX - boss.x;
-        boss.x += dx * 0.01;
+        boss.x += dx * 0.01 * dtFactor;
       }
     }
   }
@@ -198,7 +198,7 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState): void
     if (!miniBoss.isActive) continue;
 
     // Mini-boss se move mais devagar verticalmente
-    const miniBossSpeed = baseSpeed * 0.4; // 40% da velocidade base (bem lento)
+    const miniBossSpeed = baseSpeed * 0.4 * dtFactor; // 40% da velocidade base (bem lento)
 
     if (miniBoss.y < 200) {
       miniBoss.y += miniBossSpeed;
@@ -209,7 +209,7 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState): void
       // Mini-boss persegue o jogador horizontalmente (lentamente)
       const targetX = entities.playerArmy.centerX - miniBoss.width / 2;
       const dx = targetX - miniBoss.x;
-      miniBoss.x += dx * 0.015; // Perseguição mais lenta
+      miniBoss.x += dx * 0.015 * dtFactor; // Perseguição mais lenta
     }
   }
 
@@ -217,16 +217,18 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState): void
   entities.miniBosses = entities.miniBosses.filter(mb => mb.isActive && mb.y < 1000);
 
   // Mover bullets
-  for (const bullet of entities.bullets) {
-    bullet.y += bullet.speed;
-  }
+  // REMOVIDO: A movimentação de bullets foi movida para updateBullets em shooting.ts
+  // Isso evita duplicação de lógica, já que updateBullets já é chamado no game loop.
+  // for (const bullet of entities.bullets) {
+  //   bullet.y += bullet.speed * dtFactor;
+  // }
 
   // Atualizar distância percorrida (baseado na velocidade dos gates)
   gameState.distanceTraveled += gateSpeed;
 }
 
 // Atualizar formação circular da horda inimiga
-function updateHordeFormation(horde: { x: number; y: number; soldiers: { x: number; y: number; targetX: number; targetY: number; isAlive: boolean }[]; isActive: boolean }, speed: number): void {
+function updateHordeFormation(horde: { x: number; y: number; soldiers: { x: number; y: number; targetX: number; targetY: number; isAlive: boolean }[]; isActive: boolean }, speed: number, dtFactor: number): void {
   const aliveSoldiers = horde.soldiers.filter(s => s.isAlive);
   const count = aliveSoldiers.length;
 
@@ -250,8 +252,8 @@ function updateHordeFormation(horde: { x: number; y: number; soldiers: { x: numb
       soldier.targetY = horde.y + Math.sin(angle) * ringRadius * 0.5;
 
       // Movimento suave para a posição alvo
-      soldier.x += (soldier.targetX - soldier.x) * 0.1;
-      soldier.y += (soldier.targetY - soldier.y) * 0.1 + speed;
+      soldier.x += (soldier.targetX - soldier.x) * 0.1 * dtFactor;
+      soldier.y += (soldier.targetY - soldier.y) * 0.1 * dtFactor + speed;
 
       soldierIndex++;
     }
@@ -259,7 +261,7 @@ function updateHordeFormation(horde: { x: number; y: number; soldiers: { x: numb
   }
 }
 
-export function updateMovement(entities: Entities, gameState: GameState, canvasWidth: number, targetX: number): void {
-  updateArmyPosition(entities.playerArmy, targetX, canvasWidth);
-  moveEntitiesDown(entities, gameState);
+export function updateMovement(entities: Entities, gameState: GameState, canvasWidth: number, targetX: number, dtFactor: number): void {
+  updateArmyPosition(entities.playerArmy, targetX, canvasWidth, dtFactor);
+  moveEntitiesDown(entities, gameState, dtFactor);
 }

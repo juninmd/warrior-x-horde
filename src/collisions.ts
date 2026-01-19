@@ -4,6 +4,7 @@ import { addSoldiersToArmy, multiplySoldiersInArmy, removeSoldiersFromArmy, addS
 import { addFloatingText, addExplosion, addParticle } from './renderer';
 import { playSound, audioManager } from './audio';
 import { vibrate } from './input';
+import { triggerScreenShake } from './game';
 import { getArmyBounds, checkBounds, getEntityBounds, Rect } from './utils';
 import { COLORS } from './constants';
 
@@ -145,9 +146,7 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
     vibrate(30);
   }
 
-  gameState.screenShakeActive = true;
-  gameState.screenShakeIntensity = 5;
-  gameState.screenShakeDuration = 100;
+  triggerScreenShake(5, 100);
 }
 
 function processMiniBossBattle(army: Army, miniBoss: MiniBoss, gameState: GameState): void {
@@ -191,9 +190,7 @@ function processMiniBossBattle(army: Army, miniBoss: MiniBoss, gameState: GameSt
     vibrate(50);
   }
 
-  gameState.screenShakeActive = true;
-  gameState.screenShakeIntensity = 3;
-  gameState.screenShakeDuration = 50;
+  triggerScreenShake(3, 50);
 }
 
 function applyMysteryBoxEffect(army: Army, box: MysteryBox, gameState: GameState, entities: Entities): void {
@@ -216,9 +213,7 @@ function applyMysteryBoxEffect(army: Army, box: MysteryBox, gameState: GameState
         }
       });
       addFloatingText('NUKE!', box.x, box.y, COLORS.UI.GOLD, 2.0);
-      gameState.screenShakeActive = true;
-      gameState.screenShakeIntensity = 10;
-      gameState.screenShakeDuration = 500;
+      triggerScreenShake(10, 500);
       break;
     case 'double':
       multiplySoldiersInArmy(army, 2);
@@ -420,11 +415,4 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
     }
   }
 
-  if (gameState.screenShakeActive) {
-    gameState.screenShakeTimer += 16;
-    if (gameState.screenShakeTimer >= gameState.screenShakeDuration) {
-      gameState.screenShakeActive = false;
-      gameState.screenShakeTimer = 0;
-    }
-  }
 }

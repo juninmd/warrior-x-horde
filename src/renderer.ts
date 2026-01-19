@@ -936,11 +936,13 @@ function drawArmy(ctx: CanvasRenderingContext2D, army: Army, time: number): void
     }
   }
 
-  // Contador de soldados
+  // Contador de soldados REMOVIDO daqui pois já está no HUD unificado
+  /*
   const count = army.soldiers.filter(s => s.isAlive).length;
   if (count > 0) {
     drawGlassBadge(ctx, army.centerX - 28, army.centerY - 75, 56, 36, count.toString(), '#4A90D9');
   }
+  */
 }
 
 function drawEnemyHorde(ctx: CanvasRenderingContext2D, horde: EnemyHorde, time: number): void {
@@ -1153,43 +1155,81 @@ function drawBullets(ctx: CanvasRenderingContext2D, bullets: Bullet[]): void {
   }
 }
 
-function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: number, fireRate: number, damage: number): void {
+function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: number, fireRate: number, damage: number, army: Army): void {
   const { width, height } = ctx.canvas;
-  const bottomY = height - 30;
-  const badgeHeight = 36;
-  const progressWidth = width - 40;
-  const progressX = 20;
-  const progressY = 15;
-  const progressHeight = 8;
-  const progress = Math.min(gameState.distanceTraveled / gameState.levelDistance, 1);
+
+  // Calcular "Poder do Exército" (Soma dos pesos das unidades)
+  let armyPower = 0;
+  for (const s of army.soldiers) {
+    if (!s.isAlive) continue;
+    if (s.type === 'bazooka') armyPower += 5;
+    else if (s.type === 'rambo') armyPower += 3;
+    else if (s.type === 'laser') armyPower += 4;
+    else if (s.isSuper) armyPower += 2;
+    else armyPower += 1;
+  }
+
+  // Layout inferior unificado (Linha única)
+  const bottomY = height - 25;
+  const badgeHeight = 32;
+  const fontSize = 16;
+  const gap = 5;
+
+  // Largura total disponível = width - 20 (margens)
+  // Elementos: Score, Level, Army Power, Fire Rate, DMG.
+  // Vamos distribuir.
 
   ctx.save();
-  // Progress Bar
-  ctx.fillStyle = COLORS.UI.GLASS_BG;
-  ctx.strokeStyle = COLORS.UI.GLASS_BORDER;
+
+  // 1. Score (Esquerda)
+  drawGlassBadge(ctx, 10, bottomY - badgeHeight/2, 80, badgeHeight, `🏆 ${gameState.score}`, '#FFD700', 14);
+
+  // 2. Coins (Esquerda - Novo)
+  drawGlassBadge(ctx, 95, bottomY - badgeHeight/2, 70, badgeHeight, `💰 ${gameState.coins}`, '#F1C40F', 14);
+
+  // 3. Level (Centro-Esquerda)
+  drawGlassBadge(ctx, 170, bottomY - badgeHeight/2, 50, badgeHeight, `Lv.${gameState.currentLevel}`, '#4A90D9', 14);
+
+  // 4. Army Power (Centro)
+  drawGlassBadge(ctx, 225, bottomY - badgeHeight/2, 60, badgeHeight, `🪖 ${armyPower}`, '#2ECC71', 14);
+
+  // 5. Fire Rate (Centro-Direita)
+  const shotsPerSec = (1000 / fireRate).toFixed(1);
+  drawGlassBadge(ctx, 290, bottomY - badgeHeight/2, 70, badgeHeight, `🔥 ${shotsPerSec}/s`, '#F39C12', 14);
+
+  // 6. Damage (Direita)
+  drawGlassBadge(ctx, 365, bottomY - badgeHeight/2, 55, badgeHeight, `⚔️ ${damage}`, '#E91E63', 14);
+
+  // Coins removido do topo pois foi movido para baixo
+  // drawGlassBadge(ctx, width - 90, 30, 80, 28, `💰 ${gameState.coins}`, '#FFD700', 14);
+
+  // High Score (Topo Esquerda, pequeno)
+  if (gameState.highScore > 0) {
+    drawGlassBadge(ctx, 10, 30, 100, 24, `👑 HI: ${gameState.highScore}`, '#CCCCCC', 12);
+  }
+
+  // Progress Bar (Topo, bem fina)
+  const progressWidth = width - 40;
+  const progressX = 20;
+  const progressY = 5;
+  const progressHeight = 4;
+  const progress = Math.min(gameState.distanceTraveled / gameState.levelDistance, 1);
+
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
   ctx.beginPath();
-  ctx.roundRect(progressX - 4, progressY - 4, progressWidth + 8, progressHeight + 8, 8);
+  ctx.roundRect(progressX, progressY, progressWidth, progressHeight, 2);
   ctx.fill();
-  ctx.stroke();
   ctx.fillStyle = '#00C9FF';
   ctx.beginPath();
-  ctx.roundRect(progressX, progressY, progressWidth * progress, progressHeight, 4);
+  ctx.roundRect(progressX, progressY, progressWidth * progress, progressHeight, 2);
   ctx.fill();
 
-  // Badges
-  drawGlassBadge(ctx, 10, bottomY - badgeHeight/2, 80, badgeHeight, `Lv. ${gameState.currentLevel}`, '#4A90D9');
-  drawGlassBadge(ctx, width / 2 - 50 - 60, bottomY - badgeHeight/2, 100, badgeHeight, `${gameState.score}`, '#F1C40F');
-  drawGlassBadge(ctx, width / 2 + 50, bottomY - badgeHeight/2, 100, badgeHeight, `💰 ${gameState.coins}`, '#FFD700');
-
-  const shotsPerSec = (1000 / fireRate).toFixed(1);
-  drawGlassBadge(ctx, 10, progressY + progressHeight + 15, 100, 28, `🔥 ${shotsPerSec}/s`, '#F39C12');
-  drawGlassBadge(ctx, 120, progressY + progressHeight + 15, 80, 28, `⚔️ ${damage.toFixed(1)}`, '#E91E63');
   ctx.restore();
 
   // Combo
   if (gameState.combo > 1) {
     const comboX = width / 2;
-    const comboY = 35;
+    const comboY = 80; // Movido para baixo para não sobrepor o boss warning ou score
     const pulse = 1 + Math.sin(Date.now() * 0.01) * 0.1;
     ctx.save();
     ctx.translate(comboX, comboY);
@@ -1422,7 +1462,7 @@ export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameSt
     drawBossAtmosphere(ctx, width, height, gameState.bossAtmosphereIntensity, time);
   }
 
-  drawUI(ctx, gameState, entities.playerArmy.soldiers.filter(s => s.isAlive).length, entities.playerArmy.fireRate, entities.playerArmy.damage);
+  drawUI(ctx, gameState, entities.playerArmy.soldiers.filter(s => s.isAlive).length, entities.playerArmy.fireRate, entities.playerArmy.damage, entities.playerArmy);
   drawJoystick(ctx);
   updateFloatingTexts();
   drawFloatingTexts(ctx);
