@@ -1182,23 +1182,26 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
   ctx.save();
 
   // 1. Score (Esquerda)
-  drawGlassBadge(ctx, 10, bottomY - badgeHeight/2, 90, badgeHeight, `🏆 ${gameState.score}`, '#FFD700', fontSize);
+  drawGlassBadge(ctx, 10, bottomY - badgeHeight/2, 80, badgeHeight, `🏆 ${gameState.score}`, '#FFD700', 14);
 
-  // 2. Level (Centro-Esquerda)
-  drawGlassBadge(ctx, 105, bottomY - badgeHeight/2, 60, badgeHeight, `Lv.${gameState.currentLevel}`, '#4A90D9', fontSize);
+  // 2. Coins (Esquerda - Novo)
+  drawGlassBadge(ctx, 95, bottomY - badgeHeight/2, 70, badgeHeight, `💰 ${gameState.coins}`, '#F1C40F', 14);
 
-  // 3. Army Power (Centro)
-  drawGlassBadge(ctx, 170, bottomY - badgeHeight/2, 70, badgeHeight, `👮 ${armyPower}`, '#2ECC71', fontSize);
+  // 3. Level (Centro-Esquerda)
+  drawGlassBadge(ctx, 170, bottomY - badgeHeight/2, 50, badgeHeight, `Lv.${gameState.currentLevel}`, '#4A90D9', 14);
 
-  // 4. Fire Rate (Centro-Direita)
+  // 4. Army Power (Centro)
+  drawGlassBadge(ctx, 225, bottomY - badgeHeight/2, 60, badgeHeight, `🪖 ${armyPower}`, '#2ECC71', 14);
+
+  // 5. Fire Rate (Centro-Direita)
   const shotsPerSec = (1000 / fireRate).toFixed(1);
-  drawGlassBadge(ctx, 245, bottomY - badgeHeight/2, 75, badgeHeight, `🔥 ${shotsPerSec}/s`, '#F39C12', fontSize);
+  drawGlassBadge(ctx, 290, bottomY - badgeHeight/2, 70, badgeHeight, `🔥 ${shotsPerSec}/s`, '#F39C12', 14);
 
-  // 5. Damage (Direita)
-  drawGlassBadge(ctx, 325, bottomY - badgeHeight/2, 60, badgeHeight, `⚔️ ${damage}`, '#E91E63', fontSize);
+  // 6. Damage (Direita)
+  drawGlassBadge(ctx, 365, bottomY - badgeHeight/2, 55, badgeHeight, `⚔️ ${damage}`, '#E91E63', 14);
 
-  // Coins (Topo Direita agora, para limpar embaixo)
-  drawGlassBadge(ctx, width - 90, 30, 80, 28, `💰 ${gameState.coins}`, '#FFD700', 14);
+  // Coins removido do topo pois foi movido para baixo
+  // drawGlassBadge(ctx, width - 90, 30, 80, 28, `💰 ${gameState.coins}`, '#FFD700', 14);
 
   // High Score (Topo Esquerda, pequeno)
   if (gameState.highScore > 0) {

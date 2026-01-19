@@ -82,11 +82,11 @@ export function setupShopUI(onBuy: BuyAction): void {
 
     // Add specific text overrides if needed
     if (cfg.id === 'soldier') {
-         btn.innerHTML = `<span style="font-size: 18px;">🛡️ +10</span><br><span style="font-size: 12px;">💰 ${cfg.price}</span>`;
+         btn.innerHTML = `<span style="font-size: 20px;">🛡️</span><span style="font-size: 10px; font-weight: 800; display: block; margin-top: -2px;">+10 UNITS</span><span style="font-size: 11px;">💰 ${cfg.price}</span>`;
     } else if (cfg.id === 'nuke') {
-         btn.innerHTML = `<span style="font-size: 18px;">☢️ NUKE</span><br><span style="font-size: 12px;">💰 ${cfg.price}</span>`;
+         btn.innerHTML = `<span style="font-size: 20px;">☢️</span><span style="font-size: 10px; font-weight: 800; display: block; margin-top: -2px;">NUKE</span><span style="font-size: 11px;">💰 ${cfg.price}</span>`;
     } else if (cfg.id === 'recharge') {
-         btn.innerHTML = `<span style="font-size: 18px;">🔋 RECARGA</span><br><span style="font-size: 12px;">💰 ${cfg.price}</span>`;
+         btn.innerHTML = `<span style="font-size: 20px;">🔋</span><span style="font-size: 10px; font-weight: 800; display: block; margin-top: -2px;">RECARGA</span><span style="font-size: 11px;">💰 ${cfg.price}</span>`;
     }
 
     // Event listeners
