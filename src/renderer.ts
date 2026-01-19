@@ -1178,18 +1178,44 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
 
   // Badges
   drawGlassBadge(ctx, 10, bottomY - badgeHeight/2, 80, badgeHeight, `Lv. ${gameState.currentLevel}`, '#4A90D9');
-  drawGlassBadge(ctx, width / 2 - 50 - 60, bottomY - badgeHeight/2, 100, badgeHeight, `${gameState.score}`, '#F1C40F');
-  drawGlassBadge(ctx, width / 2 + 50, bottomY - badgeHeight/2, 100, badgeHeight, `💰 ${gameState.coins}`, '#FFD700');
+  // Score removido daqui para ir para o topo
+  drawGlassBadge(ctx, width / 2, bottomY - badgeHeight/2, 100, badgeHeight, `💰 ${gameState.coins}`, '#FFD700');
 
   const shotsPerSec = (1000 / fireRate).toFixed(1);
-  drawGlassBadge(ctx, 10, progressY + progressHeight + 15, 100, 28, `🔥 ${shotsPerSec}/s`, '#F39C12');
-  drawGlassBadge(ctx, 120, progressY + progressHeight + 15, 80, 28, `⚔️ ${damage.toFixed(1)}`, '#E91E63');
+  // Moved down to make room for the big Score at the top left
+  const statsY = progressY + progressHeight + 55;
+  drawGlassBadge(ctx, 10, statsY, 100, 28, `🔥 ${shotsPerSec}/s`, '#F39C12');
+  drawGlassBadge(ctx, 120, statsY, 80, 28, `⚔️ ${damage.toFixed(1)}`, '#E91E63');
+  ctx.restore();
+
+  // Score Competitivo (Topo Esquerdo)
+  ctx.save();
+  ctx.fillStyle = '#FFFFFF';
+  ctx.shadowColor = 'rgba(0,0,0,0.8)';
+  ctx.shadowBlur = 4;
+  ctx.textAlign = 'left';
+
+  // Score Principal
+  ctx.font = 'bold 32px Arial';
+  ctx.fillText(`${gameState.score}`, 15, 50);
+
+  // Label Score
+  ctx.font = '10px Arial';
+  ctx.fillStyle = '#FFD700';
+  ctx.fillText('SCORE', 15, 22);
+
+  // High Score (pequeno abaixo)
+  if (gameState.highScore > 0) {
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.font = '12px Arial';
+    ctx.fillText(`HI: ${gameState.highScore}`, 15, 70);
+  }
   ctx.restore();
 
   // Combo
   if (gameState.combo > 1) {
     const comboX = width / 2;
-    const comboY = 35;
+    const comboY = 80; // Movido para baixo para não sobrepor o boss warning ou score
     const pulse = 1 + Math.sin(Date.now() * 0.01) * 0.1;
     ctx.save();
     ctx.translate(comboX, comboY);

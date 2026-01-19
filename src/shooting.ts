@@ -1,6 +1,7 @@
 // shooting.ts - Sistema de tiro automatico e Super Cannon
 import { Entities, GameState, Bullet, Army, EnemyHorde, Boss, Soldier, MiniBoss } from './types';
 import { addFloatingText, addExplosion, addParticle } from './renderer';
+import { triggerScreenShake } from './game';
 import { ObjectPool } from './pool';
 import { SpatialHashGrid } from './spatial';
 
@@ -254,16 +255,17 @@ function applySuperCannonDamage(entities: Entities, gameState: GameState): void 
         gameState.isVictory = true;
         gameState.score += 1000;
         addFloatingText('BOSS DESTROYED!', boss.x + boss.width / 2, boss.y, '#FFD700');
+        triggerScreenShake(20, 1000);
       }
     }
   }
 }
 
-export function updateBullets(entities: Entities, gameState: GameState): void {
+export function updateBullets(entities: Entities, gameState: GameState, dtFactor: number): void {
   // Atualizar e remover bullets fora da tela manualmente para usar o pool
   for (let i = entities.bullets.length - 1; i >= 0; i--) {
     const bullet = entities.bullets[i];
-    bullet.y += bullet.speed;
+    bullet.y += bullet.speed * dtFactor;
 
     if (bullet.y <= -50 || bullet.y >= 900) {
       bulletPool.release(bullet);
@@ -415,6 +417,7 @@ export function updateBullets(entities: Entities, gameState: GameState): void {
 
         if (boss.hp <= 0) {
           boss.isActive = false;
+          triggerScreenShake(20, 1000); // Shake forte na morte do boss
 
           if (boss.type === 'mothership') {
             // Vitória final do jogo - derrotou a nave mãe!

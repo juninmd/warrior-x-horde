@@ -370,6 +370,7 @@
 
 <body>
   <div class="top-controls">
+    <button id="pauseBtnTop" class="icon-btn" onclick="window.togglePause && window.togglePause()" title="Pausar">⏸️</button>
     <button id="muteBtn" class="icon-btn" onclick="window.toggleMuteUI && window.toggleMuteUI()" title="Som">🔊</button>
     <button id="fullscreenBtn" class="icon-btn" onclick="window.toggleFullscreen && window.toggleFullscreen()" title="Tela Cheia">⛶</button>
   </div>
@@ -412,7 +413,6 @@
         <option value="11">Lv 11+</option>
       </select>
       <button class="go-btn" onclick="window.debugSetLevel && window.debugSetLevel(parseInt(document.getElementById('levelSelector').value))">⚡ Ir</button>
-      <button class="pause-btn" id="pauseBtn" onclick="window.togglePause && window.togglePause()">⏸️ Pause</button>
       <button class="super-btn" id="superCannonBtnInline" onclick="window.triggerSuperCannon && window.triggerSuperCannon()">⚡ SUPER</button>
     </div>
   </div>

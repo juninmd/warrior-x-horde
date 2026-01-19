@@ -2,24 +2,24 @@
 import { Entities, GameState, MAX_ENEMIES } from './types';
 import { createGatePair, createEnemyHorde, createBoss, createMiniBoss, createMysteryBox, createCoin } from './entities';
 
-export function spawnCoins(entities: Entities, canvasWidth: number, gameState: GameState): void {
+export function spawnCoins(entities: Entities, canvasWidth: number, gameState: GameState, dtFactor: number): void {
   // Remover moedas que já passaram
   entities.coins = entities.coins.filter(coin => !coin.passed && coin.y < 1200);
 
-  // Spawn de moedas no chão (baixa probabilidade)
-  if (Math.random() < 0.005) { // 0.5% chance por frame
+  // Spawn de moedas no chão (baixa probabilidade ajustada por dt)
+  if (Math.random() < 0.005 * dtFactor) { // 0.5% chance por frame (normalizado)
     const margin = 20;
     const x = margin + Math.random() * (canvasWidth - margin * 2);
     entities.coins.push(createCoin(x, -50, 10)); // Moedas valem 10
   }
 }
 
-export function spawnMysteryBoxes(entities: Entities, canvasWidth: number, _gameState: GameState): void {
+export function spawnMysteryBoxes(entities: Entities, canvasWidth: number, _gameState: GameState, dtFactor: number): void {
   // Remover caixas que já passaram
   entities.mysteryBoxes = entities.mysteryBoxes.filter(box => !box.passed && box.y < 1200);
 
   // Chance de spawn (raro)
-  if (Math.random() < 0.002 && entities.mysteryBoxes.length < 1) { // 0.2% chance por frame
+  if (Math.random() < 0.002 * dtFactor && entities.mysteryBoxes.length < 1) { // 0.2% chance por frame (normalizado)
     entities.mysteryBoxes.push(createMysteryBox(canvasWidth, -100));
   }
 }
@@ -59,7 +59,7 @@ function getTotalEnemyCount(entities: Entities): number {
   return total;
 }
 
-export function spawnEnemies(entities: Entities, canvasWidth: number, gameState: GameState, _canvasHeight: number = 800): void {
+export function spawnEnemies(entities: Entities, canvasWidth: number, gameState: GameState, _canvasHeight: number = 800, dtFactor: number): void {
   // Inimigos nascem do céu (da nave alienígena)
   const spawnY = -50; // Acima da tela, vindo da nave
 
@@ -81,7 +81,20 @@ export function spawnEnemies(entities: Entities, canvasWidth: number, gameState:
   // Chance de spawn (reduzida para performance)
   const spawnChance = Math.min(0.8, 0.7 + (gameState.currentLevel - 1) * 0.01);
 
-  if (lowestHordeY > spawnY && Math.random() < spawnChance) {
+  // Normalizar probabilidade pelo dtFactor para consistência de framerate
+  // spawnChance é "probabilidade de spawnar QUANDO houver espaço".
+  // Se rodar a 120fps, testamos 2x mais vezes. Se não ajustarmos, spawna 2x mais rápido (ou enche os espaços mais rápido).
+  // Porém, aqui a lógica depende mais de `lowestHordeY > spawnY` (espaço disponível).
+  // Se o jogo roda mais rápido, as hordas descem mais rápido, abrindo espaço mais rápido.
+  // Então a taxa de spawn já é controlada pela velocidade de descida (que já foi corrigida com dtFactor).
+  // A chance aqui é apenas para introduzir aleatoriedade nos buracos.
+  // Se mantivermos fixo, em FPS alto teremos menos buracos (mais testes de sucesso).
+  // Ajustando: Math.pow(chance, dtFactor)? Não, simples multiplicação para probabilidades pequenas.
+  // Vamos usar uma aproximação:
+
+  const adjustedChance = spawnChance * dtFactor;
+
+  if (lowestHordeY > spawnY && Math.random() < adjustedChance) {
     // Balancear inimigos baseado no tamanho do exército
     const playerCount = entities.playerArmy.soldiers.filter(s => s.isAlive).length;
 
@@ -162,13 +175,13 @@ export function checkBossSpawn(entities: Entities, canvasWidth: number, gameStat
   }
 }
 
-export function updateSpawns(entities: Entities, canvasWidth: number, gameState: GameState, canvasHeight: number = 800): void {
+export function updateSpawns(entities: Entities, canvasWidth: number, gameState: GameState, canvasHeight: number = 800, dtFactor: number): void {
   if (gameState.isGameOver || gameState.isVictory) return;
 
   spawnGates(entities, canvasWidth, gameState);
-  spawnEnemies(entities, canvasWidth, gameState, canvasHeight);
+  spawnEnemies(entities, canvasWidth, gameState, canvasHeight, dtFactor);
   spawnMiniBoss(entities, canvasWidth, gameState, canvasHeight);
-  spawnMysteryBoxes(entities, canvasWidth, gameState);
-  spawnCoins(entities, canvasWidth, gameState);
+  spawnMysteryBoxes(entities, canvasWidth, gameState, dtFactor);
+  spawnCoins(entities, canvasWidth, gameState, dtFactor);
   checkBossSpawn(entities, canvasWidth, gameState, canvasHeight);
 }
