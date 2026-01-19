@@ -1,5 +1,6 @@
 // entities.ts - Criação de entidades
-import { Army, Soldier, EnemyHorde, Gate, Boss, Entities, MiniBoss, MysteryBox, Coin, MAX_HEROES, MAX_ENEMIES } from './types';
+import { Army, Soldier, EnemyHorde, Gate, Boss, Entities, MiniBoss, MysteryBox, Coin } from './types';
+import { MAX_HEROES, MAX_ENEMIES } from './constants';
 
 let soldierIdCounter = 0;
 let hordeIdCounter = 0;

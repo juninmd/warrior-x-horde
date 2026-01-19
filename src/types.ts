@@ -191,10 +191,6 @@ export interface Entities {
   miniBosses: MiniBoss[];
 }
 
-// Limites de entidades para performance
-export const MAX_HEROES = 20000; // Aumentado para 20k
-export const MAX_ENEMIES = 20000;
-
 export interface FloatingText {
   text: string;
   x: number;
