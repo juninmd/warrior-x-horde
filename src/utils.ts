@@ -1,6 +1,6 @@
 // utils.ts - Shared Helper Functions
 import { Army, BoundingBox } from './types';
-import { BIOMES } from './constants';
+import { THEMES, ThemeConfig } from './constants';
 
 // --- Math & Color Utilities ---
 
@@ -71,18 +71,18 @@ export function getEntityBounds(x: number, y: number, width: number, height: num
   };
 }
 
-/**
- * Helper to create a rect from center-based coordinates (like hordes often are treated)
- * IF x/y are center, use this. IF x/y are top-left, use getEntityBounds.
- * Based on codebase, many entities use top-left, but hordes seem center-ish or variable.
- * We will verify usage. For now, generic rect check is safest.
- */
-
 // --- Biome Utilities ---
 
-export function getBiomeColors(level: number): { sky: string[], ground: string[], road: string[], tree: string } {
-  if (level >= BIOMES.ALIEN.minLevel) return BIOMES.ALIEN.colors;
-  if (level >= BIOMES.HELL.minLevel) return BIOMES.HELL.colors;
-  if (level >= BIOMES.WASTELAND.minLevel) return BIOMES.WASTELAND.colors;
-  return BIOMES.GRASSLANDS.colors;
+export function getBiomeColors(level: number): ThemeConfig {
+  // 1-10 are predefined
+  if (THEMES[level]) {
+    return THEMES[level];
+  }
+
+  // For levels > 10, cycle through themes 1-10 or generate procedural
+  // Simple cycling for now, maybe with a twist later
+  // Formula: ((level - 1) % 10) + 1
+  // This maps 11 -> 1, 12 -> 2, etc.
+  const themeIndex = ((level - 1) % 10) + 1;
+  return THEMES[themeIndex];
 }
