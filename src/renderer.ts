@@ -509,15 +509,68 @@ function drawGround(ctx: CanvasRenderingContext2D, width: number, height: number
   ctx.fillRect(0, horizonY, width, height - horizonY);
 
   // Ground details (textures/lines)
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-  ctx.lineWidth = 1;
-  for (let y = horizonY + 20; y < height; y += 30) {
-    for (let x = 0; x < width; x += 15) {
-      if (Math.random() > 0.8) {
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-        ctx.lineTo(x + 3, y - 5);
-        ctx.stroke();
+  if (theme.groundType === 'grid') {
+      ctx.strokeStyle = 'rgba(0, 255, 255, 0.3)';
+      ctx.lineWidth = 1;
+      const perspective = 200;
+      // Vertical lines
+      for (let x = -width; x < width * 2; x += 40) {
+          ctx.beginPath();
+          ctx.moveTo(x, horizonY);
+          ctx.lineTo((x - width/2) * 4 + width/2, height);
+          ctx.stroke();
+      }
+      // Horizontal lines
+      for(let y = horizonY; y < height; y += (y - horizonY) * 0.5 + 5) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(width, y);
+          ctx.stroke();
+      }
+  } else if (theme.groundType === 'cracked') {
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 20; i++) {
+          const x = Math.random() * width;
+          const y = horizonY + Math.random() * (height - horizonY);
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.lineTo(x + Math.random() * 40 - 20, y + Math.random() * 40 - 20);
+          ctx.lineTo(x + Math.random() * 40 - 20, y + Math.random() * 40 - 20);
+          ctx.stroke();
+      }
+  } else if (theme.groundType === 'waves') {
+       ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+       ctx.lineWidth = 2;
+       for (let y = horizonY + 20; y < height; y += 30) {
+           ctx.beginPath();
+           for (let x = 0; x <= width; x += 50) {
+               ctx.quadraticCurveTo(x + 25, y - 10, x + 50, y);
+           }
+           ctx.stroke();
+       }
+  } else if (theme.groundType === 'bubbles') {
+      ctx.fillStyle = 'rgba(100, 255, 100, 0.2)';
+      for (let i = 0; i < 20; i++) {
+           const x = Math.random() * width;
+           const y = horizonY + Math.random() * (height - horizonY);
+           const r = Math.random() * 10 + 5;
+           ctx.beginPath();
+           ctx.arc(x, y, r, 0, Math.PI * 2);
+           ctx.fill();
+      }
+  } else if (theme.groundType !== 'none') {
+    // Default / Grass / Sand / Snow
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+    ctx.lineWidth = 1;
+    for (let y = horizonY + 20; y < height; y += 30) {
+      for (let x = 0; x < width; x += 15) {
+        if (Math.random() > 0.8) {
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.lineTo(x + 3, y - 5);
+          ctx.stroke();
+        }
       }
     }
   }
@@ -543,6 +596,21 @@ function drawRoadSurface(ctx: CanvasRenderingContext2D, width: number, height: n
   ctx.closePath();
   ctx.fill();
 
+  // Specific Road details
+  if (theme.roadType === 'brick') {
+     ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
+     ctx.lineWidth = 1;
+     // simple brick pattern
+     for(let y = roadStartY; y < height; y+=20) {
+         ctx.beginPath();
+         ctx.moveTo(width/2 - roadBottomWidth, y); // overdraw is fine, clipped by loop logic usually or distinct path
+         // Actually better to re-clip or just draw lines roughly
+         // Simplified:
+         ctx.moveTo(0, y); ctx.lineTo(width, y); // across screen, cheap but works if layered
+         ctx.stroke();
+     }
+  }
+
   // Road Borders
   ctx.fillStyle = shadeColor(theme.colors.road[1], -30); // Darker border
   const borderWidth = 8;
@@ -565,29 +633,46 @@ function drawRoadSurface(ctx: CanvasRenderingContext2D, width: number, height: n
   ctx.closePath();
   ctx.fill();
 
+  if (theme.roadType === 'holographic') {
+      ctx.strokeStyle = '#00FFFF';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(width / 2 - roadHorizonWidth / 2, roadStartY);
+      ctx.lineTo(width / 2 - roadBottomWidth / 2, height);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(width / 2 + roadHorizonWidth / 2, roadStartY);
+      ctx.lineTo(width / 2 + roadBottomWidth / 2, height);
+      ctx.stroke();
+  }
+
   // Center Lines
-  ctx.strokeStyle = '#FFD700'; // Standard yellow line, could be themed
-  ctx.lineWidth = 4;
-  ctx.setLineDash([30, 40]);
-  ctx.beginPath();
-  ctx.moveTo(width / 2, roadStartY + 10);
-  ctx.lineTo(width / 2, height);
-  ctx.stroke();
-  ctx.setLineDash([]);
+  if (theme.roadType !== 'dirt' && theme.roadType !== 'ice' && theme.roadType !== 'alien') {
+      ctx.strokeStyle = theme.roadType === 'holographic' ? '#00FFFF' : '#FFD700';
+      ctx.lineWidth = 4;
+      ctx.setLineDash([30, 40]);
+      ctx.beginPath();
+      ctx.moveTo(width / 2, roadStartY + 10);
+      ctx.lineTo(width / 2, height);
+      ctx.stroke();
+      ctx.setLineDash([]);
+  }
 
   // Side Lines
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
-  ctx.lineWidth = 2;
-  ctx.setLineDash([20, 30]);
-  ctx.beginPath();
-  ctx.moveTo(width / 2 - roadHorizonWidth / 2 + 5, roadStartY + 10);
-  ctx.lineTo(width / 2 - roadBottomWidth / 2 + 30, height);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(width / 2 + roadHorizonWidth / 2 - 5, roadStartY + 10);
-  ctx.lineTo(width / 2 + roadBottomWidth / 2 - 30, height);
-  ctx.stroke();
-  ctx.setLineDash([]);
+  if (theme.roadType === 'asphalt' || theme.roadType === 'brick') {
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([20, 30]);
+      ctx.beginPath();
+      ctx.moveTo(width / 2 - roadHorizonWidth / 2 + 5, roadStartY + 10);
+      ctx.lineTo(width / 2 - roadBottomWidth / 2 + 30, height);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(width / 2 + roadHorizonWidth / 2 - 5, roadStartY + 10);
+      ctx.lineTo(width / 2 + roadBottomWidth / 2 - 30, height);
+      ctx.stroke();
+      ctx.setLineDash([]);
+  }
 }
 
 function drawDecorations(ctx: CanvasRenderingContext2D, width: number, height: number, theme: ThemeConfig): void {
@@ -601,16 +686,148 @@ function drawDecorations(ctx: CanvasRenderingContext2D, width: number, height: n
     if (treeY > height - 80) continue;
 
     const progress = (treeY - horizonY) / (height - horizonY);
-    const treeSize = 10 + progress * 25;
+    const size = 10 + progress * 25;
     const treeProgress = (treeY - roadStartY) / (height - roadStartY);
     const roadWidthAtY = roadHorizonWidth + (roadBottomWidth - roadHorizonWidth) * treeProgress;
 
     const leftX = (width - roadWidthAtY) / 2 - 30 - progress * 20;
-    if (leftX > 15) drawTree(ctx, leftX, treeY, treeSize, theme.colors.tree);
+    if (leftX > 15) drawDecorationItem(ctx, leftX, treeY, size, theme);
 
     const rightX = (width + roadWidthAtY) / 2 + 30 + progress * 20;
-    if (rightX < width - 15) drawTree(ctx, rightX, treeY, treeSize, theme.colors.tree);
+    if (rightX < width - 15) drawDecorationItem(ctx, rightX, treeY, size, theme);
   }
+}
+
+function drawDecorationItem(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, theme: ThemeConfig): void {
+    const color = theme.colors.tree;
+    switch (theme.decorationType) {
+        case 'cactus':
+            drawCactus(ctx, x, y, size, color);
+            break;
+        case 'snowman':
+            drawSnowman(ctx, x, y, size);
+            break;
+        case 'crystal':
+            drawCrystal(ctx, x, y, size, color);
+            break;
+        case 'candy_cane':
+            drawCandyCane(ctx, x, y, size);
+            break;
+        case 'pillar':
+            drawPillar(ctx, x, y, size, color);
+            break;
+        case 'rock':
+            drawRock(ctx, x, y, size, color);
+            break;
+        case 'bubble':
+            drawBubble(ctx, x, y, size);
+            break;
+        case 'mushroom':
+            drawMushroom(ctx, x, y, size, color);
+            break;
+        case 'star':
+            drawStar(ctx, x, y, 5, size, size/2);
+            ctx.fillStyle = '#FFF';
+            ctx.fill();
+            break;
+        case 'tree':
+        default:
+            drawTree(ctx, x, y, size, color);
+            break;
+    }
+}
+
+// --- Specific Decoration Drawers ---
+
+function drawCactus(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, color: string): void {
+    ctx.fillStyle = color;
+    // Main stem
+    ctx.fillRect(x - size * 0.2, y - size, size * 0.4, size);
+    // Arms
+    ctx.fillRect(x - size * 0.5, y - size * 0.6, size * 0.3, size * 0.2);
+    ctx.fillRect(x - size * 0.5, y - size * 0.8, size * 0.1, size * 0.2);
+    ctx.fillRect(x + size * 0.2, y - size * 0.7, size * 0.3, size * 0.2);
+    ctx.fillRect(x + size * 0.4, y - size * 0.9, size * 0.1, size * 0.2);
+}
+
+function drawSnowman(ctx: CanvasRenderingContext2D, x: number, y: number, size: number): void {
+    ctx.fillStyle = '#FFF';
+    ctx.beginPath();
+    ctx.arc(x, y, size * 0.5, 0, Math.PI * 2); // Base
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x, y - size * 0.6, size * 0.35, 0, Math.PI * 2); // Body
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x, y - size * 1.0, size * 0.25, 0, Math.PI * 2); // Head
+    ctx.fill();
+}
+
+function drawCrystal(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, color: string): void {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(x, y - size);
+    ctx.lineTo(x + size * 0.4, y - size * 0.4);
+    ctx.lineTo(x, y);
+    ctx.lineTo(x - size * 0.4, y - size * 0.4);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.beginPath();
+    ctx.moveTo(x, y - size);
+    ctx.lineTo(x + size * 0.2, y - size * 0.4);
+    ctx.lineTo(x, y);
+    ctx.fill();
+}
+
+function drawCandyCane(ctx: CanvasRenderingContext2D, x: number, y: number, size: number): void {
+    ctx.strokeStyle = '#FFF';
+    ctx.lineWidth = size * 0.2;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x, y - size * 0.8);
+    ctx.quadraticCurveTo(x, y - size, x - size * 0.3, y - size);
+    ctx.stroke();
+    ctx.strokeStyle = '#FF0000';
+    ctx.setLineDash([size * 0.1, size * 0.1]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+}
+
+function drawPillar(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, color: string): void {
+    ctx.fillStyle = color;
+    ctx.fillRect(x - size * 0.2, y - size, size * 0.4, size);
+    ctx.fillStyle = 'rgba(0, 255, 255, 0.5)';
+    ctx.fillRect(x - size * 0.1, y - size, size * 0.2, size);
+}
+
+function drawRock(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, color: string): void {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(x - size * 0.5, y);
+    ctx.lineTo(x - size * 0.3, y - size * 0.6);
+    ctx.lineTo(x, y - size * 0.8);
+    ctx.lineTo(x + size * 0.4, y - size * 0.5);
+    ctx.lineTo(x + size * 0.5, y);
+    ctx.fill();
+}
+
+function drawBubble(ctx: CanvasRenderingContext2D, x: number, y: number, size: number): void {
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(x, y - size * 0.5, size * 0.5, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.fill();
+}
+
+function drawMushroom(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, color: string): void {
+    ctx.fillStyle = '#EEE'; // Stem
+    ctx.fillRect(x - size * 0.15, y - size * 0.5, size * 0.3, size * 0.5);
+    ctx.fillStyle = color; // Cap
+    ctx.beginPath();
+    ctx.arc(x, y - size * 0.5, size * 0.5, Math.PI, 0);
+    ctx.fill();
 }
 
 function drawTree(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, color: string): void {

@@ -61,6 +61,9 @@ export interface ThemeConfig {
     color: string;
     shadowColor?: string;
   };
+  decorationType: 'tree' | 'cactus' | 'crystal' | 'candy_cane' | 'bubble' | 'rock' | 'pillar' | 'snowman' | 'mushroom' | 'star';
+  groundType: 'grass' | 'sand' | 'snow' | 'grid' | 'cracked' | 'waves' | 'bubbles' | 'none';
+  roadType: 'asphalt' | 'dirt' | 'ice' | 'holographic' | 'brick' | 'alien';
 }
 
 export const THEMES: Record<number, ThemeConfig> = {
@@ -74,7 +77,10 @@ export const THEMES: Record<number, ThemeConfig> = {
       mountain: { near: '#7BA3BD', far: '#A8C4D8' },
       clouds: 'rgba(255, 255, 255, 0.7)'
     },
-    celestial: { type: 'sun', color: '#FDB813' }
+    celestial: { type: 'sun', color: '#FDB813' },
+    decorationType: 'tree',
+    groundType: 'grass',
+    roadType: 'asphalt'
   },
   2: { // Desert
     name: 'Desert',
@@ -86,7 +92,10 @@ export const THEMES: Record<number, ThemeConfig> = {
       mountain: { near: '#CD853F', far: '#DEB887' },
       clouds: 'rgba(255, 250, 240, 0.6)'
     },
-    celestial: { type: 'sun', color: '#FF4500' }
+    celestial: { type: 'sun', color: '#FF4500' },
+    decorationType: 'cactus',
+    groundType: 'sand',
+    roadType: 'dirt'
   },
   3: { // Snow
     name: 'Snow',
@@ -98,7 +107,10 @@ export const THEMES: Record<number, ThemeConfig> = {
       mountain: { near: '#B0C4DE', far: '#E6E6FA' },
       clouds: 'rgba(255, 255, 255, 0.8)'
     },
-    celestial: { type: 'sun', color: '#FFFACD' }
+    celestial: { type: 'sun', color: '#FFFACD' },
+    decorationType: 'snowman',
+    groundType: 'snow',
+    roadType: 'ice'
   },
   4: { // Toxic
     name: 'Toxic',
@@ -110,7 +122,10 @@ export const THEMES: Record<number, ThemeConfig> = {
       mountain: { near: '#556B2F', far: '#8FBC8F' },
       clouds: 'rgba(0, 255, 0, 0.3)'
     },
-    celestial: { type: 'sun', color: '#ADFF2F' }
+    celestial: { type: 'sun', color: '#ADFF2F' },
+    decorationType: 'mushroom',
+    groundType: 'bubbles',
+    roadType: 'asphalt'
   },
   5: { // Candy
     name: 'Candy',
@@ -122,7 +137,10 @@ export const THEMES: Record<number, ThemeConfig> = {
       mountain: { near: '#FF69B4', far: '#FFB6C1' },
       clouds: 'rgba(255, 240, 245, 0.8)'
     },
-    celestial: { type: 'sun', color: '#FFFFE0' }
+    celestial: { type: 'sun', color: '#FFFFE0' },
+    decorationType: 'candy_cane',
+    groundType: 'grass',
+    roadType: 'brick'
   },
   6: { // Ocean / Underwater
     name: 'Ocean',
@@ -130,11 +148,14 @@ export const THEMES: Record<number, ThemeConfig> = {
       sky: ['#00008B', '#00BFFF'],
       ground: ['#008080', '#20B2AA'],
       road: ['#4682B4', '#5F9EA0'],
-      tree: '#00CED1', // Coral?
+      tree: '#00CED1', // Coral
       mountain: { near: '#4169E1', far: '#1E90FF' },
       clouds: 'rgba(255, 255, 255, 0.2)'
     },
-    celestial: { type: 'moon', color: '#E0FFFF' }
+    celestial: { type: 'moon', color: '#E0FFFF' },
+    decorationType: 'bubble',
+    groundType: 'waves',
+    roadType: 'asphalt'
   },
   7: { // Hell
     name: 'Hell',
@@ -146,7 +167,10 @@ export const THEMES: Record<number, ThemeConfig> = {
       mountain: { near: '#400000', far: '#200000' },
       clouds: 'rgba(50, 0, 0, 0.5)'
     },
-    celestial: { type: 'moon', color: '#FF4444', shadowColor: '#FF0000' }
+    celestial: { type: 'moon', color: '#FF4444', shadowColor: '#FF0000' },
+    decorationType: 'rock',
+    groundType: 'cracked',
+    roadType: 'dirt'
   },
   8: { // Cyber
     name: 'Cyber',
@@ -158,7 +182,10 @@ export const THEMES: Record<number, ThemeConfig> = {
       mountain: { near: '#000080', far: '#000040' },
       clouds: 'rgba(0, 255, 255, 0.1)'
     },
-    celestial: { type: 'moon', color: '#00FFFF', shadowColor: '#0000FF' }
+    celestial: { type: 'moon', color: '#00FFFF', shadowColor: '#0000FF' },
+    decorationType: 'pillar',
+    groundType: 'grid',
+    roadType: 'holographic'
   },
   9: { // Space
     name: 'Space',
@@ -170,7 +197,10 @@ export const THEMES: Record<number, ThemeConfig> = {
       mountain: { near: '#696969', far: '#2F4F4F' },
       clouds: 'rgba(255, 255, 255, 0.05)'
     },
-    celestial: { type: 'sun', color: '#FFFFFF' }
+    celestial: { type: 'sun', color: '#FFFFFF' },
+    decorationType: 'star',
+    groundType: 'none',
+    roadType: 'asphalt'
   },
   10: { // Alien
     name: 'Alien',
@@ -182,9 +212,9 @@ export const THEMES: Record<number, ThemeConfig> = {
       mountain: { near: '#4a148c', far: '#2e0b3d' },
       clouds: 'rgba(255, 0, 255, 0.3)'
     },
-    celestial: { type: 'moon', color: '#E0B0FF', shadowColor: '#E0B0FF' }
+    celestial: { type: 'moon', color: '#E0B0FF', shadowColor: '#E0B0FF' },
+    decorationType: 'crystal',
+    groundType: 'waves',
+    roadType: 'alien'
   }
 };
-
-// Deprecated: BIOMES (Kept for temporary compatibility if needed, but we will remove it)
-// We will replace usage in utils.ts immediately.
