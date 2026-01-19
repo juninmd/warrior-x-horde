@@ -5,7 +5,8 @@ import { virtualJoystick } from './input';
 
 // --- UI Drawing Helpers ---
 
-export function drawGlassBadge(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, text: string, accentColor: string): void {
+export function drawGlassBadge(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, text: string, accentColor: string, fontSize: number = 14): void {
+  ctx.save();
   // Fundo Glass
   ctx.fillStyle = 'rgba(10, 10, 20, 0.7)';
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
@@ -25,10 +26,11 @@ export function drawGlassBadge(ctx: CanvasRenderingContext2D, x: number, y: numb
 
   // Texto
   ctx.fillStyle = '#FFF';
-  ctx.font = 'bold 14px "Segoe UI", Arial';
+  ctx.font = `bold ${fontSize}px "Segoe UI", Arial`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(text, x + w / 2, y + h / 2 - 2);
+  ctx.restore();
 }
 
 // --- Shape Drawing Helpers ---

@@ -180,6 +180,21 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
     if (speed !== 0) bullet.speed = speed;
 
     entities.bullets.push(bullet);
+
+    // Muzzle Flash Effect (Visual variety per class)
+    let flashColor = '#FFF';
+    let flashSize = 1;
+    if (shooter.type === 'bazooka') {
+      flashColor = '#F39C12'; // Big orange flash
+      flashSize = 2;
+    } else if (shooter.type === 'laser') {
+      flashColor = '#00FFFF'; // Cyan flash
+      flashSize = 1;
+    } else if (shooter.type === 'rambo') {
+      flashColor = '#FFD700'; // Gold flash
+    }
+
+    addParticle(shooter.x, shooter.y - 10, 'spark', flashColor, flashSize);
   }
 
   army.lastShotTime = now;
