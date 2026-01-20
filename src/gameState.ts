@@ -36,6 +36,7 @@ export const gameState: GameState = {
   // Boss Atmosphere
   bossActive: false,
   bossAtmosphereIntensity: 0,
+  newRecordReached: false,
 };
 
 export function resetGameState(): void {
@@ -60,4 +61,5 @@ export function resetGameState(): void {
   gameState.maxCombo = 0;
   gameState.bossActive = false;
   gameState.bossAtmosphereIntensity = 0;
+  gameState.newRecordReached = false;
 }

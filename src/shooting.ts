@@ -349,6 +349,20 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
         if (horde.isActive && soldier.isAlive && checkBulletSoldierCollision(bullet, soldier)) {
           // Aplicar dano
           soldier.hp -= bullet.damage;
+          soldier.hitTimer = 5; // Flash white
+
+          // Critical Hit Text (Only for high damage to save performance)
+          if (bullet.damage >= 5) {
+             const isCrit = bullet.damage >= 10;
+             addFloatingText(
+                 Math.floor(bullet.damage).toString(),
+                 soldier.x,
+                 soldier.y - 20,
+                 isCrit ? '#FF0000' : '#FFF',
+                 isCrit ? 1.5 : 1.0
+             );
+          }
+
           addExplosion(soldier.x, soldier.y, '#E74C3C');
 
           if (soldier.hp <= 0) {
@@ -380,6 +394,7 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
             bullet.y > miniBoss.y && bullet.y < miniBoss.y + miniBoss.height) {
 
           miniBoss.hp -= bullet.damage;
+          miniBoss.hitTimer = 5;
           addExplosion(bullet.x, bullet.y, '#FF4500');
 
           if (miniBoss.hp <= 0) {
@@ -424,6 +439,7 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
 
       if (hitBoss) {
         boss.hp -= bullet.damage;
+        boss.hitTimer = 5;
         bulletPool.release(bullet);
         entities.bullets.splice(i, 1);
 

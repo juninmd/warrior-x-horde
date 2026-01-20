@@ -18,8 +18,8 @@ const spriteCache: SpriteCache = {
 };
 
 // Helper to generate a key
-const getSpriteKey = (type: string, color: string, size: number, isSuper: boolean = false): string => {
-  return `${type}_${color}_${size}_${isSuper}`;
+const getSpriteKey = (type: string, color: string, size: number, isSuper: boolean = false, isFlash: boolean = false): string => {
+  return `${type}_${color}_${size}_${isSuper}_${isFlash}`;
 };
 
 // Function to pre-render sprites
@@ -44,9 +44,14 @@ export function preRenderSprites(): void {
     for (const color of colors) {
       for (const size of sizes) {
         // Normal version
-        renderSoldierToCache(type, color, size, false);
-        // Super version (mostly for 'normal' type but applied generally just in case)
-        renderSoldierToCache(type, color, size, true);
+        renderSoldierToCache(type, color, size, false, false);
+        // Flash version (white silhouette)
+        renderSoldierToCache(type, color, size, false, true);
+
+        // Super version
+        renderSoldierToCache(type, color, size, true, false);
+        // Super Flash version
+        renderSoldierToCache(type, color, size, true, true);
       }
     }
   }
@@ -65,8 +70,8 @@ export function preRenderSprites(): void {
   console.log('Sprites pre-rendered. Cache size:', spriteCache.images.size);
 }
 
-function renderSoldierToCache(type: Soldier['type'], color: string, size: number, isSuper: boolean) {
-  const key = getSpriteKey(type, color, size, isSuper);
+function renderSoldierToCache(type: Soldier['type'], color: string, size: number, isSuper: boolean, isFlash: boolean) {
+  const key = getSpriteKey(type, color, size, isSuper, isFlash);
   if (spriteCache.images.has(key)) return;
 
   // Padding for drawing (shadows, accessories sticking out)
@@ -94,58 +99,80 @@ function renderSoldierToCache(type: Soldier['type'], color: string, size: number
   const x = center;
   const y = center;
 
+  if (isFlash) {
+      // Draw a pure white silhouette for damage flash
+      renderSoldierShape(ctx, type, '#FFFFFF', x, y, actualSize, isSuper, true);
+  } else {
+      renderSoldierShape(ctx, type, color, x, y, actualSize, isSuper, false);
+  }
+
+  spriteCache.images.set(key, canvas);
+}
+
+function renderSoldierShape(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, type: Soldier['type'], color: string, x: number, y: number, actualSize: number, isSuper: boolean, isFlash: boolean) {
   const isPlayer = color === COLORS.PLAYER.NORMAL || color === COLORS.PLAYER.SUPER || color === COLORS.PLAYER.BAZOOKA || color === COLORS.PLAYER.LASER || type !== 'normal';
 
-  // Sombra (static relative to body)
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-  ctx.beginPath();
-  ctx.ellipse(x, y + actualSize * 0.8, actualSize * 0.6, actualSize * 0.2, 0, 0, Math.PI * 2);
-  ctx.fill();
+  // If flashing, skip complex gradients and details, just shape
+
+  if (!isFlash) {
+    // Sombra (static relative to body)
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.beginPath();
+    ctx.ellipse(x, y + actualSize * 0.8, actualSize * 0.6, actualSize * 0.2, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
 
   // Corpo (círculo principal)
-  // Gradients need to be relative to canvas
-  const bodyGradient = ctx.createRadialGradient(x - actualSize * 0.2, y - actualSize * 0.2, 0, x, y, actualSize);
-  bodyGradient.addColorStop(0, color);
-  bodyGradient.addColorStop(1, shadeColor(color, -30));
+  let bodyFill: string | CanvasGradient = color;
+  if (!isFlash) {
+      const bodyGradient = ctx.createRadialGradient(x - actualSize * 0.2, y - actualSize * 0.2, 0, x, y, actualSize);
+      bodyGradient.addColorStop(0, color);
+      bodyGradient.addColorStop(1, shadeColor(color, -30));
+      bodyFill = bodyGradient;
+  }
 
-  ctx.fillStyle = bodyGradient;
+  ctx.fillStyle = bodyFill;
   ctx.beginPath();
   ctx.arc(x, y, actualSize * 0.7, 0, Math.PI * 2);
   ctx.fill();
 
   if (isPlayer) {
     if (type === 'bazooka') {
-      ctx.fillStyle = '#2c3e50';
+      ctx.fillStyle = isFlash ? '#FFF' : '#2c3e50';
       ctx.beginPath();
       ctx.roundRect(x - actualSize * 0.6, y - actualSize * 0.8, actualSize * 0.4, actualSize * 1.2, 2);
       ctx.fill();
     } else if (type === 'rambo') {
-      ctx.fillStyle = '#111';
+      ctx.fillStyle = isFlash ? '#FFF' : '#111';
       ctx.fillRect(x + actualSize * 0.3, y, actualSize * 0.8, actualSize * 0.2);
     } else if (type === 'laser') {
       ctx.fillStyle = '#FFF';
       ctx.fillRect(x + actualSize * 0.3, y, actualSize * 0.6, actualSize * 0.15);
-      ctx.strokeStyle = '#00ffff';
-      ctx.strokeRect(x + actualSize * 0.3, y, actualSize * 0.6, actualSize * 0.15);
+      if (!isFlash) {
+          ctx.strokeStyle = '#00ffff';
+          ctx.strokeRect(x + actualSize * 0.3, y, actualSize * 0.6, actualSize * 0.15);
+      }
     } else {
-      ctx.fillStyle = shadeColor(color, 20);
+      ctx.fillStyle = isFlash ? '#FFF' : shadeColor(color, 20);
       ctx.beginPath();
       ctx.arc(x - actualSize * 0.4, y + actualSize * 0.2, actualSize * 0.3, 0, Math.PI * 2);
       ctx.fill();
-      ctx.strokeStyle = '#FFF';
-      ctx.lineWidth = 1;
-      ctx.stroke();
+      if (!isFlash) {
+          ctx.strokeStyle = '#FFF';
+          ctx.lineWidth = 1;
+          ctx.stroke();
 
-      ctx.strokeStyle = '#DDD';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(x + actualSize * 0.3, y);
-      ctx.lineTo(x + actualSize * 0.8, y - actualSize * 0.4);
-      ctx.stroke();
+          ctx.strokeStyle = '#DDD';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(x + actualSize * 0.3, y);
+          ctx.lineTo(x + actualSize * 0.8, y - actualSize * 0.4);
+          ctx.stroke();
+      }
     }
   } else {
     // Enemy Spikes
-    ctx.fillStyle = shadeColor(color, -50);
+    ctx.fillStyle = isFlash ? '#FFF' : shadeColor(color, -50);
     ctx.beginPath();
     ctx.moveTo(x - actualSize * 0.6, y - actualSize * 0.2);
     ctx.lineTo(x - actualSize * 0.9, y - actualSize * 0.5);
@@ -159,41 +186,47 @@ function renderSoldierToCache(type: Soldier['type'], color: string, size: number
   }
 
   // Cabeça
-  const headGradient = ctx.createRadialGradient(x - actualSize * 0.1, y - actualSize * 0.6, 0, x, y - actualSize * 0.5, actualSize * 0.4);
-  if (isPlayer) {
-    headGradient.addColorStop(0, '#FFE4C4');
-    headGradient.addColorStop(1, '#DEB887');
+  let headFill: string | CanvasGradient;
+  if (isFlash) {
+      headFill = '#FFF';
   } else {
-    headGradient.addColorStop(0, '#90EE90');
-    headGradient.addColorStop(1, '#2E8B57');
+    const headGradient = ctx.createRadialGradient(x - actualSize * 0.1, y - actualSize * 0.6, 0, x, y - actualSize * 0.5, actualSize * 0.4);
+    if (isPlayer) {
+        headGradient.addColorStop(0, '#FFE4C4');
+        headGradient.addColorStop(1, '#DEB887');
+    } else {
+        headGradient.addColorStop(0, '#90EE90');
+        headGradient.addColorStop(1, '#2E8B57');
+    }
+    headFill = headGradient;
   }
 
-  ctx.fillStyle = headGradient;
+  ctx.fillStyle = headFill;
   ctx.beginPath();
   ctx.arc(x, y - actualSize * 0.5, actualSize * 0.4, 0, Math.PI * 2);
   ctx.fill();
 
   // Capacete
-  ctx.fillStyle = shadeColor(color, -40);
+  ctx.fillStyle = isFlash ? '#FFF' : shadeColor(color, -40);
   ctx.beginPath();
   ctx.arc(x, y - actualSize * 0.6, actualSize * 0.35, Math.PI, 0);
   ctx.fill();
 
   // Detalhes extras de cabeça
   if (type === 'rambo') {
-    ctx.strokeStyle = '#ff0000';
+    ctx.strokeStyle = isFlash ? '#FFF' : '#ff0000';
     ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo(x - actualSize * 0.35, y - actualSize * 0.7);
     ctx.lineTo(x + actualSize * 0.35, y - actualSize * 0.7);
     ctx.stroke();
   } else if (type === 'laser') {
-    ctx.fillStyle = '#00ffff';
+    ctx.fillStyle = isFlash ? '#FFF' : '#00ffff';
     ctx.fillRect(x - actualSize * 0.25, y - actualSize * 0.65, actualSize * 0.5, actualSize * 0.15);
   }
 
   // Olhos brilhantes para inimigos
-  if (!isPlayer) {
+  if (!isPlayer && !isFlash) {
     ctx.fillStyle = '#FFD700';
     ctx.beginPath();
     ctx.arc(x - actualSize * 0.15, y - actualSize * 0.5, actualSize * 0.1, 0, Math.PI * 2);
@@ -202,15 +235,13 @@ function renderSoldierToCache(type: Soldier['type'], color: string, size: number
   }
 
   // Super effect overlay (baked in)
-  if (isSuper) {
+  if (isSuper && !isFlash) {
     ctx.strokeStyle = '#FFD700';
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.arc(x, y, actualSize + 2, 0, Math.PI * 2);
     ctx.stroke();
   }
-
-  spriteCache.images.set(key, canvas);
 }
 
 function renderParticleToCache(type: Particle['type'], color: string) {
@@ -350,19 +381,26 @@ function drawParticles(ctx: CanvasRenderingContext2D): void {
     const cachedCanvas = spriteCache.images.get(key);
 
     if (cachedCanvas) {
-      ctx.save();
-      ctx.globalAlpha = p.life;
-
+      // Optimization: Manual Transform instead of save/restore
       const size = 10; // Base size used in cache
       const scale = p.size / size;
       const canvasSize = cachedCanvas.width;
 
-      // Draw centered
-      ctx.translate(p.x, p.y);
+      const px = p.x;
+      const py = p.y;
+
+      // Transform
+      ctx.translate(px, py);
       ctx.scale(scale, scale);
+
+      ctx.globalAlpha = p.life;
       ctx.drawImage(cachedCanvas, -canvasSize/2, -canvasSize/2);
 
-      ctx.restore();
+      // Inverse Transform
+      ctx.scale(1/scale, 1/scale);
+      ctx.translate(-px, -py);
+      ctx.globalAlpha = 1.0;
+
     } else {
       // Fallback if not cached
       ctx.save();
@@ -870,9 +908,9 @@ function drawRoad(ctx: CanvasRenderingContext2D, gameState: GameState): void {
 }
 // ------------------------------
 
-function drawSoldier3D(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, color: string, animOffset: number, time: number, type: Soldier['type'] = 'normal', isSuper: boolean = false): void {
+function drawSoldier3D(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, color: string, animOffset: number, time: number, type: Soldier['type'] = 'normal', isSuper: boolean = false, isFlash: boolean = false): void {
   // Attempt to use cached sprite
-  const key = getSpriteKey(type, color, size, isSuper);
+  const key = getSpriteKey(type, color, size, isSuper, isFlash);
   const cachedCanvas = spriteCache.images.get(key);
 
   const bounce = Math.sin(time * 0.008 + animOffset) * 3;
@@ -881,11 +919,18 @@ function drawSoldier3D(ctx: CanvasRenderingContext2D, x: number, y: number, size
 
   if (cachedCanvas) {
     const canvasSize = cachedCanvas.width;
-    ctx.save();
-    ctx.translate(x, y + bounce);
+
+    // Optimization: Manual Transform instead of save/restore
+    const finalY = y + bounce;
+
+    ctx.translate(x, finalY);
     ctx.scale(scale, scale);
     ctx.drawImage(cachedCanvas, -canvasSize / 2, -canvasSize / 2);
-    ctx.restore();
+
+    // Reset transform
+    ctx.scale(1/scale, 1/scale);
+    ctx.translate(-x, -finalY);
+
     return;
   }
 
@@ -921,28 +966,24 @@ function drawArmy(ctx: CanvasRenderingContext2D, army: Army, time: number): void
   }
 
   for (const soldier of sortedSoldiers) {
+    if (soldier.hitTimer && soldier.hitTimer > 0) {
+      soldier.hitTimer--;
+    }
+    const isFlash = (soldier.hitTimer || 0) > 0;
+
     if (soldier.isSuper) {
-      ctx.save();
-      ctx.shadowColor = '#FFD700';
-      ctx.shadowBlur = 15;
-      drawSoldier3D(ctx, soldier.x, soldier.y, soldier.size, '#FFD700', soldier.animOffset, time, soldier.type, true);
-      ctx.restore();
+      // Use super sprite
+      drawSoldier3D(ctx, soldier.x, soldier.y, soldier.size, '#FFD700', soldier.animOffset, time, soldier.type, true, isFlash);
+
+      // Star overhead (simple text, could be sprite too)
       ctx.fillStyle = '#FFD700';
       ctx.font = '10px Arial';
       ctx.textAlign = 'center';
       ctx.fillText('⭐', soldier.x, soldier.y - soldier.size - 5);
     } else {
-      drawSoldier3D(ctx, soldier.x, soldier.y, soldier.size, soldier.color, soldier.animOffset, time, soldier.type, false);
+      drawSoldier3D(ctx, soldier.x, soldier.y, soldier.size, soldier.color, soldier.animOffset, time, soldier.type, false, isFlash);
     }
   }
-
-  // Contador de soldados REMOVIDO daqui pois já está no HUD unificado
-  /*
-  const count = army.soldiers.filter(s => s.isAlive).length;
-  if (count > 0) {
-    drawGlassBadge(ctx, army.centerX - 28, army.centerY - 75, 56, 36, count.toString(), '#4A90D9');
-  }
-  */
 }
 
 function drawEnemyHorde(ctx: CanvasRenderingContext2D, horde: EnemyHorde, time: number): void {
@@ -970,7 +1011,11 @@ function drawEnemyHorde(ctx: CanvasRenderingContext2D, horde: EnemyHorde, time: 
   ctx.globalAlpha = hordeAlpha;
 
   for (const soldier of sortedSoldiers) {
-    drawSoldier3D(ctx, soldier.x, soldier.y, soldier.size, soldier.color, soldier.animOffset, time, soldier.type, false);
+    if (soldier.hitTimer && soldier.hitTimer > 0) {
+      soldier.hitTimer--;
+    }
+    const isFlash = (soldier.hitTimer || 0) > 0;
+    drawSoldier3D(ctx, soldier.x, soldier.y, soldier.size, soldier.color, soldier.animOffset, time, soldier.type, false, isFlash);
   }
 
   const count = horde.soldiers.filter(s => s.isAlive).length;
@@ -1170,7 +1215,8 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
   }
 
   // Layout inferior unificado (Linha única)
-  const bottomY = height - 25;
+  // Ajustado para Safe Area (Home Bar no iOS ocupa ~34px)
+  const bottomY = height - 45;
   const badgeHeight = 32;
   const fontSize = 16;
   const gap = 5;
@@ -1181,24 +1227,34 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
 
   ctx.save();
 
-  // 1. Score (Esquerda)
-  drawGlassBadge(ctx, 10, bottomY - badgeHeight/2, 80, badgeHeight, `🏆 ${gameState.score}`, '#FFD700', 14);
+  // Dynamic layout calculation
+  let currentX = 10;
 
-  // 2. Coins (Esquerda - Novo)
-  drawGlassBadge(ctx, 95, bottomY - badgeHeight/2, 70, badgeHeight, `💰 ${gameState.coins}`, '#F1C40F', 14);
+  const drawAutoBadge = (text: string, color: string, minWidth: number = 50) => {
+      // Estimate width (roughly 9px per char at 14px bold)
+      const w = Math.max(minWidth, 20 + text.length * 9);
+      drawGlassBadge(ctx, currentX, bottomY - badgeHeight/2, w, badgeHeight, text, color, 14);
+      currentX += w + gap;
+  };
 
-  // 3. Level (Centro-Esquerda)
-  drawGlassBadge(ctx, 170, bottomY - badgeHeight/2, 50, badgeHeight, `Lv.${gameState.currentLevel}`, '#4A90D9', 14);
+  // 1. Score
+  drawAutoBadge(`🏆 ${gameState.score}`, '#FFD700', 70);
 
-  // 4. Army Power (Centro)
-  drawGlassBadge(ctx, 225, bottomY - badgeHeight/2, 60, badgeHeight, `🪖 ${armyPower}`, '#2ECC71', 14);
+  // 2. Coins
+  drawAutoBadge(`💰 ${gameState.coins}`, '#F1C40F', 60);
 
-  // 5. Fire Rate (Centro-Direita)
+  // 3. Level
+  drawAutoBadge(`Lv.${gameState.currentLevel}`, '#4A90D9', 50);
+
+  // 4. Army Power
+  drawAutoBadge(`🪖 ${armyPower}`, '#2ECC71', 60);
+
+  // 5. Fire Rate
   const shotsPerSec = (1000 / fireRate).toFixed(1);
-  drawGlassBadge(ctx, 290, bottomY - badgeHeight/2, 70, badgeHeight, `🔥 ${shotsPerSec}/s`, '#F39C12', 14);
+  drawAutoBadge(`🔥 ${shotsPerSec}/s`, '#F39C12', 70);
 
-  // 6. Damage (Direita)
-  drawGlassBadge(ctx, 365, bottomY - badgeHeight/2, 55, badgeHeight, `⚔️ ${damage}`, '#E91E63', 14);
+  // 6. Damage
+  drawAutoBadge(`⚔️ ${damage}`, '#E91E63', 50);
 
   // Coins removido do topo pois foi movido para baixo
   // drawGlassBadge(ctx, width - 90, 30, 80, 28, `💰 ${gameState.coins}`, '#FFD700', 14);
@@ -1230,14 +1286,16 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
   if (gameState.combo > 1) {
     const comboX = width / 2;
     const comboY = 80; // Movido para baixo para não sobrepor o boss warning ou score
-    const pulse = 1 + Math.sin(Date.now() * 0.01) * 0.1;
+    const pulse = 1 + Math.sin(Date.now() * 0.01) * 0.1 + (gameState.combo > 10 ? Math.random() * 0.1 : 0);
+    const shake = gameState.combo > 20 ? (Math.random() - 0.5) * 5 : 0;
+
     ctx.save();
-    ctx.translate(comboX, comboY);
+    ctx.translate(comboX + shake, comboY + shake);
     ctx.scale(pulse, pulse);
     ctx.shadowColor = getComboColor(gameState.combo);
     ctx.shadowBlur = 20;
     ctx.fillStyle = getComboColor(gameState.combo);
-    ctx.font = 'bold 28px Arial';
+    ctx.font = `bold ${Math.min(48, 28 + gameState.combo)}px Arial`; // Grow with combo
     ctx.textAlign = 'center';
     ctx.fillText(`${gameState.combo}x COMBO!`, 0, 0);
     const comboProgress = gameState.comboTimer / 4000;
@@ -1246,6 +1304,14 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
     ctx.fillStyle = getComboColor(gameState.combo);
     ctx.fillRect(-50, 10, 100 * comboProgress, 6);
     ctx.restore();
+  }
+
+  // New Record Celebration
+  if (gameState.score > gameState.highScore && gameState.highScore > 0 && !gameState.newRecordReached) {
+      // Just triggered logic handled in game loop, but visual here
+      // We can use a property in gameState to track if we should show celebration
+      // For now, simpler: if score is > old highscore (we'd need to know old highscore, which we don't track separately here easily without adding state)
+      // Actually, game.ts handles logic.
   }
 }
 

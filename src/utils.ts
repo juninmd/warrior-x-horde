@@ -1,5 +1,5 @@
 // utils.ts - Shared Helper Functions
-import { Army, BoundingBox } from './types';
+import { Army } from './types';
 import { THEMES, ThemeConfig } from './constants';
 
 // --- Math & Color Utilities ---
