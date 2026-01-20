@@ -6,7 +6,7 @@ import { render, getShareButtonBounds, getWhatsAppButtonBounds, shareOnX, shareO
 import { checkCollisions } from './collisions';
 import { updateSpawns } from './spawner';
 import { updateMovement } from './movement';
-import { setupInput, getMouseX, initializeMousePosition, setGameStateRef, setInputScale } from './input';
+import { setupInput, getMouseX, initializeMousePosition, setGameStateRef, setInputScale, vibrate } from './input';
 import { updateShooting, updateBullets, updateSuperCannon, activateSuperCannon } from './shooting';
 import { initAudio, playMusic, playSound, stopAllMusic, audioManager, toggleMute, isMusicMuted } from './audio';
 import { BASE_WIDTH, BASE_HEIGHT, ASPECT_RATIO } from './constants';
@@ -243,7 +243,13 @@ function gameLoop(currentTime: number = 0): void {
   if (!gameState.isGameOver) {
     // Checar High Score em tempo real para feedback
     if (gameState.score > gameState.highScore && gameState.highScore > 0) {
-      // Pequeno efeito visual ou som se bateu o recorde agora
+      if (!gameState.newRecordReached) {
+        gameState.newRecordReached = true;
+        addFloatingText("👑 NEW RECORD! 👑", canvas.width/2, 200, "#FFD700", 2);
+        triggerScreenShake(15, 800);
+        playSound(audioManager.powerUp); // Use powerup sound as placeholder
+        // spawn confetti?
+      }
     }
 
     requestAnimationFrame(gameLoop);
@@ -489,6 +495,7 @@ function debugSetLevel(targetLevel: number): void {
 function togglePause(): void {
   if (!gameState.isStarted || gameState.isGameOver) return;
 
+  vibrate(20);
   gameState.isPaused = !gameState.isPaused;
 
   // Atualizar botão de pause
@@ -506,6 +513,7 @@ function togglePause(): void {
 }
 
 function toggleMuteUI(): void {
+  vibrate(10);
   const muted = toggleMute();
   const btn = document.getElementById('muteBtn');
   if (btn) {
@@ -514,6 +522,7 @@ function toggleMuteUI(): void {
 }
 
 function toggleFullscreen(): void {
+  vibrate(10);
   if (!document.fullscreenElement) {
     document.documentElement.requestFullscreen().catch(err => {
       console.log(`Error attempting to enable fullscreen: ${err.message}`);
@@ -527,6 +536,7 @@ function toggleFullscreen(): void {
 
 // Função para ativar super cannon (exposta para HTML)
 function triggerSuperCannon(): void {
+  vibrate(25);
   if (gameState.isStarted && !gameState.isGameOver && !gameState.isPaused) {
     activateSuperCannon(gameState);
   }

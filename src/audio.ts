@@ -8,6 +8,7 @@ export interface AudioManager {
   powerUp: HTMLAudioElement;
   nerf: HTMLAudioElement;
   superCannon: HTMLAudioElement;
+  victory: HTMLAudioElement;
 }
 
 let isMuted = false;
@@ -29,6 +30,7 @@ export const audioManager: AudioManager = {
   powerUp: createAudio('/audio/power_up.wav', false, 0.4),
   nerf: createAudio('/audio/nerf.wav', false, 0.4),
   superCannon: createAudio('/audio/boss_death.mp3', false, 0.5),
+  victory: createAudio('/audio/wave_complete.wav', false, 0.5),
 };
 
 export function initAudio(): void {

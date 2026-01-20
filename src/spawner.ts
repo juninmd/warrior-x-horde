@@ -1,5 +1,6 @@
 // spawner.ts - Gerador de obstáculos e inimigos
-import { Entities, GameState, MAX_ENEMIES } from './types';
+import { Entities, GameState } from './types';
+import { MAX_ENEMIES } from './constants';
 import { createGatePair, createEnemyHorde, createBoss, createMiniBoss, createMysteryBox, createCoin } from './entities';
 
 export function spawnCoins(entities: Entities, canvasWidth: number, gameState: GameState, dtFactor: number): void {

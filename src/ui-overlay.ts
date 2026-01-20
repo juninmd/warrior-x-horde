@@ -1,6 +1,7 @@
 // ui-overlay.ts - Manages HTML/DOM overlays
 import { COLORS } from './constants';
 import { GameState } from './types';
+import { vibrate } from './input';
 
 // Container elements
 let shopContainer: HTMLElement | null = null;
@@ -32,15 +33,19 @@ function createShopButton(type: string, price: number, color: string, label: str
     justify-content: center;
     touch-action: manipulation;
     user-select: none;
+    -webkit-user-select: none;
     transition: transform 0.1s, opacity 0.2s;
   `;
 
   // Effects
-  btn.addEventListener('mousedown', () => btn.style.transform = 'scale(0.95)');
-  btn.addEventListener('mouseup', () => btn.style.transform = 'scale(1)');
-  btn.addEventListener('mouseleave', () => btn.style.transform = 'scale(1)');
-  btn.addEventListener('touchstart', () => btn.style.transform = 'scale(0.95)', { passive: true });
-  btn.addEventListener('touchend', () => btn.style.transform = 'scale(1)', { passive: true });
+  // Use pointer events for unified handling
+  btn.addEventListener('pointerdown', (e) => {
+      btn.style.transform = 'scale(0.95)';
+      // Optional: Prevent default if necessary, but careful with scrolling
+  });
+
+  btn.addEventListener('pointerup', () => btn.style.transform = 'scale(1)');
+  btn.addEventListener('pointerleave', () => btn.style.transform = 'scale(1)');
 
   return btn;
 }
@@ -90,12 +95,14 @@ export function setupShopUI(onBuy: BuyAction): void {
     }
 
     // Event listeners
+    // Using click with touch-action: manipulation is standard for mobile buttons now.
+    // It avoids the double-fire issue of listening to both touch and click.
     const handler = (e: Event) => {
         e.stopPropagation();
+        vibrate(15); // Haptic feedback
         onBuy(cfg.type as any, cfg.price);
     };
     btn.addEventListener('click', handler);
-    btn.addEventListener('touchstart', handler, { passive: true });
 
     shopContainer!.appendChild(btn);
     buttons[cfg.id] = btn;
@@ -160,19 +167,26 @@ export function setupSuperCannonUI(onActivate: SuperCannonAction): void {
         -webkit-user-select: none;
         -webkit-tap-highlight-color: transparent;
         -webkit-touch-callout: none;
+        transition: transform 0.1s;
     `;
 
     const trigger = (e: Event) => {
-        e.preventDefault();
+        // Prevent default only if it's touch to avoid synthesized click if we handle both?
+        // Actually, just handle click is safest with touch-action: manipulation.
+        // But for "Game Actions" sometimes touchstart is preferred for lower latency.
+        // Let's stick to click for consistency, or careful pointerdown.
+        // Given this is a big action button, click is fine.
         e.stopPropagation();
+        vibrate(25); // Stronger vibration for Super Cannon
         onActivate();
+
         // Visual feedback
         btn.style.transform = 'scale(0.95)';
         setTimeout(() => btn.style.transform = 'scale(1)', 100);
     };
 
-    btn.addEventListener('touchstart', trigger, { passive: false });
     btn.addEventListener('click', trigger);
+    // Remove touchstart to avoid double trigger, rely on browser fast-tap via touch-action
 
     superCannonContainer.appendChild(btn);
     buttons['superCannon'] = btn;

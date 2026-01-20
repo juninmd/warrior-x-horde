@@ -15,6 +15,7 @@ export class VirtualJoystick {
   currentX: number = 0;
   currentY: number = 0;
   maxRadius: number = 50;
+  deadZone: number = 5; // Pixels de movimento ignorados
 
   start(x: number, y: number) {
     this.active = true;
@@ -37,13 +38,16 @@ export class VirtualJoystick {
   getDeltaX(): number {
     if (!this.active) return 0;
     const dx = this.currentX - this.startX;
-    // Clamp to maxRadius for normalized feel, but return raw delta for direct mapping if needed
-    // For this game, we want direct mapping or relative movement
+    if (Math.abs(dx) < this.deadZone) return 0;
     return dx;
   }
 }
 
 export const virtualJoystick = new VirtualJoystick();
+
+// Variaveis para controle relativo (Touch)
+let touchStartX = 0;
+let armyStartX = 0;
 
 export function getMouseX(): number {
   return mouseX;
@@ -67,13 +71,13 @@ export function vibrate(ms: number): void {
     try {
       navigator.vibrate(ms);
     } catch (e) {
-      // Ignore vibration errors (user interaction requirements, etc)
+      // Ignore vibration errors
     }
   }
 }
 
 export function setupInput(canvas: HTMLCanvasElement): void {
-  // Mouse events
+  // Mouse events (Desktop - Absolute positioning is fine/expected for mouse)
   canvas.addEventListener('mousedown', (e) => {
     isDragging = true;
     mouseX = screenToCanvasX(e.clientX, canvas.getBoundingClientRect());
@@ -93,7 +97,7 @@ export function setupInput(canvas: HTMLCanvasElement): void {
     isDragging = false;
   });
 
-  // Touch events
+  // Touch events (Mobile - Relative positioning for better experience)
   canvas.addEventListener('touchstart', (e) => {
     // Não prevenir default aqui para permitir que game.ts trate o game over
     if (gameStateRef && !gameStateRef.isGameOver) {
@@ -106,13 +110,14 @@ export function setupInput(canvas: HTMLCanvasElement): void {
 
     if (e.touches.length > 0) {
       const touch = e.touches[0];
-      const canvasX = screenToCanvasX(touch.clientX, canvas.getBoundingClientRect());
+      const rect = canvas.getBoundingClientRect();
+      const touchX = screenToCanvasX(touch.clientX, rect);
 
-      // Update mouseX directly for absolute positioning (original behavior)
-      mouseX = canvasX;
+      touchStartX = touchX;
+      armyStartX = mouseX; // Anchor to current position
       isDragging = true;
 
-      // Start virtual joystick for relative movement options if we add them later
+      // Start virtual joystick for visualization
       virtualJoystick.start(touch.clientX, touch.clientY);
     }
   }, { passive: false });
@@ -124,12 +129,24 @@ export function setupInput(canvas: HTMLCanvasElement): void {
 
     if (e.touches.length > 0) {
       const touch = e.touches[0];
-      const canvasX = screenToCanvasX(touch.clientX, canvas.getBoundingClientRect());
+      const rect = canvas.getBoundingClientRect();
+      const currentTouchX = screenToCanvasX(touch.clientX, rect);
 
-      // Update mouseX directly
-      mouseX = canvasX;
+      // Relative movement
+      const delta = currentTouchX - touchStartX;
+
+      // Sensitivity factor (1.2 for slightly faster response than finger)
+      const sensitivity = 1.2;
+
+      let newX = armyStartX + delta * sensitivity;
+
+      // Clamp to screen bounds
+      newX = Math.max(0, Math.min(canvas.width, newX));
+
+      mouseX = newX;
       isDragging = true;
 
+      // Joystick visual update
       virtualJoystick.move(touch.clientX, touch.clientY);
     }
   }, { passive: false });

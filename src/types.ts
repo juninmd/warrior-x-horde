@@ -47,6 +47,7 @@ export interface GameState {
   // Boss Atmosphere
   bossActive: boolean;
   bossAtmosphereIntensity: number;
+  newRecordReached: boolean;
 }
 
 export interface Soldier {
@@ -64,6 +65,7 @@ export interface Soldier {
   isSuper?: boolean; // Super guerreiro
   personalFireRate?: number; // Fire rate individual (para super guerreiros)
   type: 'normal' | 'bazooka' | 'rambo' | 'laser';
+  hitTimer?: number;
 }
 
 export interface Army {
@@ -103,6 +105,7 @@ export interface MiniBoss {
   isActive: boolean;
   color: string;
   type: 'normal' | 'armored' | 'speed' | 'spiky';
+  hitTimer?: number;
 }
 
 export interface Gate {
@@ -140,6 +143,7 @@ export interface MysteryBox {
   hp: number;
   maxHp: number;
   passed: boolean;
+  hitTimer?: number;
 }
 
 export interface Coin {
@@ -177,6 +181,7 @@ export interface Boss {
   type: 'normal' | 'beast' | 'machine' | 'demon' | 'mothership' | 'slime' | 'eye' | 'spider' | 'skull' | 'ghost' | 'crystal'; // Tipo de boss
   vx?: number; // Velocidade horizontal (para mothership)
   vy?: number; // Velocidade vertical (para mothership)
+  hitTimer?: number;
 }
 
 export interface Entities {

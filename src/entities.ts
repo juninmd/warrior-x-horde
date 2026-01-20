@@ -24,6 +24,7 @@ export function createSoldier(x: number, y: number, color: string, hp: number = 
     maxHp: hp,
     isSuper: false,
     type,
+    hitTimer: 0,
   };
 }
 
@@ -44,6 +45,7 @@ export function createSuperSoldier(x: number, y: number): Soldier {
     isSuper: true,
     personalFireRate: 100, // Atira 2x mais rápido
     type: 'normal', // Considerado normal, mas com flag isSuper
+    hitTimer: 0,
   };
 }
 
@@ -85,6 +87,7 @@ export function createSpecialSoldier(x: number, y: number, type: Soldier['type']
     maxHp: hp,
     isSuper: false,
     type,
+    hitTimer: 0,
   };
 }
 
@@ -503,6 +506,7 @@ export function createBoss(canvasWidth: number, level: number): Boss {
       spawnTime: Date.now(),
       isMoving: false, // Nave não se move, fica no topo
       type: 'mothership',
+      hitTimer: 0,
     };
   }
 
@@ -567,6 +571,7 @@ export function createBoss(canvasWidth: number, level: number): Boss {
     spawnTime: Date.now(),
     isMoving: false,
     type,
+    hitTimer: 0,
   };
 }
 
@@ -592,6 +597,7 @@ export function createMiniBoss(canvasWidth: number, y: number, level: number): M
     isActive: true,
     color,
     type,
+    hitTimer: 0,
   };
 }
 
@@ -617,6 +623,7 @@ export function createMysteryBox(canvasWidth: number, y: number): MysteryBox {
     hp,
     maxHp: hp,
     passed: false,
+    hitTimer: 0,
   };
 }
 

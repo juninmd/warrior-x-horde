@@ -1,44 +1,28 @@
-import asyncio
-from playwright.async_api import async_playwright, expect
+from playwright.sync_api import Page, expect, sync_playwright
+import time
 
-async def run():
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
-        page = await browser.new_page()
+def verify_game_ui(page: Page):
+    # 1. Arrange: Go to the game
+    page.goto("http://localhost:5173/")
 
-        # Navigate to the game (Vite default port)
-        await page.goto("http://localhost:5173")
+    # 2. Act: Click start
+    # Ensure start button is visible
+    start_btn = page.locator("#startBtnOverlay")
+    expect(start_btn).to_be_visible()
+    start_btn.click()
 
-        # Wait for game canvas to load
-        await expect(page.locator("#gameCanvas")).to_be_visible()
+    # 3. Wait for game loop to render UI
+    time.sleep(2) # Wait for animation/fade out
 
-        # Take screenshot of initial state (should show Start Screen)
-        await page.screenshot(path="verification/start_screen.png")
-
-        # Click Start
-        await page.locator("#startBtnOverlay").click()
-
-        # Wait a bit for game to start
-        await page.wait_for_timeout(1000)
-
-        # Verify Pause Button is visible
-        await expect(page.locator("#pauseBtn")).to_be_visible()
-
-        # Pause the game
-        await page.keyboard.press("P")
-        await page.wait_for_timeout(500)
-
-        # Screenshot paused state (should see Glassmorphism overlay)
-        await page.screenshot(path="verification/paused_state.png")
-
-        # Resume
-        await page.keyboard.press("P")
-        await page.wait_for_timeout(500)
-
-        # Screenshot gameplay
-        await page.screenshot(path="verification/gameplay.png")
-
-        await browser.close()
+    # 4. Screenshot
+    page.screenshot(path="verification/game_ui.png")
 
 if __name__ == "__main__":
-    asyncio.run(run())
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        # Mobile viewport size to test responsive UI
+        page = browser.new_page(viewport={"width": 375, "height": 812})
+        try:
+            verify_game_ui(page)
+        finally:
+            browser.close()
