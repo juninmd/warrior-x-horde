@@ -48,6 +48,8 @@ export interface GameState {
   bossActive: boolean;
   bossAtmosphereIntensity: number;
   newRecordReached: boolean;
+  damageFlash: number;
+  lowArmyTriggered: boolean;
 }
 
 export interface Soldier {

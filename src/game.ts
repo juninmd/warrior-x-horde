@@ -46,9 +46,12 @@ function resizeCanvas(): void {
   canvas.style.width = `${newWidth}px`;
   canvas.style.height = `${newHeight}px`;
 
-  // Manter dimensões internas do canvas (resolução do jogo)
-  canvas.width = BASE_WIDTH;
-  canvas.height = BASE_HEIGHT;
+  // Manter dimensões internas do canvas (resolução do jogo) com suporte a High DPI
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = BASE_WIDTH * dpr;
+  canvas.height = BASE_HEIGHT * dpr;
+
+  ctx.scale(dpr, dpr);
 
   // Calcular escala para eventos de input
   scale = newWidth / BASE_WIDTH;
@@ -152,14 +155,14 @@ function gameLoop(currentTime: number = 0): void {
     // Desenhar texto de PAUSADO
     ctx.save();
     ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, BASE_WIDTH, BASE_HEIGHT);
     ctx.fillStyle = '#FFD700';
     ctx.font = 'bold 48px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('⏸️ PAUSADO', canvas.width / 2, canvas.height / 2);
+    ctx.fillText('⏸️ PAUSADO', BASE_WIDTH / 2, BASE_HEIGHT / 2);
     ctx.font = '18px Arial';
     ctx.fillStyle = '#FFF';
-    ctx.fillText('Toque para continuar', canvas.width / 2, canvas.height / 2 + 40);
+    ctx.fillText('Toque para continuar', BASE_WIDTH / 2, BASE_HEIGHT / 2 + 40);
     ctx.restore();
     return; // Não continua o loop enquanto pausado
   }
@@ -182,8 +185,13 @@ function gameLoop(currentTime: number = 0): void {
     }
   }
 
+  // Update Damage Flash
+  if (gameState.damageFlash > 0) {
+    gameState.damageFlash = Math.max(0, gameState.damageFlash - 0.05 * dtFactor);
+  }
+
   // Atualizar movimento
-  updateMovement(entities, gameState, canvas.width, getMouseX(), dtFactor);
+  updateMovement(entities, gameState, BASE_WIDTH, getMouseX(), dtFactor);
 
   // Atualizar movimento das Mystery Boxes
   for (const box of entities.mysteryBoxes) {
@@ -203,10 +211,22 @@ function gameLoop(currentTime: number = 0): void {
   updateShopUI(gameState);
 
   // Spawnar elementos
-  updateSpawns(entities, canvas.width, gameState, canvas.height, dtFactor);
+  updateSpawns(entities, BASE_WIDTH, gameState, BASE_HEIGHT, dtFactor);
 
   // Verificar colisões
   checkCollisions(entities, gameState);
+
+  // Check Low Army Warning
+  const armyCount = entities.playerArmy.soldiers.filter(s => s.isAlive).length;
+  if (armyCount < 10 && armyCount > 0 && !gameState.isGameOver && gameState.isStarted) {
+     if (!gameState.lowArmyTriggered) {
+        gameState.lowArmyTriggered = true;
+        vibrate(50);
+        addFloatingText("⚠️ LOW ARMY! ⚠️", entities.playerArmy.centerX, entities.playerArmy.centerY - 50, "#FF4500", 1.2);
+     }
+  } else if (armyCount >= 10) {
+     gameState.lowArmyTriggered = false;
+  }
 
   // Atualizar combo timer
   if (gameState.comboTimer > 0) {
@@ -245,10 +265,9 @@ function gameLoop(currentTime: number = 0): void {
     if (gameState.score > gameState.highScore && gameState.highScore > 0) {
       if (!gameState.newRecordReached) {
         gameState.newRecordReached = true;
-        addFloatingText("👑 NEW RECORD! 👑", canvas.width/2, 200, "#FFD700", 2);
+        addFloatingText("👑 NEW RECORD! 👑", BASE_WIDTH/2, 200, "#FFD700", 2);
         triggerScreenShake(15, 800);
         playSound(audioManager.powerUp); // Use powerup sound as placeholder
-        // spawn confetti?
       }
     }
 
@@ -289,16 +308,16 @@ function advanceToNextLevel(): void {
   // Spawnar hordas iniciais para o novo level - quantidades reduzidas
   const baseEnemies = 12 + gameState.currentLevel * 2; // Reduzido
   entities.enemyHordes = [
-    createEnemyHorde(canvas.width, -50, baseEnemies, gameState.currentLevel),
-    createEnemyHorde(canvas.width, -200, baseEnemies + 3, gameState.currentLevel),
+    createEnemyHorde(BASE_WIDTH, -50, baseEnemies, gameState.currentLevel),
+    createEnemyHorde(BASE_WIDTH, -200, baseEnemies + 3, gameState.currentLevel),
   ];
 }
 
 // Iniciar jogo
 function startGame(): void {
   resetGameState();
-  entities = createInitialEntities(canvas.width, canvas.height);
-  initializeMousePosition(canvas.width);
+  entities = createInitialEntities(BASE_WIDTH, BASE_HEIGHT);
+  initializeMousePosition(BASE_WIDTH);
   setGameStateRef(gameState); // Configurar referência para input de Super Cannon
   wasInBossFight = false; // Resetar flag de boss
   gameState.isStarted = true;
@@ -421,7 +440,7 @@ window.addEventListener('orientationchange', () => {
 // Setup inicial
 resizeCanvas(); // Configurar tamanho inicial
 setupInput(canvas);
-initializeMousePosition(canvas.width);
+initializeMousePosition(BASE_WIDTH);
 initAudio(); // Inicializar sistema de áudio
 
 // Auto-pause quando a aba for trocada ou minimizada (Mobile friendly)
@@ -438,7 +457,7 @@ if (muteBtn) {
 }
 
 // Desenhar tela inicial
-entities = createInitialEntities(canvas.width, canvas.height);
+entities = createInitialEntities(BASE_WIDTH, BASE_HEIGHT);
 render(ctx, entities, gameState);
 
 // DEBUG: Função para ir para um level específico (exposta globalmente)
@@ -457,7 +476,7 @@ function debugSetLevel(targetLevel: number): void {
 
   // Dar um exército razoável para teste
   const testSoldiers = Math.min(200, 10 + targetLevel * 12);
-  entities = createInitialEntities(canvas.width, canvas.height);
+  entities = createInitialEntities(BASE_WIDTH, BASE_HEIGHT);
 
   // Adicionar soldados extras
   for (let i = 0; i < testSoldiers; i++) {
@@ -478,8 +497,8 @@ function debugSetLevel(targetLevel: number): void {
   // Spawnar hordas para o level
   const baseEnemies = 15 + targetLevel * 3;
   entities.enemyHordes = [
-    createEnemyHorde(canvas.width, -50, baseEnemies, targetLevel),
-    createEnemyHorde(canvas.width, -200, baseEnemies + 5, targetLevel),
+    createEnemyHorde(BASE_WIDTH, -50, baseEnemies, targetLevel),
+    createEnemyHorde(BASE_WIDTH, -200, baseEnemies + 5, targetLevel),
   ];
 
   console.log(`🎮 Debug: Indo para Level ${targetLevel}`);

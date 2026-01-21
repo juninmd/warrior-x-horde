@@ -2,7 +2,7 @@
 import { Entities, GameState, FloatingText, Army, EnemyHorde, Gate, Bullet, Particle, MysteryBox, Soldier, MiniBoss } from './types';
 import { ObjectPool } from './pool';
 import { shadeColor, getBiomeColors } from './utils';
-import { COLORS, MAX_PARTICLES, MAX_RENDERED_SOLDIERS, ThemeConfig } from './constants';
+import { COLORS, MAX_PARTICLES, MAX_RENDERED_SOLDIERS, ThemeConfig, BASE_WIDTH, BASE_HEIGHT } from './constants';
 import { drawGlassBadge, drawStar, drawJoystick, getComboColor } from './renderer-utils';
 import { drawBoss } from './renderer-boss';
 
@@ -894,7 +894,8 @@ function drawTree(ctx: CanvasRenderingContext2D, x: number, y: number, size: num
 }
 
 function drawRoad(ctx: CanvasRenderingContext2D, gameState: GameState): void {
-  const { width, height } = ctx.canvas;
+  const width = BASE_WIDTH;
+  const height = BASE_HEIGHT;
   const time = Date.now();
   const theme = getBiomeColors(gameState.currentLevel);
 
@@ -915,7 +916,6 @@ function drawSoldier3D(ctx: CanvasRenderingContext2D, x: number, y: number, size
 
   const bounce = Math.sin(time * 0.008 + animOffset) * 3;
   const scale = Math.max(0.5, 1 - (800 - y) / 1500);
-  const actualSize = size * scale;
 
   if (cachedCanvas) {
     const canvasSize = cachedCanvas.width;
@@ -947,25 +947,52 @@ function drawArmy(ctx: CanvasRenderingContext2D, army: Army, time: number): void
 
   const dx = army.centerX - lastArmyX;
   if (Math.abs(dx) > 2) {
-    const aliveSoldiers = army.soldiers.filter(s => s.isAlive);
-    if (aliveSoldiers.length > 0 && Math.random() < 0.3) {
-      const randomSoldier = aliveSoldiers[Math.floor(Math.random() * aliveSoldiers.length)];
-      addTrail(randomSoldier.x, randomSoldier.y + 10, '#4A90D9');
+    // Optimization: Avoid filtering entire array just for trail check. Try random sampling.
+    for (let i = 0; i < 5; i++) {
+        const randIdx = Math.floor(Math.random() * army.soldiers.length);
+        const s = army.soldiers[randIdx];
+        if (s && s.isAlive && Math.random() < 0.3) {
+            addTrail(s.x, s.y + 10, '#4A90D9');
+            break;
+        }
     }
   }
   lastArmyX = army.centerX;
 
-  let sortedSoldiers = [...army.soldiers].filter(s => s.isAlive).sort((a, b) => a.y - b.y);
+  // Optimized Rendering: Sample BEFORE sorting to avoid O(N log N) on massive armies
+  const aliveNormalSoldiers: Soldier[] = [];
+  const superSoldiers: Soldier[] = [];
 
-  if (sortedSoldiers.length > MAX_RENDERED_SOLDIERS) {
-    const superSoldiers = sortedSoldiers.filter(s => s.isSuper);
-    const normalSoldiers = sortedSoldiers.filter(s => !s.isSuper);
-    const remainingSlots = MAX_RENDERED_SOLDIERS - superSoldiers.length;
-    const selectedNormal = normalSoldiers.slice(0, Math.max(0, remainingSlots));
-    sortedSoldiers = [...superSoldiers, ...selectedNormal].sort((a, b) => a.y - b.y);
+  // Single pass to separate types
+  for (const s of army.soldiers) {
+      if (s.isAlive) {
+          if (s.isSuper) superSoldiers.push(s);
+          else aliveNormalSoldiers.push(s);
+      }
   }
 
-  for (const soldier of sortedSoldiers) {
+  let soldiersToDraw: Soldier[] = [];
+
+  if (superSoldiers.length >= MAX_RENDERED_SOLDIERS) {
+      soldiersToDraw = superSoldiers.slice(0, MAX_RENDERED_SOLDIERS);
+  } else {
+      soldiersToDraw = [...superSoldiers];
+      const remainingSlots = MAX_RENDERED_SOLDIERS - soldiersToDraw.length;
+
+      if (aliveNormalSoldiers.length > remainingSlots) {
+           const step = aliveNormalSoldiers.length / remainingSlots;
+           for (let i = 0; i < remainingSlots; i++) {
+               soldiersToDraw.push(aliveNormalSoldiers[Math.floor(i * step)]);
+           }
+      } else {
+           soldiersToDraw = [...soldiersToDraw, ...aliveNormalSoldiers];
+      }
+  }
+
+  // Sort ONLY the subset (small N)
+  soldiersToDraw.sort((a, b) => a.y - b.y);
+
+  for (const soldier of soldiersToDraw) {
     if (soldier.hitTimer && soldier.hitTimer > 0) {
       soldier.hitTimer--;
     }
@@ -1074,22 +1101,48 @@ function drawGate(ctx: CanvasRenderingContext2D, gate: Gate): void {
   barrelGradient.addColorStop(0.5, gate.color);
   barrelGradient.addColorStop(1, shadeColor(gate.color, -20));
 
+  ctx.save();
+  // Shadow/Glow
+  ctx.shadowColor = gate.color;
+  ctx.shadowBlur = 15;
+
   ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
   ctx.beginPath();
   ctx.ellipse(x + width / 2 + 5, gate.y + height + 10, width / 2, 15, 0, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = '#8B4513';
+  ctx.shadowBlur = 0; // Reset for post
+
+  ctx.fillStyle = '#8B4513'; // Post color
   ctx.beginPath();
-  ctx.roundRect(x, gate.y, width, height, 10);
+  ctx.roundRect(x + width * 0.05, gate.y + height, width * 0.1, 15, 2);
+  ctx.roundRect(x + width * 0.85, gate.y + height, width * 0.1, 15, 2);
   ctx.fill();
+
+  // Main Body
+  ctx.shadowBlur = 10;
+  ctx.shadowColor = gate.color;
   ctx.fillStyle = barrelGradient;
+  ctx.beginPath();
+  ctx.roundRect(x, gate.y, width, height, 12);
+  ctx.fill();
+
+  // Border
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  ctx.restore();
+
+  // Inner Panel
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
   ctx.beginPath();
   ctx.roundRect(x + 5, gate.y + 5, width - 10, height - 10, 8);
   ctx.fill();
 
   ctx.save();
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = `bold ${Math.floor(28 * scale)}px Arial`;
+  ctx.shadowColor = 'rgba(0,0,0,0.5)';
+  ctx.shadowBlur = 4;
+  ctx.font = `900 ${Math.floor(36 * scale)}px Arial`; // Thicker, larger font
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   let text = '';
@@ -1184,6 +1237,21 @@ function drawBossAtmosphere(ctx: CanvasRenderingContext2D, width: number, height
   }
 }
 
+function drawDamageOverlay(ctx: CanvasRenderingContext2D, width: number, height: number, intensity: number): void {
+  if (intensity <= 0.05) return;
+
+  ctx.save();
+  // Red vignette
+  const gradient = ctx.createRadialGradient(width/2, height/2, height * 0.4, width/2, height/2, height * 0.9);
+  gradient.addColorStop(0, 'rgba(255, 0, 0, 0)');
+  gradient.addColorStop(1, `rgba(255, 0, 0, ${intensity * 0.6})`);
+
+  ctx.fillStyle = gradient;
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.fillRect(0, 0, width, height);
+  ctx.restore();
+}
+
 function drawBullets(ctx: CanvasRenderingContext2D, bullets: Bullet[]): void {
   for (const bullet of bullets) {
     const gradient = ctx.createRadialGradient(bullet.x, bullet.y, 0, bullet.x, bullet.y, 8);
@@ -1201,7 +1269,8 @@ function drawBullets(ctx: CanvasRenderingContext2D, bullets: Bullet[]): void {
 }
 
 function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: number, fireRate: number, damage: number, army: Army): void {
-  const { width, height } = ctx.canvas;
+  const width = BASE_WIDTH;
+  const height = BASE_HEIGHT;
 
   // Calcular "Poder do Exército" (Soma dos pesos das unidades)
   let armyPower = 0;
@@ -1218,7 +1287,6 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
   // Ajustado para Safe Area (Home Bar no iOS ocupa ~34px)
   const bottomY = height - 45;
   const badgeHeight = 32;
-  const fontSize = 16;
   const gap = 5;
 
   // Largura total disponível = width - 20 (margens)
@@ -1291,12 +1359,16 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
 
     ctx.save();
     ctx.translate(comboX + shake, comboY + shake);
+    ctx.rotate(Math.sin(Date.now() * 0.01) * 0.1);
     ctx.scale(pulse, pulse);
     ctx.shadowColor = getComboColor(gameState.combo);
     ctx.shadowBlur = 20;
     ctx.fillStyle = getComboColor(gameState.combo);
-    ctx.font = `bold ${Math.min(48, 28 + gameState.combo)}px Arial`; // Grow with combo
+    ctx.font = `900 ${Math.min(48, 28 + gameState.combo)}px Arial`; // Grow with combo
     ctx.textAlign = 'center';
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 2;
+    ctx.strokeText(`${gameState.combo}x COMBO!`, 0, 0);
     ctx.fillText(`${gameState.combo}x COMBO!`, 0, 0);
     const comboProgress = gameState.comboTimer / 4000;
     ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
@@ -1330,7 +1402,8 @@ function drawFloatingTexts(ctx: CanvasRenderingContext2D): void {
 }
 
 function drawGameOver(ctx: CanvasRenderingContext2D, gameState: GameState): void {
-  const { width, height } = ctx.canvas;
+  const width = BASE_WIDTH;
+  const height = BASE_HEIGHT;
   const isFinalVictory = gameState.isVictory && gameState.currentLevel >= 10;
 
   ctx.fillStyle = isFinalVictory ? 'rgba(0, 50, 30, 0.95)' : 'rgba(0, 0, 0, 0.85)';
@@ -1473,10 +1546,15 @@ export function drawPauseScreen(ctx: CanvasRenderingContext2D, width: number, he
 }
 
 export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameState: GameState): void {
-  const { width, height } = ctx.canvas;
+  const width = BASE_WIDTH;
+  const height = BASE_HEIGHT;
   const time = Date.now();
 
-  ctx.clearRect(0, 0, width, height);
+  // Clear with physical dimensions to ensure full clear
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform to clear physical screen
+  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+  ctx.restore();
 
   // Boss atmosphere
   if (entities.boss && entities.boss.isActive) {
@@ -1526,6 +1604,10 @@ export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameSt
 
   if (gameState.bossAtmosphereIntensity > 0) {
     drawBossAtmosphere(ctx, width, height, gameState.bossAtmosphereIntensity, time);
+  }
+
+  if (gameState.damageFlash > 0) {
+    drawDamageOverlay(ctx, width, height, gameState.damageFlash);
   }
 
   drawUI(ctx, gameState, entities.playerArmy.soldiers.filter(s => s.isAlive).length, entities.playerArmy.fireRate, entities.playerArmy.damage, entities.playerArmy);

@@ -37,6 +37,8 @@ export const gameState: GameState = {
   bossActive: false,
   bossAtmosphereIntensity: 0,
   newRecordReached: false,
+  damageFlash: 0,
+  lowArmyTriggered: false,
 };
 
 export function resetGameState(): void {
@@ -62,4 +64,6 @@ export function resetGameState(): void {
   gameState.bossActive = false;
   gameState.bossAtmosphereIntensity = 0;
   gameState.newRecordReached = false;
+  gameState.damageFlash = 0;
+  gameState.lowArmyTriggered = false;
 }
