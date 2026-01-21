@@ -4,6 +4,7 @@ import { addFloatingText, addExplosion, addParticle } from './renderer';
 import { triggerScreenShake } from './game';
 import { ObjectPool } from './pool';
 import { SpatialHashGrid } from './spatial';
+import { fastRemove } from './utils';
 
 // Grid espacial para otimização de colisão (Célula de 120px cobre bem grupos de inimigos)
 const enemyGrid = new SpatialHashGrid(120);
@@ -284,7 +285,7 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
 
     if (bullet.y <= -50 || bullet.y >= 900) {
       bulletPool.release(bullet);
-      entities.bullets.splice(i, 1);
+      fastRemove(entities.bullets, i);
     }
   }
 
@@ -383,7 +384,7 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
           }
 
           bulletPool.release(bullet);
-          entities.bullets.splice(i, 1);
+          fastRemove(entities.bullets, i);
           bulletHit = true;
         }
       } else if (item.ref.type === 'miniboss') {
@@ -409,7 +410,7 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
           }
 
           bulletPool.release(bullet);
-          entities.bullets.splice(i, 1);
+          fastRemove(entities.bullets, i);
           bulletHit = true;
         }
       }
@@ -441,7 +442,7 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
         boss.hp -= bullet.damage;
         boss.hitTimer = 5;
         bulletPool.release(bullet);
-        entities.bullets.splice(i, 1);
+        fastRemove(entities.bullets, i);
 
         // Efeito de impacto no boss
         addExplosion(bullet.x, bullet.y, boss.type === 'mothership' ? '#00FF88' : '#FF6B6B');

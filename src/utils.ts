@@ -86,3 +86,20 @@ export function getBiomeColors(level: number): ThemeConfig {
   const themeIndex = ((level - 1) % 10) + 1;
   return THEMES[themeIndex];
 }
+
+// --- Array Utilities ---
+
+/**
+ * Removes an element from an array in O(1) time by swapping it with the last element.
+ * WARNING: Does NOT preserve array order. Use only when order is irrelevant.
+ * @param array The array to modify
+ * @param index The index of the element to remove
+ */
+export function fastRemove<T>(array: T[], index: number): void {
+  if (index < 0 || index >= array.length) return;
+  const lastIndex = array.length - 1;
+  if (index !== lastIndex) {
+    array[index] = array[lastIndex];
+  }
+  array.pop();
+}
