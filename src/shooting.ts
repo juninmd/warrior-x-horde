@@ -108,33 +108,60 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
 
   if (now - army.lastShotTime < army.fireRate) return;
 
-  const aliveSoldiers = army.soldiers.filter(s => s.isAlive);
-  if (aliveSoldiers.length === 0) return;
+  // PERFORMANCE OPTIMIZATION: Use bucket sort instead of full sort
+  // Avoids allocating filtered array and expensive sort with function calls
+  const lasers: Soldier[] = [];
+  const bazookas: Soldier[] = [];
+  const rambos: Soldier[] = [];
+  const supers: Soldier[] = [];
+  const normals: Soldier[] = [];
+
+  let aliveCount = 0;
+
+  for (const s of army.soldiers) {
+    if (!s.isAlive) continue;
+    aliveCount++;
+
+    if (s.type === 'laser') { lasers.push(s); continue; }
+    if (s.type === 'bazooka') { bazookas.push(s); continue; }
+    if (s.type === 'rambo') { rambos.push(s); continue; }
+    if (s.isSuper) { supers.push(s); continue; }
+    normals.push(s);
+  }
+
+  if (aliveCount === 0) return;
 
   // Mais soldados atiram baseado no tamanho do exército
   // Aumentado para 30 para permitir que classes especiais tenham mais chance de atirar
-  const shootersCount = Math.min(Math.ceil(aliveSoldiers.length / 5), 30);
+  const shootersCount = Math.min(Math.ceil(aliveCount / 5), 30);
 
-  // Priorizar soldados especiais e super soldados
-  // Ordenação: Special/Super primeiro, depois por posição Y (frente)
-  const sortedSoldiers = [...aliveSoldiers].sort((a, b) => {
-    // Definir prioridade: Laser > Bazooka > Rambo > Super > Normal
-    const getPriority = (s: Soldier) => {
-      if (s.type === 'laser') return 5;
-      if (s.type === 'bazooka') return 4;
-      if (s.type === 'rambo') return 3;
-      if (s.isSuper) return 2;
-      return 1;
-    };
+  const shooters: Soldier[] = [];
+  let needed = shootersCount;
 
-    const prioA = getPriority(a);
-    const prioB = getPriority(b);
+  // Coleta ordenada (Special -> Super -> Normal)
+  // Prioridade: Laser (5) > Bazooka (4) > Rambo (3) > Super (2) > Normal (1)
+  const buckets = [lasers, bazookas, rambos, supers, normals];
 
-    if (prioA !== prioB) return prioB - prioA; // Maior prioridade primeiro
-    return a.y - b.y; // Se igual, quem está mais na frente
-  });
+  for (const bucket of buckets) {
+    if (needed <= 0) break;
+    if (bucket.length === 0) continue;
 
-  const shooters = sortedSoldiers.slice(0, shootersCount);
+    if (bucket.length <= needed) {
+      // Se o bucket cabe inteiro, pegamos todos.
+      // A ordenação interna por Y não afeta quem é selecionado (pegamos todos),
+      // e a ordem de processamento de tiro não é crítica.
+      for (const s of bucket) shooters.push(s);
+      needed -= bucket.length;
+    } else {
+      // Se o bucket é maior que o necessário, pegamos os 'needed' melhores (menor Y = mais à frente)
+      // Ordenamos apenas este bucket específico (muito mais rápido que ordenar tudo)
+      bucket.sort((a, b) => a.y - b.y);
+      for (let i = 0; i < needed; i++) {
+        shooters.push(bucket[i]);
+      }
+      needed = 0;
+    }
+  }
 
   for (const shooter of shooters) {
     // Cada atirador procura seu alvo mais próximo
