@@ -193,12 +193,18 @@ function gameLoop(currentTime: number = 0): void {
   // Atualizar movimento
   updateMovement(entities, gameState, BASE_WIDTH, getMouseX(), dtFactor);
 
-  // Atualizar movimento das Mystery Boxes
-  for (const box of entities.mysteryBoxes) {
+  // Atualizar movimento das Mystery Boxes e limpar usando swap-and-pop
+  for (let i = 0; i < entities.mysteryBoxes.length; i++) {
+    const box = entities.mysteryBoxes[i];
     box.y += gameState.gameSpeed * dtFactor;
+
+    if (box.passed || box.y >= 1200) {
+      // Swap com o último elemento e remove
+      entities.mysteryBoxes[i] = entities.mysteryBoxes[entities.mysteryBoxes.length - 1];
+      entities.mysteryBoxes.pop();
+      i--; // Re-processar este índice pois agora contém o elemento trocado
+    }
   }
-  // Limpar boxes que saíram da tela
-  entities.mysteryBoxes = entities.mysteryBoxes.filter(box => !box.passed && box.y < 1200);
 
   // Sistema de tiro
   updateShooting(entities, gameState);
