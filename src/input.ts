@@ -71,7 +71,7 @@ export function vibrate(ms: number): void {
   if (typeof navigator !== 'undefined' && navigator.vibrate) {
     try {
       navigator.vibrate(ms);
-    } catch (e) {
+    } catch {
       // Ignore vibration errors
     }
   }

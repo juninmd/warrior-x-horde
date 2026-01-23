@@ -1,5 +1,5 @@
 // collisions.ts - Sistema de colisões
-import { Entities, GameState, Army, EnemyHorde, Gate, MiniBoss, MysteryBox, Coin } from './types';
+import { Entities, GameState, Army, EnemyHorde, Gate, MiniBoss, MysteryBox } from './types';
 import { addSoldiersToArmy, multiplySoldiersInArmy, removeSoldiersFromArmy, addSuperSoldiersToArmy, addSpecialSoldiersToArmy } from './entities';
 import { addFloatingText, addExplosion, addParticle } from './renderer';
 import { playSound, audioManager } from './audio';
@@ -8,7 +8,7 @@ import { triggerScreenShake, triggerHitStop } from './game';
 import { getArmyBounds, checkBounds, getEntityBounds, Rect } from './utils';
 import { COLORS } from './constants';
 
-function applyGateEffect(army: Army, gate: Gate, gameState: GameState, entities: Entities): void {
+function applyGateEffect(army: Army, gate: Gate, gameState: GameState): void {
   const beforeCount = army.soldiers.length;
   let afterCount = beforeCount;
   let isPositive = true;
@@ -287,7 +287,7 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
         armyCenterX <= gate.x + gate.width &&
         bounds.bottom > gate.y &&
         bounds.top < gate.y + gate.height) {
-      applyGateEffect(army, gate, gameState, entities);
+      applyGateEffect(army, gate, gameState);
       // Pass sibling gate
       for (const otherGate of entities.gates) {
         if (otherGate.id !== gate.id && Math.abs(otherGate.y - gate.y) < 10) {
