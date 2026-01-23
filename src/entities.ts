@@ -117,6 +117,7 @@ export function createPlayerArmy(canvasWidth: number, canvasHeight: number): Arm
     fireRate: 700, // FireRate base: 700ms (mais lento para equilibrar)
     lastShotTime: 0,
     damage: 3, // Dano base reduzido para 3
+    aliveCount: soldiers.length,
   };
 }
 
@@ -142,6 +143,7 @@ export function addSoldiersToArmy(army: Army, count: number): void {
       army.color
     ));
   }
+  army.aliveCount += actualCount;
 }
 
 export function addSpecialSoldiersToArmy(army: Army, type: Soldier['type'], count: number): void {
@@ -163,6 +165,7 @@ export function addSpecialSoldiersToArmy(army: Army, type: Soldier['type'], coun
       type
     ));
   }
+  army.aliveCount += actualCount;
 }
 
 export function multiplySoldiersInArmy(army: Army, multiplier: number): void {
@@ -175,7 +178,10 @@ export function multiplySoldiersInArmy(army: Army, multiplier: number): void {
 
 export function removeSoldiersFromArmy(army: Army, count: number): void {
   for (let i = 0; i < count && army.soldiers.length > 0; i++) {
-    army.soldiers.pop();
+    const s = army.soldiers.pop();
+    if (s && s.isAlive) {
+      army.aliveCount--;
+    }
   }
 }
 
@@ -200,6 +206,7 @@ export function addSuperSoldiersToArmy(army: Army, count: number): void {
       army.centerY + Math.sin(angle) * radius * 0.6
     ));
   }
+  army.aliveCount += actualCount;
 }
 
 export function createEnemyHorde(canvasWidth: number, y: number, count: number, level: number = 1): EnemyHorde {

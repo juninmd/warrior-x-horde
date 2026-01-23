@@ -71,7 +71,7 @@ function applyGateEffect(army: Army, gate: Gate, gameState: GameState, entities:
 }
 
 function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): void {
-  const playerCount = army.soldiers.filter(s => s.isAlive).length;
+  const playerCount = army.aliveCount;
   const enemyCount = horde.soldiers.filter(s => s.isAlive).length;
 
   if (playerCount <= 0 || enemyCount <= 0) {
@@ -113,6 +113,7 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
       const soldier = army.soldiers[i];
       addExplosion(soldier.x, soldier.y, COLORS.PLAYER.NORMAL);
       soldier.isAlive = false;
+      army.aliveCount--;
       killed++;
     }
   }
@@ -157,7 +158,7 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
 }
 
 function processMiniBossBattle(army: Army, miniBoss: MiniBoss, gameState: GameState): void {
-  const playerCount = army.soldiers.filter(s => s.isAlive).length;
+  const playerCount = army.aliveCount;
 
   if (playerCount <= 0 || miniBoss.hp <= 0) {
     if (miniBoss.hp <= 0) {
@@ -179,6 +180,7 @@ function processMiniBossBattle(army: Army, miniBoss: MiniBoss, gameState: GameSt
       const soldier = army.soldiers[i];
       addExplosion(soldier.x, soldier.y, COLORS.PLAYER.NORMAL);
       soldier.isAlive = false;
+      army.aliveCount--;
       killed++;
     }
   }
@@ -399,6 +401,7 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
                   const soldier = army.soldiers[i];
                   addExplosion(soldier.x, soldier.y, COLORS.PLAYER.NORMAL);
                   army.soldiers[i].isAlive = false;
+                  army.aliveCount--;
                   killed++;
                 }
             }
@@ -423,7 +426,7 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
       }
   }
 
-  if (army.soldiers.filter(s => s.isAlive).length <= 0) {
+  if (army.aliveCount <= 0) {
     gameState.isGameOver = true;
     vibrate(200);
     if (gameState.score > gameState.highScore) {
