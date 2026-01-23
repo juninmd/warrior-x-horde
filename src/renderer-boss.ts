@@ -1,6 +1,5 @@
 // renderer-boss.ts - Boss specific rendering logic
 import { Boss } from './types';
-import { drawStar } from './renderer-utils';
 
 // Boss final - Nave Mãe Alienígena (Scarier version)
 export function drawMothershipBoss(ctx: CanvasRenderingContext2D, boss: Boss, time: number): void {
@@ -273,8 +272,8 @@ export function drawBossMachine(ctx: CanvasRenderingContext2D, boss: Boss, time:
 
   // Detalhes mecânicos (rivets)
   ctx.fillStyle = '#888';
-  for(let dx of [-1, 1]) {
-    for(let dy of [-1, 1]) {
+  for(const dx of [-1, 1]) {
+    for(const dy of [-1, 1]) {
       ctx.beginPath();
       ctx.arc(cx + dx * (s/2 - 10), cy + dy * (s/2 - 10), 4, 0, Math.PI * 2);
       ctx.fill();
@@ -370,7 +369,7 @@ export function drawBossSlime(ctx: CanvasRenderingContext2D, boss: Boss, time: n
   ctx.fill();
 }
 
-export function drawBossEye(ctx: CanvasRenderingContext2D, boss: Boss, time: number): void {
+export function drawBossEye(ctx: CanvasRenderingContext2D, boss: Boss, _time: number): void {
   const cx = boss.x + boss.width / 2;
   const cy = boss.y + boss.height / 2;
 
@@ -407,7 +406,7 @@ export function drawBossEye(ctx: CanvasRenderingContext2D, boss: Boss, time: num
   ctx.stroke();
 }
 
-export function drawBossSpider(ctx: CanvasRenderingContext2D, boss: Boss, time: number): void {
+export function drawBossSpider(ctx: CanvasRenderingContext2D, boss: Boss, _time: number): void {
   const cx = boss.x + boss.width / 2;
   const cy = boss.y + boss.height / 2;
 
@@ -439,7 +438,7 @@ export function drawBossSpider(ctx: CanvasRenderingContext2D, boss: Boss, time: 
   }
 }
 
-export function drawBossSkull(ctx: CanvasRenderingContext2D, boss: Boss, time: number): void {
+export function drawBossSkull(ctx: CanvasRenderingContext2D, boss: Boss, _time: number): void {
   const cx = boss.x + boss.width / 2;
   const cy = boss.y + boss.height / 2;
 
@@ -522,7 +521,6 @@ export function drawBossCrystal(ctx: CanvasRenderingContext2D, boss: Boss, time:
 export function drawBoss(ctx: CanvasRenderingContext2D, boss: Boss, time: number): void {
   // Sombra genérica base
   const cx = boss.x + boss.width / 2;
-  const cy = boss.y + boss.height / 2;
 
   ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
   ctx.beginPath();

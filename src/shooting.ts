@@ -1,5 +1,5 @@
 // shooting.ts - Sistema de tiro automatico e Super Cannon
-import { Entities, GameState, Bullet, Army, EnemyHorde, Boss, Soldier, MiniBoss } from './types';
+import { Entities, GameState, Bullet, EnemyHorde, Boss, Soldier, MiniBoss } from './types';
 import { addFloatingText, addExplosion, addParticle } from './renderer';
 import { triggerScreenShake } from './game';
 import { ObjectPool } from './pool';

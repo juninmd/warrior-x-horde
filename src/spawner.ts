@@ -1,6 +1,5 @@
 // spawner.ts - Gerador de obstáculos e inimigos
 import { Entities, GameState } from './types';
-import { MAX_ENEMIES } from './constants';
 import { createGatePair, createEnemyHorde, createBoss, createMiniBoss, createMysteryBox, createCoin } from './entities';
 
 export function spawnCoins(entities: Entities, canvasWidth: number, gameState: GameState, dtFactor: number): void {
@@ -60,7 +59,7 @@ function getTotalEnemyCount(entities: Entities): number {
   return total;
 }
 
-export function spawnEnemies(entities: Entities, canvasWidth: number, gameState: GameState, _canvasHeight: number = 800, dtFactor: number): void {
+export function spawnEnemies(entities: Entities, canvasWidth: number, gameState: GameState, _canvasHeight: number, dtFactor: number): void {
   // Inimigos nascem do céu (da nave alienígena)
   const spawnY = -50; // Acima da tela, vindo da nave
 
@@ -126,7 +125,7 @@ export function spawnEnemies(entities: Entities, canvasWidth: number, gameState:
 // Mini-boss spawn durante as hordas
 let lastMiniBossSpawn = 0;
 
-export function spawnMiniBoss(entities: Entities, canvasWidth: number, gameState: GameState, _canvasHeight: number = 800): void {
+export function spawnMiniBoss(entities: Entities, canvasWidth: number, gameState: GameState, _canvasHeight: number): void {
   // Spawnar mini-boss
   // Se for level > 11 (Sistema Anti-Astolfo), spawna muito mais frequente
   let intervalFactor = 0.25; // Padrão: a cada 25% do level
@@ -159,7 +158,7 @@ export function spawnMiniBoss(entities: Entities, canvasWidth: number, gameState
   }
 }
 
-export function checkBossSpawn(entities: Entities, canvasWidth: number, gameState: GameState, _canvasHeight: number = 800): void {
+export function checkBossSpawn(entities: Entities, canvasWidth: number, gameState: GameState, _canvasHeight: number): void {
   // Spawnar boss quando atingir distância do nível
   if (gameState.distanceTraveled >= gameState.levelDistance * 0.9 && !entities.boss) {
     const boss = createBoss(canvasWidth, gameState.currentLevel);
