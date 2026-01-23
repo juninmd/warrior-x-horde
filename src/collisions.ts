@@ -5,7 +5,7 @@ import { addFloatingText, addExplosion, addParticle } from './renderer';
 import { playSound, audioManager } from './audio';
 import { vibrate } from './input';
 import { triggerScreenShake } from './game';
-import { getArmyBounds, checkBounds, getEntityBounds, Rect } from './utils';
+import { getArmyBounds, checkBounds, getEntityBounds, Rect, fastRemove } from './utils';
 import { COLORS } from './constants';
 
 function applyGateEffect(army: Army, gate: Gate, gameState: GameState, entities: Entities): void {
@@ -132,8 +132,17 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
     }
   }
 
-  army.soldiers = army.soldiers.filter(s => s.isAlive);
-  horde.soldiers = horde.soldiers.filter(s => s.isAlive);
+  // Fast removal of dead soldiers
+  for (let i = army.soldiers.length - 1; i >= 0; i--) {
+    if (!army.soldiers[i].isAlive) {
+      fastRemove(army.soldiers, i);
+    }
+  }
+  for (let i = horde.soldiers.length - 1; i >= 0; i--) {
+    if (!horde.soldiers[i].isAlive) {
+      fastRemove(horde.soldiers, i);
+    }
+  }
   horde.count = horde.soldiers.length;
 
   if (horde.soldiers.length <= 0) {
@@ -192,7 +201,12 @@ function processMiniBossBattle(army: Army, miniBoss: MiniBoss, gameState: GameSt
   const damageToMiniBoss = Math.min(playerCount * 0.5, 5);
   miniBoss.hp -= damageToMiniBoss;
 
-  army.soldiers = army.soldiers.filter(s => s.isAlive);
+  // Fast removal of dead soldiers
+  for (let i = army.soldiers.length - 1; i >= 0; i--) {
+    if (!army.soldiers[i].isAlive) {
+      fastRemove(army.soldiers, i);
+    }
+  }
 
   if (miniBoss.hp <= 0) {
     miniBoss.isActive = false;
@@ -408,7 +422,12 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
             if (killed > 0) {
               gameState.damageFlash = Math.min(0.8, gameState.damageFlash + (killed * 0.1));
             }
-            army.soldiers = army.soldiers.filter(s => s.isAlive);
+            // Fast removal of dead soldiers
+            for (let i = army.soldiers.length - 1; i >= 0; i--) {
+                if (!army.soldiers[i].isAlive) {
+                    fastRemove(army.soldiers, i);
+                }
+            }
         }
 
         const contactDamage = 5;
