@@ -567,32 +567,52 @@ function triggerSuperCannon(): void {
   }
 }
 
+let cachedSuperBtn: HTMLButtonElement | null = null;
+let lastSuperText: string = '';
+let lastSuperDisabled: boolean | null = null;
+
 // Atualizar estado do botão Super inline
 function updateSuperButtonInline(): void {
-  const superBtn = document.getElementById('superCannonBtnInline') as HTMLButtonElement;
-  if (!superBtn) return;
-
-  if (!gameState.isStarted || gameState.isGameOver) {
-    superBtn.disabled = true;
-    superBtn.textContent = '⚡ SUPER';
-    return;
+  if (!cachedSuperBtn) {
+    cachedSuperBtn = document.getElementById('superCannonBtnInline') as HTMLButtonElement;
   }
 
-  const now = Date.now();
-  const timeSinceLastUse = now - gameState.superCannonLastUsed;
-  const cooldownRemaining = Math.max(0, gameState.superCannonCooldown - timeSinceLastUse);
-  const isOnCooldown = cooldownRemaining > 0 && !gameState.superCannonActive;
+  if (!cachedSuperBtn) return;
 
-  if (gameState.superCannonActive) {
-    superBtn.textContent = '⚡ ATIVO!';
-    superBtn.disabled = true;
-  } else if (isOnCooldown) {
-    const cooldownSecs = Math.ceil(cooldownRemaining / 1000);
-    superBtn.textContent = `⏳ ${cooldownSecs}s`;
-    superBtn.disabled = true;
+  let newText = '';
+  let newDisabled = false;
+
+  if (!gameState.isStarted || gameState.isGameOver) {
+    newDisabled = true;
+    newText = '⚡ SUPER';
   } else {
-    superBtn.textContent = '⚡ SUPER';
-    superBtn.disabled = false;
+    const now = Date.now();
+    const timeSinceLastUse = now - gameState.superCannonLastUsed;
+    const cooldownRemaining = Math.max(0, gameState.superCannonCooldown - timeSinceLastUse);
+    const isOnCooldown = cooldownRemaining > 0 && !gameState.superCannonActive;
+
+    if (gameState.superCannonActive) {
+      newText = '⚡ ATIVO!';
+      newDisabled = true;
+    } else if (isOnCooldown) {
+      const cooldownSecs = Math.ceil(cooldownRemaining / 1000);
+      newText = `⏳ ${cooldownSecs}s`;
+      newDisabled = true;
+    } else {
+      newText = '⚡ SUPER';
+      newDisabled = false;
+    }
+  }
+
+  // Update DOM only if changed
+  if (lastSuperText !== newText) {
+    cachedSuperBtn.textContent = newText;
+    lastSuperText = newText;
+  }
+
+  if (lastSuperDisabled !== newDisabled) {
+    cachedSuperBtn.disabled = newDisabled;
+    lastSuperDisabled = newDisabled;
   }
 }
 
