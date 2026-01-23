@@ -36,8 +36,8 @@ class CanvasRenderingContext2DMock {
   roundRect = vi.fn();
   ellipse = vi.fn();
   strokeRect = vi.fn();
-  quadraticCurveTo = vi.fn(); // Added this
-  bezierCurveTo = vi.fn(); // Added this for future safety
+  quadraticCurveTo = vi.fn();
+  bezierCurveTo = vi.fn();
   globalAlpha = 1;
   fillStyle = '';
   strokeStyle = '';
@@ -53,7 +53,7 @@ class CanvasRenderingContext2DMock {
 }
 
 // Mock HTMLCanvasElement.getContext
-HTMLCanvasElement.prototype.getContext = vi.fn((contextId: string) => {
+HTMLCanvasElement.prototype.getContext = vi.fn(function(this: HTMLCanvasElement, contextId: string) {
     if (contextId === '2d') {
         // @ts-ignore
         return new CanvasRenderingContext2DMock(this);
@@ -69,14 +69,16 @@ window.AudioContext = vi.fn().mockImplementation(() => ({
   createOscillator: vi.fn(() => ({ connect: vi.fn(), start: vi.fn(), stop: vi.fn() })),
   destination: {},
   currentTime: 0,
-  resume: vi.fn(),
-  suspend: vi.fn(),
+  resume: vi.fn().mockResolvedValue(undefined),
+  suspend: vi.fn().mockResolvedValue(undefined),
+  close: vi.fn().mockResolvedValue(undefined),
 }));
 
-// Mock Audio Element play
+// Mock Audio Element
 window.HTMLAudioElement.prototype.play = vi.fn().mockReturnValue(Promise.resolve());
 window.HTMLAudioElement.prototype.pause = vi.fn();
-window.HTMLAudioElement.prototype.cloneNode = vi.fn(function() { return this; }); // Return self for chaining
+window.HTMLAudioElement.prototype.load = vi.fn();
+window.HTMLAudioElement.prototype.cloneNode = vi.fn(function() { return this; });
 
 // Mock requestAnimationFrame
 window.requestAnimationFrame = vi.fn((callback) => {
@@ -99,7 +101,9 @@ const localStorageMock = (function() {
     }),
     removeItem: vi.fn((key) => {
       delete store[key];
-    })
+    }),
+    key: vi.fn((index) => Object.keys(store)[index] || null),
+    length: 0
   };
 })();
 Object.defineProperty(window, 'localStorage', { value: localStorageMock });
@@ -114,3 +118,20 @@ global.Image = class {
   width: number = 0;
   height: number = 0;
 } as any;
+
+// Ensure gameCanvas exists for game.ts top-level execution
+if (!document.getElementById('gameCanvas')) {
+    const canvas = document.createElement('canvas');
+    canvas.id = 'gameCanvas';
+    document.body.appendChild(canvas);
+}
+
+// Mock Pointer Events if not present (JSDOM might lack full pointer support)
+if (!window.PointerEvent) {
+  // @ts-ignore
+  window.PointerEvent = class extends MouseEvent {
+      constructor(type: string, params: any) {
+          super(type, params);
+      }
+  } as any;
+}
