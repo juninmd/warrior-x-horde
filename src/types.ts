@@ -72,6 +72,7 @@ export interface Soldier {
 
 export interface Army {
   soldiers: Soldier[];
+  aliveCount: number;
   centerX: number;
   centerY: number;
   targetX: number;

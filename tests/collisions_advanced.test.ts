@@ -38,7 +38,8 @@ describe('Collisions - Advanced', () => {
             centerX: 100,
             centerY: 100,
             damage: 1,
-            fireRate: 100
+            fireRate: 100,
+            aliveCount: 1
         } as any;
 
         // Horde uses Center X/Y based on source code interpretation
@@ -69,7 +70,8 @@ describe('Collisions - Advanced', () => {
         const army: Army = {
             soldiers: [{ isAlive: true, x: 100, y: 100, size: 10, hp: 10, type: 'normal' }],
             centerX: 100,
-            centerY: 100
+            centerY: 100,
+            aliveCount: 1
         } as any;
 
         // Boss uses Top-Left X/Y based on source code interpretation
@@ -106,7 +108,8 @@ describe('Collisions - Advanced', () => {
         const army: Army = {
             soldiers: [{ isAlive: true, x: 100, y: 100, size: 10, hp: 10, type: 'normal' }],
             centerX: 100,
-            centerY: 100
+            centerY: 100,
+            aliveCount: 1
         } as any;
 
         // MiniBoss uses Top-Left X/Y
@@ -142,7 +145,8 @@ describe('Collisions - Advanced', () => {
         const army: Army = {
             soldiers: [],
             centerX: 100,
-            centerY: 100
+            centerY: 100,
+            aliveCount: 0
         } as any;
 
         const entities: Entities = {

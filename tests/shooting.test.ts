@@ -92,7 +92,8 @@ describe('Shooting', () => {
           centerY: 700,
           lastShotTime: 0,
           fireRate: 0, // Instant
-          damage: 1
+          damage: 1,
+          aliveCount: 1
       } as any;
 
       const entities: Entities = {

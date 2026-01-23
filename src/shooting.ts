@@ -116,11 +116,11 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
   const supers: Soldier[] = [];
   const normals: Soldier[] = [];
 
-  let aliveCount = 0;
+  // Use cached aliveCount for performance
+  if (army.aliveCount === 0) return;
 
   for (const s of army.soldiers) {
     if (!s.isAlive) continue;
-    aliveCount++;
 
     if (s.type === 'laser') { lasers.push(s); continue; }
     if (s.type === 'bazooka') { bazookas.push(s); continue; }
@@ -129,11 +129,9 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
     normals.push(s);
   }
 
-  if (aliveCount === 0) return;
-
   // Mais soldados atiram baseado no tamanho do exército
   // Aumentado para 30 para permitir que classes especiais tenham mais chance de atirar
-  const shootersCount = Math.min(Math.ceil(aliveCount / 5), 30);
+  const shootersCount = Math.min(Math.ceil(army.aliveCount / 5), 30);
 
   const shooters: Soldier[] = [];
   let needed = shootersCount;

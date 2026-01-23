@@ -223,7 +223,7 @@ function gameLoop(currentTime: number = 0): void {
   checkCollisions(entities, gameState);
 
   // Check Low Army Warning
-  const armyCount = entities.playerArmy.soldiers.filter(s => s.isAlive).length;
+  const armyCount = entities.playerArmy.aliveCount;
   if (armyCount < 10 && armyCount > 0 && !gameState.isGameOver && gameState.isStarted) {
      if (!gameState.lowArmyTriggered) {
         gameState.lowArmyTriggered = true;
