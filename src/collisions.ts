@@ -4,7 +4,7 @@ import { addSoldiersToArmy, multiplySoldiersInArmy, removeSoldiersFromArmy, addS
 import { addFloatingText, addExplosion, addParticle } from './renderer';
 import { playSound, audioManager } from './audio';
 import { vibrate } from './input';
-import { triggerScreenShake } from './game';
+import { triggerScreenShake, triggerHitStop } from './game';
 import { getArmyBounds, checkBounds, getEntityBounds, Rect } from './utils';
 import { COLORS } from './constants';
 
@@ -138,6 +138,7 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
 
   if (horde.soldiers.length <= 0) {
     horde.isActive = false;
+    triggerHitStop(5); // Hit Stop on Horde Clear
     gameState.combo++;
     gameState.comboTimer = 2000;
     if (gameState.combo > gameState.maxCombo) {
@@ -196,6 +197,7 @@ function processMiniBossBattle(army: Army, miniBoss: MiniBoss, gameState: GameSt
 
   if (miniBoss.hp <= 0) {
     miniBoss.isActive = false;
+    triggerHitStop(10); // Hit Stop on MiniBoss
     gameState.score += 300;
     gameState.coins += 50;
     addExplosion(miniBoss.x + miniBoss.width / 2, miniBoss.y + miniBoss.height / 2, '#FF4500');
@@ -228,6 +230,7 @@ function applyMysteryBoxEffect(army: Army, box: MysteryBox, gameState: GameState
         }
       });
       addFloatingText('NUKE!', box.x, box.y, COLORS.UI.GOLD, 2.0);
+      triggerHitStop(20); // Big Hit Stop on Nuke
       triggerScreenShake(10, 500);
       break;
     case 'double':
@@ -416,6 +419,7 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
 
         if (boss.hp <= 0) {
           boss.isActive = false;
+          triggerHitStop(20); // Massive Hit Stop on Boss Kill
           gameState.isVictory = true;
           gameState.score += 1000;
           gameState.coins += 500;

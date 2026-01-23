@@ -6,6 +6,7 @@ let mouseX = 0;
 let isDragging = false;
 let gameStateRef: GameState | null = null;
 let currentScale = 1;
+let activeTouchId: number | null = null;
 
 // Virtual Joystick
 export class VirtualJoystick {
@@ -98,6 +99,7 @@ export function setupInput(canvas: HTMLCanvasElement): void {
   });
 
   // Touch events (Mobile - Relative positioning for better experience)
+  // Robust multi-touch handling: Track specific finger ID
   canvas.addEventListener('touchstart', (e) => {
     // Não prevenir default aqui para permitir que game.ts trate o game over
     if (gameStateRef && !gameStateRef.isGameOver) {
@@ -108,8 +110,11 @@ export function setupInput(canvas: HTMLCanvasElement): void {
       }
     }
 
-    if (e.touches.length > 0) {
-      const touch = e.touches[0];
+    // Only accept a new touch if we aren't already dragging
+    if (activeTouchId === null && e.changedTouches.length > 0) {
+      const touch = e.changedTouches[0];
+      activeTouchId = touch.identifier;
+
       const rect = canvas.getBoundingClientRect();
       const touchX = screenToCanvasX(touch.clientX, rect);
 
@@ -124,36 +129,62 @@ export function setupInput(canvas: HTMLCanvasElement): void {
 
   canvas.addEventListener('touchmove', (e) => {
     if (gameStateRef && !gameStateRef.isGameOver) {
-       e.preventDefault();
+       e.preventDefault(); // Stop scrolling/zooming
     }
 
-    if (e.touches.length > 0) {
-      const touch = e.touches[0];
-      const rect = canvas.getBoundingClientRect();
-      const currentTouchX = screenToCanvasX(touch.clientX, rect);
+    if (activeTouchId !== null) {
+      // Find the active touch
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        if (e.changedTouches[i].identifier === activeTouchId) {
+          const touch = e.changedTouches[i];
+          const rect = canvas.getBoundingClientRect();
+          const currentTouchX = screenToCanvasX(touch.clientX, rect);
 
-      // Relative movement
-      const delta = currentTouchX - touchStartX;
+          // Relative movement
+          const delta = currentTouchX - touchStartX;
 
-      // Sensitivity factor (1.2 for slightly faster response than finger)
-      const sensitivity = 1.2;
+          // Sensitivity factor (1.2 for slightly faster response than finger)
+          const sensitivity = 1.2;
 
-      let newX = armyStartX + delta * sensitivity;
+          let newX = armyStartX + delta * sensitivity;
 
-      // Clamp to screen bounds
-      newX = Math.max(0, Math.min(canvas.width, newX));
+          // Clamp to screen bounds
+          newX = Math.max(0, Math.min(canvas.width, newX));
 
-      mouseX = newX;
-      isDragging = true;
+          mouseX = newX;
 
-      // Joystick visual update
-      virtualJoystick.move(touch.clientX, touch.clientY);
+          // Joystick visual update
+          virtualJoystick.move(touch.clientX, touch.clientY);
+          break;
+        }
+      }
     }
   }, { passive: false });
 
-  canvas.addEventListener('touchend', () => {
-    isDragging = false;
-    virtualJoystick.end();
+  canvas.addEventListener('touchend', (e) => {
+    if (activeTouchId !== null) {
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        if (e.changedTouches[i].identifier === activeTouchId) {
+          activeTouchId = null;
+          isDragging = false;
+          virtualJoystick.end();
+          break;
+        }
+      }
+    }
+  });
+
+  canvas.addEventListener('touchcancel', (e) => {
+    if (activeTouchId !== null) {
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        if (e.changedTouches[i].identifier === activeTouchId) {
+          activeTouchId = null;
+          isDragging = false;
+          virtualJoystick.end();
+          break;
+        }
+      }
+    }
   });
 
   // Keyboard events for desktop

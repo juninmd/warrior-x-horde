@@ -39,6 +39,7 @@ export const gameState: GameState = {
   newRecordReached: false,
   damageFlash: 0,
   lowArmyTriggered: false,
+  hitStop: 0,
 };
 
 export function resetGameState(): void {
