@@ -1,7 +1,7 @@
 // renderer.ts - Renderização do jogo estilo Crowd Runner
 import { Entities, GameState, FloatingText, Army, EnemyHorde, Gate, Bullet, Particle, MysteryBox, Soldier, MiniBoss } from './types';
 import { ObjectPool } from './pool';
-import { shadeColor, getBiomeColors } from './utils';
+import { shadeColor, getBiomeColors, fastRemove } from './utils';
 import { COLORS, MAX_PARTICLES, MAX_RENDERED_SOLDIERS, ThemeConfig, BASE_WIDTH, BASE_HEIGHT } from './constants';
 import { drawGlassBadge, drawStar, drawJoystick, getComboColor } from './renderer-utils';
 import { drawBoss } from './renderer-boss';
@@ -370,7 +370,7 @@ function updateParticles(): void {
 
     if (p.life <= 0 || p.size < 0.5) {
       particlePool.release(p);
-      particles.splice(i, 1);
+      fastRemove(particles, i);
     }
   }
 }
