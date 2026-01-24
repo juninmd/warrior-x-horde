@@ -600,16 +600,16 @@ function drawGround(ctx: CanvasRenderingContext2D, width: number, height: number
     // Default / Grass / Sand / Snow
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
     ctx.lineWidth = 1;
+    ctx.beginPath();
     for (let y = horizonY + 20; y < height; y += 30) {
       for (let x = 0; x < width; x += 15) {
         if (Math.random() > 0.8) {
-          ctx.beginPath();
           ctx.moveTo(x, y);
           ctx.lineTo(x + 3, y - 5);
-          ctx.stroke();
         }
       }
     }
+    ctx.stroke();
   }
 }
 
