@@ -124,6 +124,10 @@ export interface Gate {
   side: 'left' | 'right';
   passed: boolean;
   customText?: string;
+  cachedColors?: {
+    light: string;
+    dark: string;
+  };
 }
 
 export interface Weapon {

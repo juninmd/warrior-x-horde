@@ -1096,9 +1096,15 @@ function drawGate(ctx: CanvasRenderingContext2D, gate: Gate): void {
   const x = gate.x + (gate.width - width) / 2;
 
   const barrelGradient = ctx.createLinearGradient(x, gate.y, x + width, gate.y);
-  barrelGradient.addColorStop(0, shadeColor(gate.color, 20));
-  barrelGradient.addColorStop(0.5, gate.color);
-  barrelGradient.addColorStop(1, shadeColor(gate.color, -20));
+  if (gate.cachedColors) {
+    barrelGradient.addColorStop(0, gate.cachedColors.light);
+    barrelGradient.addColorStop(0.5, gate.color);
+    barrelGradient.addColorStop(1, gate.cachedColors.dark);
+  } else {
+    barrelGradient.addColorStop(0, shadeColor(gate.color, 20));
+    barrelGradient.addColorStop(0.5, gate.color);
+    barrelGradient.addColorStop(1, shadeColor(gate.color, -20));
+  }
 
   ctx.save();
   // Shadow/Glow
