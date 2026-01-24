@@ -382,7 +382,7 @@ export function showGameOverScreen(gameState: GameState): void {
     // Show
     gameOverContainer.style.display = 'flex';
     // Force reflow
-    gameOverContainer.offsetHeight;
+    void gameOverContainer.offsetHeight;
     gameOverContainer.style.opacity = '1';
     content.style.transform = 'scale(1)';
 }
