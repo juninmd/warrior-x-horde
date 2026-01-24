@@ -1,6 +1,6 @@
 // entities.ts - Criação de entidades
 import { Army, Soldier, EnemyHorde, Gate, Boss, Entities, MiniBoss, MysteryBox, Coin } from './types';
-import { MAX_HEROES, MAX_ENEMIES } from './constants';
+import { MAX_HEROES } from './constants';
 
 let soldierIdCounter = 0;
 let hordeIdCounter = 0;
@@ -266,7 +266,7 @@ export function createEnemyHorde(canvasWidth: number, y: number, count: number, 
 
 export function createGate(canvasWidth: number, y: number, side: 'left' | 'right', level: number = 1, currentHeroCount: number = 0, currentEnemyCount: number = 0): Gate {
   const gateWidth = canvasWidth / 2 - 30;
-  let roll = Math.random();
+  const roll = Math.random();
 
   let type: 'add' | 'multiply' | 'subtract' | 'divide' | 'firerate' | 'damage' | 'superwarrior';
   let value: number;
@@ -432,7 +432,6 @@ export function createGatePair(canvasWidth: number, y: number, level: number = 1
   const atMaxHeroes = currentHeroCount >= MAX_HEROES;
 
   // Tipos que aumentam heróis (excluir se no máximo)
-  const heroIncreaseTypes = ['add', 'multiply', 'superwarrior'];
   const goodTypes = atMaxHeroes
     ? ['firerate', 'damage'] // Apenas buffs que não aumentam heróis
     : ['add', 'multiply', 'firerate', 'damage', 'superwarrior'];

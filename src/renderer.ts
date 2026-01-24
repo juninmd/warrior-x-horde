@@ -550,7 +550,6 @@ function drawGround(ctx: CanvasRenderingContext2D, width: number, height: number
   if (theme.groundType === 'grid') {
       ctx.strokeStyle = 'rgba(0, 255, 255, 0.3)';
       ctx.lineWidth = 1;
-      const perspective = 200;
       // Vertical lines
       for (let x = -width; x < width * 2; x += 40) {
           ctx.beginPath();

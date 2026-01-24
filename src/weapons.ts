@@ -65,7 +65,7 @@ export function drawWeapon(ctx: CanvasRenderingContext2D, weapon: Weapon): void 
   ctx.fillText(icons[weapon.type], weapon.x, weapon.y + weapon.height / 2);
 }
 
-export function spawnWeapons(entities: Entities, canvasWidth: number, _gameState: GameState): void {
+export function spawnWeapons(entities: Entities, canvasWidth: number): void {
   // Remover armas que já passaram
   entities.weapons = entities.weapons.filter(w => !w.passed && w.y < 1000);
 

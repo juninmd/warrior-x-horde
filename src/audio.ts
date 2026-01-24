@@ -92,7 +92,7 @@ export function toggleMute(): boolean {
 
   try {
     localStorage.setItem('crowdRunnerMute', isMuted.toString());
-  } catch (e) {
+  } catch {
     // Ignore
   }
 

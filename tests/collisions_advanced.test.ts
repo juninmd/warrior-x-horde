@@ -3,6 +3,7 @@ import { vi } from 'vitest';
 
 vi.mock('../src/game', () => ({
     triggerScreenShake: vi.fn(),
+    triggerHitStop: vi.fn(),
     togglePause: vi.fn(),
     canvas: { width: 480, height: 800 }
 }));

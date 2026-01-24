@@ -39,7 +39,7 @@ function createShopButton(type: string, price: number, color: string, label: str
 
   // Effects
   // Use pointer events for unified handling
-  btn.addEventListener('pointerdown', (e) => {
+  btn.addEventListener('pointerdown', () => {
       btn.style.transform = 'scale(0.95)';
       // Optional: Prevent default if necessary, but careful with scrolling
   });

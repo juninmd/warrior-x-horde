@@ -1,11 +1,14 @@
 // spatial.ts - Sistema de Particionamento Espacial para Otimização de Colisões
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type SpatialRef = any;
+
 export interface SpatialItem {
   x: number;
   y: number;
   width: number;
   height: number;
-  ref: any; // Referência ao objeto original (Soldier, MiniBoss, etc)
+  ref: SpatialRef; // Referência ao objeto original (Soldier, MiniBoss, etc)
 }
 
 export class SpatialHashGrid {

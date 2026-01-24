@@ -1,14 +1,14 @@
 // collisions.ts - Sistema de colisões
-import { Entities, GameState, Army, EnemyHorde, Gate, MiniBoss, MysteryBox, Coin } from './types';
+import { Entities, GameState, Army, EnemyHorde, Gate, MiniBoss, MysteryBox } from './types';
 import { addSoldiersToArmy, multiplySoldiersInArmy, removeSoldiersFromArmy, addSuperSoldiersToArmy, addSpecialSoldiersToArmy } from './entities';
 import { addFloatingText, addExplosion, addParticle } from './renderer';
 import { playSound, audioManager } from './audio';
 import { vibrate } from './input';
-import { triggerScreenShake } from './game';
-import { getArmyBounds, checkBounds, getEntityBounds, Rect, fastRemove } from './utils';
+import { triggerScreenShake, triggerHitStop } from './game';
+import { getArmyBounds, checkBounds, getEntityBounds, Rect } from './utils';
 import { COLORS } from './constants';
 
-function applyGateEffect(army: Army, gate: Gate, gameState: GameState, entities: Entities): void {
+function applyGateEffect(army: Army, gate: Gate, gameState: GameState): void {
   const beforeCount = army.soldiers.length;
   let afterCount = beforeCount;
   let isPositive = true;
@@ -132,21 +132,13 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
     }
   }
 
-  // Fast removal of dead soldiers
-  for (let i = army.soldiers.length - 1; i >= 0; i--) {
-    if (!army.soldiers[i].isAlive) {
-      fastRemove(army.soldiers, i);
-    }
-  }
-  for (let i = horde.soldiers.length - 1; i >= 0; i--) {
-    if (!horde.soldiers[i].isAlive) {
-      fastRemove(horde.soldiers, i);
-    }
-  }
+  army.soldiers = army.soldiers.filter(s => s.isAlive);
+  horde.soldiers = horde.soldiers.filter(s => s.isAlive);
   horde.count = horde.soldiers.length;
 
   if (horde.soldiers.length <= 0) {
     horde.isActive = false;
+    triggerHitStop(5); // Hit Stop on Horde Clear
     gameState.combo++;
     gameState.comboTimer = 2000;
     if (gameState.combo > gameState.maxCombo) {
@@ -201,15 +193,11 @@ function processMiniBossBattle(army: Army, miniBoss: MiniBoss, gameState: GameSt
   const damageToMiniBoss = Math.min(playerCount * 0.5, 5);
   miniBoss.hp -= damageToMiniBoss;
 
-  // Fast removal of dead soldiers
-  for (let i = army.soldiers.length - 1; i >= 0; i--) {
-    if (!army.soldiers[i].isAlive) {
-      fastRemove(army.soldiers, i);
-    }
-  }
+  army.soldiers = army.soldiers.filter(s => s.isAlive);
 
   if (miniBoss.hp <= 0) {
     miniBoss.isActive = false;
+    triggerHitStop(10); // Hit Stop on MiniBoss
     gameState.score += 300;
     gameState.coins += 50;
     addExplosion(miniBoss.x + miniBoss.width / 2, miniBoss.y + miniBoss.height / 2, '#FF4500');
@@ -242,6 +230,7 @@ function applyMysteryBoxEffect(army: Army, box: MysteryBox, gameState: GameState
         }
       });
       addFloatingText('NUKE!', box.x, box.y, COLORS.UI.GOLD, 2.0);
+      triggerHitStop(20); // Big Hit Stop on Nuke
       triggerScreenShake(10, 500);
       break;
     case 'double':
@@ -298,7 +287,7 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
         armyCenterX <= gate.x + gate.width &&
         bounds.bottom > gate.y &&
         bounds.top < gate.y + gate.height) {
-      applyGateEffect(army, gate, gameState, entities);
+      applyGateEffect(army, gate, gameState);
       // Pass sibling gate
       for (const otherGate of entities.gates) {
         if (otherGate.id !== gate.id && Math.abs(otherGate.y - gate.y) < 10) {
@@ -422,12 +411,7 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
             if (killed > 0) {
               gameState.damageFlash = Math.min(0.8, gameState.damageFlash + (killed * 0.1));
             }
-            // Fast removal of dead soldiers
-            for (let i = army.soldiers.length - 1; i >= 0; i--) {
-                if (!army.soldiers[i].isAlive) {
-                    fastRemove(army.soldiers, i);
-                }
-            }
+            army.soldiers = army.soldiers.filter(s => s.isAlive);
         }
 
         const contactDamage = 5;
@@ -435,6 +419,7 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
 
         if (boss.hp <= 0) {
           boss.isActive = false;
+          triggerHitStop(20); // Massive Hit Stop on Boss Kill
           gameState.isVictory = true;
           gameState.score += 1000;
           gameState.coins += 500;

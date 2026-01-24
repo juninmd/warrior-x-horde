@@ -65,8 +65,11 @@ describe('Input', () => {
         setGameStateRef({ isGameOver: false } as any);
 
         const touchStart = new Event('touchstart');
+        const touchObj = { clientX: 300, clientY: 500, identifier: 1 };
         // @ts-ignore
-        touchStart.touches = [{ clientX: 300, clientY: 500 }];
+        touchStart.changedTouches = [touchObj];
+        // @ts-ignore
+        touchStart.touches = [touchObj];
         canvas.dispatchEvent(touchStart);
 
         // Touch sets touchStartX and armyStartX.
@@ -75,21 +78,19 @@ describe('Input', () => {
         expect(virtualJoystick.startX).toBe(300);
 
         const touchMove = new Event('touchmove');
+        const touchMoveObj = { clientX: 350, clientY: 550, identifier: 1 };
         // @ts-ignore
-        touchMove.touches = [{ clientX: 350, clientY: 550 }]; // +50px
+        touchMove.changedTouches = [touchMoveObj];
+        // @ts-ignore
+        touchMove.touches = [touchMoveObj]; // +50px
         canvas.dispatchEvent(touchMove);
 
         // Input logic calculates relative movement.
-        // delta = 50. sensitivity = 1.2. newX = start + 50*1.2 = 60.
-        // Wait, startX depends on previous mouseX (armyStartX).
-        // If mouseX was 200 (from previous test if state persists? No, module state persists in Vitest unless isolated).
-        // Input module has module-level variables.
-        // Let's assume mouseX was 0 or whatever.
-        // Actually, getMouseX() will reflect the change.
-
         expect(virtualJoystick.currentX).toBe(350);
 
         const touchEnd = new Event('touchend');
+        // @ts-ignore
+        touchEnd.changedTouches = [{ clientX: 350, clientY: 550, identifier: 1 }];
         canvas.dispatchEvent(touchEnd);
         expect(virtualJoystick.active).toBe(false);
     });

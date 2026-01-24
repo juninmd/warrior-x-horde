@@ -27,6 +27,7 @@ vi.mock('../src/audio', () => ({
 
 vi.mock('../src/game', () => ({
   triggerScreenShake: vi.fn(),
+  triggerHitStop: vi.fn(),
 }));
 
 vi.mock('../src/input', () => ({
@@ -338,6 +339,7 @@ describe('Collisions - Full Coverage', () => {
   describe('Game Over Condition', () => {
       it('should trigger game over if army is empty', () => {
           entities.playerArmy.soldiers = [];
+          entities.playerArmy.aliveCount = 0;
           checkCollisions(entities, gameState);
           expect(gameState.isGameOver).toBe(true);
       });

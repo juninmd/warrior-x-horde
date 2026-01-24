@@ -50,6 +50,7 @@ export interface GameState {
   newRecordReached: boolean;
   damageFlash: number;
   lowArmyTriggered: boolean;
+  hitStop: number;
 }
 
 export interface Soldier {

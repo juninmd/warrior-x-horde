@@ -1,5 +1,4 @@
 // renderer-utils.ts - Shared rendering helpers
-import { shadeColor } from './utils';
 import { COLORS } from './constants';
 import { virtualJoystick } from './input';
 

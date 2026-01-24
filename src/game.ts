@@ -1,5 +1,5 @@
 // game.ts - Loop principal do jogo Crowd Runner
-import { Entities, GameState } from './types';
+import { Entities } from './types';
 import { gameState, resetGameState } from './gameState';
 import { createInitialEntities, createEnemyHorde, createSoldier, addSpecialSoldiersToArmy, addSoldiersToArmy } from './entities';
 import { render, getShareButtonBounds, getWhatsAppButtonBounds, shareOnX, shareOnWhatsApp, addFloatingText } from './renderer';
@@ -167,9 +167,21 @@ function gameLoop(currentTime: number = 0): void {
     return; // Não continua o loop enquanto pausado
   }
 
+  // Hit Stop Logic (Freeze Frame)
+  if (gameState.hitStop > 0) {
+    gameState.hitStop--;
+    render(ctx, entities, gameState);
+    lastTime = currentTime; // Consome o tempo sem avançar a física
+    requestAnimationFrame(gameLoop);
+    return;
+  }
+
   // Calcular delta time
-  const deltaTime = lastTime ? currentTime - lastTime : 16;
+  let deltaTime = lastTime ? currentTime - lastTime : 16;
   lastTime = currentTime;
+
+  // Cap delta time to prevent physics explosions on lag spikes (max ~20fps floor)
+  deltaTime = Math.min(deltaTime, 50);
 
   // Normalizar delta time (base 60 FPS)
   // Se rodar a 60fps, dtFactor = 1.
@@ -346,6 +358,10 @@ export function triggerScreenShake(intensity: number, duration: number): void {
   gameState.screenShakeIntensity = intensity;
   gameState.screenShakeDuration = duration;
   gameState.screenShakeTimer = duration; // Timer starts at duration and counts down
+}
+
+export function triggerHitStop(frames: number): void {
+  gameState.hitStop = frames;
 }
 
 // Restart no clique após game over

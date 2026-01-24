@@ -105,6 +105,7 @@ describe('Shooting - Full Coverage', () => {
 
           // Add them to army
           entities.playerArmy.soldiers.push(laser, bazooka, rambo);
+          entities.playerArmy.aliveCount = entities.playerArmy.soldiers.length;
 
           const horde = createEnemyHorde(200, 400, 10, 1);
           entities.enemyHordes.push(horde);
