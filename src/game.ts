@@ -332,7 +332,7 @@ function advanceToNextLevel(): void {
 }
 
 // Iniciar jogo
-function startGame(): void {
+export function startGame(): void {
   resetGameState();
   entities = createInitialEntities(BASE_WIDTH, BASE_HEIGHT);
   initializeMousePosition(BASE_WIDTH);
@@ -483,7 +483,7 @@ entities = createInitialEntities(BASE_WIDTH, BASE_HEIGHT);
 render(ctx, entities, gameState);
 
 // DEBUG: Função para ir para um level específico (exposta globalmente)
-function debugSetLevel(targetLevel: number): void {
+export function debugSetLevel(targetLevel: number): void {
   if (!gameState.isStarted) {
     // Se o jogo não começou, iniciar primeiro
     startGame();
@@ -533,7 +533,7 @@ function debugSetLevel(targetLevel: number): void {
 }
 
 // Função para pausar/despausar o jogo
-function togglePause(): void {
+export function togglePause(): void {
   if (!gameState.isStarted || gameState.isGameOver) return;
 
   vibrate(20);
@@ -553,7 +553,7 @@ function togglePause(): void {
   console.log(`⏸️ Jogo ${gameState.isPaused ? 'pausado' : 'retomado'}`);
 }
 
-function toggleMuteUI(): void {
+export function toggleMuteUI(): void {
   vibrate(10);
   const muted = toggleMute();
   const btn = document.getElementById('muteBtn');
@@ -562,7 +562,7 @@ function toggleMuteUI(): void {
   }
 }
 
-function toggleFullscreen(): void {
+export function toggleFullscreen(): void {
   vibrate(10);
   if (!document.fullscreenElement) {
     document.documentElement.requestFullscreen().catch(err => {
@@ -576,7 +576,7 @@ function toggleFullscreen(): void {
 }
 
 // Função para ativar super cannon (exposta para HTML)
-function triggerSuperCannon(): void {
+export function triggerSuperCannon(): void {
   vibrate(25);
   if (gameState.isStarted && !gameState.isGameOver && !gameState.isPaused) {
     activateSuperCannon(gameState);
