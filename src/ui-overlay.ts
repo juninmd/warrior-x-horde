@@ -6,6 +6,7 @@ import { vibrate } from './input';
 // Container elements
 let shopContainer: HTMLElement | null = null;
 let superCannonContainer: HTMLElement | null = null;
+let gameOverContainer: HTMLElement | null = null;
 
 // Buttons
 const buttons: Record<string, HTMLButtonElement> = {};
@@ -231,4 +232,157 @@ export function updateSuperCannonUI(gameState: GameState): void {
         btn.style.color = '#333';
         btn.disabled = false;
     }
+}
+
+// --- Game Over UI ---
+
+export function setupGameOverUI(onRestart: () => void, onShare: (platform: 'x' | 'whatsapp') => void): void {
+    gameOverContainer = document.getElementById('gameOverContainer');
+    if (!gameOverContainer) {
+        gameOverContainer = document.createElement('div');
+        gameOverContainer.id = 'gameOverContainer';
+        gameOverContainer.style.cssText = `
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px);
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        `;
+        document.body.appendChild(gameOverContainer);
+    }
+
+    // Clear content
+    gameOverContainer.innerHTML = '';
+
+    const content = document.createElement('div');
+    content.style.cssText = `
+        background: rgba(30, 30, 40, 0.9);
+        border: 2px solid #4A90D9;
+        border-radius: 20px;
+        padding: 30px;
+        width: 85%;
+        max-width: 400px;
+        text-align: center;
+        box-shadow: 0 0 30px rgba(74, 144, 217, 0.3);
+        transform: scale(0.9);
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    `;
+
+    // Add class for animation targeting
+    content.className = 'game-over-content';
+
+    gameOverContainer.appendChild(content);
+
+    // Storing callbacks for dynamic button creation in showGameOverScreen
+    (gameOverContainer as any)._onRestart = onRestart;
+    (gameOverContainer as any)._onShare = onShare;
+}
+
+export function showGameOverScreen(gameState: GameState): void {
+    if (!gameOverContainer) return;
+
+    const onRestart = (gameOverContainer as any)._onRestart;
+    const onShare = (gameOverContainer as any)._onShare;
+
+    const isVictory = gameState.isVictory && gameState.currentLevel >= 10;
+    const title = isVictory ? '🏆 VITÓRIA!' : '💀 GAME OVER';
+    const titleColor = isVictory ? '#2ECC71' : '#E74C3C';
+
+    const content = gameOverContainer.querySelector('.game-over-content') as HTMLElement;
+    if (!content) return;
+
+    content.style.borderColor = titleColor;
+    content.style.boxShadow = `0 0 30px ${isVictory ? 'rgba(46, 204, 113, 0.3)' : 'rgba(231, 76, 60, 0.3)'}`;
+
+    content.innerHTML = `
+        <h1 style="color: ${titleColor}; font-size: 42px; margin: 0 0 10px 0; text-shadow: 0 2px 5px rgba(0,0,0,0.5);">${title}</h1>
+        ${isVictory ? '<p style="color: #00FF88; font-weight: bold; font-size: 18px; margin-bottom: 20px;">🛸 MOTHERSHIP DESTROYED!</p>' : ''}
+
+        <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 15px; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="color: #AAA; font-size: 18px;">Score</span>
+                <span style="color: #FFF; font-size: 24px; font-weight: bold;">${gameState.score}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="color: #AAA; font-size: 16px;">High Score</span>
+                <span style="color: #FFD700; font-size: 20px; font-weight: bold;">${gameState.highScore}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span style="color: #AAA; font-size: 16px;">Max Combo</span>
+                <span style="color: #FF00FF; font-size: 20px; font-weight: bold;">${gameState.maxCombo}x</span>
+            </div>
+        </div>
+
+        <button id="goRestartBtn" style="
+            width: 100%;
+            padding: 15px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #FFF;
+            background: linear-gradient(180deg, #4A90D9 0%, #2980B9 100%);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 0 #1A5276;
+            transition: transform 0.1s;
+        ">${isVictory ? 'CONTINUE LEVEL 11 ➡️' : '🔄 TRY AGAIN'}</button>
+
+        <div style="display: flex; gap: 10px;">
+            <button id="goShareX" style="
+                flex: 1;
+                padding: 10px;
+                font-size: 14px;
+                font-weight: bold;
+                color: #FFF;
+                background: #1DA1F2;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                box-shadow: 0 3px 0 #0C7ABF;
+            ">𝕏 SHARE</button>
+            <button id="goShareWa" style="
+                flex: 1;
+                padding: 10px;
+                font-size: 14px;
+                font-weight: bold;
+                color: #FFF;
+                background: #25D366;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                box-shadow: 0 3px 0 #128C7E;
+            ">WHATSAPP</button>
+        </div>
+    `;
+
+    // Attach listeners
+    const restartBtn = document.getElementById('goRestartBtn');
+    restartBtn?.addEventListener('click', () => {
+        vibrate(20);
+        gameOverContainer!.style.opacity = '0';
+        setTimeout(() => {
+            gameOverContainer!.style.display = 'none';
+            onRestart();
+        }, 300);
+    });
+
+    document.getElementById('goShareX')?.addEventListener('click', () => onShare('x'));
+    document.getElementById('goShareWa')?.addEventListener('click', () => onShare('whatsapp'));
+
+    // Show
+    gameOverContainer.style.display = 'flex';
+    // Force reflow
+    gameOverContainer.offsetHeight;
+    gameOverContainer.style.opacity = '1';
+    content.style.transform = 'scale(1)';
 }

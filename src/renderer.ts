@@ -939,6 +939,11 @@ function drawSoldier3D(ctx: CanvasRenderingContext2D, x: number, y: number, size
 // Histórico de posições para trail effect
 let lastArmyX = 0;
 
+// Reusable render buffers to reduce GC pressure
+const renderBufferNormal: Soldier[] = [];
+const renderBufferSuper: Soldier[] = [];
+const renderBufferFinal: Soldier[] = [];
+
 function drawArmy(ctx: CanvasRenderingContext2D, army: Army, time: number): void {
   if (!spriteCache.initialized) {
     preRenderSprites();
@@ -959,39 +964,55 @@ function drawArmy(ctx: CanvasRenderingContext2D, army: Army, time: number): void
   lastArmyX = army.centerX;
 
   // Optimized Rendering: Sample BEFORE sorting to avoid O(N log N) on massive armies
-  const aliveNormalSoldiers: Soldier[] = [];
-  const superSoldiers: Soldier[] = [];
+
+  // Clear buffers without reallocating
+  renderBufferNormal.length = 0;
+  renderBufferSuper.length = 0;
+  renderBufferFinal.length = 0;
 
   // Single pass to separate types
-  for (const s of army.soldiers) {
+  const soldiers = army.soldiers;
+  const len = soldiers.length;
+  for (let i = 0; i < len; i++) {
+      const s = soldiers[i];
       if (s.isAlive) {
-          if (s.isSuper) superSoldiers.push(s);
-          else aliveNormalSoldiers.push(s);
+          if (s.isSuper) renderBufferSuper.push(s);
+          else renderBufferNormal.push(s);
       }
   }
 
-  let soldiersToDraw: Soldier[] = [];
-
-  if (superSoldiers.length >= MAX_RENDERED_SOLDIERS) {
-      soldiersToDraw = superSoldiers.slice(0, MAX_RENDERED_SOLDIERS);
+  if (renderBufferSuper.length >= MAX_RENDERED_SOLDIERS) {
+      // Too many supers, take first N (or mix? usually supers are prioritized)
+      // Array.prototype.push.apply is fast for bulk move
+      for (let i = 0; i < MAX_RENDERED_SOLDIERS; i++) {
+          renderBufferFinal.push(renderBufferSuper[i]);
+      }
   } else {
-      soldiersToDraw = [...superSoldiers];
-      const remainingSlots = MAX_RENDERED_SOLDIERS - soldiersToDraw.length;
+      // Add all supers
+      for (let i = 0; i < renderBufferSuper.length; i++) {
+          renderBufferFinal.push(renderBufferSuper[i]);
+      }
 
-      if (aliveNormalSoldiers.length > remainingSlots) {
-           const step = aliveNormalSoldiers.length / remainingSlots;
+      const remainingSlots = MAX_RENDERED_SOLDIERS - renderBufferFinal.length;
+
+      if (renderBufferNormal.length > remainingSlots) {
+           // Sample normals
+           const step = renderBufferNormal.length / remainingSlots;
            for (let i = 0; i < remainingSlots; i++) {
-               soldiersToDraw.push(aliveNormalSoldiers[Math.floor(i * step)]);
+               renderBufferFinal.push(renderBufferNormal[Math.floor(i * step)]);
            }
       } else {
-           soldiersToDraw = [...soldiersToDraw, ...aliveNormalSoldiers];
+           // Add all normals
+           for (let i = 0; i < renderBufferNormal.length; i++) {
+              renderBufferFinal.push(renderBufferNormal[i]);
+           }
       }
   }
 
   // Sort ONLY the subset (small N)
-  soldiersToDraw.sort((a, b) => a.y - b.y);
+  renderBufferFinal.sort((a, b) => a.y - b.y);
 
-  for (const soldier of soldiersToDraw) {
+  for (const soldier of renderBufferFinal) {
     if (soldier.hitTimer && soldier.hitTimer > 0) {
       soldier.hitTimer--;
     }
@@ -1406,110 +1427,6 @@ function drawFloatingTexts(ctx: CanvasRenderingContext2D): void {
   }
 }
 
-function drawGameOver(ctx: CanvasRenderingContext2D, gameState: GameState): void {
-  const width = BASE_WIDTH;
-  const height = BASE_HEIGHT;
-  const isFinalVictory = gameState.isVictory && gameState.currentLevel >= 10;
-
-  ctx.fillStyle = isFinalVictory ? 'rgba(0, 50, 30, 0.95)' : 'rgba(0, 0, 0, 0.85)';
-  ctx.fillRect(0, 0, width, height);
-
-  const pulse = 1 + Math.sin(Date.now() * 0.003) * 0.05;
-  ctx.save();
-  ctx.translate(width / 2, height / 2 - 120);
-  ctx.scale(pulse, pulse);
-  if (isFinalVictory) {
-    ctx.fillStyle = '#00FF88';
-    ctx.font = 'bold 28px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('🛸 NAVE MÃE DESTRUÍDA! 🛸', 0, -40);
-    ctx.fillText('🎉 PARABÉNS! 🎉', 0, 10);
-  } else {
-    ctx.fillStyle = gameState.isVictory ? '#2ECC71' : '#E74C3C';
-    ctx.font = 'bold 48px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText(gameState.isVictory ? '🏆 VITÓRIA!' : '💀 GAME OVER', 0, 0);
-  }
-  ctx.restore();
-
-  const boxWidth = 280;
-  const boxHeight = 180;
-  const boxX = width / 2 - boxWidth / 2;
-  const boxY = height / 2 - 60;
-  ctx.fillStyle = 'rgba(30, 30, 50, 0.9)';
-  ctx.beginPath();
-  ctx.roundRect(boxX, boxY, boxWidth, boxHeight, 15);
-  ctx.fill();
-  ctx.strokeStyle = '#4A90D9';
-  ctx.stroke();
-
-  ctx.textAlign = 'left';
-  ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 22px Arial';
-  ctx.fillText(`🎯 Score:`, boxX + 20, boxY + 35);
-  ctx.textAlign = 'right';
-  ctx.fillText(`${gameState.score}`, boxX + boxWidth - 20, boxY + 35);
-
-  ctx.textAlign = 'left';
-  ctx.font = '18px Arial';
-  ctx.fillText(`👑 High Score:`, boxX + 20, boxY + 70);
-  ctx.textAlign = 'right';
-  ctx.fillText(`${gameState.highScore}`, boxX + boxWidth - 20, boxY + 70);
-
-  // Update bounds for sharing buttons
-  shareButtonBounds = {
-    x: width / 2 - 100,
-    y: boxY + boxHeight + 100 - 20,
-    width: 200,
-    height: 40
-  };
-
-  whatsappButtonBounds = {
-    x: width / 2 - 100,
-    y: boxY + boxHeight + 150 - 20,
-    width: 200,
-    height: 40
-  };
-
-  // Draw Share Buttons placeholders (visual only as text usually)
-  ctx.save();
-  ctx.translate(width / 2, boxY + boxHeight + 45);
-  ctx.fillStyle = '#4A90D9';
-  ctx.fillRect(-100, -22, 200, 44);
-  ctx.fillStyle = '#FFF';
-  ctx.textAlign = 'center';
-  ctx.fillText(isFinalVictory ? '➡️ NÍVEL 11' : '🔄 RESTART', 0, 5);
-  ctx.restore();
-
-  ctx.save();
-  ctx.translate(width / 2, boxY + boxHeight + 100);
-  ctx.fillStyle = '#1DA1F2';
-  ctx.fillRect(-100, -20, 200, 40);
-  ctx.fillStyle = '#FFF';
-  ctx.textAlign = 'center';
-  ctx.fillText('𝕏 SHARE', 0, 5);
-  ctx.restore();
-
-  ctx.save();
-  ctx.translate(width / 2, boxY + boxHeight + 150);
-  ctx.fillStyle = '#25D366';
-  ctx.fillRect(-100, -20, 200, 40);
-  ctx.fillStyle = '#FFF';
-  ctx.textAlign = 'center';
-  ctx.fillText('📱 WHATSAPP', 0, 5);
-  ctx.restore();
-}
-
-let shareButtonBounds = { x: 0, y: 0, width: 0, height: 0 };
-let whatsappButtonBounds = { x: 0, y: 0, width: 0, height: 0 };
-
-export function getShareButtonBounds(): { x: number; y: number; width: number; height: number } {
-  return shareButtonBounds;
-}
-
-export function getWhatsAppButtonBounds(): { x: number; y: number; width: number; height: number } {
-  return whatsappButtonBounds;
-}
 
 export function shareOnX(gameState: GameState): void {
   const text = `🎮 Crowd Runner!\n🏆 Score: ${gameState.score}\nLevel: ${gameState.currentLevel}`;
@@ -1619,8 +1536,4 @@ export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameSt
   drawJoystick(ctx);
   updateFloatingTexts();
   drawFloatingTexts(ctx);
-
-  if (gameState.isGameOver) {
-    drawGameOver(ctx, gameState);
-  }
 }

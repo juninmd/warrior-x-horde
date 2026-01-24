@@ -65,6 +65,8 @@ vi.mock('../src/ui-overlay', () => ({
     setupShopUI: vi.fn(),
     updateShopUI: vi.fn(),
     setupSuperCannonUI: vi.fn(),
+    setupGameOverUI: vi.fn(),
+    showGameOverScreen: vi.fn(),
 }));
 
 describe('Game', () => {

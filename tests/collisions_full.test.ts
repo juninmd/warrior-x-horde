@@ -284,6 +284,32 @@ describe('Collisions - Full Coverage', () => {
           expect(gameState.isBattling).toBe(true);
           expect(mb.hp).toBeLessThan(100);
       });
+
+      it('should increment combo and trigger milestones', () => {
+          // Reset combo
+          gameState.combo = 0;
+          gameState.comboTimer = 0;
+
+          // Win 5 battles to reach 5x combo
+          // Note: processBattle increments combo when horde is cleared
+          for(let i=0; i<5; i++) {
+              // Ensure army is strong enough
+              entities.playerArmy.soldiers = [];
+              for(let k=0; k<20; k++) entities.playerArmy.soldiers.push(createSoldier(100, 100, '#FFF', 0));
+              entities.playerArmy.aliveCount = 20;
+
+              const horde = createEnemyHorde(200, 100, 1, 1);
+              // Kill the enemy manually to ensure instant win in one check
+              horde.soldiers[0].isAlive = false;
+
+              entities.enemyHordes = [horde];
+
+              checkCollisions(entities, gameState);
+          }
+
+          expect(gameState.combo).toBe(5);
+          expect(renderer.addFloatingText).toHaveBeenCalledWith('GREAT!', expect.any(Number), expect.any(Number), expect.any(String), expect.any(Number));
+      });
   });
 
   describe('Boss Collisions', () => {
