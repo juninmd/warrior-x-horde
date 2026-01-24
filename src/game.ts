@@ -2,7 +2,7 @@
 import { Entities } from './types';
 import { gameState, resetGameState } from './gameState';
 import { createInitialEntities, createEnemyHorde, createSoldier, addSpecialSoldiersToArmy, addSoldiersToArmy } from './entities';
-import { render, getShareButtonBounds, getWhatsAppButtonBounds, shareOnX, shareOnWhatsApp, addFloatingText } from './renderer';
+import { render, shareOnX, shareOnWhatsApp, addFloatingText } from './renderer';
 import { checkCollisions } from './collisions';
 import { updateSpawns } from './spawner';
 import { updateMovement } from './movement';
@@ -10,7 +10,7 @@ import { setupInput, getMouseX, initializeMousePosition, setGameStateRef, setInp
 import { updateShooting, updateBullets, updateSuperCannon, activateSuperCannon } from './shooting';
 import { initAudio, playMusic, playSound, stopAllMusic, audioManager, toggleMute, isMusicMuted } from './audio';
 import { BASE_WIDTH, BASE_HEIGHT, ASPECT_RATIO } from './constants';
-import { setupShopUI, updateShopUI, setupSuperCannonUI, updateSuperCannonUI, BuyAction } from './ui-overlay';
+import { setupShopUI, updateShopUI, setupSuperCannonUI, updateSuperCannonUI, BuyAction, setupGameOverUI, showGameOverScreen } from './ui-overlay';
 
 // Canvas setup
 export const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
@@ -300,12 +300,15 @@ function gameLoop(currentTime: number = 0): void {
       localStorage.setItem('crowdHighScore', gameState.highScore.toString());
     }
 
-    // Mostrar tela de game over
+    // Mostrar tela de game over (apenas o último frame do jogo)
     render(ctx, entities, gameState);
 
     // Parar música e tocar som de game over
     stopAllMusic();
     playSound(audioManager.gameOver);
+
+    // Mostrar UI de Game Over DOM
+    showGameOverScreen(gameState);
   }
 }
 
@@ -364,87 +367,43 @@ export function triggerHitStop(frames: number): void {
   gameState.hitStop = frames;
 }
 
-// Restart no clique após game over
-canvas.addEventListener('click', (e) => {
-  const { x, y } = screenToCanvas(e.clientX, e.clientY);
+// Callback de Reinício
+const onRestartGame = () => {
+    if (gameState.isVictory && gameState.currentLevel === 10) {
+      // Continuar para nível 11 (Infinito)
+      advanceToNextLevel();
+      gameState.isGameOver = false;
+      gameState.isStarted = true;
+      requestAnimationFrame(gameLoop);
+    } else {
+      // Reiniciar jogo
+      startGame();
+    }
+};
 
+const onShareGame = (platform: 'x' | 'whatsapp') => {
+    if (platform === 'x') shareOnX(gameState);
+    else shareOnWhatsApp(gameState);
+};
+
+// Setup Game Over UI
+setupGameOverUI(onRestartGame, onShareGame);
+
+// Restart no clique após game over (apenas para Pause e Interação In-Game)
+canvas.addEventListener('click', (e) => {
   // Se pausado, verificar clique no botão Resume
   if (gameState.isPaused) {
     // Área central para despausar
     togglePause();
     return;
   }
-
-  if (gameState.isGameOver) {
-    // Verificar se clicou no botão de compartilhar X (Twitter)
-    const xBounds = getShareButtonBounds();
-    if (x >= xBounds.x && x <= xBounds.x + xBounds.width &&
-      y >= xBounds.y && y <= xBounds.y + xBounds.height) {
-      shareOnX(gameState);
-      return;
-    }
-
-    // Verificar se clicou no botão de compartilhar WhatsApp
-    const waBounds = getWhatsAppButtonBounds();
-    if (x >= waBounds.x && x <= waBounds.x + waBounds.width &&
-      y >= waBounds.y && y <= waBounds.y + waBounds.height) {
-      shareOnWhatsApp(gameState);
-      return;
-    }
-
-    // Lógica para continuar ou reiniciar
-    if (gameState.isVictory && gameState.currentLevel === 10) {
-      // Continuar para nível 11 (Infinito)
-      advanceToNextLevel();
-      gameState.isGameOver = false;
-      gameState.isStarted = true;
-      requestAnimationFrame(gameLoop);
-    } else {
-      // Reiniciar jogo
-      startGame();
-    }
-  }
 });
 
 canvas.addEventListener('touchstart', (e) => {
-  const touch = e.touches[0];
-  const { x, y } = screenToCanvas(touch.clientX, touch.clientY);
-
   if (gameState.isPaused) {
     e.preventDefault(); // Evitar scroll/zoom
     togglePause();
     return;
-  }
-
-  if (gameState.isGameOver) {
-    e.preventDefault();
-    // Verificar se clicou no botão de compartilhar X (Twitter)
-    const xBounds = getShareButtonBounds();
-    if (x >= xBounds.x && x <= xBounds.x + xBounds.width &&
-      y >= xBounds.y && y <= xBounds.y + xBounds.height) {
-      shareOnX(gameState);
-      return;
-    }
-
-    // Verificar se clicou no botão de compartilhar WhatsApp
-    const waBounds = getWhatsAppButtonBounds();
-    if (x >= waBounds.x && x <= waBounds.x + waBounds.width &&
-      y >= waBounds.y && y <= waBounds.y + waBounds.height) {
-      shareOnWhatsApp(gameState);
-      return;
-    }
-
-    // Lógica para continuar ou reiniciar
-    if (gameState.isVictory && gameState.currentLevel === 10) {
-      // Continuar para nível 11 (Infinito)
-      advanceToNextLevel();
-      gameState.isGameOver = false;
-      gameState.isStarted = true;
-      requestAnimationFrame(gameLoop);
-    } else {
-      // Reiniciar jogo
-      startGame();
-    }
   }
 }, { passive: false });
 

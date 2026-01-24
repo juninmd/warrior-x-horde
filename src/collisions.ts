@@ -92,10 +92,14 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
       addParticle(horde.x, horde.y, 'star', COLORS.UI.GOLD, 3);
       vibrate(30);
 
+      // Milestone messages
+      if (gameState.combo === 5) addFloatingText("GREAT!", horde.x, horde.y - 60, COLORS.UI.INFO, 1.5);
+      else if (gameState.combo === 10) addFloatingText("EPIC!", horde.x, horde.y - 60, '#FF00FF', 1.8);
+      else if (gameState.combo === 20) addFloatingText("LEGENDARY!", horde.x, horde.y - 60, COLORS.UI.GOLD, 2.0);
+      else if (gameState.combo === 50) addFloatingText("UNSTOPPABLE!", horde.x, horde.y - 60, COLORS.EFFECTS.EXPLOSION, 2.5);
+
       if (gameState.combo >= 2) {
         const isBigCombo = gameState.combo >= 5;
-        // Need to import getComboColor from renderer-utils, but to avoid circular deps with renderer, we duplicate or move it.
-        // It's in renderer-utils which is safe to import.
         addFloatingText(`${gameState.combo}x COMBO! +${scoreGain}`, horde.x, horde.y - 30, COLORS.UI.GOLD, isBigCombo ? 1.5 : 1.1);
       } else {
         addFloatingText(`+${scoreGain}`, horde.x, horde.y, COLORS.UI.GOLD);
@@ -144,6 +148,12 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
     if (gameState.combo > gameState.maxCombo) {
       gameState.maxCombo = gameState.combo;
     }
+
+    // Milestone messages
+    if (gameState.combo === 5) addFloatingText("GREAT!", horde.x, horde.y - 60, COLORS.UI.INFO, 1.5);
+    else if (gameState.combo === 10) addFloatingText("EPIC!", horde.x, horde.y - 60, '#FF00FF', 1.8);
+    else if (gameState.combo === 20) addFloatingText("LEGENDARY!", horde.x, horde.y - 60, COLORS.UI.GOLD, 2.0);
+    else if (gameState.combo === 50) addFloatingText("UNSTOPPABLE!", horde.x, horde.y - 60, COLORS.EFFECTS.EXPLOSION, 2.5);
 
     const comboMultiplier = Math.min(gameState.combo, 10);
     const scoreGain = 100 * comboMultiplier;

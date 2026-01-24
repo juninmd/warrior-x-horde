@@ -45,6 +45,8 @@ vi.mock('../src/renderer', () => ({
     getShareButtonBounds: vi.fn(() => ({ x: 0, y: 0, width: 0, height: 0 })),
     getWhatsAppButtonBounds: vi.fn(() => ({ x: 0, y: 0, width: 0, height: 0 })),
     addFloatingText: vi.fn(),
+    shareOnX: vi.fn(),
+    shareOnWhatsApp: vi.fn(),
 }));
 
 vi.mock('../src/audio', () => ({
@@ -76,6 +78,8 @@ vi.mock('../src/ui-overlay', () => ({
     updateShopUI: vi.fn(),
     setupSuperCannonUI: vi.fn(),
     updateSuperCannonUI: vi.fn(),
+    setupGameOverUI: vi.fn(),
+    showGameOverScreen: vi.fn(),
 }));
 
 vi.mock('../src/shooting', () => ({

@@ -62,12 +62,19 @@ vi.mock('../src/movement', () => ({
 // Capture callbacks
 let shopCallback: any;
 let superCannonCallback: any;
+let gameOverRestartCallback: any;
+let gameOverShareCallback: any;
 
 vi.mock('../src/ui-overlay', () => ({
     setupShopUI: vi.fn((cb) => { shopCallback = cb; }),
     updateShopUI: vi.fn(),
     setupSuperCannonUI: vi.fn((cb) => { superCannonCallback = cb; }),
     updateSuperCannonUI: vi.fn(),
+    setupGameOverUI: vi.fn((onRestart, onShare) => {
+        gameOverRestartCallback = onRestart;
+        gameOverShareCallback = onShare;
+    }),
+    showGameOverScreen: vi.fn(),
 }));
 
 // Mock window functions exposed by game.ts
@@ -196,7 +203,7 @@ describe('Game Loop - Full Coverage', () => {
         expect(shooting.activateSuperCannon).toHaveBeenCalled();
     });
 
-    it('should handle game over click (restart)', () => {
+    it('should handle game over restart callback', () => {
         // Set game over
         gameState.isStarted = true;
         gameState.isGameOver = true;
@@ -208,9 +215,9 @@ describe('Game Loop - Full Coverage', () => {
         // Reset mocks to clear previous calls
         vi.clearAllMocks();
 
-        // Click on canvas
-        const canvas = document.getElementById('gameCanvas');
-        canvas?.dispatchEvent(new MouseEvent('click', { clientX: 100, clientY: 100 }));
+        // Trigger the captured callback instead of clicking canvas
+        expect(gameOverRestartCallback).toBeDefined();
+        gameOverRestartCallback();
 
         // Should restart -> init entities -> play sound
         expect(audio.playSound).toHaveBeenCalledWith('start');
