@@ -1,6 +1,14 @@
 // entities.ts - Criação de entidades
 import { Army, Soldier, EnemyHorde, Gate, Boss, Entities, MiniBoss, MysteryBox, Coin } from './types';
 import { MAX_HEROES } from './constants';
+import { shadeColor } from './utils';
+
+function updateGateColorCache(gate: Gate): void {
+  gate.cachedColors = {
+    light: shadeColor(gate.color, 20),
+    dark: shadeColor(gate.color, -20),
+  };
+}
 
 let soldierIdCounter = 0;
 let hordeIdCounter = 0;
@@ -381,7 +389,7 @@ export function createGate(canvasWidth: number, y: number, side: 'left' | 'right
     }
   }
 
-  return {
+  const gate: Gate = {
     id: gateIdCounter++,
     x: side === 'left' ? 15 : canvasWidth / 2 + 15,
     y,
@@ -393,6 +401,8 @@ export function createGate(canvasWidth: number, y: number, side: 'left' | 'right
     side,
     passed: false,
   };
+  updateGateColorCache(gate);
+  return gate;
 }
 
 export function createGatePair(canvasWidth: number, y: number, level: number = 1, currentHeroCount: number = 0, currentEnemyCount: number = 0): Gate[] {
@@ -421,6 +431,9 @@ export function createGatePair(canvasWidth: number, y: number, level: number = 1
     wrongGate.value = Math.max(1, Math.abs(result - wrongResult));
     wrongGate.color = '#E74C3C'; // Vermelho
     wrongGate.customText = `${a} × ${b} = ${wrongResult}`;
+
+    updateGateColorCache(correctGate);
+    updateGateColorCache(wrongGate);
 
     return [correctGate, wrongGate];
   }
@@ -491,6 +504,9 @@ export function createGatePair(canvasWidth: number, y: number, level: number = 1
       leftGate.value = Math.max(leftGate.value, rightGate.value + 1);
     }
   }
+
+  updateGateColorCache(leftGate);
+  updateGateColorCache(rightGate);
 
   return [leftGate, rightGate];
 }
