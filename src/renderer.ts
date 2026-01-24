@@ -638,14 +638,14 @@ function drawRoadSurface(ctx: CanvasRenderingContext2D, width: number, height: n
      ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
      ctx.lineWidth = 1;
      // simple brick pattern
+     ctx.beginPath();
      for(let y = roadStartY; y < height; y+=20) {
-         ctx.beginPath();
          ctx.moveTo(width/2 - roadBottomWidth, y); // overdraw is fine, clipped by loop logic usually or distinct path
          // Actually better to re-clip or just draw lines roughly
          // Simplified:
          ctx.moveTo(0, y); ctx.lineTo(width, y); // across screen, cheap but works if layered
-         ctx.stroke();
      }
+     ctx.stroke();
   }
 
   // Road Borders
