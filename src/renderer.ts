@@ -939,10 +939,57 @@ function drawSoldier3D(ctx: CanvasRenderingContext2D, x: number, y: number, size
 // Histórico de posições para trail effect
 let lastArmyX = 0;
 
-// Reusable render buffers to reduce GC pressure
-const renderBufferNormal: Soldier[] = [];
-const renderBufferSuper: Soldier[] = [];
-const renderBufferFinal: Soldier[] = [];
+// Reusable arrays to avoid allocation every frame
+const tempAliveNormalSoldiers: Soldier[] = [];
+const tempSuperSoldiers: Soldier[] = [];
+const tempSoldiersToDraw: Soldier[] = [];
+
+export function prepareSoldiersToDraw(army: Army): Soldier[] {
+  // Clear buffers without reallocating
+  tempAliveNormalSoldiers.length = 0;
+  tempSuperSoldiers.length = 0;
+  tempSoldiersToDraw.length = 0;
+
+  // Single pass to separate types
+  for (const s of army.soldiers) {
+    if (s.isAlive) {
+      if (s.isSuper) tempSuperSoldiers.push(s);
+      else tempAliveNormalSoldiers.push(s);
+    }
+  }
+
+  if (tempSuperSoldiers.length >= MAX_RENDERED_SOLDIERS) {
+    // If we have enough supers, just fill with supers up to limit
+    for (let i = 0; i < MAX_RENDERED_SOLDIERS; i++) {
+      tempSoldiersToDraw.push(tempSuperSoldiers[i]);
+    }
+  } else {
+    // Add all supers
+    for (let i = 0; i < tempSuperSoldiers.length; i++) {
+      tempSoldiersToDraw.push(tempSuperSoldiers[i]);
+    }
+
+    const remainingSlots = MAX_RENDERED_SOLDIERS - tempSoldiersToDraw.length;
+
+    if (tempAliveNormalSoldiers.length > remainingSlots) {
+      // Sample normals
+      const step = tempAliveNormalSoldiers.length / remainingSlots;
+      for (let i = 0; i < remainingSlots; i++) {
+        tempSoldiersToDraw.push(tempAliveNormalSoldiers[Math.floor(i * step)]);
+      }
+    } else {
+      // Add all normals
+      for (let i = 0; i < tempAliveNormalSoldiers.length; i++) {
+        tempSoldiersToDraw.push(tempAliveNormalSoldiers[i]);
+      }
+    }
+  }
+
+  // Sort in-place
+  tempSoldiersToDraw.sort((a, b) => a.y - b.y);
+
+  return tempSoldiersToDraw;
+}
 
 function drawArmy(ctx: CanvasRenderingContext2D, army: Army, time: number): void {
   if (!spriteCache.initialized) {
@@ -953,66 +1000,19 @@ function drawArmy(ctx: CanvasRenderingContext2D, army: Army, time: number): void
   if (Math.abs(dx) > 2) {
     // Optimization: Avoid filtering entire array just for trail check. Try random sampling.
     for (let i = 0; i < 5; i++) {
-        const randIdx = Math.floor(Math.random() * army.soldiers.length);
-        const s = army.soldiers[randIdx];
-        if (s && s.isAlive && Math.random() < 0.3) {
-            addTrail(s.x, s.y + 10, '#4A90D9');
-            break;
-        }
+      const randIdx = Math.floor(Math.random() * army.soldiers.length);
+      const s = army.soldiers[randIdx];
+      if (s && s.isAlive && Math.random() < 0.3) {
+        addTrail(s.x, s.y + 10, '#4A90D9');
+        break;
+      }
     }
   }
   lastArmyX = army.centerX;
 
-  // Optimized Rendering: Sample BEFORE sorting to avoid O(N log N) on massive armies
+  const soldiersToDraw = prepareSoldiersToDraw(army);
 
-  // Clear buffers without reallocating
-  renderBufferNormal.length = 0;
-  renderBufferSuper.length = 0;
-  renderBufferFinal.length = 0;
-
-  // Single pass to separate types
-  const soldiers = army.soldiers;
-  const len = soldiers.length;
-  for (let i = 0; i < len; i++) {
-      const s = soldiers[i];
-      if (s.isAlive) {
-          if (s.isSuper) renderBufferSuper.push(s);
-          else renderBufferNormal.push(s);
-      }
-  }
-
-  if (renderBufferSuper.length >= MAX_RENDERED_SOLDIERS) {
-      // Too many supers, take first N (or mix? usually supers are prioritized)
-      // Array.prototype.push.apply is fast for bulk move
-      for (let i = 0; i < MAX_RENDERED_SOLDIERS; i++) {
-          renderBufferFinal.push(renderBufferSuper[i]);
-      }
-  } else {
-      // Add all supers
-      for (let i = 0; i < renderBufferSuper.length; i++) {
-          renderBufferFinal.push(renderBufferSuper[i]);
-      }
-
-      const remainingSlots = MAX_RENDERED_SOLDIERS - renderBufferFinal.length;
-
-      if (renderBufferNormal.length > remainingSlots) {
-           // Sample normals
-           const step = renderBufferNormal.length / remainingSlots;
-           for (let i = 0; i < remainingSlots; i++) {
-               renderBufferFinal.push(renderBufferNormal[Math.floor(i * step)]);
-           }
-      } else {
-           // Add all normals
-           for (let i = 0; i < renderBufferNormal.length; i++) {
-              renderBufferFinal.push(renderBufferNormal[i]);
-           }
-      }
-  }
-
-  // Sort ONLY the subset (small N)
-  renderBufferFinal.sort((a, b) => a.y - b.y);
-
-  for (const soldier of renderBufferFinal) {
+  for (const soldier of soldiersToDraw) {
     if (soldier.hitTimer && soldier.hitTimer > 0) {
       soldier.hitTimer--;
     }
