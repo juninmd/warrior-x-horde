@@ -300,12 +300,37 @@ export function showGameOverScreen(gameState: GameState): void {
     const content = gameOverContainer.querySelector('.game-over-content') as HTMLElement;
     if (!content) return;
 
+    // Rank Calculation
+    let rank = 'C';
+    let rankColor = '#95a5a6'; // Gray
+    if (gameState.score >= 5000) { rank = 'S'; rankColor = '#FFD700'; } // Gold
+    else if (gameState.score >= 3000) { rank = 'A'; rankColor = '#9B59B6'; } // Purple
+    else if (gameState.score >= 1000) { rank = 'B'; rankColor = '#3498DB'; } // Blue
+
     content.style.borderColor = titleColor;
     content.style.boxShadow = `0 0 30px ${isVictory ? 'rgba(46, 204, 113, 0.3)' : 'rgba(231, 76, 60, 0.3)'}`;
 
     content.innerHTML = `
         <h1 style="color: ${titleColor}; font-size: 42px; margin: 0 0 10px 0; text-shadow: 0 2px 5px rgba(0,0,0,0.5);">${title}</h1>
         ${isVictory ? '<p style="color: #00FF88; font-weight: bold; font-size: 18px; margin-bottom: 20px;">🛸 MOTHERSHIP DESTROYED!</p>' : ''}
+
+        <!-- Rank Badge -->
+        <div style="margin-bottom: 20px;">
+            <div style="
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+                border: 2px solid ${rankColor};
+                box-shadow: 0 0 15px ${rankColor};
+            ">
+                <span style="font-size: 32px; font-weight: 900; color: ${rankColor}; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">${rank}</span>
+            </div>
+            <div style="color: ${rankColor}; font-size: 12px; font-weight: bold; margin-top: 5px; letter-spacing: 1px;">RANK</div>
+        </div>
 
         <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 15px; margin-bottom: 20px;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">

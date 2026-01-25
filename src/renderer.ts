@@ -17,6 +17,41 @@ const spriteCache: SpriteCache = {
   initialized: false
 };
 
+// --- Background Caching System ---
+let backgroundCache: HTMLCanvasElement | OffscreenCanvas | null = null;
+let lastCachedLevel = -1;
+let lastCachedWidth = 0;
+let lastCachedHeight = 0;
+
+function updateBackgroundCache(theme: ThemeConfig, width: number, height: number): void {
+  if (!backgroundCache) {
+    if (typeof OffscreenCanvas !== 'undefined') {
+      backgroundCache = new OffscreenCanvas(width, height);
+    } else {
+      backgroundCache = document.createElement('canvas');
+      backgroundCache.width = width;
+      backgroundCache.height = height;
+    }
+  }
+
+  // Ensure size match
+  if (backgroundCache.width !== width || backgroundCache.height !== height) {
+    backgroundCache.width = width;
+    backgroundCache.height = height;
+  }
+
+  const ctx = backgroundCache.getContext('2d') as CanvasRenderingContext2D;
+
+  // Clear
+  ctx.clearRect(0, 0, width, height);
+
+  // Draw static layers
+  drawSky(ctx, width, height, theme);
+  drawCelestialBody(ctx, width, height, theme);
+  drawMountains(ctx, width, height, theme);
+  drawGround(ctx, width, height, theme);
+}
+
 // Helper to generate a key
 const getSpriteKey = (type: string, color: string, size: number, isSuper: boolean = false, isFlash: boolean = false): string => {
   return `${type}_${color}_${size}_${isSuper}_${isFlash}`;
@@ -898,11 +933,29 @@ function drawRoad(ctx: CanvasRenderingContext2D, gameState: GameState): void {
   const time = Date.now();
   const theme = getBiomeColors(gameState.currentLevel);
 
-  drawSky(ctx, width, height, theme);
-  drawCelestialBody(ctx, width, height, theme);
+  // Update Cache if necessary
+  if (!backgroundCache || lastCachedLevel !== gameState.currentLevel || lastCachedWidth !== width || lastCachedHeight !== height) {
+    updateBackgroundCache(theme, width, height);
+    lastCachedLevel = gameState.currentLevel;
+    lastCachedWidth = width;
+    lastCachedHeight = height;
+  }
+
+  // Draw cached static background
+  if (backgroundCache) {
+    ctx.drawImage(backgroundCache, 0, 0);
+  } else {
+    // Fallback should normally not happen if updateBackgroundCache works
+    drawSky(ctx, width, height, theme);
+    drawCelestialBody(ctx, width, height, theme);
+    drawMountains(ctx, width, height, theme);
+    drawGround(ctx, width, height, theme);
+  }
+
+  // Draw dynamic elements on top
   drawClouds(ctx, width, time, theme);
-  drawMountains(ctx, width, height, theme);
-  drawGround(ctx, width, height, theme);
+  // drawRoadSurface is semi-static (perspective shape) but has dynamic elements in some themes or could have scrolling lines
+  // We keep it dynamic for now to support animated road textures if added
   drawRoadSurface(ctx, width, height, theme);
   drawDecorations(ctx, width, height, theme);
 }
@@ -1358,29 +1411,52 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
     drawGlassBadge(ctx, 10, 30, 100, 24, `👑 HI: ${gameState.highScore}`, '#CCCCCC', 12);
   }
 
-  // Progress Bar (Topo, bem fina)
+  // Progress Bar (Topo, mais visível)
   const progressWidth = width - 40;
   const progressX = 20;
-  const progressY = 5;
-  const progressHeight = 4;
+  const progressY = 10;
+  const progressHeight = 8;
   const progress = Math.min(gameState.distanceTraveled / gameState.levelDistance, 1);
 
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
   ctx.beginPath();
-  ctx.roundRect(progressX, progressY, progressWidth, progressHeight, 2);
+  ctx.roundRect(progressX, progressY, progressWidth, progressHeight, 4);
   ctx.fill();
   ctx.fillStyle = '#00C9FF';
   ctx.beginPath();
-  ctx.roundRect(progressX, progressY, progressWidth * progress, progressHeight, 2);
+  ctx.roundRect(progressX, progressY, progressWidth * progress, progressHeight, 4);
   ctx.fill();
+
+  // Boss/Goal Icon at the end
+  const endX = progressX + progressWidth;
+  const endY = progressY + progressHeight / 2;
+
+  // Outer ring
+  ctx.fillStyle = '#333';
+  ctx.beginPath();
+  ctx.arc(endX, endY, 12, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Inner circle
+  ctx.fillStyle = '#E74C3C';
+  ctx.beginPath();
+  ctx.arc(endX, endY, 10, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Skull icon text
+  ctx.fillStyle = '#FFF';
+  ctx.font = '12px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('💀', endX, endY + 1);
 
   ctx.restore();
 
   // Combo
   if (gameState.combo > 1) {
     const comboX = width / 2;
-    const comboY = 80; // Movido para baixo para não sobrepor o boss warning ou score
-    const pulse = 1 + Math.sin(Date.now() * 0.01) * 0.1 + (gameState.combo > 10 ? Math.random() * 0.1 : 0);
+    const comboY = 120; // Movido mais para baixo
+    const pulse = Math.min(2.5, 1.2 + gameState.combo / 40) + Math.sin(Date.now() * 0.015) * 0.1;
     const shake = gameState.combo > 20 ? (Math.random() - 0.5) * 5 : 0;
 
     ctx.save();
