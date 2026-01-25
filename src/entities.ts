@@ -269,6 +269,8 @@ export function createEnemyHorde(canvasWidth: number, y: number, count: number, 
     color: '#E74C3C',
     speed: 0,
     isActive: true,
+    hp: count * enemyHp,
+    maxHp: count * enemyHp,
   };
 }
 

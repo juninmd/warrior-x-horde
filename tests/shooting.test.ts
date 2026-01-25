@@ -52,7 +52,8 @@ describe('Shooting', () => {
   it('should detect bullet collision with enemy', () => {
       const bullet = createBullet(100, 100, 100, 50, 1, false);
       const enemy: Soldier = { x: 100, y: 100, size: 10, isAlive: true, hp: 10 } as any;
-      const horde = { isActive: true, soldiers: [enemy], count: 1, y: 0 };
+      // Initialize shared HP for the test
+      const horde = { isActive: true, soldiers: [enemy], count: 1, y: 200, hp: 10, maxHp: 10 };
 
       const entities: Entities = {
           bullets: [bullet],
@@ -65,22 +66,13 @@ describe('Shooting', () => {
 
       const gameState: GameState = { score: 0 } as any;
 
-      // The issue with the failing test is that updateBullets uses SpatialHashGrid.
-      // SpatialHashGrid implementation uses cell sizes.
-      // And the bullet and enemy need to overlap.
-      // checkBulletSoldierCollision logic: dist < (soldierRadius + bulletRadius)
-      // soldierRadius=10, bulletRadius=5. dist < 15.
-      // bullet at 100,100, enemy at 100,100. dist = 0.
-
-      // BUT, updateBullets checks if horde.y < 100 to continue (skips spawn logic)?
-      // "if (!horde.isActive || horde.y < 100) continue;"
-      // My test horde has y: 0. So it skipped inserting into grid!
-      horde.y = 200;
-
       updateBullets(entities, gameState, 1);
 
       expect(entities.bullets.length).toBe(0);
-      expect(enemy.hp).toBe(9);
+      // With shared HP logic, the horde takes damage.
+      // The soldier HP might not be decremented directly if it doesn't cross the threshold for killing.
+      // Or we assert on Horde HP.
+      expect(horde.hp).toBe(9);
   });
 
   it('should shooting logic (updateShooting)', () => {

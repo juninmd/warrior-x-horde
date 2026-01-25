@@ -314,6 +314,12 @@ function gameLoop(currentTime: number = 0): void {
 
 // Avançar para o próximo nível
 function advanceToNextLevel(): void {
+  // Bonus Coins for clearing level
+  const levelBonus = 100 + gameState.currentLevel * 50;
+  gameState.coins += levelBonus;
+  addFloatingText(`LEVEL CLEAR! +${levelBonus} 💰`, BASE_WIDTH/2, BASE_HEIGHT/2, '#FFD700', 2.0);
+  playSound(audioManager.victory);
+
   gameState.currentLevel++;
   gameState.distanceTraveled = 0;
   gameState.levelDistance += 900; // Incremento 3x maior por level (era 300)
