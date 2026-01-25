@@ -96,6 +96,8 @@ export interface EnemyHorde {
   speed: number;
   isActive: boolean;
   isMini?: boolean; // Mini-boss horde
+  hp: number; // Shared HP for the horde
+  maxHp: number;
 }
 
 export interface MiniBoss {

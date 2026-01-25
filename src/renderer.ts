@@ -1368,40 +1368,36 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
   const badgeHeight = 32;
   const gap = 5;
 
-  // Largura total disponível = width - 20 (margens)
-  // Elementos: Score, Level, Army Power, Fire Rate, DMG.
-  // Vamos distribuir.
+  // Calculate Total Attack Power (Actual DPS proxy)
+  const totalAttack = Math.floor(armyPower * damage);
 
   ctx.save();
 
-  // Dynamic layout calculation
-  let currentX = 10;
+  // Pre-calculate widths to center
+  const badges = [
+      { text: `🏆 ${gameState.score}`, color: '#FFD700', width: 0 },
+      { text: `💰 ${gameState.coins}`, color: '#F1C40F', width: 0 },
+      { text: `Lv.${gameState.currentLevel}`, color: '#4A90D9', width: 0 },
+      { text: `🪖 ${armyCount}`, color: '#2ECC71', width: 0 }, // Show count, power is implied in Attack
+      { text: `⚔️ ${totalAttack}`, color: '#E91E63', width: 0 } // Show Total Attack
+  ];
 
-  const drawAutoBadge = (text: string, color: string, minWidth: number = 50) => {
-      // Estimate width (roughly 9px per char at 14px bold)
-      const w = Math.max(minWidth, 20 + text.length * 9);
-      drawGlassBadge(ctx, currentX, bottomY - badgeHeight/2, w, badgeHeight, text, color, 14);
-      currentX += w + gap;
-  };
+  let totalWidth = 0;
+  for (const b of badges) {
+      // Estimate width (roughly 9px per char at 14px bold) + padding
+      b.width = Math.max(50, 20 + b.text.length * 9);
+      totalWidth += b.width;
+  }
+  totalWidth += (badges.length - 1) * gap;
 
-  // 1. Score
-  drawAutoBadge(`🏆 ${gameState.score}`, '#FFD700', 70);
+  // Start X to center
+  let currentX = (width - totalWidth) / 2;
 
-  // 2. Coins
-  drawAutoBadge(`💰 ${gameState.coins}`, '#F1C40F', 60);
-
-  // 3. Level
-  drawAutoBadge(`Lv.${gameState.currentLevel}`, '#4A90D9', 50);
-
-  // 4. Army Power
-  drawAutoBadge(`🪖 ${armyPower}`, '#2ECC71', 60);
-
-  // 5. Fire Rate
-  const shotsPerSec = (1000 / fireRate).toFixed(1);
-  drawAutoBadge(`🔥 ${shotsPerSec}/s`, '#F39C12', 70);
-
-  // 6. Damage
-  drawAutoBadge(`⚔️ ${damage}`, '#E91E63', 50);
+  // Draw
+  for (const b of badges) {
+      drawGlassBadge(ctx, currentX, bottomY - badgeHeight/2, b.width, badgeHeight, b.text, b.color, 14);
+      currentX += b.width + gap;
+  }
 
   // Coins removido do topo pois foi movido para baixo
   // drawGlassBadge(ctx, width - 90, 30, 80, 28, `💰 ${gameState.coins}`, '#FFD700', 14);

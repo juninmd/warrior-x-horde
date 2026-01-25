@@ -373,11 +373,11 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
         const horde = item.ref.horde as EnemyHorde;
 
         if (horde.isActive && soldier.isAlive && checkBulletSoldierCollision(bullet, soldier)) {
-          // Aplicar dano
-          soldier.hp -= bullet.damage;
-          soldier.hitTimer = 5; // Flash white
+          // SHARED HP LOGIC: Damage the Horde
+          horde.hp -= bullet.damage;
+          soldier.hitTimer = 5;
 
-          // Critical Hit Text (Only for high damage to save performance)
+          // Critical Hit Text
           if (bullet.damage >= 5) {
              const isCrit = bullet.damage >= 10;
              addFloatingText(
@@ -391,21 +391,57 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
 
           addExplosion(soldier.x, soldier.y, '#E74C3C');
 
-          if (soldier.hp <= 0) {
-            // Encontrar index para remover (pode ser lento, mas só acontece na morte)
-            const idx = horde.soldiers.indexOf(soldier);
-            if (idx > -1) {
-              horde.soldiers.splice(idx, 1);
-              horde.count = horde.soldiers.length;
-              gameState.score += 10;
+          // Determine how many soldiers should be alive based on % of Horde HP left
+          const count = horde.count > 0 ? horde.count : horde.soldiers.length;
+          const avgHp = horde.maxHp / count;
+          const safeAvgHp = avgHp > 0 ? avgHp : 1;
 
-              if (horde.soldiers.length === 0) {
-                horde.isActive = false;
-                gameState.score += 50;
-                addFloatingText('HORDE DESTROYED!', horde.x, horde.y, '#FFD700');
-                addParticle(horde.x, horde.y, 'star', '#FFD700', 8);
+          const targetAliveCount = Math.max(0, Math.ceil(horde.hp / safeAvgHp));
+          const currentAlive = horde.soldiers.filter(s => s.isAlive).length;
+
+          if (currentAlive > targetAliveCount) {
+              // Kill the difference
+              const toKill = currentAlive - targetAliveCount;
+              let killedCount = 0;
+
+              // Kill the hit soldier first if alive
+              if (soldier.isAlive) {
+                  soldier.isAlive = false;
+                  soldier.hp = 0;
+                  killedCount++;
+                  gameState.score += 10;
+                  gameState.coins += 1; // Coin per enemy kill
               }
-            }
+
+              // Kill nearest other soldiers if we need to kill more
+              if (killedCount < toKill) {
+                  for (const s of horde.soldiers) {
+                      if (killedCount >= toKill) break;
+                      if (s.isAlive) {
+                          s.isAlive = false;
+                          s.hp = 0;
+                          killedCount++;
+                          gameState.score += 10;
+                          gameState.coins += 1;
+                          addExplosion(s.x, s.y, '#E74C3C');
+                      }
+                  }
+              }
+
+              // Clean up dead soldiers
+              for (let k = horde.soldiers.length - 1; k >= 0; k--) {
+                  if (!horde.soldiers[k].isAlive) {
+                      horde.soldiers.splice(k, 1);
+                  }
+              }
+              horde.count = horde.soldiers.length;
+
+              if (horde.soldiers.length === 0 || horde.hp <= 0) {
+                  horde.isActive = false;
+                  gameState.score += 50;
+                  addFloatingText('HORDE DESTROYED!', horde.x, horde.y, '#FFD700');
+                  addParticle(horde.x, horde.y, 'star', '#FFD700', 8);
+              }
           }
 
           bulletPool.release(bullet);
