@@ -314,7 +314,9 @@ export function showGameOverScreen(gameState: GameState): void {
     let leaderboard = [];
     try {
         leaderboard = JSON.parse(localStorage.getItem('crowdLeaderboard') || '[]');
-    } catch(e) {}
+    } catch (e) {
+        console.error('Failed to load leaderboard', e);
+    }
 
     let leaderboardHTML = '';
     if (leaderboard.length > 0) {

@@ -317,7 +317,7 @@ function gameLoop(currentTime: number = 0): void {
         const leaderboardStr = localStorage.getItem('crowdLeaderboard') || '[]';
         const leaderboard = JSON.parse(leaderboardStr);
         leaderboard.push({ score: gameState.score, date: Date.now() });
-        leaderboard.sort((a: any, b: any) => b.score - a.score);
+        leaderboard.sort((a: { score: number }, b: { score: number }) => b.score - a.score);
         // Manter top 5
         const top5 = leaderboard.slice(0, 5);
         localStorage.setItem('crowdLeaderboard', JSON.stringify(top5));
@@ -423,7 +423,7 @@ const onShareGame = (platform: 'x' | 'whatsapp') => {
 setupGameOverUI(onRestartGame, onShareGame);
 
 // Restart no clique após game over (apenas para Pause e Interação In-Game)
-canvas.addEventListener('click', (e) => {
+canvas.addEventListener('click', () => {
   // Se pausado, verificar clique no botão Resume
   if (gameState.isPaused) {
     // Área central para despausar
