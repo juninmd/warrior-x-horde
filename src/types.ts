@@ -51,6 +51,7 @@ export interface GameState {
   damageFlash: number;
   lowArmyTriggered: boolean;
   hitStop: number;
+  slowMoTimer: number;
 }
 
 export interface Soldier {

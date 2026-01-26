@@ -75,6 +75,7 @@ vi.mock('../src/ui-overlay', () => ({
         gameOverShareCallback = onShare;
     }),
     showGameOverScreen: vi.fn(),
+    startCountdown: vi.fn((cb) => cb()),
 }));
 
 // Mock window functions exposed by game.ts

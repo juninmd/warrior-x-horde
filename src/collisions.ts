@@ -430,6 +430,7 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
         if (boss.hp <= 0) {
           boss.isActive = false;
           triggerHitStop(20); // Massive Hit Stop on Boss Kill
+          gameState.slowMoTimer = 2000; // 2 seconds of Slow Mo
           gameState.isVictory = true;
           gameState.score += 1000;
           gameState.coins += 500;

@@ -310,6 +310,35 @@ export function showGameOverScreen(gameState: GameState): void {
     content.style.borderColor = titleColor;
     content.style.boxShadow = `0 0 30px ${isVictory ? 'rgba(46, 204, 113, 0.3)' : 'rgba(231, 76, 60, 0.3)'}`;
 
+    // Load Leaderboard
+    let leaderboard = [];
+    try {
+        leaderboard = JSON.parse(localStorage.getItem('crowdLeaderboard') || '[]');
+    } catch(e) {}
+
+    let leaderboardHTML = '';
+    if (leaderboard.length > 0) {
+        leaderboardHTML = `
+        <div style="background: rgba(0,0,0,0.4); border-radius: 10px; padding: 10px; margin-bottom: 20px;">
+            <h3 style="color: #FFD700; font-size: 14px; margin-bottom: 5px; text-transform: uppercase;">Top Commanders</h3>
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px; color: #DDD;">
+                ${leaderboard.map((entry: any, index: number) => {
+                    const isCurrent = entry.score === gameState.score;
+                    const rowColor = isCurrent ? 'rgba(255, 215, 0, 0.2)' : 'transparent';
+                    const textColor = isCurrent ? '#FFF' : '#AAA';
+                    const weight = isCurrent ? 'bold' : 'normal';
+                    return `
+                    <tr style="background: ${rowColor}; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <td style="padding: 4px; text-align: left; color: ${index === 0 ? '#FFD700' : textColor}; font-weight: ${weight};">#${index + 1}</td>
+                        <td style="padding: 4px; text-align: right; color: ${textColor}; font-weight: ${weight};">${entry.score}</td>
+                    </tr>
+                    `;
+                }).join('')}
+            </table>
+        </div>
+        `;
+    }
+
     content.innerHTML = `
         <h1 style="color: ${titleColor}; font-size: 42px; margin: 0 0 10px 0; text-shadow: 0 2px 5px rgba(0,0,0,0.5);">${title}</h1>
         ${isVictory ? '<p style="color: #00FF88; font-weight: bold; font-size: 18px; margin-bottom: 20px;">🛸 MOTHERSHIP DESTROYED!</p>' : ''}
@@ -346,6 +375,8 @@ export function showGameOverScreen(gameState: GameState): void {
                 <span style="color: #FF00FF; font-size: 20px; font-weight: bold;">${gameState.maxCombo}x</span>
             </div>
         </div>
+
+        ${leaderboardHTML}
 
         <button id="goRestartBtn" style="
             width: 100%;
@@ -410,4 +441,61 @@ export function showGameOverScreen(gameState: GameState): void {
     void gameOverContainer.offsetHeight;
     gameOverContainer.style.opacity = '1';
     content.style.transform = 'scale(1)';
+}
+
+// --- Start Countdown ---
+export function startCountdown(onComplete: () => void): void {
+    const el = document.createElement('div');
+    el.style.cssText = `
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        display: flex; justify-content: center; align-items: center;
+        background: rgba(0,0,0,0.5);
+        z-index: 9999;
+        font-size: 80px;
+        font-weight: 900;
+        color: #FFD700;
+        text-shadow: 0 0 20px rgba(0,0,0,0.5);
+        pointer-events: none;
+    `;
+    document.body.appendChild(el);
+
+    let count = 3;
+
+    const tick = () => {
+        if (count > 0) {
+            el.innerText = count.toString();
+            el.style.transform = 'scale(1.5)';
+            el.style.opacity = '0';
+
+            // Animate
+            el.animate([
+                { transform: 'scale(0.5)', opacity: 0 },
+                { transform: 'scale(1.2)', opacity: 1, offset: 0.5 },
+                { transform: 'scale(1.0)', opacity: 1 }
+            ], { duration: 400, fill: 'forwards' });
+
+            vibrate(10);
+            setTimeout(() => {
+                count--;
+                tick();
+            }, 800);
+        } else {
+            el.innerText = "GO!";
+            el.style.color = "#2ECC71";
+            el.animate([
+                 { transform: 'scale(0.5)', opacity: 0 },
+                 { transform: 'scale(1.5)', opacity: 1 }
+            ], { duration: 300, fill: 'forwards' });
+
+            vibrate(50);
+
+            setTimeout(() => {
+                el.remove();
+                onComplete();
+            }, 500);
+        }
+    };
+
+    tick();
 }

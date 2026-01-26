@@ -5,6 +5,7 @@ import { shadeColor, getBiomeColors, fastRemove } from './utils';
 import { COLORS, MAX_PARTICLES, MAX_RENDERED_SOLDIERS, ThemeConfig, BASE_WIDTH, BASE_HEIGHT } from './constants';
 import { drawGlassBadge, drawStar, drawJoystick, getComboColor } from './renderer-utils';
 import { drawBoss } from './renderer-boss';
+import { QualityManager } from './quality';
 
 // --- Sprite Caching System ---
 interface SpriteCache {
@@ -147,10 +148,11 @@ function renderSoldierToCache(type: Soldier['type'], color: string, size: number
 
 function renderSoldierShape(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, type: Soldier['type'], color: string, x: number, y: number, actualSize: number, isSuper: boolean, isFlash: boolean) {
   const isPlayer = color === COLORS.PLAYER.NORMAL || color === COLORS.PLAYER.SUPER || color === COLORS.PLAYER.BAZOOKA || color === COLORS.PLAYER.LASER || type !== 'normal';
+  const quality = QualityManager.getInstance().settings;
 
   // If flashing, skip complex gradients and details, just shape
 
-  if (!isFlash) {
+  if (!isFlash && quality.enableShadows) {
     // Sombra (static relative to body)
     ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
     ctx.beginPath();
@@ -160,7 +162,7 @@ function renderSoldierShape(ctx: CanvasRenderingContext2D | OffscreenCanvasRende
 
   // Corpo (círculo principal)
   let bodyFill: string | CanvasGradient = color;
-  if (!isFlash) {
+  if (!isFlash && !quality.simplifiedRendering) {
       const bodyGradient = ctx.createRadialGradient(x - actualSize * 0.2, y - actualSize * 0.2, 0, x, y, actualSize);
       bodyGradient.addColorStop(0, color);
       bodyGradient.addColorStop(1, shadeColor(color, -30));
@@ -305,7 +307,7 @@ function renderParticleToCache(type: Particle['type'], color: string) {
 
   const p = { x: center, y: center, size: size, color: color, type: type };
 
-  if (p.type === 'spark' || p.type === 'star') {
+  if ((p.type === 'spark' || p.type === 'star') && QualityManager.getInstance().settings.enableShadows) {
       ctx.shadowColor = p.color;
       ctx.shadowBlur = 10;
   }
@@ -359,11 +361,14 @@ const particlePool = new ObjectPool<Particle>(
 
 // Sistema de partículas
 export function addParticle(x: number, y: number, type: Particle['type'], color: string, count = 1): void {
+  const quality = QualityManager.getInstance().settings;
+  const limit = Math.floor(MAX_PARTICLES * quality.particleMultiplier);
+
   // Limitar quantidade de partículas
-  if (particles.length >= MAX_PARTICLES) return;
+  if (particles.length >= limit) return;
 
   // Reduzir count se estiver chegando no limite
-  const availableSlots = MAX_PARTICLES - particles.length;
+  const availableSlots = limit - particles.length;
   const actualCount = Math.min(count, availableSlots, 2); // Máximo 2 partículas por vez
 
   for (let i = 0; i < actualCount; i++) {
@@ -1003,6 +1008,8 @@ const tempSuperSoldiers: Soldier[] = [];
 const tempSoldiersToDraw: Soldier[] = [];
 
 export function prepareSoldiersToDraw(army: Army): Soldier[] {
+  const maxSoldiers = QualityManager.getInstance().settings.maxRenderedSoldiers;
+
   // Clear buffers without reallocating
   tempAliveNormalSoldiers.length = 0;
   tempSuperSoldiers.length = 0;
@@ -1016,9 +1023,9 @@ export function prepareSoldiersToDraw(army: Army): Soldier[] {
     }
   }
 
-  if (tempSuperSoldiers.length >= MAX_RENDERED_SOLDIERS) {
+  if (tempSuperSoldiers.length >= maxSoldiers) {
     // If we have enough supers, just fill with supers up to limit
-    for (let i = 0; i < MAX_RENDERED_SOLDIERS; i++) {
+    for (let i = 0; i < maxSoldiers; i++) {
       tempSoldiersToDraw.push(tempSuperSoldiers[i]);
     }
   } else {
@@ -1027,7 +1034,7 @@ export function prepareSoldiersToDraw(army: Army): Soldier[] {
       tempSoldiersToDraw.push(tempSuperSoldiers[i]);
     }
 
-    const remainingSlots = MAX_RENDERED_SOLDIERS - tempSoldiersToDraw.length;
+    const remainingSlots = maxSoldiers - tempSoldiersToDraw.length;
 
     if (tempAliveNormalSoldiers.length > remainingSlots) {
       // Sample normals
@@ -1188,8 +1195,10 @@ function drawGate(ctx: CanvasRenderingContext2D, gate: Gate): void {
 
   ctx.save();
   // Shadow/Glow
-  ctx.shadowColor = gate.color;
-  ctx.shadowBlur = 15;
+  if (QualityManager.getInstance().settings.enableShadows) {
+    ctx.shadowColor = gate.color;
+    ctx.shadowBlur = 15;
+  }
 
   ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
   ctx.beginPath();
@@ -1302,6 +1311,8 @@ function drawMiniBoss(ctx: CanvasRenderingContext2D, miniBoss: MiniBoss, time: n
 }
 
 function drawBossAtmosphere(ctx: CanvasRenderingContext2D, width: number, height: number, intensity: number, time: number): void {
+  if (QualityManager.getInstance().settings.simplifiedRendering) return;
+
   const vignetteGradient = ctx.createRadialGradient(width / 2, height / 2, height * 0.3, width / 2, height / 2, height * 0.9);
   vignetteGradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
   vignetteGradient.addColorStop(0.5, `rgba(20, 0, 0, ${0.3 * intensity})`);
