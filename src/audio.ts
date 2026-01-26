@@ -54,6 +54,11 @@ export function initAudio(): void {
   audioInitialized = true;
 }
 
+export function resetAudio(): void {
+  audioInitialized = false;
+  isMuted = false;
+}
+
 export function playSound(sound: HTMLAudioElement): void {
   if (isMuted) return;
 

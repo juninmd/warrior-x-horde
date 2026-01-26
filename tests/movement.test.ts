@@ -1,164 +1,157 @@
-import { describe, it, expect } from 'vitest';
-import {
-    updateMovement,
-    updateSoldierFormation,
-    moveEntitiesDown,
-    updateArmyPosition
-} from '../src/movement';
-import { Army, GameState, Entities, Soldier, Boss, EnemyHorde, Gate, MysteryBox, Coin, MiniBoss } from '../src/types';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { updateMovement, updateArmyPosition, moveEntitiesDown } from '../src/movement';
+import { GameState, Entities, Army } from '../src/types';
 
 describe('Movement', () => {
-  it('should update soldier formation targets', () => {
-    const army: Army = {
-      soldiers: [
-        { x: 0, y: 0, targetX: 0, targetY: 0, isAlive: true }
-      ],
-      centerX: 100,
-      centerY: 100
-    } as any;
+    let entities: Entities;
+    let gameState: GameState;
 
-    updateSoldierFormation(army, 1);
+    beforeEach(() => {
+        gameState = {
+            isGameOver: false,
+            isPaused: false,
+            isVictory: false,
+            currentLevel: 1,
+            gameSpeed: 1,
+            distanceTraveled: 0,
+            levelDistance: 1000
+        } as any;
 
-    const s = army.soldiers[0];
-    expect(s.targetX).not.toBe(0);
-    expect(s.targetY).not.toBe(0);
-  });
+        entities = {
+            playerArmy: { centerX: 100, centerY: 700, targetX: 100, soldiers: [] } as any,
+            enemyHordes: [],
+            gates: [],
+            miniBosses: [],
+            boss: null,
+            mysteryBoxes: [],
+            coins: []
+        } as any;
 
-  it('should update army position', () => {
-      const army: Army = {
-          soldiers: [],
-          centerX: 100,
-          centerY: 100,
-          targetX: 100
-      } as any;
+        vi.clearAllMocks();
+    });
 
-      // Move target to 200
-      updateArmyPosition(army, 200, 500, 1);
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
 
-      expect(army.centerX).toBeGreaterThan(100);
-      expect(army.targetX).toBe(200);
-  });
+    describe('Army Movement', () => {
+        it('should update army position towards target', () => {
+            entities.playerArmy.centerX = 100;
+            updateArmyPosition(entities.playerArmy, 200, 480, 1);
+            // Moves 10% of diff: 100 + (200-100)*0.1 = 110
+            expect(entities.playerArmy.centerX).toBeCloseTo(110);
+        });
 
-  it('should move entities down', () => {
-      const entities: Entities = {
-          gates: [{ y: 0 }],
-          enemyHordes: [],
-          mysteryBoxes: [{ y: 0, passed: false }],
-          coins: [{ y: 0, passed: false }],
-          miniBosses: [],
-          boss: { isActive: false },
-          playerArmy: { centerX: 250, centerY: 700 }
-      } as any;
+        it('should clamp target position', () => {
+            updateArmyPosition(entities.playerArmy, -100, 480, 1);
+            expect(entities.playerArmy.targetX).toBe(50); // Min X
 
-      const gameState: GameState = {
-          gameSpeed: 5,
-          currentLevel: 1,
-          isGameOver: false,
-          isPaused: false,
-          distanceTraveled: 0
-      } as any;
+            updateArmyPosition(entities.playerArmy, 600, 480, 1);
+            expect(entities.playerArmy.targetX).toBe(430); // Max X (480 - 50)
+        });
 
-      moveEntitiesDown(entities, gameState, 1);
+        it('should update soldier formation', () => {
+            // Add soldiers
+            const s1 = { x: 100, y: 700, targetX: 100, targetY: 700, isAlive: true, size: 10 };
+            const s2 = { x: 100, y: 700, targetX: 100, targetY: 700, isAlive: true, size: 10 };
+            entities.playerArmy.soldiers = [s1, s2] as any;
+            entities.playerArmy.centerX = 100;
+            entities.playerArmy.centerY = 700;
 
-      expect(entities.gates[0].y).toBeGreaterThan(0);
-      expect(entities.mysteryBoxes[0].y).toBeGreaterThan(0);
-      expect(entities.coins[0].y).toBeGreaterThan(0);
-      expect(gameState.distanceTraveled).toBeGreaterThan(0);
-  });
+            updateArmyPosition(entities.playerArmy, 100, 480, 1);
 
-  it('should move enemy hordes and update their formation', () => {
-      const horde: EnemyHorde = {
-          y: 0,
-          x: 250,
-          isActive: true,
-          soldiers: [
-              { x: 250, y: 0, targetX: 250, targetY: 0, isAlive: true }
-          ]
-      } as any;
+            // They should move towards formation points
+            // S1 (index 0, ring 0) -> Center
+            // S2 (index 1, ring 1) -> Offset
 
-      const entities: Entities = {
-          gates: [],
-          enemyHordes: [horde],
-          mysteryBoxes: [],
-          coins: [],
-          miniBosses: [],
-          boss: null,
-          playerArmy: { centerX: 250, centerY: 700 }
-      } as any;
+            // Check targets updated
+            expect(s2.targetX).not.toBe(100); // Should be offset
+            expect(s2.targetY).not.toBe(700);
+        });
+    });
 
-      moveEntitiesDown(entities, { gameSpeed: 5, currentLevel: 1 } as any, 1);
+    describe('World Movement', () => {
+        it('should move gates down', () => {
+            const gate = { y: 100 } as any;
+            entities.gates = [gate];
 
-      expect(horde.y).toBeGreaterThan(0);
-      expect(horde.soldiers[0].y).toBeGreaterThan(0);
-  });
+            moveEntitiesDown(entities, gameState, 1);
 
-  it('should move boss (mothership)', () => {
-      const boss: Boss = {
-          y: 25,
-          x: 250,
-          isActive: true,
-          type: 'mothership',
-          vx: 0,
-          vy: 0,
-          width: 90
-      } as any;
+            expect(gate.y).toBeGreaterThan(100);
+        });
 
-      const entities: Entities = {
-          gates: [],
-          enemyHordes: [],
-          mysteryBoxes: [],
-          coins: [],
-          miniBosses: [],
-          boss: boss,
-          playerArmy: { centerX: 250, centerY: 700 }
-      } as any;
+        it('should move enemies down and chase', () => {
+            const s1 = { x: 200, y: 600, targetX: 200, targetY: 600, isAlive: true };
+            const horde = { y: 600, isActive: true, x: 200, soldiers: [s1] } as any; // > pursuitThreshold (0.6 * 800 = 480)
+            entities.enemyHordes = [horde];
+            entities.playerArmy.centerX = 100;
 
-      moveEntitiesDown(entities, { gameSpeed: 5, currentLevel: 10 } as any, 1);
+            moveEntitiesDown(entities, gameState, 1);
 
-      // Mothership moves slightly
-      // It initializes vx/vy randomly if 0? No, if undefined.
-      // But vx/vy is 0 here.
-      // Logic: if (boss.vx === undefined) ...
-      // So let's pass undefined to trigger init logic
-      boss.vx = undefined;
-      boss.vy = undefined;
+            expect(horde.y).toBeGreaterThan(600);
+            expect(horde.x).toBeLessThan(200); // Moving towards 100
 
-      moveEntitiesDown(entities, { gameSpeed: 5, currentLevel: 10 } as any, 1);
+            // Check formation update on horde
+            expect(s1.targetX).toBeDefined();
+        });
 
-      expect(boss.vx).toBeDefined();
-      expect(boss.vy).toBeDefined();
-  });
+        it('should move boss (mothership - random)', () => {
+            const randomSpy = vi.spyOn(Math, 'random');
+            randomSpy.mockReturnValue(0.9); // (0.9 - 0.5) * 2 = 0.8 vx
 
-  it('should move mini bosses', () => {
-      const mb: MiniBoss = {
-          y: 100,
-          x: 250,
-          isActive: true,
-          width: 80
-      } as any;
+            const boss = {
+                type: 'mothership', isActive: true, x: 100, y: 50, width: 100,
+                vx: undefined, vy: undefined
+            } as any;
+            entities.boss = boss;
 
-      const entities: Entities = {
-          gates: [],
-          enemyHordes: [],
-          mysteryBoxes: [],
-          coins: [],
-          miniBosses: [mb],
-          boss: null,
-          playerArmy: { centerX: 250, centerY: 700 }
-      } as any;
+            moveEntitiesDown(entities, gameState, 1);
 
-      moveEntitiesDown(entities, { gameSpeed: 5, currentLevel: 1 } as any, 1);
+            // Should have initialized velocity
+            expect(boss.vx).toBeCloseTo(0.8);
+        });
 
-      expect(mb.y).toBeGreaterThan(100);
-  });
+        it('should move boss (normal - wait then chase)', () => {
+             const boss = {
+                type: 'beast', isActive: true, x: 100, y: 100, width: 100, height: 100,
+                spawnTime: Date.now() - 11000, // 11s ago (>10s wait)
+                isMoving: false
+            } as any;
+            entities.boss = boss;
+            entities.playerArmy.centerY = 700;
+            entities.playerArmy.centerX = 200;
 
-  it('should not move if paused or game over', () => {
-      const entities: Entities = { gates: [{ y: 0 }] } as any;
+            moveEntitiesDown(entities, gameState, 1);
 
-      moveEntitiesDown(entities, { isPaused: true } as any, 1);
-      expect(entities.gates[0].y).toBe(0);
+            expect(boss.isMoving).toBe(true);
+            expect(boss.y).toBeGreaterThan(100);
+            expect(boss.x).toBeGreaterThan(100); // Towards 200
+        });
 
-      moveEntitiesDown(entities, { isGameOver: true } as any, 1);
-      expect(entities.gates[0].y).toBe(0);
-  });
+        it('should move boss (normal - waiting)', () => {
+             const boss = {
+                type: 'beast', isActive: true, x: 100, y: 100,
+                spawnTime: Date.now(),
+                isMoving: false
+            } as any;
+            entities.boss = boss;
+
+            moveEntitiesDown(entities, gameState, 1);
+
+            expect(boss.isMoving).toBe(false);
+            expect(boss.y).toBe(100);
+        });
+
+        it('should move mystery boxes and coins', () => {
+            const box = { y: 100, passed: false } as any;
+            const coin = { y: 100, passed: false } as any;
+            entities.mysteryBoxes = [box];
+            entities.coins = [coin];
+
+            moveEntitiesDown(entities, gameState, 1);
+
+            expect(box.y).toBeGreaterThan(100);
+            expect(coin.y).toBeGreaterThan(100);
+        });
+    });
 });

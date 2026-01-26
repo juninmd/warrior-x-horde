@@ -62,6 +62,12 @@ export function setInputScale(scale: number): void {
   currentScale = scale;
 }
 
+export function resetInput(): void {
+  activeTouchId = null;
+  isDragging = false;
+  virtualJoystick.end();
+}
+
 // Converter coordenadas da tela para coordenadas do canvas
 function screenToCanvasX(screenX: number, canvasRect: DOMRect): number {
   return (screenX - canvasRect.left) / currentScale;

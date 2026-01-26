@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getArmyBounds, checkBounds, getEntityBounds, shadeColor, getBiomeColors } from '../src/utils';
+import { getArmyBounds, checkBounds, getEntityBounds, shadeColor, getBiomeColors, fastRemove } from '../src/utils';
 import { Army } from '../src/types';
 import { THEMES } from '../src/constants';
 
@@ -14,15 +14,25 @@ describe('utils', () => {
     });
 
     it('should handle invalid input gracefully', () => {
+        expect(shadeColor(null as any, 10)).toBe(null);
         expect(shadeColor('invalid', 10)).toBe('invalid');
         expect(shadeColor('#fff', 10)).toBe('#fff'); // Too short
     });
 
-    it('should clamp values', () => {
-       // Test upper bound
+    it('should clamp values correctly', () => {
+       // Test upper bound clamping
+       // White + lighten = White
        expect(shadeColor('#ffffff', 10)).toBe('#ffffff');
-       // Test lower bound
+
+       // Test lower bound clamping
+       // Black + darken = Black
        expect(shadeColor('#000000', -10)).toBe('#000000');
+
+       // Test specific channels clamping
+       // #FF0000 (Red) + lighten -> should cap R at 255, increase others
+       expect(shadeColor('#FF0000', 10)).not.toBe('#ff0000');
+       // #0000FF (Blue) + darken -> should cap B at 0
+       expect(shadeColor('#000001', -10)).toBe('#000000');
     });
   });
 
@@ -102,6 +112,36 @@ describe('utils', () => {
           expect(getBiomeColors(12)).toBe(THEMES[2]);
           expect(getBiomeColors(20)).toBe(THEMES[10]);
           expect(getBiomeColors(21)).toBe(THEMES[1]);
+      });
+  });
+
+  describe('fastRemove', () => {
+      it('should remove element at index and swap with last', () => {
+          const arr = [1, 2, 3, 4, 5];
+          fastRemove(arr, 1); // Remove '2'
+          // Should replace '2' with '5' and pop '5'
+          expect(arr).toEqual([1, 5, 3, 4]);
+          expect(arr.length).toBe(4);
+      });
+
+      it('should remove last element correctly', () => {
+          const arr = [1, 2, 3];
+          fastRemove(arr, 2); // Remove '3'
+          expect(arr).toEqual([1, 2]);
+      });
+
+      it('should handle invalid index', () => {
+          const arr = [1, 2];
+          fastRemove(arr, -1);
+          expect(arr).toEqual([1, 2]);
+          fastRemove(arr, 2);
+          expect(arr).toEqual([1, 2]);
+      });
+
+      it('should handle empty array', () => {
+          const arr: number[] = [];
+          fastRemove(arr, 0);
+          expect(arr).toEqual([]);
       });
   });
 });

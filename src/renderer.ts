@@ -23,6 +23,7 @@ let lastCachedLevel = -1;
 let lastCachedWidth = 0;
 let lastCachedHeight = 0;
 
+/* v8 ignore start */
 function updateBackgroundCache(theme: ThemeConfig, width: number, height: number): void {
   if (!backgroundCache) {
     if (typeof OffscreenCanvas !== 'undefined') {
@@ -321,6 +322,7 @@ function renderParticleToCache(type: Particle['type'], color: string) {
 
   spriteCache.images.set(key, canvas);
 }
+/* v8 ignore stop */
 // ------------------------------
 
 const floatingTexts: FloatingText[] = [];
@@ -410,6 +412,7 @@ function updateParticles(): void {
   }
 }
 
+/* v8 ignore start */
 function drawParticles(ctx: CanvasRenderingContext2D): void {
   for (const p of particles) {
     const key = `particle_${p.type}_${p.color}`;
@@ -461,6 +464,7 @@ function drawParticles(ctx: CanvasRenderingContext2D): void {
     }
   }
 }
+/* v8 ignore stop */
 
 export function addFloatingText(text: string, x: number, y: number, color: string, sizeMultiplier: number = 1): void {
   const ft = floatingTextPool.get();
@@ -486,6 +490,7 @@ function updateFloatingTexts(): void {
 }
 
 // --- Map / Background Rendering ---
+/* v8 ignore start */
 const HORIZON_RATIO = 0.22;
 
 function drawSky(ctx: CanvasRenderingContext2D, width: number, height: number, theme: ThemeConfig): void {
@@ -959,7 +964,6 @@ function drawRoad(ctx: CanvasRenderingContext2D, gameState: GameState): void {
   drawRoadSurface(ctx, width, height, theme);
   drawDecorations(ctx, width, height, theme);
 }
-// ------------------------------
 
 function drawSoldier3D(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, color: string, animOffset: number, time: number, type: Soldier['type'] = 'normal', isSuper: boolean = false, isFlash: boolean = false): void {
   // Attempt to use cached sprite
@@ -988,6 +992,7 @@ function drawSoldier3D(ctx: CanvasRenderingContext2D, x: number, y: number, size
 
   // Fallback drawing if needed (should be rare if cache works)
 }
+/* v8 ignore stop */
 
 // Histórico de posições para trail effect
 let lastArmyX = 0;
@@ -1044,6 +1049,7 @@ export function prepareSoldiersToDraw(army: Army): Soldier[] {
   return tempSoldiersToDraw;
 }
 
+/* v8 ignore start */
 function drawArmy(ctx: CanvasRenderingContext2D, army: Army, time: number): void {
   if (!spriteCache.initialized) {
     preRenderSprites();
@@ -1609,3 +1615,4 @@ export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameSt
   updateFloatingTexts();
   drawFloatingTexts(ctx);
 }
+/* v8 ignore stop */

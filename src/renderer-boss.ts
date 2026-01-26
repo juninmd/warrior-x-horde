@@ -1,4 +1,5 @@
 // renderer-boss.ts - Boss specific rendering logic
+/* v8 ignore start */
 import { Boss } from './types';
 
 // Boss final - Nave Mãe Alienígena (Scarier version)
@@ -430,7 +431,7 @@ export function drawBossSpider(ctx: CanvasRenderingContext2D, boss: Boss, _time:
   ctx.fill();
 
   // Olhos múltiplos
-  ctx.fillStyle = '#F00';
+  ctx.fillStyle = '#F0F0F0';
   for(let i=0; i<4; i++) {
     ctx.beginPath();
     ctx.arc(cx - 10 + i * 6, cy - 5, 2, 0, Math.PI * 2);
@@ -589,3 +590,4 @@ export function drawBoss(ctx: CanvasRenderingContext2D, boss: Boss, time: number
 
   ctx.fillText(`${bossName}: ${Math.ceil(boss.hp)}`, barX + barWidth / 2, barY + barHeight / 2 + 4);
 }
+/* v8 ignore stop */

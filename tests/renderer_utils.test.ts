@@ -19,6 +19,7 @@ vi.mock('../src/input', () => ({
 
 import { drawGlassBadge, drawStar, drawJoystick, getComboColor } from '../src/renderer-utils';
 import { COLORS } from '../src/constants';
+import { virtualJoystick } from '../src/input';
 
 describe('Renderer Utils', () => {
     it('should get combo color', () => {
@@ -48,5 +49,20 @@ describe('Renderer Utils', () => {
         drawJoystick(ctx);
         // If joystick inactive, nothing happens.
         expect(ctx.beginPath).not.toHaveBeenCalled();
+    });
+
+    it('should draw active joystick', () => {
+        const ctx = document.createElement('canvas').getContext('2d')!;
+        // Manually set active
+        virtualJoystick.active = true;
+        virtualJoystick.startX = 100;
+        virtualJoystick.startY = 100;
+        virtualJoystick.currentX = 120;
+        virtualJoystick.currentY = 120;
+
+        drawJoystick(ctx);
+
+        expect(ctx.beginPath).toHaveBeenCalled();
+        expect(ctx.arc).toHaveBeenCalled();
     });
 });

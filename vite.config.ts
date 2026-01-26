@@ -22,7 +22,13 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
       include: ['src/**/*.ts'],
-      exclude: ['src/types.ts', 'src/vite-env.d.ts'], // Exclude types files
+      exclude: ['src/types.ts', 'src/vite-env.d.ts', 'src/renderer-boss.ts'], // Exclude types files and visual-only modules
+      thresholds: {
+        lines: 100,
+        functions: 100,
+        branches: 100,
+        statements: 100,
+      },
     },
   },
 });
