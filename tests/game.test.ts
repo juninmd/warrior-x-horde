@@ -94,6 +94,7 @@ vi.mock('../src/ui-overlay', () => ({
     updateSuperCannonUI: vi.fn(),
     setupGameOverUI: vi.fn(),
     showGameOverScreen: vi.fn(),
+    startCountdown: vi.fn((cb) => cb()),
 }));
 
 vi.mock('../src/shooting', () => ({

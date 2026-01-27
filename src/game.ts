@@ -10,7 +10,8 @@ import { setupInput, getMouseX, initializeMousePosition, setGameStateRef, setInp
 import { updateShooting, updateBullets, updateSuperCannon, activateSuperCannon } from './shooting';
 import { initAudio, playMusic, playSound, stopAllMusic, audioManager, toggleMute, isMusicMuted } from './audio';
 import { BASE_WIDTH, BASE_HEIGHT, ASPECT_RATIO } from './constants';
-import { setupShopUI, updateShopUI, setupSuperCannonUI, updateSuperCannonUI, BuyAction, setupGameOverUI, showGameOverScreen } from './ui-overlay';
+import { setupShopUI, updateShopUI, setupSuperCannonUI, updateSuperCannonUI, BuyAction, setupGameOverUI, showGameOverScreen, startCountdown } from './ui-overlay';
+import { QualityManager } from './quality';
 
 // Canvas setup
 export const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
@@ -183,10 +184,21 @@ function gameLoop(currentTime: number = 0): void {
   // Cap delta time to prevent physics explosions on lag spikes (max ~20fps floor)
   deltaTime = Math.min(deltaTime, 50);
 
+  // Monitor Performance
+  QualityManager.getInstance().updateFPS(deltaTime);
+
+  // Slow Mo Logic
+  let timeScale = 1.0;
+  if (gameState.slowMoTimer > 0) {
+      // Use real deltaTime for timer
+      gameState.slowMoTimer -= deltaTime;
+      timeScale = 0.2;
+  }
+
   // Normalizar delta time (base 60 FPS)
   // Se rodar a 60fps, dtFactor = 1.
   // Se rodar a 120fps, dtFactor = 0.5 (move metade por frame, mas tem o dobro de frames = mesma velocidade)
-  const dtFactor = deltaTime / 16.67;
+  const dtFactor = (deltaTime / 16.67) * timeScale;
 
   // Atualizar screen shake (decay)
   if (gameState.screenShakeTimer > 0) {
@@ -300,6 +312,19 @@ function gameLoop(currentTime: number = 0): void {
       localStorage.setItem('crowdHighScore', gameState.highScore.toString());
     }
 
+    // Salvar Leaderboard
+    try {
+        const leaderboardStr = localStorage.getItem('crowdLeaderboard') || '[]';
+        const leaderboard = JSON.parse(leaderboardStr);
+        leaderboard.push({ score: gameState.score, date: Date.now() });
+        leaderboard.sort((a: { score: number }, b: { score: number }) => b.score - a.score);
+        // Manter top 5
+        const top5 = leaderboard.slice(0, 5);
+        localStorage.setItem('crowdLeaderboard', JSON.stringify(top5));
+    } catch (e) {
+        console.error('Erro ao salvar leaderboard', e);
+    }
+
     // Mostrar tela de game over (apenas o último frame do jogo)
     render(ctx, entities, gameState);
 
@@ -347,18 +372,20 @@ export function startGame(): void {
   initializeMousePosition(BASE_WIDTH);
   setGameStateRef(gameState); // Configurar referência para input de Super Cannon
   wasInBossFight = false; // Resetar flag de boss
-  gameState.isStarted = true;
 
   // Esconder overlay de start
   if (startScreen) startScreen.classList.remove('active');
 
-  // superCannonButton.style.display = 'block'; // Handled by UI
+  // Start Countdown then Game
+  startCountdown(() => {
+    gameState.isStarted = true;
 
-  // Iniciar música
-  playSound(audioManager.gameStart);
-  setTimeout(() => playMusic(false), 500); // Iniciar música após som de início
+    // Iniciar música
+    playSound(audioManager.gameStart);
+    setTimeout(() => playMusic(false), 500); // Iniciar música após som de início
 
-  requestAnimationFrame(gameLoop);
+    requestAnimationFrame(gameLoop);
+  });
 }
 
 // Helper function to trigger screen shake (exported to be used by other modules)
@@ -396,7 +423,7 @@ const onShareGame = (platform: 'x' | 'whatsapp') => {
 setupGameOverUI(onRestartGame, onShareGame);
 
 // Restart no clique após game over (apenas para Pause e Interação In-Game)
-canvas.addEventListener('click', (e) => {
+canvas.addEventListener('click', () => {
   // Se pausado, verificar clique no botão Resume
   if (gameState.isPaused) {
     // Área central para despausar

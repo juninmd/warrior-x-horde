@@ -7,13 +7,16 @@
   <meta name="theme-color" content="#1a1a2e">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="manifest" href="./public/manifest.json">
+  <meta name="apple-mobile-web-app-title" content="Crowd Runner">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
   <title>Crowd Runner - Warrior x Horde</title>
   <style>
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
     }
 
     html, body {
@@ -97,6 +100,7 @@
       justify-content: center;
       transition: all 0.2s;
       backdrop-filter: blur(4px);
+      touch-action: manipulation;
     }
 
     .icon-btn:hover {
