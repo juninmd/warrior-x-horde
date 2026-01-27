@@ -9,6 +9,9 @@ import { fastRemove } from './utils';
 // Grid espacial para otimização de colisão (Célula de 120px cobre bem grupos de inimigos)
 const enemyGrid = new SpatialHashGrid(120);
 
+// Reusable array to avoid allocations
+const tempPlayerBullets: Bullet[] = [];
+
 const bulletPool = new ObjectPool<Bullet>(
   () => ({ x: 0, y: 0, targetX: 0, targetY: 0, speed: 0, damage: 0, isEnemy: false }),
   (b) => {
@@ -303,6 +306,8 @@ function applySuperCannonDamage(entities: Entities, gameState: GameState): void 
 }
 
 export function updateBullets(entities: Entities, gameState: GameState, dtFactor: number): void {
+  tempPlayerBullets.length = 0;
+
   // Atualizar e remover bullets fora da tela manualmente para usar o pool
   for (let i = entities.bullets.length - 1; i >= 0; i--) {
     const bullet = entities.bullets[i];
@@ -311,18 +316,13 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
     if (bullet.y <= -50 || bullet.y >= 900) {
       bulletPool.release(bullet);
       fastRemove(entities.bullets, i);
+    } else if (!bullet.isEnemy) {
+      tempPlayerBullets.push(bullet);
     }
   }
 
-  const playerBullets = entities.bullets.filter(b => !b.isEnemy);
   // Se não houver balas do jogador, não precisamos popular a grid nem verificar colisões complexas
-  // Mas ainda precisamos processar colisões das balas inimigas com o jogador?
-  // O código original de colisão bala inimiga x jogador NÃO estava nesta função, mas sim em checkCollisions (talvez?)
-  // Verificando o código original... Não, checkBulletSoldierCollision era usado aqui.
-  // ESPERA! O loop original iterava sobre TODAS as balas e dava "continue" se bullet.isEnemy.
-  // Então aqui só processamos balas do jogador acertando inimigos.
-
-  if (playerBullets.length > 0) {
+  if (tempPlayerBullets.length > 0) {
     // 1. Popular a Grid Espacial com Inimigos (Soldados e MiniBosses)
     enemyGrid.clear();
 

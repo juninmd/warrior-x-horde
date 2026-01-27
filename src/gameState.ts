@@ -9,7 +9,7 @@ export const gameState: GameState = {
   currentLevel: 1,
   score: 0,
   highScore: Number(localStorage.getItem('crowdHighScore')) || 0,
-  coins: 0,
+  coins: Number(localStorage.getItem('crowdCoins')) || 0,
   gameSpeed: 0.5,
   baseGameSpeed: 0.5,
   distanceTraveled: 0,
@@ -51,7 +51,8 @@ export function resetGameState(): void {
   gameState.currentLevel = 1; // Reiniciar do level 1
   gameState.levelDistance = 5000; // Reset da distância do level
   gameState.score = 0;
-  gameState.coins = 0;
+  // Coins persist, do not reset to 0
+  gameState.coins = Number(localStorage.getItem('crowdCoins')) || 0;
   gameState.gameSpeed = gameState.baseGameSpeed;
   gameState.distanceTraveled = 0;
   gameState.isBattling = false;
@@ -69,4 +70,11 @@ export function resetGameState(): void {
   gameState.damageFlash = 0;
   gameState.lowArmyTriggered = false;
   gameState.slowMoTimer = 0;
+}
+
+export function saveGameProgress(): void {
+  localStorage.setItem('crowdCoins', gameState.coins.toString());
+  if (gameState.highScore > 0) {
+      localStorage.setItem('crowdHighScore', gameState.highScore.toString());
+  }
 }

@@ -1,6 +1,6 @@
 // game.ts - Loop principal do jogo Crowd Runner
 import { Entities } from './types';
-import { gameState, resetGameState } from './gameState';
+import { gameState, resetGameState, saveGameProgress } from './gameState';
 import { createInitialEntities, createEnemyHorde, createSoldier, addSpecialSoldiersToArmy, addSoldiersToArmy } from './entities';
 import { render, shareOnX, shareOnWhatsApp, addFloatingText } from './renderer';
 import { checkCollisions } from './collisions';
@@ -120,6 +120,9 @@ const handleBuy: BuyAction = (type, cost) => {
           addFloatingText(`+1 ${type.toUpperCase()}`, entities.playerArmy.centerX, entities.playerArmy.centerY, '#00FF00');
           playSound(audioManager.powerUp);
         }
+
+        // Salvar moedas após compra
+        saveGameProgress();
       } else {
         playSound(audioManager.nerf);
       }
@@ -311,8 +314,10 @@ function gameLoop(currentTime: number = 0): void {
     // Salvar high score
     if (gameState.score > gameState.highScore) {
       gameState.highScore = gameState.score;
-      localStorage.setItem('crowdHighScore', gameState.highScore.toString());
     }
+
+    // Salvar progresso (moedas e high score)
+    saveGameProgress();
 
     // Salvar Leaderboard
     try {
@@ -344,6 +349,7 @@ function advanceToNextLevel(): void {
   // Bonus Coins for clearing level
   const levelBonus = 100 + gameState.currentLevel * 50;
   gameState.coins += levelBonus;
+  saveGameProgress(); // Salvar progresso
   addFloatingText(`LEVEL CLEAR! +${levelBonus} 💰`, BASE_WIDTH/2, BASE_HEIGHT/2, '#FFD700', 2.0);
   playSound(audioManager.victory);
 
