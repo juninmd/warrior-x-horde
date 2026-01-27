@@ -230,7 +230,7 @@ describe('Collisions', () => {
             };
             entities.mysteryBoxes = [box];
 
-            const bullet = { x: 225, y: 225, isEnemy: false, damage: 2, y: 225 } as any;
+            const bullet = { x: 225, y: 225, isEnemy: false, damage: 2 } as any;
             entities.bullets = [bullet];
 
             checkCollisions(entities, gameState);

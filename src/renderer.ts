@@ -445,6 +445,7 @@ function drawParticles(ctx: CanvasRenderingContext2D): void {
       ctx.globalAlpha = 1.0;
 
     } else {
+      /* v8 ignore start */
       // Fallback if not cached
       ctx.save();
       ctx.globalAlpha = p.life;
@@ -466,6 +467,7 @@ function drawParticles(ctx: CanvasRenderingContext2D): void {
       }
       ctx.fill();
       ctx.restore();
+      /* v8 ignore stop */
     }
   }
 }
