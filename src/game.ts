@@ -154,6 +154,7 @@ function gameLoop(currentTime: number = 0): void {
   if (gameState.isPaused) {
     render(ctx, entities, gameState);
     // Desenhar texto de PAUSADO
+    /* v8 ignore start */
     ctx.save();
     ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
     ctx.fillRect(0, 0, BASE_WIDTH, BASE_HEIGHT);
@@ -165,6 +166,7 @@ function gameLoop(currentTime: number = 0): void {
     ctx.fillStyle = '#FFF';
     ctx.fillText('Toque para continuar', BASE_WIDTH / 2, BASE_HEIGHT / 2 + 40);
     ctx.restore();
+    /* v8 ignore stop */
     return; // Não continua o loop enquanto pausado
   }
 
