@@ -102,6 +102,10 @@ export function setupShopUI(onBuy: BuyAction): void {
         e.stopPropagation();
         vibrate(15); // Haptic feedback
         onBuy(cfg.type as any, cfg.price);
+        // Persistir moedas após compra
+        // Nota: gameState não é acessível diretamente aqui, mas o callback onBuy atualiza o estado
+        // Idealmente, a persistência deveria ser feita no callback, mas podemos adicionar um pequeno delay ou acessar globalmente se necessário.
+        // A melhor prática é mover a lógica de persistência para o callback 'handleBuy' em game.ts.
     };
     btn.addEventListener('click', handler);
 

@@ -1393,8 +1393,13 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
   ctx.save();
 
   // Pre-calculate widths to center
+  const isRecord = gameState.score > gameState.highScore && gameState.highScore > 0;
+  const scoreColor = isRecord
+      ? (Math.floor(Date.now() / 200) % 2 === 0 ? '#FFD700' : '#FF4500') // Pulse Gold/Orange
+      : '#FFD700';
+
   const badges = [
-      { text: `🏆 ${gameState.score}`, color: '#FFD700', width: 0 },
+      { text: `🏆 ${gameState.score}`, color: scoreColor, width: 0 },
       { text: `💰 ${gameState.coins}`, color: '#F1C40F', width: 0 },
       { text: `Lv.${gameState.currentLevel}`, color: '#4A90D9', width: 0 },
       { text: `🪖 ${armyCount}`, color: '#2ECC71', width: 0 }, // Show count, power is implied in Attack
