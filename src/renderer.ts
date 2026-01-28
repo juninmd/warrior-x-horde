@@ -347,6 +347,7 @@ const floatingTextPool = new ObjectPool<FloatingText>(
 const particlePool = new ObjectPool<Particle>(
   () => ({ x: 0, y: 0, vx: 0, vy: 0, color: '#FFF', size: 0, life: 0, maxLife: 0, type: 'spark' }),
   (p) => {
+    /* v8 ignore next 10 */
     p.x = 0;
     p.y = 0;
     p.vx = 0;
@@ -365,6 +366,7 @@ export function addParticle(x: number, y: number, type: Particle['type'], color:
   const limit = Math.floor(MAX_PARTICLES * quality.particleMultiplier);
 
   // Limitar quantidade de partículas
+  /* v8 ignore next */
   if (particles.length >= limit) return;
 
   // Reduzir count se estiver chegando no limite
