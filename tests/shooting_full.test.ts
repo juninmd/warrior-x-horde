@@ -11,7 +11,7 @@ import { fastRemove } from '../src/utils';
 // Mock dependencies
 vi.mock('../src/renderer', () => ({
   render: vi.fn(),
-  addFloatingText: vi.fn(),
+  addFloatingText: vi.fn(), updateFloatingTexts: vi.fn(),
   addExplosion: vi.fn(),
   addParticle: vi.fn(),
   getShareButtonBounds: vi.fn(() => ({ x: 0, y: 0, width: 0, height: 0 })),

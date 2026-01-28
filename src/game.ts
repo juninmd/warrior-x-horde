@@ -2,7 +2,7 @@
 import { Entities } from './types';
 import { gameState, resetGameState, saveGameProgress } from './gameState';
 import { createInitialEntities, createEnemyHorde, createSoldier, addSpecialSoldiersToArmy, addSoldiersToArmy } from './entities';
-import { render, shareOnX, shareOnWhatsApp, addFloatingText } from './renderer';
+import { render, shareOnX, shareOnWhatsApp, addFloatingText, updateFloatingTexts } from './renderer';
 import { checkCollisions } from './collisions';
 import { updateSpawns } from './spawner';
 import { updateMovement } from './movement';
@@ -241,6 +241,7 @@ function gameLoop(currentTime: number = 0): void {
   updateShooting(entities, gameState);
   updateBullets(entities, gameState, dtFactor);
   updateSuperCannon(entities, gameState, deltaTime);
+  updateFloatingTexts(); // Visual updates (damage numbers)
 
   // UI Updates
   updateSuperCannonUI(gameState);
@@ -539,20 +540,23 @@ export function togglePause(): void {
   if (!gameState.isStarted || gameState.isGameOver) return;
 
   vibrate(20);
-  gameState.isPaused = !gameState.isPaused;
 
-  // Atualizar botão de pause
-  const pauseBtn = document.getElementById('pauseBtn');
-  if (pauseBtn) {
-    pauseBtn.textContent = gameState.isPaused ? '▶️' : '⏸️'; // Icon only for mobile space
+  if (gameState.isPaused) {
+    // Resume with countdown
+    startCountdown(() => {
+      gameState.isPaused = false;
+      const pauseBtn = document.getElementById('pauseBtnTop');
+      if (pauseBtn) pauseBtn.textContent = '⏸️';
+      console.log('⏸️ Jogo retomado');
+      requestAnimationFrame(gameLoop);
+    });
+  } else {
+    // Pause immediately
+    gameState.isPaused = true;
+    const pauseBtn = document.getElementById('pauseBtnTop');
+    if (pauseBtn) pauseBtn.textContent = '▶️';
+    console.log('⏸️ Jogo pausado');
   }
-
-  // Se despausou, continuar o game loop
-  if (!gameState.isPaused) {
-    requestAnimationFrame(gameLoop);
-  }
-
-  console.log(`⏸️ Jogo ${gameState.isPaused ? 'pausado' : 'retomado'}`);
 }
 
 export function toggleMuteUI(): void {

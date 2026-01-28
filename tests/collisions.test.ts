@@ -8,7 +8,7 @@ vi.mock('../src/game', () => ({
 }));
 
 vi.mock('../src/renderer', () => ({
-    addFloatingText: vi.fn(),
+    addFloatingText: vi.fn(), updateFloatingTexts: vi.fn(),
     addExplosion: vi.fn(),
     addParticle: vi.fn(),
 }));

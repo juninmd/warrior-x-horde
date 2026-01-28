@@ -8,7 +8,7 @@ vi.mock('../src/renderer', () => ({
   render: vi.fn(),
   shareOnX: vi.fn(),
   shareOnWhatsApp: vi.fn(),
-  addFloatingText: vi.fn(),
+  addFloatingText: vi.fn(), updateFloatingTexts: vi.fn(),
 }));
 
 vi.mock('../src/audio', () => ({
@@ -53,7 +53,7 @@ describe('Game Coverage', () => {
     });
 
     // Ensure canvas exists
-    document.body.innerHTML = '<div id="game-container"><canvas id="gameCanvas"></canvas></div><div id="startScreen"></div><div id="startBtnOverlay"></div><button id="muteBtn"></button><button id="pauseBtn"></button><button id="superCannonBtnInline"></button>';
+    document.body.innerHTML = '<div id="game-container"><canvas id="gameCanvas"></canvas></div><div id="startScreen"></div><div id="startBtnOverlay"></div><button id="muteBtn"></button><button id="pauseBtnTop"></button><button id="superCannonBtnInline"></button>';
 
     // Import game module
     gameModule = await import('../src/game');
@@ -70,7 +70,7 @@ describe('Game Coverage', () => {
 
     // Pause
     gameModule.togglePause();
-    const pauseBtn = document.getElementById('pauseBtn');
+    const pauseBtn = document.getElementById('pauseBtnTop');
     expect(pauseBtn?.textContent).toBe('▶️');
     expect(window.requestAnimationFrame).toHaveBeenCalledTimes(initialCalls); // No new calls
 

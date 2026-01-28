@@ -6,7 +6,7 @@ import * as input from '../src/input';
 // Mock dependencies
 vi.mock('../src/renderer', () => ({
     render: vi.fn(),
-    addFloatingText: vi.fn(),
+    addFloatingText: vi.fn(), updateFloatingTexts: vi.fn(),
     shareOnX: vi.fn(),
     shareOnWhatsApp: vi.fn(),
 }));

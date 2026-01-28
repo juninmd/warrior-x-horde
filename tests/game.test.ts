@@ -58,7 +58,7 @@ vi.mock('../src/renderer', () => ({
     preRenderSprites: vi.fn(),
     getShareButtonBounds: vi.fn(() => ({ x: 0, y: 0, width: 0, height: 0 })),
     getWhatsAppButtonBounds: vi.fn(() => ({ x: 0, y: 0, width: 0, height: 0 })),
-    addFloatingText: vi.fn(),
+    addFloatingText: vi.fn(), updateFloatingTexts: vi.fn(),
     shareOnX: vi.fn(),
     shareOnWhatsApp: vi.fn(),
 }));

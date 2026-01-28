@@ -462,7 +462,7 @@ export function startCountdown(onComplete: () => void): void {
         font-weight: 900;
         color: #FFD700;
         text-shadow: 0 0 20px rgba(0,0,0,0.5);
-        pointer-events: none;
+        pointer-events: auto;
     `;
     document.body.appendChild(el);
 
