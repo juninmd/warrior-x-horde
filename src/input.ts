@@ -11,6 +11,7 @@ let activeTouchId: number | null = null;
 // Virtual Joystick
 export class VirtualJoystick {
   active: boolean = false;
+  alpha: number = 0;
   startX: number = 0;
   startY: number = 0;
   currentX: number = 0;

@@ -459,6 +459,9 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
           miniBoss.hitTimer = 5;
           addExplosion(bullet.x, bullet.y, '#FF4500');
 
+          // Visual Damage Number
+          addFloatingText(Math.floor(bullet.damage).toString(), bullet.x, bullet.y - 20, '#FFF', 0.8);
+
           if (miniBoss.hp <= 0) {
             miniBoss.isActive = false;
             gameState.score += 200;
@@ -507,6 +510,16 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
 
         // Efeito de impacto no boss
         addExplosion(bullet.x, bullet.y, boss.type === 'mothership' ? '#00FF88' : '#FF6B6B');
+
+        // Visual Damage Number
+        const isCrit = bullet.damage > 10;
+        addFloatingText(
+          Math.floor(bullet.damage).toString(),
+          bullet.x,
+          bullet.y - 30,
+          isCrit ? '#FFD700' : '#FFF',
+          isCrit ? 1.2 : 0.9
+        );
 
         if (boss.hp <= 0) {
           boss.isActive = false;

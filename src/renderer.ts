@@ -52,6 +52,9 @@ function updateBackgroundCache(theme: ThemeConfig, width: number, height: number
   drawCelestialBody(ctx, width, height, theme);
   drawMountains(ctx, width, height, theme);
   drawGround(ctx, width, height, theme);
+
+  // Cache road surface as well since it is static (lines don't scroll currently)
+  drawRoadSurface(ctx, width, height, theme);
 }
 
 // Helper to generate a key
@@ -486,14 +489,14 @@ export function addFloatingText(text: string, x: number, y: number, color: strin
   floatingTexts.push(ft);
 }
 
-function updateFloatingTexts(): void {
+export function updateFloatingTexts(): void {
   for (let i = floatingTexts.length - 1; i >= 0; i--) {
     floatingTexts[i].y -= 2;
     floatingTexts[i].alpha -= 0.02;
     floatingTexts[i].scale += 0.02;
     if (floatingTexts[i].alpha <= 0) {
       floatingTextPool.release(floatingTexts[i]);
-      floatingTexts.splice(i, 1);
+      fastRemove(floatingTexts, i);
     }
   }
 }
@@ -968,9 +971,6 @@ function drawRoad(ctx: CanvasRenderingContext2D, gameState: GameState): void {
 
   // Draw dynamic elements on top
   drawClouds(ctx, width, time, theme);
-  // drawRoadSurface is semi-static (perspective shape) but has dynamic elements in some themes or could have scrolling lines
-  // We keep it dynamic for now to support animated road textures if added
-  drawRoadSurface(ctx, width, height, theme);
   drawDecorations(ctx, width, height, theme);
 }
 
@@ -1632,7 +1632,7 @@ export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameSt
 
   drawUI(ctx, gameState, entities.playerArmy.soldiers.filter(s => s.isAlive).length, entities.playerArmy.fireRate, entities.playerArmy.damage, entities.playerArmy);
   drawJoystick(ctx);
-  updateFloatingTexts();
+  // updateFloatingTexts() moved to game loop to respect pause
   drawFloatingTexts(ctx);
 }
 /* v8 ignore stop */

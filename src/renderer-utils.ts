@@ -54,20 +54,36 @@ export function drawStar(ctx: CanvasRenderingContext2D, cx: number, cy: number, 
 // --- Input Visuals ---
 
 export function drawJoystick(ctx: CanvasRenderingContext2D): void {
-  if (!virtualJoystick.active) return;
+  // Update Alpha for fade in/out
+  if (virtualJoystick.active) {
+    virtualJoystick.alpha = Math.min(1, virtualJoystick.alpha + 0.15);
+  } else {
+    virtualJoystick.alpha = Math.max(0, virtualJoystick.alpha - 0.1);
+  }
 
-  const { startX, startY, currentX, currentY, maxRadius } = virtualJoystick;
+  if (virtualJoystick.alpha <= 0.01) return;
 
-  // Base
+  const { startX, startY, currentX, currentY, maxRadius, alpha } = virtualJoystick;
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+
+  // Base (Outer Ring)
   ctx.beginPath();
   ctx.arc(startX, startY, maxRadius, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+
+  // Gradient fill for base
+  const baseGrad = ctx.createRadialGradient(startX, startY, maxRadius * 0.2, startX, startY, maxRadius);
+  baseGrad.addColorStop(0, 'rgba(255, 255, 255, 0.0)');
+  baseGrad.addColorStop(1, 'rgba(255, 255, 255, 0.15)');
+  ctx.fillStyle = baseGrad;
+
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
   ctx.lineWidth = 2;
   ctx.fill();
   ctx.stroke();
 
-  // Stick
+  // Stick Position Calculation
   const dx = currentX - startX;
   const dy = currentY - startY;
   const distance = Math.sqrt(dx * dx + dy * dy);
@@ -81,10 +97,32 @@ export function drawJoystick(ctx: CanvasRenderingContext2D): void {
     stickY = startY + Math.sin(angle) * maxRadius;
   }
 
+  // Stick (Knob)
   ctx.beginPath();
-  ctx.arc(stickX, stickY, 20, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+  ctx.arc(stickX, stickY, 25, 0, Math.PI * 2);
+
+  // Knob Gradient
+  const knobGrad = ctx.createRadialGradient(stickX - 5, stickY - 5, 0, stickX, stickY, 25);
+  knobGrad.addColorStop(0, '#FFFFFF');
+  knobGrad.addColorStop(1, '#B0BEC5');
+  ctx.fillStyle = knobGrad;
+
+  // Knob Shadow
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+  ctx.shadowBlur = 10;
+  ctx.shadowOffsetY = 4;
+
   ctx.fill();
+
+  // Inner detail of Knob
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetY = 0;
+  ctx.beginPath();
+  ctx.arc(stickX, stickY, 12, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+  ctx.fill();
+
+  ctx.restore();
 }
 
 // --- Game Specific Helpers ---

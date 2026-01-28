@@ -13,7 +13,9 @@ vi.mock('../src/input', () => ({
         startX: 0,
         startY: 0,
         currentX: 0,
-        currentY: 0
+        currentY: 0,
+        maxRadius: 50,
+        alpha: 0
     }
 }));
 

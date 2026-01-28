@@ -10,7 +10,7 @@ import * as game from '../src/game';
 
 // Mock dependencies to avoid side effects
 vi.mock('../src/renderer', () => ({
-  addFloatingText: vi.fn(),
+  addFloatingText: vi.fn(), updateFloatingTexts: vi.fn(),
   addExplosion: vi.fn(),
   addParticle: vi.fn(),
 }));

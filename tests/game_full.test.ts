@@ -14,7 +14,7 @@ import * as uiOverlay from '../src/ui-overlay';
 // Mock everything
 vi.mock('../src/renderer', () => ({
     render: vi.fn(),
-    addFloatingText: vi.fn(),
+    addFloatingText: vi.fn(), updateFloatingTexts: vi.fn(),
     getShareButtonBounds: vi.fn(() => ({ x: 0, y: 0, width: 0, height: 0 })),
     getWhatsAppButtonBounds: vi.fn(() => ({ x: 0, y: 0, width: 0, height: 0 })),
     shareOnX: vi.fn(),
