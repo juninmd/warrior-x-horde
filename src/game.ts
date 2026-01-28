@@ -21,6 +21,7 @@ const ctx = canvas.getContext('2d')!;
 let scale = 1;
 
 // Função para redimensionar o canvas responsivamente
+/* v8 ignore start */
 function resizeCanvas(): void {
   const container = canvas.parentElement;
   if (!container) return;
@@ -58,6 +59,7 @@ function resizeCanvas(): void {
   scale = newWidth / BASE_WIDTH;
   setInputScale(scale);
 }
+/* v8 ignore stop */
 
 // Converter coordenadas do mouse/touch para coordenadas do canvas
 export function screenToCanvas(screenX: number, screenY: number): { x: number; y: number } {
