@@ -42,30 +42,27 @@ function findNearestTarget(shooter: Soldier, hordes: EnemyHorde[], boss: Boss | 
   let nearest: { x: number; y: number } | null = null;
 
   // OTIMIZAÇÃO: Checar distância da horda primeiro
-  const MAX_TARGET_DIST = 600; // Não atirar se muito longe
+  const MAX_TARGET_DIST = 750; // Aumentado para cobrir quase toda a tela (800px)
 
-  // Procurar inimigos nas hordas
+  // Procurar inimigos nas hordas - OTIMIZAÇÃO: Alvejar a horda, não soldados individuais
   for (const horde of hordes) {
     if (!horde.isActive || horde.soldiers.length === 0) continue;
 
-    // Se horda estiver muito longe, nem checar soldados
-    const hordeDist = Math.abs(horde.y - shooter.y);
-    if (hordeDist > MAX_TARGET_DIST) continue;
+    const dy = horde.y - shooter.y;
+    // Só mirar em inimigos que estão na frente (acima) e dentro do alcance
+    if (dy >= 0 || Math.abs(dy) > MAX_TARGET_DIST) continue;
 
-    // Encontrar o soldado inimigo mais próximo, não apenas o centro da horda
-    for (const enemy of horde.soldiers) {
-      if (!enemy.isAlive) continue;
-      const dy = enemy.y - shooter.y;
-      // Só mirar em inimigos que estão na frente (acima)
-      if (dy >= 0) continue;
+    // Calcular distância para o CENTRO da horda
+    const dx = horde.x - shooter.x;
+    const dist = Math.sqrt(dx * dx + dy * dy);
 
-      const dx = enemy.x - shooter.x;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-
-      if (dist < nearestDist) {
-        nearestDist = dist;
-        nearest = { x: enemy.x, y: enemy.y };
-      }
+    if (dist < nearestDist) {
+      nearestDist = dist;
+      // Alvejar ponto aleatório dentro da área da horda para espalhar os tiros
+      // Isso simula mirar em soldados sem o custo de iterar por todos eles (O(1) vs O(N))
+      const jitterX = (Math.random() - 0.5) * Math.min(horde.width, 150);
+      const jitterY = (Math.random() - 0.5) * Math.min(horde.height, 80);
+      nearest = { x: horde.x + jitterX, y: horde.y + jitterY };
     }
   }
 

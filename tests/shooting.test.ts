@@ -74,7 +74,7 @@ describe('Shooting', () => {
           entities.playerArmy.aliveCount = 2;
 
           // Enemy to shoot at
-          entities.enemyHordes = [{ isActive: true, soldiers: [{ x: 100, y: 100, isAlive: true }], y: 100 }] as any;
+          entities.enemyHordes = [{ isActive: true, soldiers: [{ x: 100, y: 100, isAlive: true }], y: 100, x: 100, width: 100, height: 100 }] as any;
 
           updateShooting(entities, gameState);
 
@@ -89,7 +89,7 @@ describe('Shooting', () => {
           // Soldier
           entities.playerArmy.soldiers = [{ x: 100, y: 700, size: 10, isAlive: true, type: 'normal' }] as any;
           entities.playerArmy.aliveCount = 1;
-          entities.enemyHordes = [{ isActive: true, soldiers: [{ x: 100, y: 100, isAlive: true }], y: 100 }] as any;
+          entities.enemyHordes = [{ isActive: true, soldiers: [{ x: 100, y: 100, isAlive: true }], y: 100, x: 100, width: 100, height: 100 }] as any;
 
           updateShooting(entities, gameState);
           expect(entities.bullets.length).toBe(0);
@@ -105,14 +105,16 @@ describe('Shooting', () => {
           const nearEnemy = { x: 100, y: 600, isAlive: true };
 
           entities.enemyHordes = [
-              { isActive: true, soldiers: [farEnemy], y: 100 },
-              { isActive: true, soldiers: [nearEnemy], y: 600 }
+              { isActive: true, soldiers: [farEnemy], y: 100, x: 100, width: 100, height: 100 },
+              { isActive: true, soldiers: [nearEnemy], y: 600, x: 100, width: 100, height: 100 }
           ] as any;
 
           updateShooting(entities, gameState);
 
           const bullet = entities.bullets[0];
-          expect(bullet.targetY).toBe(600);
+          // Allow for jitter (+/- 50 for height)
+          expect(bullet.targetY).toBeGreaterThan(550);
+          expect(bullet.targetY).toBeLessThan(650);
       });
 
       it('should target boss', () => {
@@ -153,7 +155,7 @@ describe('Shooting', () => {
       it('should detect bullet collision with horde soldier (shared HP)', () => {
           const bullet = createBullet(100, 100, 100, 50, 1, false);
           const enemy = { x: 100, y: 100, size: 10, isAlive: true, hp: 10 };
-          const horde = { isActive: true, soldiers: [enemy], count: 1, y: 100, hp: 10, maxHp: 10 };
+          const horde = { isActive: true, soldiers: [enemy], count: 1, y: 100, x: 100, hp: 10, maxHp: 10, width: 100, height: 100 };
 
           entities.bullets = [bullet];
           entities.enemyHordes = [horde] as any;
@@ -170,7 +172,7 @@ describe('Shooting', () => {
           const s1 = { x: 100, y: 100, size: 10, isAlive: true, hp: 10 };
           const s2 = { x: 110, y: 100, size: 10, isAlive: true, hp: 10 };
 
-          const horde = { isActive: true, soldiers: [s1, s2], count: 2, y: 100, hp: 20, maxHp: 20 };
+          const horde = { isActive: true, soldiers: [s1, s2], count: 2, y: 100, x: 100, hp: 20, maxHp: 20, width: 100, height: 100 };
           entities.bullets = [bullet];
           entities.enemyHordes = [horde] as any;
 
@@ -241,7 +243,10 @@ describe('Shooting', () => {
               isActive: true,
               soldiers: [{ x: 100, y: 100, isAlive: true }],
               y: 100,
-              count: 1
+              x: 100,
+              count: 1,
+              width: 100,
+              height: 100
           };
           entities.enemyHordes = [horde] as any;
 

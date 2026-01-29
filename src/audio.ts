@@ -13,12 +13,19 @@ export interface AudioManager {
 
 let isMuted = false;
 let audioInitialized = false;
+// Map to track last played time for throttling
+const lastPlayedMap = new Map<string, number>();
+const THROTTLE_MS = 80; // Minimum time between same sound instances
 
 function createAudio(src: string, loop = false, volume = 0.5): HTMLAudioElement {
   const audio = new Audio(src);
   audio.loop = loop;
   audio.volume = volume;
   audio.preload = 'auto';
+  // Ensure src is set for keying
+  if (!audio.src && src) {
+      audio.src = src;
+  }
   return audio;
 }
 
@@ -57,10 +64,22 @@ export function initAudio(): void {
 export function resetAudio(): void {
   audioInitialized = false;
   isMuted = false;
+  lastPlayedMap.clear();
 }
 
 export function playSound(sound: HTMLAudioElement): void {
   if (isMuted) return;
+
+  const now = Date.now();
+  // Use src as key. If empty (unlikely in prod but possible in tests), use a fallback or object ref.
+  const key = sound.src || 'unknown_sound';
+  const lastTime = lastPlayedMap.get(key) || 0;
+
+  if (now - lastTime < THROTTLE_MS) {
+    return; // Throttled
+  }
+
+  lastPlayedMap.set(key, now);
 
   // Clonar para permitir múltiplas reproduções simultâneas
   const clone = sound.cloneNode(true) as HTMLAudioElement;
