@@ -9,6 +9,9 @@ vi.mock('../src/renderer', () => ({
   shareOnX: vi.fn(),
   shareOnWhatsApp: vi.fn(),
   addFloatingText: vi.fn(), updateFloatingTexts: vi.fn(),
+  addParticle: vi.fn(),
+  addExplosion: vi.fn(),
+  addTrail: vi.fn(),
 }));
 
 vi.mock('../src/audio', () => ({
