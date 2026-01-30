@@ -423,6 +423,9 @@ export function startGame(): void {
     playSound(audioManager.gameStart);
     setTimeout(() => playMusic(false), 500); // Iniciar música após som de início
 
+    // Tutorial Hint
+    addFloatingText("HOLD & DRAG", BASE_WIDTH / 2, BASE_HEIGHT / 2 + 100, "#FFFFFF", 1.5);
+
     requestAnimationFrame(gameLoop);
   });
 }
