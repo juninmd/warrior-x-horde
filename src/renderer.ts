@@ -331,11 +331,12 @@ function renderParticleToCache(type: Particle['type'], color: string) {
 // ------------------------------
 
 const floatingTexts: FloatingText[] = [];
+export const _testing = { getFloatingTexts: () => floatingTexts };
 const particles: Particle[] = [];
 
 // Pool de floating texts
 const floatingTextPool = new ObjectPool<FloatingText>(
-  () => ({ text: '', x: 0, y: 0, color: '#FFF', alpha: 1, scale: 1 }),
+  () => ({ text: '', x: 0, y: 0, color: '#FFF', alpha: 1, scale: 1, vx: 0, vy: 0, gravity: 0 }),
   (t) => {
     t.text = '';
     t.x = 0;
@@ -343,6 +344,9 @@ const floatingTextPool = new ObjectPool<FloatingText>(
     t.color = '#FFF';
     t.alpha = 1;
     t.scale = 1;
+    t.vx = 0;
+    t.vy = 0;
+    t.gravity = 0;
   }
 );
 
@@ -486,16 +490,29 @@ export function addFloatingText(text: string, x: number, y: number, color: strin
   ft.color = color;
   ft.alpha = 1;
   ft.scale = 1 * sizeMultiplier;
+
+  // Physics "Pop" effect (Juicy!)
+  ft.vx = (Math.random() - 0.5) * 4;
+  ft.vy = -3 - Math.random() * 3;
+  ft.gravity = 0.2;
+
   floatingTexts.push(ft);
 }
 
 export function updateFloatingTexts(): void {
   for (let i = floatingTexts.length - 1; i >= 0; i--) {
-    floatingTexts[i].y -= 2;
-    floatingTexts[i].alpha -= 0.02;
-    floatingTexts[i].scale += 0.02;
-    if (floatingTexts[i].alpha <= 0) {
-      floatingTextPool.release(floatingTexts[i]);
+    const ft = floatingTexts[i];
+
+    // Apply Physics
+    ft.x += ft.vx;
+    ft.y += ft.vy;
+    ft.vy += ft.gravity;
+
+    ft.alpha -= 0.02;
+    ft.scale += 0.01; // Slower growth
+
+    if (ft.alpha <= 0) {
+      floatingTextPool.release(ft);
       fastRemove(floatingTexts, i);
     }
   }

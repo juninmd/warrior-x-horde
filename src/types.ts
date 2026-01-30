@@ -214,4 +214,7 @@ export interface FloatingText {
   color: string;
   alpha: number;
   scale: number;
+  vx: number;
+  vy: number;
+  gravity: number;
 }

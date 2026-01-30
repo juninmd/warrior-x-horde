@@ -21,8 +21,11 @@ export class SpatialHashGrid {
   }
 
   // Limpar a grid (deve ser chamado a cada frame antes de popular)
+  // OTIMIZAÇÃO: Reutiliza arrays existentes para evitar Garbage Collection
   clear(): void {
-    this.buckets.clear();
+    for (const bucket of this.buckets.values()) {
+      bucket.length = 0;
+    }
   }
 
   // Inserir um item na grid
@@ -35,10 +38,12 @@ export class SpatialHashGrid {
     for (let col = minCol; col <= maxCol; col++) {
       for (let row = minRow; row <= maxRow; row++) {
         const key = `${col}:${row}`;
-        if (!this.buckets.has(key)) {
-          this.buckets.set(key, []);
+        let bucket = this.buckets.get(key);
+        if (!bucket) {
+          bucket = [];
+          this.buckets.set(key, bucket);
         }
-        this.buckets.get(key)!.push(item);
+        bucket.push(item);
       }
     }
   }
@@ -56,9 +61,9 @@ export class SpatialHashGrid {
       for (let row = minRow; row <= maxRow; row++) {
         const key = `${col}:${row}`;
         const bucket = this.buckets.get(key);
-        if (bucket) {
-          for (const item of bucket) {
-            results.add(item);
+        if (bucket && bucket.length > 0) {
+          for (let i = 0; i < bucket.length; i++) {
+             results.add(bucket[i]);
           }
         }
       }

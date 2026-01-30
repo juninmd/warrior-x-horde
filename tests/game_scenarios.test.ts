@@ -51,6 +51,10 @@ vi.mock('../src/entities', () => ({
     addSoldiersToArmy: vi.fn(),
     addSpecialSoldiersToArmy: vi.fn(),
     createGatePair: vi.fn(() => []), // Return empty array
+    createCoin: vi.fn(() => ({ id: 1, x: 0, y: 0, value: 1 })),
+    createBoss: vi.fn(),
+    createMiniBoss: vi.fn(),
+    createMysteryBox: vi.fn(),
 }));
 
 describe('Game Low Army Coverage', () => {
