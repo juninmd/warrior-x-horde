@@ -16,7 +16,7 @@ export function spawnCoins(entities: Entities, canvasWidth: number, gameState: G
 
 export function spawnMysteryBoxes(entities: Entities, canvasWidth: number, _gameState: GameState, dtFactor: number): void {
   // Remover caixas que já passaram
-  entities.mysteryBoxes = entities.mysteryBoxes.filter(box => !box.passed && box.y < 1200);
+  entities.mysteryBoxes = entities.mysteryBoxes.filter(box => box && !box.passed && box.y < 1200);
 
   // Chance de spawn (raro)
   if (Math.random() < 0.002 * dtFactor && entities.mysteryBoxes.length < 1) { // 0.2% chance por frame (normalizado)
@@ -175,7 +175,7 @@ export function checkBossSpawn(entities: Entities, canvasWidth: number, gameStat
   }
 }
 
-export function updateSpawns(entities: Entities, canvasWidth: number, gameState: GameState, _canvasHeight: number = 800, dtFactor: number): void {
+export function updateSpawns(entities: Entities, canvasWidth: number, gameState: GameState, dtFactor: number): void {
   if (gameState.isGameOver || gameState.isVictory) return;
 
   spawnGates(entities, canvasWidth, gameState);

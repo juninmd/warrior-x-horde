@@ -255,6 +255,8 @@ function gameLoop(currentTime: number = 0): void {
   // Atualizar movimento das Mystery Boxes e limpar usando swap-and-pop
   for (let i = 0; i < entities.mysteryBoxes.length; i++) {
     const box = entities.mysteryBoxes[i];
+    if (!box) continue;
+
     box.y += gameState.gameSpeed * dtFactor;
 
     if (box.passed || box.y >= 1200) {

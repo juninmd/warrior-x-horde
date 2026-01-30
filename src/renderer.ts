@@ -18,6 +18,11 @@ const spriteCache: SpriteCache = {
   initialized: false
 };
 
+export function _resetSpriteCache() {
+  spriteCache.images.clear();
+  spriteCache.initialized = false;
+}
+
 // --- Background Caching System ---
 let backgroundCache: HTMLCanvasElement | OffscreenCanvas | null = null;
 let lastCachedLevel = -1;
@@ -1612,7 +1617,7 @@ function drawNukeEffect(ctx: CanvasRenderingContext2D, width: number, height: nu
   // Phase 1: Whiteout (Timer 60-50)
   // Phase 2: Fade + Shockwave (Timer 50-0)
 
-  const maxTimer = 60;
+  // const maxTimer = 60; // Unused
   // const progress = 1 - (timer / maxTimer); // Unused
 
   ctx.save();

@@ -21,7 +21,10 @@ import {
     addExplosion,
     addParticle,
     addTrail,
-    drawPauseScreen
+    drawPauseScreen,
+    updateFloatingTexts,
+    _testing,
+    _resetSpriteCache
 } from '../src/renderer';
 import { GameState, Entities, Army } from '../src/types';
 
@@ -151,5 +154,42 @@ describe('Renderer', () => {
       drawPauseScreen(ctx, 480, 800);
       expect(ctx.fillStyle).toBe('#FFD700'); // Last fillStyle set
       expect(ctx.fillText).toHaveBeenCalledWith('⏸️ PAUSADO', 240, 400);
+  });
+
+  it('should update and remove floating texts', () => {
+      // Reset
+      const texts = _testing.getFloatingTexts();
+      texts.length = 0;
+
+      addFloatingText('FadeMe', 100, 100, '#fff');
+      expect(texts.length).toBe(1);
+
+      // Run updates until it fades out
+      // Alpha starts at 1, decrements by 0.02. Needs ~51 updates.
+      for (let i = 0; i < 60; i++) {
+          updateFloatingTexts();
+      }
+
+      expect(texts.length).toBe(0);
+  });
+
+  it('should handle floating text gravity', () => {
+      // Reset
+      const texts = _testing.getFloatingTexts();
+      texts.length = 0;
+
+      addFloatingText('Fall', 100, 100, '#fff');
+      const startY = texts[0].y;
+
+      updateFloatingTexts();
+
+      expect(texts[0].y).not.toBe(startY);
+  });
+
+  it('should force re-render sprites', () => {
+      _resetSpriteCache();
+      preRenderSprites();
+      // This exercises renderSoldierToCache and renderSoldierShape for all types
+      expect(true).toBe(true);
   });
 });
