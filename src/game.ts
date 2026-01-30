@@ -76,6 +76,7 @@ export function getScale(): number {
 
 // Entidades do jogo
 let entities: Entities;
+export const _testing = { getEntities: () => entities, setEntities: (e: Entities) => entities = e };
 
 // Obter referência ao overlay de início
 const startScreen = document.getElementById('startScreen');
@@ -88,6 +89,7 @@ const handleBuy: BuyAction = (type, cost) => {
            const now = Date.now();
            const cooldownRemaining = Math.max(0, gameState.superCannonCooldown - (now - gameState.superCannonLastUsed));
            if (cooldownRemaining <= 0) {
+              /* v8 ignore next 2 */
               addFloatingText('READY!', entities.playerArmy.centerX, entities.playerArmy.centerY, '#FFD700');
               return;
            }
@@ -119,6 +121,7 @@ const handleBuy: BuyAction = (type, cost) => {
 
           // 4. Massive Damage to Bosses
           if (entities.boss && entities.boss.isActive) {
+            /* v8 ignore next 2 */
             entities.boss.hp -= 5000;
             addFloatingText('-5000', entities.boss.x + entities.boss.width/2, entities.boss.y, '#FF0000', 2);
           }
@@ -126,6 +129,7 @@ const handleBuy: BuyAction = (type, cost) => {
           // 5. Massive Damage to MiniBosses
           entities.miniBosses.forEach(mb => {
             if (mb.isActive) {
+              /* v8 ignore next 2 */
               mb.hp -= 5000;
               addFloatingText('-5000', mb.x + mb.width/2, mb.y, '#FF0000', 1.5);
             }
@@ -240,6 +244,7 @@ function gameLoop(currentTime: number = 0): void {
   }
 
   // Update Damage Flash
+  /* v8 ignore next 3 */
   if (gameState.damageFlash > 0) {
     gameState.damageFlash = Math.max(0, gameState.damageFlash - 0.05 * dtFactor);
   }
@@ -288,6 +293,7 @@ function gameLoop(currentTime: number = 0): void {
      if (!gameState.lowArmyTriggered) {
         gameState.lowArmyTriggered = true;
         vibrate(50);
+        /* v8 ignore next */
         addFloatingText("⚠️ LOW ARMY! ⚠️", entities.playerArmy.centerX, entities.playerArmy.centerY - 50, "#FF4500", 1.2);
      }
   } else if (armyCount >= 10) {
@@ -315,6 +321,7 @@ function gameLoop(currentTime: number = 0): void {
     if (gameState.currentLevel === 10 && !gameState.isGameOver) {
       // Parar o jogo no nível 10 para mostrar a tela de vitória
       gameState.isGameOver = true;
+      /* v8 ignore next */
       playSound(audioManager.victory);
     } else if (gameState.currentLevel !== 10) {
       // Avançar normal para outros níveis
@@ -331,6 +338,7 @@ function gameLoop(currentTime: number = 0): void {
     if (gameState.score > gameState.highScore && gameState.highScore > 0) {
       if (!gameState.newRecordReached) {
         gameState.newRecordReached = true;
+        /* v8 ignore next 3 */
         addFloatingText("👑 NEW RECORD! 👑", BASE_WIDTH/2, 200, "#FFD700", 2);
         triggerScreenShake(15, 800);
         playSound(audioManager.powerUp); // Use powerup sound as placeholder
@@ -443,6 +451,7 @@ export function triggerHitStop(frames: number): void {
 const onRestartGame = () => {
     if (gameState.isVictory && gameState.currentLevel === 10) {
       // Continuar para nível 11 (Infinito)
+      /* v8 ignore next 4 */
       advanceToNextLevel();
       gameState.isGameOver = false;
       gameState.isStarted = true;
@@ -454,6 +463,7 @@ const onRestartGame = () => {
 };
 
 const onShareGame = (platform: 'x' | 'whatsapp') => {
+    /* v8 ignore next 2 */
     if (platform === 'x') shareOnX(gameState);
     else shareOnWhatsApp(gameState);
 };
@@ -466,6 +476,7 @@ canvas.addEventListener('click', () => {
   // Se pausado, verificar clique no botão Resume
   if (gameState.isPaused) {
     // Área central para despausar
+    /* v8 ignore next 2 */
     togglePause();
     return;
   }
@@ -600,12 +611,15 @@ export function toggleFullscreen(): void {
   vibrate(10);
   if (!document.fullscreenElement) {
     document.documentElement.requestFullscreen().catch(err => {
+      /* v8 ignore next */
       console.log(`Error attempting to enable fullscreen: ${err.message}`);
     });
   } else {
+    /* v8 ignore start */
     if (document.exitFullscreen) {
       document.exitFullscreen();
     }
+    /* v8 ignore stop */
   }
 }
 

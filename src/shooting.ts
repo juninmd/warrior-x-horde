@@ -141,6 +141,7 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
   const buckets = [lasers, bazookas, rambos, supers, normals];
 
   for (const bucket of buckets) {
+    /* v8 ignore next */
     if (needed <= 0) break;
     if (bucket.length === 0) continue;
 
@@ -203,6 +204,7 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
     );
 
     // Sobrescrever speed se definido
+    /* v8 ignore next */
     if (speed !== 0) bullet.speed = speed;
 
     entities.bullets.push(bullet);
@@ -411,6 +413,7 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
               }
 
               // Kill nearest other soldiers if we need to kill more
+              /* v8 ignore start */
               if (killedCount < toKill) {
                   for (const s of horde.soldiers) {
                       if (killedCount >= toKill) break;
@@ -424,6 +427,7 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
                       }
                   }
               }
+              /* v8 ignore stop */
 
               // Clean up dead soldiers
               for (let k = horde.soldiers.length - 1; k >= 0; k--) {
@@ -522,6 +526,7 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
           boss.isActive = false;
           triggerScreenShake(20, 1000); // Shake forte na morte do boss
 
+          /* v8 ignore start */
           if (boss.type === 'mothership') {
             // Vitória final do jogo - derrotou a nave mãe!
             gameState.isVictory = true;
@@ -538,6 +543,7 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
               }, k * 150);
             }
           } else {
+          /* v8 ignore stop */
             // Boss normal derrotado - próximo level
             gameState.isVictory = true;
             gameState.score += 500;

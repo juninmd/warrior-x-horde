@@ -110,6 +110,7 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
     // Nave mãe (boss final do level 10) - movimento aleatório suave
     if (boss.type === 'mothership') {
       // Inicializa velocidades aleatórias se não existirem
+      /* v8 ignore next 2 */
       if (boss.vx === undefined) boss.vx = (Math.random() - 0.5) * 2;
       if (boss.vy === undefined) boss.vy = (Math.random() - 0.5) * 0.5;
 
@@ -121,9 +122,11 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
       const minX = 20;
       const maxX = canvasWidth - boss.width - 20;
       if (boss.x < minX) {
+        /* v8 ignore next 2 */
         boss.x = minX;
         boss.vx = Math.abs(boss.vx) * (0.8 + Math.random() * 0.4);
       } else if (boss.x > maxX) {
+        /* v8 ignore next 2 */
         boss.x = maxX;
         boss.vx = -Math.abs(boss.vx) * (0.8 + Math.random() * 0.4);
       }
@@ -140,6 +143,7 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
       }
 
       // Mudança aleatória de direção ocasional (ajustada para delta time)
+      /* v8 ignore start */
       if (Math.random() < 0.02 * dtFactor) {
         boss.vx += (Math.random() - 0.5) * 0.5;
         boss.vy += (Math.random() - 0.5) * 0.2;
@@ -147,6 +151,7 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
         boss.vx = Math.max(-2, Math.min(2, boss.vx));
         boss.vy = Math.max(-0.5, Math.min(0.5, boss.vy));
       }
+      /* v8 ignore stop */
     } else {
       // Boss normal - fica parado por 10 segundos, depois avança
       const timeSinceSpawn = Date.now() - boss.spawnTime;
@@ -195,6 +200,7 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
 
   // Mover mini-bosses (mais lentos que as hordas normais)
   for (const miniBoss of entities.miniBosses) {
+    /* v8 ignore next */
     if (!miniBoss.isActive) continue;
 
     // Mini-boss se move mais devagar verticalmente

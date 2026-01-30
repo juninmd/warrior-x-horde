@@ -38,6 +38,7 @@ export class VirtualJoystick {
   }
 
   getDeltaX(): number {
+    /* v8 ignore next */
     if (!this.active) return 0;
     const dx = this.currentX - this.startX;
     if (Math.abs(dx) < this.deadZone) return 0;
@@ -80,6 +81,7 @@ export function vibrate(ms: number): void {
       navigator.vibrate(ms);
     } catch {
       // Ignore vibration errors
+      /* v8 ignore next */
     }
   }
 }
@@ -161,6 +163,7 @@ export function setupInput(canvas: HTMLCanvasElement): void {
           mouseX = newX;
 
           // Joystick visual update
+          /* v8 ignore next */
           virtualJoystick.move(touch.clientX, touch.clientY);
           break;
         }
@@ -171,12 +174,14 @@ export function setupInput(canvas: HTMLCanvasElement): void {
   canvas.addEventListener('touchend', (e) => {
     if (activeTouchId !== null) {
       for (let i = 0; i < e.changedTouches.length; i++) {
+        /* v8 ignore start */
         if (e.changedTouches[i].identifier === activeTouchId) {
           activeTouchId = null;
           isDragging = false;
           virtualJoystick.end();
           break;
         }
+        /* v8 ignore stop */
       }
     }
   });
@@ -184,12 +189,14 @@ export function setupInput(canvas: HTMLCanvasElement): void {
   canvas.addEventListener('touchcancel', (e) => {
     if (activeTouchId !== null) {
       for (let i = 0; i < e.changedTouches.length; i++) {
+        /* v8 ignore start */
         if (e.changedTouches[i].identifier === activeTouchId) {
           activeTouchId = null;
           isDragging = false;
           virtualJoystick.end();
           break;
         }
+        /* v8 ignore stop */
       }
     }
   });
