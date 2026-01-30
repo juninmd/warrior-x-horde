@@ -1573,6 +1573,75 @@ function drawSuperCannonBeam(ctx: CanvasRenderingContext2D, centerX: number, cen
   ctx.fillRect(centerX - 30, centerY + 30, 60 * progress, 6);
 }
 
+function drawSpeedLines(ctx: CanvasRenderingContext2D, width: number, height: number, intensity: number, time: number): void {
+  if (QualityManager.getInstance().settings.simplifiedRendering) return;
+
+  const centerX = width / 2;
+  const centerY = height / 2;
+  const numLines = Math.floor(10 + intensity * 20);
+
+  ctx.save();
+  ctx.strokeStyle = `rgba(255, 255, 255, ${0.1 + intensity * 0.2})`;
+  ctx.lineWidth = 2;
+
+  for (let i = 0; i < numLines; i++) {
+    const angle = (i / numLines) * Math.PI * 2 + time * 0.005;
+    const length = 50 + Math.random() * 100 * intensity;
+    const offset = 200 + Math.random() * 50; // Start away from center
+
+    const x1 = centerX + Math.cos(angle) * offset;
+    const y1 = centerY + Math.sin(angle) * offset;
+    const x2 = centerX + Math.cos(angle) * (offset + length);
+    const y2 = centerY + Math.sin(angle) * (offset + length);
+
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawNukeEffect(ctx: CanvasRenderingContext2D, width: number, height: number, timer: number): void {
+  // Timer starts at ~60.
+  // Phase 1: Whiteout (Timer 60-50)
+  // Phase 2: Fade + Shockwave (Timer 50-0)
+
+  const maxTimer = 60;
+  const progress = 1 - (timer / maxTimer);
+
+  ctx.save();
+
+  // Whiteout Flash
+  if (timer > 45) {
+      const whiteAlpha = (timer - 45) / 15;
+      ctx.fillStyle = `rgba(255, 255, 255, ${whiteAlpha})`;
+      ctx.fillRect(0, 0, width, height);
+  }
+
+  // Shockwave Ring
+  if (timer < 55) {
+      const ringProgress = (55 - timer) / 55; // 0 to 1
+      const maxRadius = Math.max(width, height) * 0.8;
+      const radius = ringProgress * maxRadius;
+
+      ctx.beginPath();
+      ctx.arc(width / 2, height / 2, radius, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(255, 215, 0, ${1 - ringProgress})`; // Gold fade
+      ctx.lineWidth = 20 * (1 - ringProgress);
+      ctx.stroke();
+
+      // Secondary Ring
+      ctx.beginPath();
+      ctx.arc(width / 2, height / 2, radius * 0.8, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(255, 69, 0, ${(1 - ringProgress) * 0.5})`; // Orange fade
+      ctx.lineWidth = 10 * (1 - ringProgress);
+      ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
 export function drawPauseScreen(ctx: CanvasRenderingContext2D, width: number, height: number): void {
   ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
   ctx.fillRect(0, 0, width, height);
@@ -1641,6 +1710,15 @@ export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameSt
 
   if (gameState.bossAtmosphereIntensity > 0) {
     drawBossAtmosphere(ctx, width, height, gameState.bossAtmosphereIntensity, time);
+  }
+
+  // Visual Effects (Juice)
+  if (gameState.combo > 10) {
+      drawSpeedLines(ctx, width, height, Math.min(1, (gameState.combo - 10) / 50), time);
+  }
+
+  if (gameState.nukeTimer > 0) {
+      drawNukeEffect(ctx, width, height, gameState.nukeTimer);
   }
 
   if (gameState.damageFlash > 0) {

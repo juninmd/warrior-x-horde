@@ -100,14 +100,37 @@ const handleBuy: BuyAction = (type, cost) => {
         gameState.coins -= cost;
 
         if (type === 'nuke') {
+          // 1. Trigger Visuals
+          gameState.nukeTimer = 60; // 1 second visual
+          triggerScreenShake(20, 800);
+          triggerHitStop(10); // Freeze frame impact
+          playSound(audioManager.superCannon);
+          addFloatingText('⚠️ ORBITAL STRIKE ⚠️', entities.playerArmy.centerX, entities.playerArmy.centerY - 150, '#FF0000', 1.5);
+
+          // 2. Kill all normal hordes
           entities.enemyHordes.forEach(h => {
             if (h.isActive) {
               h.isActive = false;
             }
           });
-          addFloatingText('NUKE!', entities.playerArmy.centerX, entities.playerArmy.centerY - 100, '#F1C40F');
-          triggerScreenShake(15, 600);
-          playSound(audioManager.superCannon);
+
+          // 3. Clear Bullets
+          entities.bullets = [];
+
+          // 4. Massive Damage to Bosses
+          if (entities.boss && entities.boss.isActive) {
+            entities.boss.hp -= 5000;
+            addFloatingText('-5000', entities.boss.x + entities.boss.width/2, entities.boss.y, '#FF0000', 2);
+          }
+
+          // 5. Massive Damage to MiniBosses
+          entities.miniBosses.forEach(mb => {
+            if (mb.isActive) {
+              mb.hp -= 5000;
+              addFloatingText('-5000', mb.x + mb.width/2, mb.y, '#FF0000', 1.5);
+            }
+          });
+
         } else if (type === 'soldier') {
           addSoldiersToArmy(entities.playerArmy, 10);
           addFloatingText('+10 Soldiers', entities.playerArmy.centerX, entities.playerArmy.centerY, '#4A90D9');
@@ -219,6 +242,11 @@ function gameLoop(currentTime: number = 0): void {
   // Update Damage Flash
   if (gameState.damageFlash > 0) {
     gameState.damageFlash = Math.max(0, gameState.damageFlash - 0.05 * dtFactor);
+  }
+
+  // Update Nuke Timer
+  if (gameState.nukeTimer > 0) {
+    gameState.nukeTimer -= dtFactor;
   }
 
   // Atualizar movimento
