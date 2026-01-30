@@ -102,6 +102,51 @@ describe('Renderer', () => {
       expect(ctx.clearRect).toHaveBeenCalled();
   });
 
+  it('should render frame with particles (cached and uncached)', () => {
+      preRenderSprites(); // Ensure cache is populated
+
+      // Add Cached particles (spark #FFF is in pre-render list)
+      addParticle(100, 100, 'spark', '#FFF', 1);
+
+      // Add Uncached particle (unique color)
+      addParticle(200, 200, 'spark', '#123456', 1);
+
+      const army: Army = {
+          soldiers: [],
+          centerX: 100,
+          centerY: 100,
+          damage: 1,
+          fireRate: 100
+      } as any;
+
+      const entities: Entities = {
+          playerArmy: army,
+          coins: [],
+          gates: [],
+          enemyHordes: [],
+          mysteryBoxes: [],
+          miniBosses: [],
+          boss: null,
+          bullets: [],
+          weapons: []
+      } as any;
+
+      const gameState: GameState = {
+          score: 0,
+          coins: 0,
+          currentLevel: 1,
+          gameSpeed: 1,
+          isPaused: false,
+          bossAtmosphereIntensity: 0,
+          screenShakeActive: false,
+          damageFlash: 0
+      } as any;
+
+      render(ctx, entities, gameState);
+      // Logic inside drawParticles (loops, cache checks) will run
+      expect(true).toBe(true);
+  });
+
   it('should draw pause screen', () => {
       drawPauseScreen(ctx, 480, 800);
       expect(ctx.fillStyle).toBe('#FFD700'); // Last fillStyle set

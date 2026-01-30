@@ -455,7 +455,6 @@ function drawParticles(ctx: CanvasRenderingContext2D): void {
       ctx.globalAlpha = 1.0;
 
     } else {
-      /* v8 ignore start */
       // Fallback if not cached
       ctx.save();
       ctx.globalAlpha = p.life;
@@ -477,7 +476,6 @@ function drawParticles(ctx: CanvasRenderingContext2D): void {
       }
       ctx.fill();
       ctx.restore();
-      /* v8 ignore stop */
     }
   }
 }
@@ -1615,7 +1613,7 @@ function drawNukeEffect(ctx: CanvasRenderingContext2D, width: number, height: nu
   // Phase 2: Fade + Shockwave (Timer 50-0)
 
   const maxTimer = 60;
-  const progress = 1 - (timer / maxTimer);
+  // const progress = 1 - (timer / maxTimer); // Unused
 
   ctx.save();
 
