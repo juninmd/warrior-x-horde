@@ -148,7 +148,7 @@ describe('Spawner', () => {
     describe('Enemies', () => {
         it('should spawn enemies', () => {
             const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0.01); // High chance
-            spawnEnemies(entities, 480, gameState, 800, 1);
+            spawnEnemies(entities, 480, gameState, 1);
             expect(createEnemyHorde).toHaveBeenCalled();
             expect(entities.enemyHordes.length).toBe(1);
         });
@@ -162,7 +162,7 @@ describe('Spawner', () => {
                 { isActive: true, y: 100 } as any
             ];
 
-            spawnEnemies(entities, 480, gameState, 800, 1);
+            spawnEnemies(entities, 480, gameState, 1);
 
             expect(entities.enemyHordes.length).toBe(1);
             expect(entities.enemyHordes[0].y).toBe(100);
@@ -174,7 +174,7 @@ describe('Spawner', () => {
             gameState.distanceTraveled = 950; // > 0.9 * 1000
             gameState.currentLevel = 9; // < 10
 
-            checkBossSpawn(entities, 480, gameState, 800);
+            checkBossSpawn(entities, 480, gameState);
 
             expect(createBoss).toHaveBeenCalled();
             expect(entities.boss).toBeDefined();
@@ -188,7 +188,7 @@ describe('Spawner', () => {
             gameState.distanceTraveled = 950;
             gameState.currentLevel = 10;
 
-            checkBossSpawn(entities, 480, gameState, 800);
+            checkBossSpawn(entities, 480, gameState);
 
             expect(createBoss).toHaveBeenCalled();
             expect(entities.boss).toBeDefined();
@@ -204,7 +204,7 @@ describe('Spawner', () => {
         it('should not spawn boss if already exists', () => {
             gameState.distanceTraveled = 950;
             entities.boss = {} as any;
-            checkBossSpawn(entities, 480, gameState, 800);
+            checkBossSpawn(entities, 480, gameState);
             expect(createBoss).not.toHaveBeenCalled();
         });
     });
@@ -214,7 +214,7 @@ describe('Spawner', () => {
             // Logic: distance / interval > lastSpawn
             gameState.distanceTraveled = 300; // interval is 250 (1000 * 0.25)
 
-            spawnMiniBoss(entities, 480, gameState, 800);
+            spawnMiniBoss(entities, 480, gameState);
 
             expect(createMiniBoss).toHaveBeenCalled();
             expect(entities.miniBosses.length).toBe(1);
@@ -224,7 +224,7 @@ describe('Spawner', () => {
             gameState.currentLevel = 12;
             gameState.distanceTraveled = 500;
 
-            spawnMiniBoss(entities, 480, gameState, 800);
+            spawnMiniBoss(entities, 480, gameState);
 
             // Should spawn multiple
             expect(createMiniBoss).toHaveBeenCalled();

@@ -7,7 +7,7 @@ export const ASPECT_RATIO = BASE_WIDTH / BASE_HEIGHT;
 
 export const MAX_HEROES = 20000;
 export const MAX_ENEMIES = 20000;
-export const MAX_PARTICLES = 150; // Increased for more juice
+export const MAX_PARTICLES = 300; // Increased for more juice
 export const MAX_RENDERED_SOLDIERS = 150; // Increased for better visual density
 
 // --- Colors ---

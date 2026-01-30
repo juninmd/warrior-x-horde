@@ -16,7 +16,7 @@ export function spawnCoins(entities: Entities, canvasWidth: number, gameState: G
 
 export function spawnMysteryBoxes(entities: Entities, canvasWidth: number, _gameState: GameState, dtFactor: number): void {
   // Remover caixas que já passaram
-  entities.mysteryBoxes = entities.mysteryBoxes.filter(box => !box.passed && box.y < 1200);
+  entities.mysteryBoxes = entities.mysteryBoxes.filter(box => box && !box.passed && box.y < 1200);
 
   // Chance de spawn (raro)
   if (Math.random() < 0.002 * dtFactor && entities.mysteryBoxes.length < 1) { // 0.2% chance por frame (normalizado)
@@ -59,7 +59,7 @@ function getTotalEnemyCount(entities: Entities): number {
   return total;
 }
 
-export function spawnEnemies(entities: Entities, canvasWidth: number, gameState: GameState, _canvasHeight: number, dtFactor: number): void {
+export function spawnEnemies(entities: Entities, canvasWidth: number, gameState: GameState, dtFactor: number): void {
   // Inimigos nascem do céu (da nave alienígena)
   const spawnY = -50; // Acima da tela, vindo da nave
 
@@ -125,7 +125,7 @@ export function spawnEnemies(entities: Entities, canvasWidth: number, gameState:
 // Mini-boss spawn durante as hordas
 let lastMiniBossSpawn = 0;
 
-export function spawnMiniBoss(entities: Entities, canvasWidth: number, gameState: GameState, _canvasHeight: number): void {
+export function spawnMiniBoss(entities: Entities, canvasWidth: number, gameState: GameState): void {
   // Spawnar mini-boss
   // Se for level > 11 (Sistema Anti-Astolfo), spawna muito mais frequente
   let intervalFactor = 0.25; // Padrão: a cada 25% do level
@@ -158,7 +158,7 @@ export function spawnMiniBoss(entities: Entities, canvasWidth: number, gameState
   }
 }
 
-export function checkBossSpawn(entities: Entities, canvasWidth: number, gameState: GameState, _canvasHeight: number): void {
+export function checkBossSpawn(entities: Entities, canvasWidth: number, gameState: GameState): void {
   // Spawnar boss quando atingir distância do nível
   if (gameState.distanceTraveled >= gameState.levelDistance * 0.9 && !entities.boss) {
     const boss = createBoss(canvasWidth, gameState.currentLevel);
@@ -175,13 +175,13 @@ export function checkBossSpawn(entities: Entities, canvasWidth: number, gameStat
   }
 }
 
-export function updateSpawns(entities: Entities, canvasWidth: number, gameState: GameState, canvasHeight: number = 800, dtFactor: number): void {
+export function updateSpawns(entities: Entities, canvasWidth: number, gameState: GameState, dtFactor: number): void {
   if (gameState.isGameOver || gameState.isVictory) return;
 
   spawnGates(entities, canvasWidth, gameState);
-  spawnEnemies(entities, canvasWidth, gameState, canvasHeight, dtFactor);
-  spawnMiniBoss(entities, canvasWidth, gameState, canvasHeight);
+  spawnEnemies(entities, canvasWidth, gameState, dtFactor);
+  spawnMiniBoss(entities, canvasWidth, gameState);
   spawnMysteryBoxes(entities, canvasWidth, gameState, dtFactor);
   spawnCoins(entities, canvasWidth, gameState, dtFactor);
-  checkBossSpawn(entities, canvasWidth, gameState, canvasHeight);
+  checkBossSpawn(entities, canvasWidth, gameState);
 }
