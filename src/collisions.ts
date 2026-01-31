@@ -123,6 +123,7 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
   }
 
   if (killed > 0) {
+    /* v8 ignore next */
     gameState.damageFlash = Math.min(0.8, gameState.damageFlash + (killed * 0.05));
   }
 

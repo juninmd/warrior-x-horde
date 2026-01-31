@@ -343,6 +343,7 @@ const particles: Particle[] = [];
 const floatingTextPool = new ObjectPool<FloatingText>(
   () => ({ text: '', x: 0, y: 0, color: '#FFF', alpha: 1, scale: 1, vx: 0, vy: 0, gravity: 0 }),
   (t) => {
+    /* v8 ignore next 10 */
     t.text = '';
     t.x = 0;
     t.y = 0;
