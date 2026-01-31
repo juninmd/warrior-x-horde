@@ -93,4 +93,15 @@ describe('SpatialHashGrid', () => {
     const nearby = grid.query(-5000, -5000, 10000, 10000);
     expect(nearby.length).toBe(0);
   });
+
+  it('should expand pool when limit is reached', () => {
+    const grid = new SpatialHashGrid(100);
+    // Initial pool size is 500. Insert 501 items.
+    for (let i = 0; i < 505; i++) {
+        grid.insert(0, 0, 10, 10, 'test', { id: i });
+    }
+
+    const items = grid.query(0, 0, 100, 100);
+    expect(items.length).toBe(505);
+  });
 });

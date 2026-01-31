@@ -59,8 +59,17 @@ export class SpatialHashGrid {
   }
 
   // Get item from pool
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private getFromPool(x: number, y: number, width: number, height: number, type: string, obj: any, horde?: any): SpatialItem {
+  private getFromPool(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    type: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    obj: any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    horde?: any
+  ): SpatialItem {
     if (this.poolIndex >= this.pool.length) {
       // Expand pool
       this.pool.push({ x, y, width, height, type, obj, horde });
@@ -93,8 +102,17 @@ export class SpatialHashGrid {
   }
 
   // Inserir um item na grid
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  insert(x: number, y: number, width: number, height: number, type: string, obj: any, horde?: any): void {
+  insert(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    type: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    obj: any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    horde?: any
+  ): void {
     // Map coordinates to grid indices
     // Add offsets to handle negative coordinates or center alignment logic
 
@@ -150,8 +168,8 @@ export class SpatialHashGrid {
           const bucket = this.buckets[idx];
           for (let i = 0; i < bucket.length; i++) {
              const item = bucket[i];
-             if ((item as any)._lastQueryId !== queryId) {
-                 (item as any)._lastQueryId = queryId;
+             if (item._lastQueryId !== queryId) {
+                 item._lastQueryId = queryId;
                  results.push(item);
              }
           }
