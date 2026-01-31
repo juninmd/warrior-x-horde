@@ -1,6 +1,5 @@
 // input.ts - Sistema de input (mouse/touch)
 import { GameState } from './types';
-import { activateSuperCannon } from './shooting';
 
 let mouseX = 0;
 let isDragging = false;
@@ -218,7 +217,7 @@ export function setupInput(canvas: HTMLCanvasElement): void {
     // Super Cannon - Spacebar
     if (e.key === ' ' && gameStateRef) {
       e.preventDefault();
-      activateSuperCannon(gameStateRef);
+      import('./shooting').then(m => m.activateSuperCannon(gameStateRef!));
     }
   });
 }

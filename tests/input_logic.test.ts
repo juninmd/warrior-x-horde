@@ -139,7 +139,7 @@ describe('Input Coverage', () => {
     // virtualJoystick is only for touch.
   });
 
-  it('should handle keyboard events', () => {
+  it('should handle keyboard events', async () => {
     const gameState: GameState = { isGameOver: false, isStarted: true } as any;
     setGameStateRef(gameState);
 
@@ -151,6 +151,7 @@ describe('Input Coverage', () => {
 
     // Space (Super Cannon)
     document.dispatchEvent(new KeyboardEvent('keydown', { key: ' ' }));
+    await new Promise(resolve => setTimeout(resolve, 0));
     expect(shootingMock.activateSuperCannon).toHaveBeenCalled();
   });
 

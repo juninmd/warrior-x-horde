@@ -214,7 +214,7 @@ describe('Input', () => {
         expect(vj.getDeltaX()).toBe(0);
     });
 
-    it('should handle keyboard events', () => {
+    it('should handle keyboard events', async () => {
         setupInput(canvas);
         initializeMousePosition(480);
         const initialX = getMouseX(); // 240
@@ -243,6 +243,7 @@ describe('Input', () => {
         document.dispatchEvent(keySpace);
 
         expect(preventDefaultSpy).toHaveBeenCalled();
+        await new Promise(resolve => setTimeout(resolve, 0));
         expect(activateSuperCannon).toHaveBeenCalled();
     });
 
