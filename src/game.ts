@@ -82,6 +82,31 @@ export const _testing = { getEntities: () => entities, setEntities: (e: Entities
 const startScreen = document.getElementById('startScreen');
 const startBtnOverlay = document.getElementById('startBtnOverlay');
 
+// --- Wake Lock API (Mobile Screen Keep-Alive) ---
+let wakeLock: any = null;
+
+/* v8 ignore start */
+async function requestWakeLock() {
+  if (typeof navigator !== 'undefined' && 'wakeLock' in navigator) {
+    try {
+      wakeLock = await (navigator as any).wakeLock.request('screen');
+    } catch (err) {
+      console.warn('Wake Lock request failed:', err);
+    }
+  }
+}
+
+function releaseWakeLock() {
+  if (wakeLock) {
+    wakeLock.release()
+      .then(() => {
+        wakeLock = null;
+      })
+      .catch((err: unknown) => console.warn('Wake Lock release failed:', err));
+  }
+}
+/* v8 ignore stop */
+
 // --- Shop Logic ---
 const handleBuy: BuyAction = (type, cost) => {
     if (gameState.coins >= cost) {
@@ -380,6 +405,8 @@ function gameLoop(currentTime: number = 0): void {
     stopAllMusic();
     playSound(audioManager.gameOver);
 
+    releaseWakeLock(); // Allow screen to sleep
+
     // Mostrar UI de Game Over DOM
     showGameOverScreen(gameState);
   }
@@ -428,6 +455,7 @@ export function startGame(): void {
   // Start Countdown then Game
   startCountdown(() => {
     gameState.isStarted = true;
+    requestWakeLock(); // Keep screen on
 
     // Iniciar música
     playSound(audioManager.gameStart);
@@ -517,6 +545,10 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden && gameState.isStarted && !gameState.isGameOver && !gameState.isPaused) {
     togglePause();
   }
+  // Re-acquire lock if returning
+  if (!document.hidden && gameState.isStarted && !gameState.isPaused) {
+    requestWakeLock();
+  }
 });
 
 // Atualizar botão de mute inicial
@@ -589,6 +621,7 @@ export function togglePause(): void {
     // Resume with countdown
     startCountdown(() => {
       gameState.isPaused = false;
+      requestWakeLock();
       const pauseBtn = document.getElementById('pauseBtnTop');
       if (pauseBtn) pauseBtn.textContent = '⏸️';
       console.log('⏸️ Jogo retomado');
@@ -597,6 +630,7 @@ export function togglePause(): void {
   } else {
     // Pause immediately
     gameState.isPaused = true;
+    releaseWakeLock();
     const pauseBtn = document.getElementById('pauseBtnTop');
     if (pauseBtn) pauseBtn.textContent = '▶️';
     console.log('⏸️ Jogo pausado');

@@ -380,9 +380,10 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
   entities.mysteryBoxes.forEach(box => {
     if (box && !box.passed) {
        entities.bullets.forEach(bullet => {
+         if (bullet.y < box.y || bullet.y > box.y + box.height) return;
+
          if (!bullet.isEnemy &&
-             bullet.x > box.x && bullet.x < box.x + box.width &&
-             bullet.y > box.y && bullet.y < box.y + box.height) {
+             bullet.x > box.x && bullet.x < box.x + box.width) {
 
            box.hp -= bullet.damage;
            bullet.y = -1000;
