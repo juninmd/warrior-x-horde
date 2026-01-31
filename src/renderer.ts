@@ -1039,6 +1039,7 @@ let lastArmyX = 0;
 const tempAliveNormalSoldiers: Soldier[] = [];
 const tempSuperSoldiers: Soldier[] = [];
 const tempSoldiersToDraw: Soldier[] = [];
+const tempEnemySoldiers: Soldier[] = [];
 
 export function prepareSoldiersToDraw(army: Army): Soldier[] {
   const maxSoldiers = QualityManager.getInstance().settings.maxRenderedSoldiers;
@@ -1135,15 +1136,31 @@ function drawArmy(ctx: CanvasRenderingContext2D, army: Army, time: number): void
 function drawEnemyHorde(ctx: CanvasRenderingContext2D, horde: EnemyHorde, time: number): void {
   if (!spriteCache.initialized) preRenderSprites();
 
-  let sortedSoldiers = [...horde.soldiers].filter(s => s.isAlive).sort((a, b) => a.y - b.y);
+  // Optimized: Use reusable array to avoid allocations
+  tempEnemySoldiers.length = 0;
 
-  if (sortedSoldiers.length > MAX_RENDERED_SOLDIERS) {
-    const step = sortedSoldiers.length / MAX_RENDERED_SOLDIERS;
-    const sampled: typeof sortedSoldiers = [];
-    for (let i = 0; i < MAX_RENDERED_SOLDIERS; i++) {
-      sampled.push(sortedSoldiers[Math.floor(i * step)]);
+  for (const s of horde.soldiers) {
+    if (s.isAlive) {
+      tempEnemySoldiers.push(s);
     }
-    sortedSoldiers = sampled;
+  }
+
+  tempEnemySoldiers.sort((a, b) => a.y - b.y);
+
+  // Sampling if too many
+  if (tempEnemySoldiers.length > MAX_RENDERED_SOLDIERS) {
+     const originalLength = tempEnemySoldiers.length;
+     const step = originalLength / MAX_RENDERED_SOLDIERS;
+     // Reducing size in place
+     let writeIdx = 0;
+     for (let i = 0; i < MAX_RENDERED_SOLDIERS; i++) {
+        const readIdx = Math.floor(i * step);
+        if (readIdx !== writeIdx) {
+            tempEnemySoldiers[writeIdx] = tempEnemySoldiers[readIdx];
+        }
+        writeIdx++;
+     }
+     tempEnemySoldiers.length = MAX_RENDERED_SOLDIERS;
   }
 
   const fadeStartY = 100;
@@ -1156,7 +1173,7 @@ function drawEnemyHorde(ctx: CanvasRenderingContext2D, horde: EnemyHorde, time: 
   ctx.save();
   ctx.globalAlpha = hordeAlpha;
 
-  for (const soldier of sortedSoldiers) {
+  for (const soldier of tempEnemySoldiers) {
     if (soldier.hitTimer && soldier.hitTimer > 0) {
       soldier.hitTimer--;
     }
