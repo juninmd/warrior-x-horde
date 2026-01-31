@@ -340,7 +340,7 @@ function renderParticleToCache(type: Particle['type'], color: string) {
 // ------------------------------
 
 const floatingTexts: FloatingText[] = [];
-export const _testing = { getFloatingTexts: () => floatingTexts };
+export const _testing = { getFloatingTexts: () => floatingTexts, getParticles: () => particles };
 const particles: Particle[] = [];
 
 // Pool de floating texts
@@ -421,7 +421,7 @@ export function addTrail(x: number, y: number, color: string): void {
   }
 }
 
-function updateParticles(): void {
+export function updateParticles(): void {
   for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i];
     p.x += p.vx;
