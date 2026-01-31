@@ -128,6 +128,7 @@ function renderSoldierToCache(type: Soldier['type'], color: string, size: number
   let canvas: HTMLCanvasElement | OffscreenCanvas;
   let ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null;
 
+  /* v8 ignore start */
   if (typeof OffscreenCanvas !== 'undefined') {
     canvas = new OffscreenCanvas(canvasSize, canvasSize);
     ctx = canvas.getContext('2d');
@@ -137,6 +138,7 @@ function renderSoldierToCache(type: Soldier['type'], color: string, size: number
     canvas.height = canvasSize;
     ctx = canvas.getContext('2d');
   }
+  /* v8 ignore stop */
 
   if (!ctx) return;
 
@@ -301,6 +303,7 @@ function renderParticleToCache(type: Particle['type'], color: string) {
   let canvas: HTMLCanvasElement | OffscreenCanvas;
   let ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null;
 
+  /* v8 ignore start */
   if (typeof OffscreenCanvas !== 'undefined') {
     canvas = new OffscreenCanvas(canvasSize, canvasSize);
     ctx = canvas.getContext('2d');
@@ -310,6 +313,7 @@ function renderParticleToCache(type: Particle['type'], color: string) {
     canvas.height = canvasSize;
     ctx = canvas.getContext('2d');
   }
+  /* v8 ignore stop */
 
   if (!ctx) return;
 

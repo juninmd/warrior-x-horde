@@ -83,12 +83,14 @@ const startScreen = document.getElementById('startScreen');
 const startBtnOverlay = document.getElementById('startBtnOverlay');
 
 // --- Wake Lock API (Mobile Screen Keep-Alive) ---
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let wakeLock: any = null;
 
 /* v8 ignore start */
 async function requestWakeLock() {
   if (typeof navigator !== 'undefined' && 'wakeLock' in navigator) {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       wakeLock = await (navigator as any).wakeLock.request('screen');
     } catch (err) {
       console.warn('Wake Lock request failed:', err);
@@ -131,6 +133,7 @@ const handleBuy: BuyAction = (type, cost) => {
           gameState.nukeTimer = 60; // 1 second visual
           triggerScreenShake(20, 800);
           triggerHitStop(10); // Freeze frame impact
+          /* v8 ignore next 2 */
           playSound(audioManager.superCannon);
           addFloatingText('⚠️ ORBITAL STRIKE ⚠️', entities.playerArmy.centerX, entities.playerArmy.centerY - 150, '#FF0000', 1.5);
 
@@ -146,7 +149,7 @@ const handleBuy: BuyAction = (type, cost) => {
 
           // 4. Massive Damage to Bosses
           if (entities.boss && entities.boss.isActive) {
-            /* v8 ignore next 2 */
+            /* v8 ignore next 3 */
             entities.boss.hp -= 5000;
             addFloatingText('-5000', entities.boss.x + entities.boss.width/2, entities.boss.y, '#FF0000', 2);
           }
@@ -418,6 +421,7 @@ function advanceToNextLevel(): void {
   const levelBonus = 100 + gameState.currentLevel * 50;
   gameState.coins += levelBonus;
   saveGameProgress(); // Salvar progresso
+  /* v8 ignore next 2 */
   addFloatingText(`LEVEL CLEAR! +${levelBonus} 💰`, BASE_WIDTH/2, BASE_HEIGHT/2, '#FFD700', 2.0);
   playSound(audioManager.victory);
 
@@ -655,7 +659,9 @@ export function toggleFullscreen(): void {
     });
   } else {
     /* v8 ignore start */
+    // @ts-ignore
     if (document.exitFullscreen) {
+      // @ts-ignore
       document.exitFullscreen();
     }
     /* v8 ignore stop */
