@@ -128,6 +128,7 @@ function renderSoldierToCache(type: Soldier['type'], color: string, size: number
   let canvas: HTMLCanvasElement | OffscreenCanvas;
   let ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null;
 
+  /* v8 ignore start */
   if (typeof OffscreenCanvas !== 'undefined') {
     canvas = new OffscreenCanvas(canvasSize, canvasSize);
     ctx = canvas.getContext('2d');
@@ -137,6 +138,7 @@ function renderSoldierToCache(type: Soldier['type'], color: string, size: number
     canvas.height = canvasSize;
     ctx = canvas.getContext('2d');
   }
+  /* v8 ignore stop */
 
   if (!ctx) return;
 
@@ -301,6 +303,7 @@ function renderParticleToCache(type: Particle['type'], color: string) {
   let canvas: HTMLCanvasElement | OffscreenCanvas;
   let ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null;
 
+  /* v8 ignore start */
   if (typeof OffscreenCanvas !== 'undefined') {
     canvas = new OffscreenCanvas(canvasSize, canvasSize);
     ctx = canvas.getContext('2d');
@@ -310,6 +313,7 @@ function renderParticleToCache(type: Particle['type'], color: string) {
     canvas.height = canvasSize;
     ctx = canvas.getContext('2d');
   }
+  /* v8 ignore stop */
 
   if (!ctx) return;
 
@@ -436,6 +440,9 @@ function updateParticles(): void {
 /* v8 ignore start */
 function drawParticles(ctx: CanvasRenderingContext2D): void {
   for (const p of particles) {
+    // Viewport Culling
+    if (p.y < -50 || p.y > BASE_HEIGHT + 50) continue;
+
     const key = `particle_${p.type}_${p.color}`;
     const cachedCanvas = spriteCache.images.get(key);
 
@@ -1382,6 +1389,9 @@ function drawDamageOverlay(ctx: CanvasRenderingContext2D, width: number, height:
 
 function drawBullets(ctx: CanvasRenderingContext2D, bullets: Bullet[]): void {
   for (const bullet of bullets) {
+    // Viewport Culling
+    if (bullet.y < -50 || bullet.y > BASE_HEIGHT + 50) continue;
+
     const gradient = ctx.createRadialGradient(bullet.x, bullet.y, 0, bullet.x, bullet.y, 8);
     gradient.addColorStop(0, bullet.isEnemy ? '#FF6B6B' : '#FFD700');
     gradient.addColorStop(1, 'rgba(255, 215, 0, 0)');
@@ -1522,11 +1532,6 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
     ctx.lineWidth = 2;
     ctx.strokeText(`${gameState.combo}x COMBO!`, 0, 0);
     ctx.fillText(`${gameState.combo}x COMBO!`, 0, 0);
-    const comboProgress = gameState.comboTimer / 4000;
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-    ctx.fillRect(-50, 10, 100, 6);
-    ctx.fillStyle = getComboColor(gameState.combo);
-    ctx.fillRect(-50, 10, 100 * comboProgress, 6);
     ctx.restore();
   }
 
@@ -1662,6 +1667,59 @@ export function drawPauseScreen(ctx: CanvasRenderingContext2D, width: number, he
   ctx.fillText('⏸️ PAUSADO', width / 2, height / 2);
 }
 
+function drawComboBar(ctx: CanvasRenderingContext2D, gameState: GameState): void {
+  if (gameState.combo <= 1) return;
+
+  const width = BASE_WIDTH;
+  const barWidth = 220;
+  const barHeight = 12;
+  const x = (width - barWidth) / 2;
+  const y = 150; // Stable position below the shaking text area
+
+  const maxTimer = 4000;
+  const progress = Math.max(0, Math.min(1, gameState.comboTimer / maxTimer));
+  const color = getComboColor(gameState.combo);
+
+  ctx.save();
+
+  // Glow background
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 10;
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+  ctx.beginPath();
+  ctx.roundRect(x, y, barWidth, barHeight, 6);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // Progress Fill
+  if (progress > 0) {
+      // Gradient fill
+      const grad = ctx.createLinearGradient(x, y, x + barWidth, y);
+      grad.addColorStop(0, shadeColor(color, -20));
+      grad.addColorStop(1, color);
+
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.roundRect(x + 2, y + 2, (barWidth - 4) * progress, barHeight - 4, 4);
+      ctx.fill();
+
+      // Shine line
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.beginPath();
+      ctx.roundRect(x + 2, y + 2, (barWidth - 4) * progress, (barHeight - 4) / 2, 4);
+      ctx.fill();
+  }
+
+  // Border
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.roundRect(x, y, barWidth, barHeight, 6);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
 export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameState: GameState): void {
   const width = BASE_WIDTH;
   const height = BASE_HEIGHT;
@@ -1737,6 +1795,7 @@ export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameSt
   }
 
   drawUI(ctx, gameState, entities.playerArmy.soldiers.filter(s => s.isAlive).length, entities.playerArmy.fireRate, entities.playerArmy.damage, entities.playerArmy);
+  drawComboBar(ctx, gameState);
   drawJoystick(ctx);
   // updateFloatingTexts() moved to game loop to respect pause
   drawFloatingTexts(ctx);

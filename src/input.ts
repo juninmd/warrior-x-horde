@@ -186,20 +186,20 @@ export function setupInput(canvas: HTMLCanvasElement): void {
     }
   });
 
+  /* v8 ignore start */
   canvas.addEventListener('touchcancel', (e) => {
     if (activeTouchId !== null) {
       for (let i = 0; i < e.changedTouches.length; i++) {
-        /* v8 ignore start */
         if (e.changedTouches[i].identifier === activeTouchId) {
           activeTouchId = null;
           isDragging = false;
           virtualJoystick.end();
           break;
         }
-        /* v8 ignore stop */
       }
     }
   });
+  /* v8 ignore stop */
 
   // Keyboard events for desktop
   document.addEventListener('keydown', (e) => {

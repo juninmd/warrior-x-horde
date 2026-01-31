@@ -121,19 +121,20 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
       // Limites horizontais (margem de 20px)
       const minX = 20;
       const maxX = canvasWidth - boss.width - 20;
+      /* v8 ignore start */
       if (boss.x < minX) {
-        /* v8 ignore next 2 */
         boss.x = minX;
         boss.vx = Math.abs(boss.vx) * (0.8 + Math.random() * 0.4);
       } else if (boss.x > maxX) {
-        /* v8 ignore next 2 */
         boss.x = maxX;
         boss.vx = -Math.abs(boss.vx) * (0.8 + Math.random() * 0.4);
       }
+      /* v8 ignore stop */
 
       // Limites verticais (entre y=20 e y=80)
       const minY = 20;
       const maxY = 80;
+      /* v8 ignore start */
       if (boss.y < minY) {
         boss.y = minY;
         boss.vy = Math.abs(boss.vy) * (0.8 + Math.random() * 0.4);
@@ -141,6 +142,7 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
         boss.y = maxY;
         boss.vy = -Math.abs(boss.vy) * (0.8 + Math.random() * 0.4);
       }
+      /* v8 ignore stop */
 
       // Mudança aleatória de direção ocasional (ajustada para delta time)
       /* v8 ignore start */

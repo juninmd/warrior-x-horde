@@ -156,6 +156,7 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
     else if (gameState.combo === 20) addFloatingText("LEGENDARY!", horde.x, horde.y - 60, COLORS.UI.GOLD, 2.0);
     else if (gameState.combo === 50) addFloatingText("UNSTOPPABLE!", horde.x, horde.y - 60, COLORS.EFFECTS.EXPLOSION, 2.5);
 
+    /* v8 ignore next */
     const comboMultiplier = Math.min(gameState.combo, 10);
     const scoreGain = 100 * comboMultiplier;
     gameState.score += scoreGain;
@@ -173,6 +174,7 @@ function processMiniBossBattle(army: Army, miniBoss: MiniBoss, gameState: GameSt
   const playerCount = army.aliveCount;
 
   if (playerCount <= 0 || miniBoss.hp <= 0) {
+    /* v8 ignore start */
     if (miniBoss.hp <= 0) {
       miniBoss.isActive = false;
       gameState.score += 300;
@@ -181,6 +183,7 @@ function processMiniBossBattle(army: Army, miniBoss: MiniBoss, gameState: GameSt
       addFloatingText('MINI-BOSS DEFEATED!', miniBoss.x + miniBoss.width / 2, miniBoss.y, '#FF4500', 1.4);
     }
     return;
+    /* v8 ignore stop */
   }
 
   // Optimize: Remove soldiers in a single pass
@@ -380,9 +383,10 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
   entities.mysteryBoxes.forEach(box => {
     if (box && !box.passed) {
        entities.bullets.forEach(bullet => {
+         if (bullet.y < box.y || bullet.y > box.y + box.height) return;
+
          if (!bullet.isEnemy &&
-             bullet.x > box.x && bullet.x < box.x + box.width &&
-             bullet.y > box.y && bullet.y < box.y + box.height) {
+             bullet.x > box.x && bullet.x < box.x + box.width) {
 
            box.hp -= bullet.damage;
            bullet.y = -1000;

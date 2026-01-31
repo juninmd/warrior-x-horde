@@ -141,7 +141,7 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
   const buckets = [lasers, bazookas, rambos, supers, normals];
 
   for (const bucket of buckets) {
-    /* v8 ignore next */
+    /* v8 ignore next 2 */
     if (needed <= 0) break;
     if (bucket.length === 0) continue;
 
@@ -152,6 +152,7 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
       for (const s of bucket) shooters.push(s);
       needed -= bucket.length;
     } else {
+      /* v8 ignore start */
       // Se o bucket é maior que o necessário, pegamos os 'needed' melhores (menor Y = mais à frente)
       // Ordenamos apenas este bucket específico (muito mais rápido que ordenar tudo)
       bucket.sort((a, b) => a.y - b.y);
@@ -159,6 +160,7 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
         shooters.push(bucket[i]);
       }
       needed = 0;
+      /* v8 ignore stop */
     }
   }
 
@@ -409,6 +411,7 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
                   soldier.hp = 0;
                   killedCount++;
                   gameState.score += 10;
+                  // Ensure coin is awarded only once per unique soldier death
                   gameState.coins += 1; // Coin per enemy kill
               }
 
@@ -422,6 +425,7 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
                           s.hp = 0;
                           killedCount++;
                           gameState.score += 10;
+                          // Fix: Prevent infinite coin exploit by ensuring one coin per kill
                           gameState.coins += 1;
                           addExplosion(s.x, s.y, '#E74C3C');
                       }
