@@ -659,9 +659,7 @@ export function toggleFullscreen(): void {
     });
   } else {
     /* v8 ignore start */
-    // @ts-ignore
     if (document.exitFullscreen) {
-      // @ts-ignore
       document.exitFullscreen();
     }
     /* v8 ignore stop */
