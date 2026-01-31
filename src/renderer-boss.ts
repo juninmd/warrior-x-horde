@@ -370,7 +370,7 @@ export function drawBossSlime(ctx: CanvasRenderingContext2D, boss: Boss, time: n
   ctx.fill();
 }
 
-export function drawBossEye(ctx: CanvasRenderingContext2D, boss: Boss, _time: number): void {
+export function drawBossEye(ctx: CanvasRenderingContext2D, boss: Boss): void {
   const cx = boss.x + boss.width / 2;
   const cy = boss.y + boss.height / 2;
 
@@ -407,7 +407,7 @@ export function drawBossEye(ctx: CanvasRenderingContext2D, boss: Boss, _time: nu
   ctx.stroke();
 }
 
-export function drawBossSpider(ctx: CanvasRenderingContext2D, boss: Boss, _time: number): void {
+export function drawBossSpider(ctx: CanvasRenderingContext2D, boss: Boss): void {
   const cx = boss.x + boss.width / 2;
   const cy = boss.y + boss.height / 2;
 
@@ -439,7 +439,7 @@ export function drawBossSpider(ctx: CanvasRenderingContext2D, boss: Boss, _time:
   }
 }
 
-export function drawBossSkull(ctx: CanvasRenderingContext2D, boss: Boss, _time: number): void {
+export function drawBossSkull(ctx: CanvasRenderingContext2D, boss: Boss): void {
   const cx = boss.x + boss.width / 2;
   const cy = boss.y + boss.height / 2;
 
@@ -535,9 +535,9 @@ export function drawBoss(ctx: CanvasRenderingContext2D, boss: Boss, time: number
     case 'demon': drawBossDemon(ctx, boss, time); break;
     case 'beast': drawBossBeast(ctx, boss, time); break;
     case 'slime': drawBossSlime(ctx, boss, time); break;
-    case 'eye': drawBossEye(ctx, boss, time); break;
-    case 'spider': drawBossSpider(ctx, boss, time); break;
-    case 'skull': drawBossSkull(ctx, boss, time); break;
+    case 'eye': drawBossEye(ctx, boss); break;
+    case 'spider': drawBossSpider(ctx, boss); break;
+    case 'skull': drawBossSkull(ctx, boss); break;
     case 'ghost': drawBossGhost(ctx, boss, time); break;
     case 'crystal': drawBossCrystal(ctx, boss, time); break;
     default: drawBossBeast(ctx, boss, time); break;

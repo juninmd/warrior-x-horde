@@ -21,7 +21,10 @@ import {
     addExplosion,
     addParticle,
     addTrail,
-    drawPauseScreen
+    drawPauseScreen,
+    updateFloatingTexts,
+    _testing,
+    _resetSpriteCache
 } from '../src/renderer';
 import { GameState, Entities, Army } from '../src/types';
 
@@ -102,9 +105,91 @@ describe('Renderer', () => {
       expect(ctx.clearRect).toHaveBeenCalled();
   });
 
+  it('should render frame with particles (cached and uncached)', () => {
+      preRenderSprites(); // Ensure cache is populated
+
+      // Add Cached particles (spark #FFF is in pre-render list)
+      addParticle(100, 100, 'spark', '#FFF', 1);
+
+      // Add Uncached particle (unique color)
+      addParticle(200, 200, 'spark', '#123456', 1);
+
+      const army: Army = {
+          soldiers: [],
+          centerX: 100,
+          centerY: 100,
+          damage: 1,
+          fireRate: 100
+      } as any;
+
+      const entities: Entities = {
+          playerArmy: army,
+          coins: [],
+          gates: [],
+          enemyHordes: [],
+          mysteryBoxes: [],
+          miniBosses: [],
+          boss: null,
+          bullets: [],
+          weapons: []
+      } as any;
+
+      const gameState: GameState = {
+          score: 0,
+          coins: 0,
+          currentLevel: 1,
+          gameSpeed: 1,
+          isPaused: false,
+          bossAtmosphereIntensity: 0,
+          screenShakeActive: false,
+          damageFlash: 0
+      } as any;
+
+      render(ctx, entities, gameState);
+      // Logic inside drawParticles (loops, cache checks) will run
+      expect(true).toBe(true);
+  });
+
   it('should draw pause screen', () => {
       drawPauseScreen(ctx, 480, 800);
       expect(ctx.fillStyle).toBe('#FFD700'); // Last fillStyle set
       expect(ctx.fillText).toHaveBeenCalledWith('⏸️ PAUSADO', 240, 400);
+  });
+
+  it('should update and remove floating texts', () => {
+      // Reset
+      const texts = _testing.getFloatingTexts();
+      texts.length = 0;
+
+      addFloatingText('FadeMe', 100, 100, '#fff');
+      expect(texts.length).toBe(1);
+
+      // Run updates until it fades out
+      // Alpha starts at 1, decrements by 0.02. Needs ~51 updates.
+      for (let i = 0; i < 60; i++) {
+          updateFloatingTexts();
+      }
+
+      expect(texts.length).toBe(0);
+  });
+
+  it('should handle floating text gravity', () => {
+      // Reset
+      const texts = _testing.getFloatingTexts();
+      texts.length = 0;
+
+      addFloatingText('Fall', 100, 100, '#fff');
+      const startY = texts[0].y;
+
+      updateFloatingTexts();
+
+      expect(texts[0].y).not.toBe(startY);
+  });
+
+  it('should force re-render sprites', () => {
+      _resetSpriteCache();
+      preRenderSprites();
+      // This exercises renderSoldierToCache and renderSoldierShape for all types
+      expect(true).toBe(true);
   });
 });

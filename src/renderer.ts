@@ -18,6 +18,11 @@ const spriteCache: SpriteCache = {
   initialized: false
 };
 
+export function _resetSpriteCache() {
+  spriteCache.images.clear();
+  spriteCache.initialized = false;
+}
+
 // --- Background Caching System ---
 let backgroundCache: HTMLCanvasElement | OffscreenCanvas | null = null;
 let lastCachedLevel = -1;
@@ -379,7 +384,8 @@ export function addParticle(x: number, y: number, type: Particle['type'], color:
 
   // Reduzir count se estiver chegando no limite
   const availableSlots = limit - particles.length;
-  const actualCount = Math.min(count, availableSlots, 2); // Máximo 2 partículas por vez
+  // Allow bursts up to limit, no hard cap per frame
+  const actualCount = Math.min(count, availableSlots);
 
   for (let i = 0; i < actualCount; i++) {
     const angle = Math.random() * Math.PI * 2;
@@ -455,7 +461,6 @@ function drawParticles(ctx: CanvasRenderingContext2D): void {
       ctx.globalAlpha = 1.0;
 
     } else {
-      /* v8 ignore start */
       // Fallback if not cached
       ctx.save();
       ctx.globalAlpha = p.life;
@@ -477,7 +482,6 @@ function drawParticles(ctx: CanvasRenderingContext2D): void {
       }
       ctx.fill();
       ctx.restore();
-      /* v8 ignore stop */
     }
   }
 }
@@ -1216,17 +1220,24 @@ function drawGate(ctx: CanvasRenderingContext2D, gate: Gate): void {
   }
 
   ctx.save();
-  // Shadow/Glow
+  // Shadow/Glow - Optimized with Gradient (instead of ShadowBlur)
   if (QualityManager.getInstance().settings.enableShadows) {
-    ctx.shadowColor = gate.color;
-    ctx.shadowBlur = 15;
+      const glowX = x + width / 2;
+      const glowY = gate.y + height / 2;
+      const glowRadius = width * 0.8;
+      const glow = ctx.createRadialGradient(glowX, glowY, 0, glowX, glowY, glowRadius);
+      glow.addColorStop(0, `${gate.color}66`); // 40% opacity
+      glow.addColorStop(1, `${gate.color}00`); // 0% opacity
+
+      ctx.fillStyle = glow;
+      ctx.fillRect(x - 20, gate.y - 20, width + 40, height + 40);
   }
 
+  // Ground Shadow
   ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
   ctx.beginPath();
   ctx.ellipse(x + width / 2 + 5, gate.y + height + 10, width / 2, 15, 0, 0, Math.PI * 2);
   ctx.fill();
-  ctx.shadowBlur = 0; // Reset for post
 
   ctx.fillStyle = '#8B4513'; // Post color
   ctx.beginPath();
@@ -1235,8 +1246,7 @@ function drawGate(ctx: CanvasRenderingContext2D, gate: Gate): void {
   ctx.fill();
 
   // Main Body
-  ctx.shadowBlur = 10;
-  ctx.shadowColor = gate.color;
+  // Removed shadowBlur here too for performance, relying on the gradient glow above
   ctx.fillStyle = barrelGradient;
   ctx.beginPath();
   ctx.roundRect(x, gate.y, width, height, 12);
@@ -1608,8 +1618,8 @@ function drawNukeEffect(ctx: CanvasRenderingContext2D, width: number, height: nu
   // Phase 1: Whiteout (Timer 60-50)
   // Phase 2: Fade + Shockwave (Timer 50-0)
 
-  const maxTimer = 60;
-  const progress = 1 - (timer / maxTimer);
+  // const maxTimer = 60; // Unused
+  // const progress = 1 - (timer / maxTimer); // Unused
 
   ctx.save();
 

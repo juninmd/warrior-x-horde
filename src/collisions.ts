@@ -347,7 +347,7 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
 
   // Check Mystery Boxes
   for (const box of entities.mysteryBoxes) {
-    if (!box.passed) {
+    if (box && !box.passed) {
         // Box check was standard rect
         const boxBounds = getEntityBounds(box.x, box.y, box.width, box.height);
         if (checkBounds(bounds, boxBounds)) {
@@ -378,7 +378,7 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
 
   // Bullet vs Mystery Box interaction
   entities.mysteryBoxes.forEach(box => {
-    if (!box.passed) {
+    if (box && !box.passed) {
        entities.bullets.forEach(bullet => {
          if (!bullet.isEnemy &&
              bullet.x > box.x && bullet.x < box.x + box.width &&

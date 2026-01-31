@@ -104,8 +104,7 @@ export function setupShopUI(onBuy: BuyAction): void {
         /* v8 ignore start */
         e.stopPropagation();
         vibrate(15); // Haptic feedback
-        onBuy(cfg.type as any, cfg.price);
-        /* v8 ignore stop */
+        onBuy(cfg.type as Parameters<BuyAction>[0], cfg.price);
         // Persistir moedas após compra
         // Nota: gameState não é acessível diretamente aqui, mas o callback onBuy atualiza o estado
         // Idealmente, a persistência deveria ser feita no callback, mas podemos adicionar um pequeno delay ou acessar globalmente se necessário.
@@ -293,15 +292,27 @@ export function setupGameOverUI(onRestart: () => void, onShare: (platform: 'x' |
     gameOverContainer.appendChild(content);
 
     // Storing callbacks for dynamic button creation in showGameOverScreen
-    (gameOverContainer as any)._onRestart = onRestart;
-    (gameOverContainer as any)._onShare = onShare;
+    // Using dataset or just storing in module level variables would be cleaner, but adhering to existing pattern with type safety:
+    interface GameOverContainer extends HTMLElement {
+        _onRestart?: () => void;
+        _onShare?: (platform: 'x' | 'whatsapp') => void;
+    }
+    (gameOverContainer as GameOverContainer)._onRestart = onRestart;
+    (gameOverContainer as GameOverContainer)._onShare = onShare;
 }
 
 export function showGameOverScreen(gameState: GameState): void {
     if (!gameOverContainer) return;
 
-    const onRestart = (gameOverContainer as any)._onRestart;
-    const onShare = (gameOverContainer as any)._onShare;
+    interface GameOverContainer extends HTMLElement {
+        _onRestart?: () => void;
+        _onShare?: (platform: 'x' | 'whatsapp') => void;
+    }
+
+    const onRestart = (gameOverContainer as GameOverContainer)._onRestart;
+    const onShare = (gameOverContainer as GameOverContainer)._onShare;
+
+    if (!onRestart || !onShare) return;
 
     const isVictory = gameState.isVictory && gameState.currentLevel >= 10;
     const title = isVictory ? '🏆 VITÓRIA!' : '💀 GAME OVER';
@@ -334,8 +345,7 @@ export function showGameOverScreen(gameState: GameState): void {
         <div style="background: rgba(0,0,0,0.4); border-radius: 10px; padding: 10px; margin-bottom: 20px;">
             <h3 style="color: #FFD700; font-size: 14px; margin-bottom: 5px; text-transform: uppercase;">Top Commanders</h3>
             <table style="width: 100%; border-collapse: collapse; font-size: 13px; color: #DDD;">
-                ${leaderboard.map((entry: any, index: number) => {
-                    /* v8 ignore start */
+                ${leaderboard.map((entry: { score: number }, index: number) => {
                     const isCurrent = entry.score === gameState.score;
                     const rowColor = isCurrent ? 'rgba(255, 215, 0, 0.2)' : 'transparent';
                     const textColor = isCurrent ? '#FFF' : '#AAA';

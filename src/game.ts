@@ -260,6 +260,8 @@ function gameLoop(currentTime: number = 0): void {
   // Atualizar movimento das Mystery Boxes e limpar usando swap-and-pop
   for (let i = 0; i < entities.mysteryBoxes.length; i++) {
     const box = entities.mysteryBoxes[i];
+    if (!box) continue;
+
     box.y += gameState.gameSpeed * dtFactor;
 
     if (box.passed || box.y >= 1200) {
@@ -430,6 +432,9 @@ export function startGame(): void {
     // Iniciar música
     playSound(audioManager.gameStart);
     setTimeout(() => playMusic(false), 500); // Iniciar música após som de início
+
+    // Tutorial Hint
+    addFloatingText("HOLD & DRAG", BASE_WIDTH / 2, BASE_HEIGHT / 2 + 100, "#FFFFFF", 1.5);
 
     requestAnimationFrame(gameLoop);
   });
