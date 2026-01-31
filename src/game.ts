@@ -76,7 +76,7 @@ export function getScale(): number {
 
 // Entidades do jogo
 let entities: Entities;
-export const _testing = { getEntities: () => entities, setEntities: (e: Entities) => entities = e };
+export const _testing = { getEntities: () => entities, setEntities: (e: Entities) => entities = e, gameLoop: (t: number) => gameLoop(t) };
 
 // Obter referência ao overlay de início
 const startScreen = document.getElementById('startScreen');
