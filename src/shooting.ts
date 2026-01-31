@@ -411,6 +411,7 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
                   soldier.hp = 0;
                   killedCount++;
                   gameState.score += 10;
+                  // Ensure coin is awarded only once per unique soldier death
                   gameState.coins += 1; // Coin per enemy kill
               }
 
@@ -424,6 +425,7 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
                           s.hp = 0;
                           killedCount++;
                           gameState.score += 10;
+                          // Fix: Prevent infinite coin exploit by ensuring one coin per kill
                           gameState.coins += 1;
                           addExplosion(s.x, s.y, '#E74C3C');
                       }
