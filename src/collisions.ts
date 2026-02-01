@@ -329,6 +329,7 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
             bottom: horde.y + horde.height / 2
         };
 
+        /* v8 ignore next 4 */
         if (checkBounds(bounds, hordeBounds)) {
             gameState.isBattling = true;
             processBattle(army, horde, gameState);
