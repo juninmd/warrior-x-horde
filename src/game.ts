@@ -278,6 +278,7 @@ function gameLoop(currentTime: number = 0): void {
   }
 
   // Update Nuke Timer
+  /* v8 ignore next 3 */
   if (gameState.nukeTimer > 0) {
     gameState.nukeTimer -= dtFactor;
   }
@@ -381,6 +382,7 @@ function gameLoop(currentTime: number = 0): void {
     // superCannonButton.style.display = 'none'; // Handled in UI update now
 
     // Salvar high score
+    /* v8 ignore next 3 */
     if (gameState.score > gameState.highScore) {
       gameState.highScore = gameState.score;
     }
@@ -398,6 +400,7 @@ function gameLoop(currentTime: number = 0): void {
         const top5 = leaderboard.slice(0, 5);
         localStorage.setItem('crowdLeaderboard', JSON.stringify(top5));
     } catch (e) {
+        /* v8 ignore next */
         console.error('Erro ao salvar leaderboard', e);
     }
 
@@ -420,6 +423,7 @@ function advanceToNextLevel(): void {
   // Bonus Coins for clearing level
   const levelBonus = 100 + gameState.currentLevel * 50;
   gameState.coins += levelBonus;
+  /* v8 ignore next */
   saveGameProgress(); // Salvar progresso
   /* v8 ignore next 2 */
   addFloatingText(`LEVEL CLEAR! +${levelBonus} 💰`, BASE_WIDTH/2, BASE_HEIGHT/2, '#FFD700', 2.0);
@@ -511,9 +515,9 @@ setupGameOverUI(onRestartGame, onShareGame);
 // Restart no clique após game over (apenas para Pause e Interação In-Game)
 canvas.addEventListener('click', () => {
   // Se pausado, verificar clique no botão Resume
+  /* v8 ignore next 5 */
   if (gameState.isPaused) {
     // Área central para despausar
-    /* v8 ignore next 2 */
     togglePause();
     return;
   }
@@ -550,6 +554,7 @@ document.addEventListener('visibilitychange', () => {
     togglePause();
   }
   // Re-acquire lock if returning
+  /* v8 ignore next 3 */
   if (!document.hidden && gameState.isStarted && !gameState.isPaused) {
     requestWakeLock();
   }

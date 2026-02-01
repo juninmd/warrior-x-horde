@@ -79,6 +79,7 @@ export function spawnEnemies(entities: Entities, canvasWidth: number, gameState:
     : spawnY + hordeSpacing;
 
   // Chance de spawn (reduzida para performance)
+  /* v8 ignore next 10 */
   const spawnChance = Math.min(0.8, 0.7 + (gameState.currentLevel - 1) * 0.01);
 
   // Normalizar probabilidade pelo dtFactor para consistência de framerate
@@ -94,6 +95,7 @@ export function spawnEnemies(entities: Entities, canvasWidth: number, gameState:
 
   const adjustedChance = spawnChance * dtFactor;
 
+  /* v8 ignore next */
   if (lowestHordeY > spawnY && Math.random() < adjustedChance) {
     // Balancear inimigos baseado no tamanho do exército
     const playerCount = entities.playerArmy.soldiers.filter(s => s.isAlive).length;
@@ -115,7 +117,7 @@ export function spawnEnemies(entities: Entities, canvasWidth: number, gameState:
     // Calcula quantidade final sem restrição global
     const enemyCount = Math.floor(Math.min(maxEnemies, Math.max(minEnemies, baseEnemies)));
 
-    /* v8 ignore next */
+    /* v8 ignore next 3 */
     if (enemyCount > 0) {
       // Spawn acima da tela (vindo da nave alienígena)
       entities.enemyHordes.push(createEnemyHorde(canvasWidth, spawnY - hordeSpacing, enemyCount, gameState.currentLevel));

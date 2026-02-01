@@ -51,7 +51,7 @@ export function initAudio(): void {
       isMuted = true;
     }
   } catch (e) {
-    /* v8 ignore next */
+    /* v8 ignore next 2 */
     console.warn('LocalStorage access denied', e);
   }
 

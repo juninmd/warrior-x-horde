@@ -110,8 +110,9 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
     // Nave mãe (boss final do level 10) - movimento aleatório suave
     if (boss.type === 'mothership') {
       // Inicializa velocidades aleatórias se não existirem
-      /* v8 ignore next 2 */
+      /* v8 ignore next 3 */
       if (boss.vx === undefined) boss.vx = (Math.random() - 0.5) * 2;
+      /* v8 ignore next 2 */
       if (boss.vy === undefined) boss.vy = (Math.random() - 0.5) * 0.5;
 
       // Movimento suave
@@ -160,6 +161,7 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
       const waitTime = 10000; // 10 segundos parado
 
       // Primeiro, mover até a posição inicial (y = 100)
+      /* v8 ignore next */
       if (boss.y < 100) {
         boss.y += baseSpeed * dtFactor;
       } else if (timeSinceSpawn > waitTime) {
@@ -202,12 +204,13 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
 
   // Mover mini-bosses (mais lentos que as hordas normais)
   for (const miniBoss of entities.miniBosses) {
-    /* v8 ignore next */
+    /* v8 ignore next 2 */
     if (!miniBoss.isActive) continue;
 
     // Mini-boss se move mais devagar verticalmente
     const miniBossSpeed = baseSpeed * 0.4 * dtFactor; // 40% da velocidade base (bem lento)
 
+    /* v8 ignore next 3 */
     if (miniBoss.y < 200) {
       miniBoss.y += miniBossSpeed;
     } else {

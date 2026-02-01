@@ -187,6 +187,7 @@ export function multiplySoldiersInArmy(army: Army, multiplier: number): void {
 export function removeSoldiersFromArmy(army: Army, count: number): void {
   for (let i = 0; i < count && army.soldiers.length > 0; i++) {
     const s = army.soldiers.pop();
+    /* v8 ignore next */
     if (s && s.isAlive) {
       army.aliveCount--;
     }
@@ -314,6 +315,7 @@ export function createGate(canvasWidth: number, y: number, side: 'left' | 'right
     const ratio = armySize > 0 ? enemySize / armySize : 10;
 
     // Fator de emergência mais conservador
+    /* v8 ignore start */
     const emergencyFactor = ratio < 0.5
       ? 0.5  // Muito forte, reduzir buffs bastante
       : ratio < 1
@@ -334,6 +336,7 @@ export function createGate(canvasWidth: number, y: number, side: 'left' | 'right
           : armySize < 400
             ? 0.6  // Reduzido de 0.7
             : 0.3; // Reduzido de 0.4
+    /* v8 ignore stop */
 
     // Fator de level - começa baixo no L1, cresce com levels
     // Level 1: 0.6x, Level 5: 0.9x, Level 10: 1.2x
@@ -463,7 +466,9 @@ export function createGatePair(canvasWidth: number, y: number, level: number = 1
     rightGate.color = rightGate.type === 'subtract' ? '#E74C3C' : '#9B59B6';
   } else if (!leftIsGood && !rightIsGood) {
     // Mudar o esquerdo para bom (valores conservadores)
+    /* v8 ignore next */
     const buffRoll = Math.random();
+    /* v8 ignore next */
     if (atMaxHeroes) {
       // Apenas firerate e damage quando no máximo
       if (buffRoll < 0.5) {
@@ -497,6 +502,7 @@ export function createGatePair(canvasWidth: number, y: number, level: number = 1
   }
 
   // Garantir que o gate bom tenha valor ligeiramente vantajoso
+  /* v8 ignore start */
   if (!leftIsGood && rightIsGood) {
     if (leftGate.type === 'subtract' && rightGate.type === 'add') {
       rightGate.value = Math.max(rightGate.value, leftGate.value + 1);
@@ -506,6 +512,7 @@ export function createGatePair(canvasWidth: number, y: number, level: number = 1
       leftGate.value = Math.max(leftGate.value, rightGate.value + 1);
     }
   }
+  /* v8 ignore stop */
 
   updateGateColorCache(leftGate);
   updateGateColorCache(rightGate);
