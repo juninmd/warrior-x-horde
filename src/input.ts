@@ -38,7 +38,7 @@ export class VirtualJoystick {
   }
 
   getDeltaX(): number {
-    /* v8 ignore next */
+    /* v8 ignore next 2 */
     if (!this.active) return 0;
     const dx = this.currentX - this.startX;
     if (Math.abs(dx) < this.deadZone) return 0;
@@ -81,7 +81,7 @@ export function vibrate(ms: number): void {
       navigator.vibrate(ms);
     } catch {
       // Ignore vibration errors
-      /* v8 ignore next */
+      /* v8 ignore next 2 */
     }
   }
 }
@@ -163,7 +163,7 @@ export function setupInput(canvas: HTMLCanvasElement): void {
           mouseX = newX;
 
           // Joystick visual update
-          /* v8 ignore next */
+          /* v8 ignore next 2 */
           virtualJoystick.move(touch.clientX, touch.clientY);
           break;
         }

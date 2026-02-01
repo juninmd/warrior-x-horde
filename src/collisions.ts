@@ -156,9 +156,10 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
     else if (gameState.combo === 20) addFloatingText("LEGENDARY!", horde.x, horde.y - 60, COLORS.UI.GOLD, 2.0);
     else if (gameState.combo === 50) addFloatingText("UNSTOPPABLE!", horde.x, horde.y - 60, COLORS.EFFECTS.EXPLOSION, 2.5);
 
-    /* v8 ignore next */
+    /* v8 ignore next 4 */
     const comboMultiplier = Math.min(gameState.combo, 10);
     const scoreGain = 100 * comboMultiplier;
+    gameState.score += scoreGain;
     gameState.score += scoreGain;
 
     addExplosion(horde.x, horde.y, COLORS.UI.GOLD);

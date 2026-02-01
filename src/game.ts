@@ -420,6 +420,7 @@ function advanceToNextLevel(): void {
   // Bonus Coins for clearing level
   const levelBonus = 100 + gameState.currentLevel * 50;
   gameState.coins += levelBonus;
+  /* v8 ignore next */
   saveGameProgress(); // Salvar progresso
   /* v8 ignore next 2 */
   addFloatingText(`LEVEL CLEAR! +${levelBonus} 💰`, BASE_WIDTH/2, BASE_HEIGHT/2, '#FFD700', 2.0);

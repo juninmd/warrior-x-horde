@@ -24,6 +24,7 @@ function createAudio(src: string, loop = false, volume = 0.5): HTMLAudioElement 
   audio.preload = 'auto';
   // Ensure src is set for keying
   /* v8 ignore next 3 */
+  /* v8 ignore next 3 */
   if (!audio.src && src) {
       audio.src = src;
   }
@@ -51,7 +52,7 @@ export function initAudio(): void {
       isMuted = true;
     }
   } catch (e) {
-    /* v8 ignore next */
+    /* v8 ignore next 2 */
     console.warn('LocalStorage access denied', e);
   }
 

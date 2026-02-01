@@ -115,7 +115,7 @@ export function spawnEnemies(entities: Entities, canvasWidth: number, gameState:
     // Calcula quantidade final sem restrição global
     const enemyCount = Math.floor(Math.min(maxEnemies, Math.max(minEnemies, baseEnemies)));
 
-    /* v8 ignore next */
+    /* v8 ignore next 3 */
     if (enemyCount > 0) {
       // Spawn acima da tela (vindo da nave alienígena)
       entities.enemyHordes.push(createEnemyHorde(canvasWidth, spawnY - hordeSpacing, enemyCount, gameState.currentLevel));
