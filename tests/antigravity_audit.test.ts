@@ -5,7 +5,12 @@ import { GameState, Entities } from '../src/types';
 // Mocks
 vi.mock('../src/input', () => ({
   virtualJoystick: { active: false, alpha: 0 },
-  getMouseX: () => 0
+  getMouseX: () => 0,
+  setInputScale: vi.fn(),
+  setGameStateRef: vi.fn(),
+  setupInput: vi.fn(),
+  initializeMousePosition: vi.fn(),
+  vibrate: vi.fn()
 }));
 vi.mock('../src/renderer-boss', () => ({ drawBoss: vi.fn() }));
 vi.mock('../src/renderer-utils', () => ({
@@ -13,8 +18,10 @@ vi.mock('../src/renderer-utils', () => ({
 }));
 vi.mock('../src/quality', () => ({
   QualityManager: {
-      getInstance: () => ({ settings: { particleMultiplier: 1, enableShadows: true, simplifiedRendering: false, maxRenderedSoldiers: 100 } }),
-      updateFPS: vi.fn()
+      getInstance: () => ({
+          settings: { particleMultiplier: 1, enableShadows: true, simplifiedRendering: false, maxRenderedSoldiers: 100 },
+          updateFPS: vi.fn()
+      })
   }
 }));
 vi.mock('../src/audio', () => ({
@@ -32,6 +39,8 @@ import { addFloatingText, updateFloatingTexts, updateParticles, _testing as rend
 import { moveEntitiesDown } from '../src/movement';
 import { createInitialEntities } from '../src/entities';
 import { BASE_WIDTH, BASE_HEIGHT } from '../src/constants';
+import { _testing as gameTesting } from '../src/game';
+import { gameState, resetGameState } from '../src/gameState';
 
 describe('Antigravity Audit', () => {
 
@@ -201,6 +210,25 @@ describe('Antigravity Audit', () => {
       moveEntitiesDown(entities, gameState, 1.0);
 
       expect(entities.gates[0].y).toBe(initialY);
+    });
+  });
+
+  describe('Game Loop Physics Timers (Antigravity Decay)', () => {
+    it('should decay screen shake timer', () => {
+        resetGameState();
+        gameState.isStarted = true;
+        gameState.screenShakeActive = true;
+        gameState.screenShakeTimer = 30;
+
+        // Mock setEntities to prevent crash if game loop tries to access them
+        gameTesting.setEntities(createInitialEntities(BASE_WIDTH, BASE_HEIGHT));
+
+        // Run loop: t=1000 (init lastTime), t=1100 (dt=100 -> cap 50)
+        gameTesting.gameLoop(1000);
+        gameTesting.gameLoop(1100);
+
+        expect(gameState.screenShakeTimer).toBeLessThanOrEqual(0);
+        expect(gameState.screenShakeActive).toBe(false);
     });
   });
 });
