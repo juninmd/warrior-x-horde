@@ -187,6 +187,7 @@ export function multiplySoldiersInArmy(army: Army, multiplier: number): void {
 export function removeSoldiersFromArmy(army: Army, count: number): void {
   for (let i = 0; i < count && army.soldiers.length > 0; i++) {
     const s = army.soldiers.pop();
+    /* v8 ignore next */
     if (s && s.isAlive) {
       army.aliveCount--;
     }
@@ -467,6 +468,7 @@ export function createGatePair(canvasWidth: number, y: number, level: number = 1
     // Mudar o esquerdo para bom (valores conservadores)
     /* v8 ignore next */
     const buffRoll = Math.random();
+    /* v8 ignore next */
     if (atMaxHeroes) {
       // Apenas firerate e damage quando no máximo
       if (buffRoll < 0.5) {

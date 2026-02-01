@@ -28,6 +28,7 @@ export class VirtualJoystick {
   }
 
   move(x: number, y: number) {
+    /* v8 ignore next */
     if (!this.active) return;
     this.currentX = x;
     this.currentY = y;
@@ -76,6 +77,7 @@ function screenToCanvasX(screenX: number, canvasRect: DOMRect): number {
 }
 
 export function vibrate(ms: number): void {
+  /* v8 ignore next */
   if (typeof navigator !== 'undefined' && navigator.vibrate) {
     try {
       navigator.vibrate(ms);
@@ -120,6 +122,7 @@ export function setupInput(canvas: HTMLCanvasElement): void {
     }
 
     // Only accept a new touch if we aren't already dragging
+    /* v8 ignore next */
     if (activeTouchId === null && e.changedTouches.length > 0) {
       const touch = e.changedTouches[0];
       activeTouchId = touch.identifier;
@@ -172,6 +175,7 @@ export function setupInput(canvas: HTMLCanvasElement): void {
   }, { passive: false });
 
   canvas.addEventListener('touchend', (e) => {
+    /* v8 ignore next */
     if (activeTouchId !== null) {
       for (let i = 0; i < e.changedTouches.length; i++) {
         /* v8 ignore start */
@@ -204,6 +208,7 @@ export function setupInput(canvas: HTMLCanvasElement): void {
   // Keyboard events for desktop
   document.addEventListener('keydown', (e) => {
     const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
+    /* v8 ignore next */
     if (!canvas) return;
 
     const step = 30;

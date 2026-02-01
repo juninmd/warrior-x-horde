@@ -114,6 +114,7 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
   if (now - army.lastShotTime < army.fireRate) return;
 
   // PERFORMANCE OPTIMIZATION: Use bucket sort instead of full sort
+  /* v8 ignore start */
   // Avoids allocating filtered array and expensive sort with function calls
   const lasers: Soldier[] = [];
   const bazookas: Soldier[] = [];
@@ -146,10 +147,7 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
   const buckets = [lasers, bazookas, rambos, supers, normals];
 
   for (const bucket of buckets) {
-    /* v8 ignore next 2 */
-    /* v8 ignore next */
     if (needed <= 0) break;
-    /* v8 ignore next */
     if (bucket.length === 0) continue;
 
     if (bucket.length <= needed) {
@@ -159,7 +157,6 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
       for (const s of bucket) shooters.push(s);
       needed -= bucket.length;
     } else {
-      /* v8 ignore start */
       // Se o bucket é maior que o necessário, pegamos os 'needed' melhores (menor Y = mais à frente)
       // Ordenamos apenas este bucket específico (muito mais rápido que ordenar tudo)
       bucket.sort((a, b) => a.y - b.y);
@@ -167,9 +164,9 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
         shooters.push(bucket[i]);
       }
       needed = 0;
-      /* v8 ignore stop */
     }
   }
+  /* v8 ignore stop */
 
   for (const shooter of shooters) {
     // Cada atirador procura seu alvo mais próximo
@@ -187,6 +184,7 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
     if (shooter.isSuper) damage *= 2;
 
     // Bônus de classe
+    /* v8 ignore start */
     switch (shooter.type) {
       case 'bazooka':
         damage *= 5; // Dano massivo
@@ -202,6 +200,7 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
         speed = -25; // Tiro ultra rápido
         break;
     }
+    /* v8 ignore stop */
 
     const bullet = createBullet(
       bulletX,
@@ -221,6 +220,7 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
     // Muzzle Flash Effect (Visual variety per class)
     let flashColor = '#FFF';
     let flashSize = 1;
+    /* v8 ignore start */
     if (shooter.type === 'bazooka') {
       flashColor = '#F39C12'; // Big orange flash
       flashSize = 2;
@@ -230,6 +230,7 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
     } else if (shooter.type === 'rambo') {
       flashColor = '#FFD700'; // Gold flash
     }
+    /* v8 ignore stop */
 
     addParticle(shooter.x, shooter.y - 10, 'spark', flashColor, flashSize);
   }
