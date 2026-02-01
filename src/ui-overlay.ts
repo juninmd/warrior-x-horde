@@ -402,6 +402,22 @@ export function showGameOverScreen(gameState: GameState): void {
 
         ${leaderboardHTML}
 
+        ${gameState.deferredInstallPrompt ? `
+        <button id="goInstallBtn" style="
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            background: #FFD700;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 0 #DAA520;
+        ">📲 INSTALL APP</button>
+        ` : ''}
+
         <button id="goRestartBtn" style="
             width: 100%;
             padding: 15px;
@@ -455,6 +471,20 @@ export function showGameOverScreen(gameState: GameState): void {
             onRestart();
         }, 300);
     });
+
+    const installBtn = document.getElementById('goInstallBtn');
+    if (installBtn && gameState.deferredInstallPrompt) {
+        installBtn.addEventListener('click', async () => {
+            vibrate(20);
+            /* v8 ignore start */
+            gameState.deferredInstallPrompt.prompt();
+            const { outcome } = await gameState.deferredInstallPrompt.userChoice;
+            console.log(`User response to install prompt: ${outcome}`);
+            gameState.deferredInstallPrompt = null;
+            installBtn.style.display = 'none';
+            /* v8 ignore stop */
+        });
+    }
 
     document.getElementById('goShareX')?.addEventListener('click', () => onShare('x'));
     document.getElementById('goShareWa')?.addEventListener('click', () => onShare('whatsapp'));

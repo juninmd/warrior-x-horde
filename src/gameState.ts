@@ -42,6 +42,10 @@ export const gameState: GameState = {
   hitStop: 0,
   slowMoTimer: 0,
   nukeTimer: 0,
+  killStreak: 0,
+  killStreakTimer: 0,
+  whiteFlash: 0,
+  deferredInstallPrompt: null,
 };
 
 export function resetGameState(): void {
@@ -72,6 +76,10 @@ export function resetGameState(): void {
   gameState.lowArmyTriggered = false;
   gameState.slowMoTimer = 0;
   gameState.nukeTimer = 0;
+  gameState.killStreak = 0;
+  gameState.killStreakTimer = 0;
+  gameState.whiteFlash = 0;
+  // Do not reset deferredInstallPrompt as it persists across games
 }
 
 export function saveGameProgress(): void {

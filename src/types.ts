@@ -53,6 +53,13 @@ export interface GameState {
   hitStop: number;
   slowMoTimer: number;
   nukeTimer: number;
+  // Killstreak System
+  killStreak: number;
+  killStreakTimer: number;
+  // Visuals
+  whiteFlash: number;
+  // PWA
+  deferredInstallPrompt: any;
 }
 
 export interface Soldier {

@@ -386,6 +386,11 @@ export function addParticle(x: number, y: number, type: Particle['type'], color:
   /* v8 ignore next */
   if (particles.length >= limit) return;
 
+  // Adaptive Quality: Skip expensive trails on low quality
+  if (type === 'trail' && quality.particleMultiplier < 1.0) {
+      return;
+  }
+
   // Reduzir count se estiver chegando no limite
   const availableSlots = limit - particles.length;
   // Allow bursts up to limit, no hard cap per frame
@@ -1636,6 +1641,8 @@ function drawSpeedLines(ctx: CanvasRenderingContext2D, width: number, height: nu
 }
 
 function drawNukeEffect(ctx: CanvasRenderingContext2D, width: number, height: number, timer: number): void {
+  if (QualityManager.getInstance().settings.simplifiedRendering) return;
+
   // Timer starts at ~60.
   // Phase 1: Whiteout (Timer 60-50)
   // Phase 2: Fade + Shockwave (Timer 50-0)
@@ -1682,6 +1689,15 @@ export function drawPauseScreen(ctx: CanvasRenderingContext2D, width: number, he
   ctx.font = 'bold 36px Arial';
   ctx.textAlign = 'center';
   ctx.fillText('⏸️ PAUSADO', width / 2, height / 2);
+}
+
+function drawWhiteFlash(ctx: CanvasRenderingContext2D, width: number, height: number, opacity: number): void {
+  if (opacity <= 0.01) return;
+  ctx.save();
+  ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
+  // Use pure fillRect for speed, no composition changes
+  ctx.fillRect(0, 0, width, height);
+  ctx.restore();
 }
 
 function drawComboBar(ctx: CanvasRenderingContext2D, gameState: GameState): void {
@@ -1809,6 +1825,10 @@ export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameSt
 
   if (gameState.damageFlash > 0) {
     drawDamageOverlay(ctx, width, height, gameState.damageFlash);
+  }
+
+  if (gameState.whiteFlash > 0) {
+    drawWhiteFlash(ctx, width, height, gameState.whiteFlash);
   }
 
   drawUI(ctx, gameState, entities.playerArmy.soldiers.filter(s => s.isAlive).length, entities.playerArmy.fireRate, entities.playerArmy.damage, entities.playerArmy);

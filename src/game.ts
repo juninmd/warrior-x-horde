@@ -277,6 +277,21 @@ function gameLoop(currentTime: number = 0): void {
     gameState.damageFlash = Math.max(0, gameState.damageFlash - 0.05 * dtFactor);
   }
 
+  // Update White Flash
+  /* v8 ignore next 3 */
+  if (gameState.whiteFlash > 0) {
+    gameState.whiteFlash = Math.max(0, gameState.whiteFlash - 0.02 * dtFactor);
+  }
+
+  // Update Kill Streak
+  /* v8 ignore next 6 */
+  if (gameState.killStreakTimer > 0) {
+    gameState.killStreakTimer -= deltaTime;
+    if (gameState.killStreakTimer <= 0) {
+      gameState.killStreak = 0;
+    }
+  }
+
   // Update Nuke Timer
   /* v8 ignore next 3 */
   if (gameState.nukeTimer > 0) {
@@ -749,4 +764,13 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'p' || e.key === 'P' || e.key === 'Escape') {
     togglePause();
   }
+});
+
+// Capture PWA Install Prompt
+window.addEventListener('beforeinstallprompt', (e) => {
+  // Prevent the mini-infobar from appearing on mobile
+  e.preventDefault();
+  // Stash the event so it can be triggered later.
+  gameState.deferredInstallPrompt = e;
+  console.log('📱 PWA Install Prompt captured');
 });

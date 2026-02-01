@@ -137,6 +137,19 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
     }
   }
 
+  if (killed > 0) {
+      gameState.killStreak += killed;
+      gameState.killStreakTimer = 2500; // 2.5 seconds window
+
+      const k = gameState.killStreak;
+      // Killstreak Milestones
+      if (k === 5) addFloatingText("KILLING SPREE", horde.x, horde.y - 80, '#2ECC71', 1.3);
+      else if (k === 10) addFloatingText("RAMPAGE!", horde.x, horde.y - 80, '#3498DB', 1.5);
+      else if (k === 20) addFloatingText("DOMINATING!", horde.x, horde.y - 80, '#9B59B6', 1.8);
+      else if (k === 50) addFloatingText("UNSTOPPABLE!", horde.x, horde.y - 80, '#E74C3C', 2.2);
+      else if (k === 100) addFloatingText("GODLIKE!", horde.x, horde.y - 80, '#FFD700', 3.0);
+  }
+
   army.soldiers = army.soldiers.filter(s => s.isAlive);
   horde.soldiers = horde.soldiers.filter(s => s.isAlive);
   horde.count = horde.soldiers.length;
@@ -436,6 +449,7 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
 
         if (boss.hp <= 0) {
           boss.isActive = false;
+          gameState.whiteFlash = 1.0;
           triggerHitStop(20); // Massive Hit Stop on Boss Kill
           gameState.slowMoTimer = 2000; // 2 seconds of Slow Mo
           gameState.isVictory = true;
