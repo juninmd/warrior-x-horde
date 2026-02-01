@@ -332,13 +332,15 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
       if (!horde.isActive || horde.y < 100) continue;
       for (const soldier of horde.soldiers) {
         if (soldier.isAlive && soldier.y >= 100) {
-          enemyGrid.insert({
-            x: soldier.x - soldier.size,
-            y: soldier.y - soldier.size,
-            width: soldier.size * 2,
-            height: soldier.size * 2,
-            ref: { type: 'soldier', obj: soldier, horde: horde }
-          });
+          enemyGrid.insert(
+            soldier.x - soldier.size,
+            soldier.y - soldier.size,
+            soldier.size * 2,
+            soldier.size * 2,
+            'soldier',
+            soldier,
+            horde
+          );
         }
       }
     }
@@ -346,13 +348,14 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
     // MiniBosses
     for (const mb of entities.miniBosses) {
       if (!mb.isActive || mb.y < 50) continue;
-      enemyGrid.insert({
-        x: mb.x,
-        y: mb.y,
-        width: mb.width,
-        height: mb.height,
-        ref: { type: 'miniboss', obj: mb }
-      });
+      enemyGrid.insert(
+        mb.x,
+        mb.y,
+        mb.width,
+        mb.height,
+        'miniboss',
+        mb
+      );
     }
   }
 
@@ -369,9 +372,9 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
     for (const item of nearby) {
       if (bulletHit) break;
 
-      if (item.ref.type === 'soldier') {
-        const soldier = item.ref.obj as Soldier;
-        const horde = item.ref.horde as EnemyHorde;
+      if (item.type === 'soldier') {
+        const soldier = item.obj as Soldier;
+        const horde = item.horde as EnemyHorde;
 
         if (horde.isActive && soldier.isAlive && checkBulletSoldierCollision(bullet, soldier)) {
           // SHARED HP LOGIC: Damage the Horde
@@ -453,8 +456,8 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
           fastRemove(entities.bullets, i);
           bulletHit = true;
         }
-      } else if (item.ref.type === 'miniboss') {
-        const miniBoss = item.ref.obj as MiniBoss;
+      } else if (item.type === 'miniboss') {
+        const miniBoss = item.obj as MiniBoss;
 
         // Colisão AABB simples para MiniBoss
         if (bullet.x > miniBoss.x && bullet.x < miniBoss.x + miniBoss.width &&
