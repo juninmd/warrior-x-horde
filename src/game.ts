@@ -670,15 +670,6 @@ export function togglePause(): void {
   }
 }
 
-export function toggleMuteUI(): void {
-  vibrate(10);
-  const muted = toggleMute();
-  const btn = document.getElementById('muteBtn');
-  if (btn) {
-    btn.textContent = muted ? '🔇' : '🔊';
-  }
-}
-
 export function toggleFullscreen(): void {
   vibrate(10);
   if (!document.fullscreenElement) {
