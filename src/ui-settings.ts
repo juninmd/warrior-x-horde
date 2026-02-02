@@ -5,6 +5,10 @@ import { gameState } from './gameState';
 
 let settingsModal: HTMLElement | null = null;
 
+export const _testing = {
+  reset: () => { settingsModal = null; }
+};
+
 function createSettingsModal(): void {
   settingsModal = document.createElement('div');
   settingsModal.id = 'settingsModal';
@@ -18,6 +22,8 @@ function createSettingsModal(): void {
     align-items: center;
     z-index: 1000;
   `;
+  // Explicitly set display for JSDOM
+  settingsModal.style.display = 'none';
 
   const content = document.createElement('div');
   content.style.cssText = `
