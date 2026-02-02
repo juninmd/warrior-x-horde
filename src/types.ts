@@ -225,4 +225,5 @@ export interface FloatingText {
   vx: number;
   vy: number;
   gravity: number;
+  style?: 'normal' | 'critical' | 'gold';
 }

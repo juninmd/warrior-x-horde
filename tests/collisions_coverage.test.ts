@@ -262,7 +262,7 @@ describe('Collisions Coverage', () => {
          checkCollisions(entities, gameState);
 
          expect(gameState.combo).toBe(5);
-         expect(renderer.addFloatingText).toHaveBeenCalledWith('GREAT!', expect.any(Number), expect.any(Number), expect.any(String), expect.any(Number));
+         expect(renderer.addFloatingText).toHaveBeenCalledWith('GREAT!', expect.any(Number), expect.any(Number), expect.any(String), expect.any(Number), 'critical');
     });
 
     it('should process mini-boss battle', () => {

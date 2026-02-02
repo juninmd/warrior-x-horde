@@ -2,6 +2,7 @@
 import { Army, Soldier, EnemyHorde, Gate, Boss, Entities, MiniBoss, MysteryBox, Coin } from './types';
 import { MAX_HEROES } from './constants';
 import { shadeColor } from './utils';
+import { soldierPool } from './soldierPool';
 
 function updateGateColorCache(gate: Gate): void {
   gate.cachedColors = {
@@ -18,43 +19,43 @@ let mysteryBoxIdCounter = 0;
 let coinIdCounter = 0;
 
 export function createSoldier(x: number, y: number, color: string, hp: number = 1, type: Soldier['type'] = 'normal'): Soldier {
-  return {
-    id: soldierIdCounter++,
-    x,
-    y,
-    targetX: x,
-    targetY: y,
-    color,
-    size: 16,
-    isAlive: true,
-    animOffset: Math.random() * Math.PI * 2,
-    hp,
-    maxHp: hp,
-    isSuper: false,
-    type,
-    hitTimer: 0,
-  };
+  const s = soldierPool.get();
+  s.id = soldierIdCounter++;
+  s.x = x;
+  s.y = y;
+  s.targetX = x;
+  s.targetY = y;
+  s.color = color;
+  s.size = 16;
+  s.isAlive = true;
+  s.animOffset = Math.random() * Math.PI * 2;
+  s.hp = hp;
+  s.maxHp = hp;
+  s.isSuper = false;
+  s.type = type;
+  s.hitTimer = 0;
+  return s;
 }
 
 // Criar super guerreiro (mais forte, mais vida, tiro mais rápido)
 export function createSuperSoldier(x: number, y: number): Soldier {
-  return {
-    id: soldierIdCounter++,
-    x,
-    y,
-    targetX: x,
-    targetY: y,
-    color: '#FFD700', // Dourado para destacar
-    size: 20, // Maior
-    isAlive: true,
-    animOffset: Math.random() * Math.PI * 2,
-    hp: 5, // 5x mais vida
-    maxHp: 5,
-    isSuper: true,
-    personalFireRate: 100, // Atira 2x mais rápido
-    type: 'normal', // Considerado normal, mas com flag isSuper
-    hitTimer: 0,
-  };
+  const s = soldierPool.get();
+  s.id = soldierIdCounter++;
+  s.x = x;
+  s.y = y;
+  s.targetX = x;
+  s.targetY = y;
+  s.color = '#FFD700'; // Dourado para destacar
+  s.size = 20; // Maior
+  s.isAlive = true;
+  s.animOffset = Math.random() * Math.PI * 2;
+  s.hp = 5; // 5x mais vida
+  s.maxHp = 5;
+  s.isSuper = true;
+  s.personalFireRate = 100; // Atira 2x mais rápido
+  s.type = 'normal'; // Considerado normal, mas com flag isSuper
+  s.hitTimer = 0;
+  return s;
 }
 
 // Criar soldados especiais
@@ -81,22 +82,22 @@ export function createSpecialSoldier(x: number, y: number, type: Soldier['type']
       break;
   }
 
-  return {
-    id: soldierIdCounter++,
-    x,
-    y,
-    targetX: x,
-    targetY: y,
-    color,
-    size,
-    isAlive: true,
-    animOffset: Math.random() * Math.PI * 2,
-    hp,
-    maxHp: hp,
-    isSuper: false,
-    type,
-    hitTimer: 0,
-  };
+  const s = soldierPool.get();
+  s.id = soldierIdCounter++;
+  s.x = x;
+  s.y = y;
+  s.targetX = x;
+  s.targetY = y;
+  s.color = color;
+  s.size = size;
+  s.isAlive = true;
+  s.animOffset = Math.random() * Math.PI * 2;
+  s.hp = hp;
+  s.maxHp = hp;
+  s.isSuper = false;
+  s.type = type;
+  s.hitTimer = 0;
+  return s;
 }
 
 export function createPlayerArmy(canvasWidth: number, canvasHeight: number): Army {
@@ -188,8 +189,11 @@ export function removeSoldiersFromArmy(army: Army, count: number): void {
   for (let i = 0; i < count && army.soldiers.length > 0; i++) {
     const s = army.soldiers.pop();
     /* v8 ignore next */
-    if (s && s.isAlive) {
-      army.aliveCount--;
+    if (s) {
+      if (s.isAlive) {
+        army.aliveCount--;
+      }
+      soldierPool.release(s);
     }
   }
 }

@@ -12,6 +12,7 @@ import { initAudio, playMusic, playSound, stopAllMusic, audioManager, toggleMute
 import { BASE_WIDTH, BASE_HEIGHT, ASPECT_RATIO } from './constants';
 import { setupShopUI, updateShopUI, setupSuperCannonUI, updateSuperCannonUI, BuyAction, setupGameOverUI, showGameOverScreen, startCountdown } from './ui-overlay';
 import { QualityManager } from './quality';
+import { setupSettingsUI, toggleSettingsMenu } from './ui-settings';
 
 // Canvas setup
 export const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
@@ -569,6 +570,7 @@ resizeCanvas(); // Configurar tamanho inicial
 setupInput(canvas);
 initializeMousePosition(BASE_WIDTH);
 initAudio(); // Inicializar sistema de áudio
+setupSettingsUI(); // Inicializar Settings UI
 
 // Auto-pause quando a aba for trocada ou minimizada (Mobile friendly)
 document.addEventListener('visibilitychange', () => {
@@ -758,6 +760,7 @@ function updateSuperButtonInline(): void {
   toggleMuteUI: typeof toggleMuteUI;
   toggleFullscreen: typeof toggleFullscreen;
   triggerScreenShake: typeof triggerScreenShake;
+  toggleSettingsMenu: typeof toggleSettingsMenu;
 }).debugSetLevel = debugSetLevel;
 
 (window as unknown as { togglePause: typeof togglePause }).togglePause = togglePause;
@@ -765,6 +768,7 @@ function updateSuperButtonInline(): void {
 (window as unknown as { toggleMuteUI: typeof toggleMuteUI }).toggleMuteUI = toggleMuteUI;
 (window as unknown as { toggleFullscreen: typeof toggleFullscreen }).toggleFullscreen = toggleFullscreen;
 (window as unknown as { triggerScreenShake: typeof triggerScreenShake }).triggerScreenShake = triggerScreenShake;
+(window as unknown as { toggleSettingsMenu: typeof toggleSettingsMenu }).toggleSettingsMenu = toggleSettingsMenu;
 
 // Adicionar atalho de teclado para pause (P ou Escape)
 document.addEventListener('keydown', (e) => {
