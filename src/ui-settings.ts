@@ -2,6 +2,7 @@ import { SettingsManager } from './settings';
 import { toggleMute, isMusicMuted, playMusic } from './audio';
 import { vibrate } from './input';
 import { gameState } from './gameState';
+import { toggleFullscreen } from './game';
 
 let settingsModal: HTMLElement | null = null;
 
@@ -125,6 +126,11 @@ function createSettingsModal(): void {
      sm.quality = newQ;
      btn.innerText = newQ.toUpperCase();
      qualityToggle.updateStyle(newQ.toUpperCase());
+  });
+
+  // Fullscreen
+  createToggle('⛶ SCREEN', 'fullscreenBtn', 'FULL', () => {
+      toggleFullscreen();
   });
 
   // Close Button

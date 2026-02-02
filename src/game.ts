@@ -757,16 +757,12 @@ function updateSuperButtonInline(): void {
   debugSetLevel: typeof debugSetLevel;
   togglePause: typeof togglePause;
   triggerSuperCannon: typeof triggerSuperCannon;
-  toggleMuteUI: typeof toggleMuteUI;
-  toggleFullscreen: typeof toggleFullscreen;
   triggerScreenShake: typeof triggerScreenShake;
   toggleSettingsMenu: typeof toggleSettingsMenu;
 }).debugSetLevel = debugSetLevel;
 
 (window as unknown as { togglePause: typeof togglePause }).togglePause = togglePause;
 (window as unknown as { triggerSuperCannon: typeof triggerSuperCannon }).triggerSuperCannon = triggerSuperCannon;
-(window as unknown as { toggleMuteUI: typeof toggleMuteUI }).toggleMuteUI = toggleMuteUI;
-(window as unknown as { toggleFullscreen: typeof toggleFullscreen }).toggleFullscreen = toggleFullscreen;
 (window as unknown as { triggerScreenShake: typeof triggerScreenShake }).triggerScreenShake = triggerScreenShake;
 (window as unknown as { toggleSettingsMenu: typeof toggleSettingsMenu }).toggleSettingsMenu = toggleSettingsMenu;
 

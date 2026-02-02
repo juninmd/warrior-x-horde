@@ -12,6 +12,16 @@ vi.mock('../src/audio', () => ({
 
 vi.mock('../src/input', () => ({
   vibrate: vi.fn(),
+  setInputScale: vi.fn(), // Required by game.ts side effects
+  setupInput: vi.fn(),
+  initializeMousePosition: vi.fn(),
+}));
+
+// Mock toggleFullscreen to avoid game.ts execution if possible,
+// but ui-settings imports it.
+// If we mock game.ts, we avoid side effects.
+vi.mock('../src/game', () => ({
+    toggleFullscreen: vi.fn(),
 }));
 
 describe('UI Settings Coverage', () => {
