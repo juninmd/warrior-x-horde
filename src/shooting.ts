@@ -478,6 +478,9 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
       } else if (item.type === 'miniboss') {
         const miniBoss = item.obj as MiniBoss;
 
+        // Check isActive to prevent multiple bullets killing the same miniboss in one frame
+        if (!miniBoss.isActive) continue;
+
         // Colisão AABB simples para MiniBoss
         if (bullet.x > miniBoss.x && bullet.x < miniBoss.x + miniBoss.width &&
             bullet.y > miniBoss.y && bullet.y < miniBoss.y + miniBoss.height) {
