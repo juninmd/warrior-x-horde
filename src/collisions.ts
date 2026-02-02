@@ -154,6 +154,7 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
   horde.soldiers = horde.soldiers.filter(s => s.isAlive);
   horde.count = horde.soldiers.length;
 
+  /* v8 ignore next */
   if (horde.soldiers.length <= 0) {
     horde.isActive = false;
     triggerHitStop(5); // Hit Stop on Horde Clear

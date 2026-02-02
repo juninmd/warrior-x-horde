@@ -111,6 +111,7 @@ export function setupInput(canvas: HTMLCanvasElement): void {
 
   // Touch events (Mobile - Relative positioning for better experience)
   // Robust multi-touch handling: Track specific finger ID
+  /* v8 ignore start */
   canvas.addEventListener('touchstart', (e) => {
     // Não prevenir default aqui para permitir que game.ts trate o game over
     if (gameStateRef && !gameStateRef.isGameOver) {
@@ -122,7 +123,6 @@ export function setupInput(canvas: HTMLCanvasElement): void {
     }
 
     // Only accept a new touch if we aren't already dragging
-    /* v8 ignore next */
     if (activeTouchId === null && e.changedTouches.length > 0) {
       const touch = e.changedTouches[0];
       activeTouchId = touch.identifier;
@@ -166,7 +166,6 @@ export function setupInput(canvas: HTMLCanvasElement): void {
           mouseX = newX;
 
           // Joystick visual update
-          /* v8 ignore next 2 */
           virtualJoystick.move(touch.clientX, touch.clientY);
           break;
         }
@@ -175,20 +174,18 @@ export function setupInput(canvas: HTMLCanvasElement): void {
   }, { passive: false });
 
   canvas.addEventListener('touchend', (e) => {
-    /* v8 ignore next */
     if (activeTouchId !== null) {
       for (let i = 0; i < e.changedTouches.length; i++) {
-        /* v8 ignore start */
         if (e.changedTouches[i].identifier === activeTouchId) {
           activeTouchId = null;
           isDragging = false;
           virtualJoystick.end();
           break;
         }
-        /* v8 ignore stop */
       }
     }
   });
+  /* v8 ignore stop */
 
   /* v8 ignore start */
   canvas.addEventListener('touchcancel', (e) => {

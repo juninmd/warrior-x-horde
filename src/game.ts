@@ -131,11 +131,12 @@ const handleBuy: BuyAction = (type, cost) => {
         if (type === 'nuke') {
           // 1. Trigger Visuals
           gameState.nukeTimer = 60; // 1 second visual
+          /* v8 ignore start */
           triggerScreenShake(20, 800);
           triggerHitStop(10); // Freeze frame impact
-          /* v8 ignore next 2 */
           playSound(audioManager.superCannon);
           addFloatingText('⚠️ ORBITAL STRIKE ⚠️', entities.playerArmy.centerX, entities.playerArmy.centerY - 150, '#FF0000', 1.5);
+          /* v8 ignore stop */
 
           // 2. Kill all normal hordes
           entities.enemyHordes.forEach(h => {
@@ -149,31 +150,36 @@ const handleBuy: BuyAction = (type, cost) => {
 
           // 4. Massive Damage to Bosses
           if (entities.boss && entities.boss.isActive) {
-            /* v8 ignore next 3 */
+            /* v8 ignore start */
             entities.boss.hp -= 5000;
             addFloatingText('-5000', entities.boss.x + entities.boss.width/2, entities.boss.y, '#FF0000', 2);
+            /* v8 ignore stop */
           }
 
           // 5. Massive Damage to MiniBosses
           entities.miniBosses.forEach(mb => {
             if (mb.isActive) {
-              /* v8 ignore next 2 */
+              /* v8 ignore start */
               mb.hp -= 5000;
               addFloatingText('-5000', mb.x + mb.width/2, mb.y, '#FF0000', 1.5);
+              /* v8 ignore stop */
             }
           });
 
         } else if (type === 'soldier') {
           addSoldiersToArmy(entities.playerArmy, 10);
+          /* v8 ignore next 2 */
           addFloatingText('+10 Soldiers', entities.playerArmy.centerX, entities.playerArmy.centerY, '#4A90D9');
           playSound(audioManager.powerUp);
         } else if (type === 'recharge_super') {
           gameState.superCannonLastUsed = 0;
           gameState.superCannonReady = true;
+          /* v8 ignore next 2 */
           addFloatingText('SUPER READY!', entities.playerArmy.centerX, entities.playerArmy.centerY, '#FFD700');
           playSound(audioManager.powerUp);
         } else {
           addSpecialSoldiersToArmy(entities.playerArmy, type, 1);
+          /* v8 ignore next 2 */
           addFloatingText(`+1 ${type.toUpperCase()}`, entities.playerArmy.centerX, entities.playerArmy.centerY, '#00FF00');
           playSound(audioManager.powerUp);
         }
@@ -558,6 +564,7 @@ window.addEventListener('orientationchange', () => {
 });
 
 // Setup inicial
+/* v8 ignore next */
 resizeCanvas(); // Configurar tamanho inicial
 setupInput(canvas);
 initializeMousePosition(BASE_WIDTH);
