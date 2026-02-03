@@ -144,6 +144,7 @@ export interface Gate {
     light: string;
     dark: string;
   };
+  cachedCanvas?: HTMLCanvasElement | OffscreenCanvas;
 }
 
 export interface Weapon {
