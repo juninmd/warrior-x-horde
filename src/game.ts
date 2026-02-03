@@ -6,7 +6,7 @@ import { render, shareOnX, shareOnWhatsApp, addFloatingText, updateFloatingTexts
 import { checkCollisions } from './collisions';
 import { updateSpawns } from './spawner';
 import { updateMovement } from './movement';
-import { setupInput, getMouseX, initializeMousePosition, setGameStateRef, setInputScale, vibrate } from './input';
+import { setupInput, getMouseX, initializeMousePosition, setGameStateRef, setInputScale, vibrate, triggerHaptic } from './input';
 import { updateShooting, updateBullets, updateSuperCannon, activateSuperCannon } from './shooting';
 import { initAudio, playMusic, playSound, stopAllMusic, audioManager, toggleMute, isMusicMuted } from './audio';
 import { BASE_WIDTH, BASE_HEIGHT, ASPECT_RATIO } from './constants';
@@ -345,7 +345,7 @@ function gameLoop(currentTime: number = 0): void {
   if (armyCount < 10 && armyCount > 0 && !gameState.isGameOver && gameState.isStarted) {
      if (!gameState.lowArmyTriggered) {
         gameState.lowArmyTriggered = true;
-        vibrate(50);
+        triggerHaptic('warning');
         /* v8 ignore next */
         addFloatingText("⚠️ LOW ARMY! ⚠️", entities.playerArmy.centerX, entities.playerArmy.centerY - 50, "#FF4500", 1.2);
      }
@@ -648,7 +648,7 @@ export function debugSetLevel(targetLevel: number): void {
 export function togglePause(): void {
   if (!gameState.isStarted || gameState.isGameOver) return;
 
-  vibrate(20);
+  triggerHaptic('light');
 
   if (gameState.isPaused) {
     // Resume with countdown
@@ -671,7 +671,7 @@ export function togglePause(): void {
 }
 
 export function toggleFullscreen(): void {
-  vibrate(10);
+  triggerHaptic('light');
   if (!document.fullscreenElement) {
     document.documentElement.requestFullscreen().catch(err => {
       /* v8 ignore next */
@@ -688,7 +688,7 @@ export function toggleFullscreen(): void {
 
 // Função para ativar super cannon (exposta para HTML)
 export function triggerSuperCannon(): void {
-  vibrate(25);
+  triggerHaptic('medium');
   if (gameState.isStarted && !gameState.isGameOver && !gameState.isPaused) {
     activateSuperCannon(gameState);
   }

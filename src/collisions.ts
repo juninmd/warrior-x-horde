@@ -3,7 +3,7 @@ import { Entities, GameState, Army, EnemyHorde, Gate, MiniBoss, MysteryBox, Sold
 import { addSoldiersToArmy, multiplySoldiersInArmy, removeSoldiersFromArmy, addSuperSoldiersToArmy, addSpecialSoldiersToArmy } from './entities';
 import { addFloatingText, addExplosion, addParticle } from './renderer';
 import { playSound, audioManager } from './audio';
-import { vibrate } from './input';
+import { triggerHaptic } from './input';
 import { triggerScreenShake, triggerHitStop } from './game';
 import { getArmyBounds, checkBounds, getEntityBounds, Rect } from './utils';
 import { COLORS } from './constants';
@@ -77,10 +77,12 @@ function applyGateEffect(army: Army, gate: Gate, gameState: GameState): void {
 
   if (isPositive) {
     playSound(audioManager.powerUp);
-    vibrate(20);
+    triggerHaptic('light');
+    addParticle(gate.x + gate.width / 2, gate.y + gate.height / 2, 'shockwave', COLORS.UI.SUCCESS, 1);
   } else {
     playSound(audioManager.nerf);
-    vibrate(40);
+    triggerHaptic('warning');
+    addParticle(gate.x + gate.width / 2, gate.y + gate.height / 2, 'shockwave', COLORS.UI.DANGER, 1);
   }
 
   gameState.score += Math.max(0, afterCount - beforeCount) * 10;
@@ -107,7 +109,7 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
 
       addExplosion(horde.x, horde.y, COLORS.UI.GOLD);
       addParticle(horde.x, horde.y, 'star', COLORS.UI.GOLD, 3);
-      vibrate(30);
+      triggerHaptic('medium');
 
       // Milestone messages
       if (gameState.combo === 5) addFloatingText("GREAT!", horde.x, horde.y - 60, COLORS.UI.INFO, 1.5, 'critical');
@@ -196,7 +198,7 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
     addExplosion(horde.x, horde.y, COLORS.UI.GOLD);
     addParticle(horde.x, horde.y, 'star', COLORS.UI.GOLD, 8);
     addFloatingText('VICTORY!', horde.x, horde.y, COLORS.UI.GOLD, 1.3);
-    vibrate(30);
+    triggerHaptic('success');
   }
 
   triggerScreenShake(5, 100);
@@ -250,7 +252,7 @@ function processMiniBossBattle(army: Army, miniBoss: MiniBoss, gameState: GameSt
     addParticle(miniBoss.x + miniBoss.width / 2, miniBoss.y + miniBoss.height / 2, 'star', '#FF4500', 10);
     addFloatingText('MINI-BOSS DEFEATED!', miniBoss.x + miniBoss.width / 2, miniBoss.y, '#FF4500', 1.4);
     addFloatingText('+$50', miniBoss.x + miniBoss.width / 2, miniBoss.y - 30, COLORS.UI.GOLD, 1.5);
-    vibrate(50);
+    triggerHaptic('heavy');
   }
 
   triggerScreenShake(3, 50);
@@ -319,6 +321,7 @@ function applyMysteryBoxEffect(army: Army, box: MysteryBox, gameState: GameState
   box.passed = true;
   playSound(isGood ? audioManager.powerUp : audioManager.nerf);
   addParticle(box.x + box.width/2, box.y + box.height/2, 'star', isGood ? '#FFFFFF' : '#FF0000', 10);
+  addParticle(box.x + box.width/2, box.y + box.height/2, 'shockwave', isGood ? '#FFFFFF' : '#FF0000', 1);
 }
 
 export function checkCollisions(entities: Entities, gameState: GameState): void {
@@ -475,14 +478,14 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
           gameState.coins += 500;
           addFloatingText('BOSS DEFEATED!', boss.x + 50, boss.y, COLORS.UI.GOLD, 2.0);
           addFloatingText('+$500', boss.x + 50, boss.y - 40, COLORS.UI.GOLD, 1.8);
-          vibrate(100);
+          triggerHaptic('heavy');
         }
       }
   }
 
   if (army.aliveCount <= 0) {
     gameState.isGameOver = true;
-    vibrate(200);
+    triggerHaptic('failure');
     if (gameState.score > gameState.highScore) {
       gameState.highScore = gameState.score;
       localStorage.setItem('crowdHighScore', gameState.highScore.toString());

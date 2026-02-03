@@ -42,6 +42,7 @@ vi.mock('../src/input', () => ({
     getMouseX: vi.fn(() => 0),
     initializeMousePosition: vi.fn(),
     setGameStateRef: vi.fn(),
+    triggerHaptic: vi.fn(),
 }));
 
 describe('Collisions Coverage', () => {
@@ -287,7 +288,7 @@ describe('Collisions Coverage', () => {
          checkCollisions(entities, gameState);
 
          expect(gameState.isGameOver).toBe(true);
-         expect(input.vibrate).toHaveBeenCalled();
+         expect(input.triggerHaptic).toHaveBeenCalledWith('failure');
          // Check High Score update
          if (gameState.score > gameState.highScore) {
              // ... logic check
