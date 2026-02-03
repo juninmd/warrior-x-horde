@@ -32,6 +32,7 @@ vi.mock('../src/game', () => ({
 
 vi.mock('../src/input', () => ({
     vibrate: vi.fn(),
+    triggerHaptic: vi.fn(),
 }));
 
 describe('Collisions - Full Coverage', () => {

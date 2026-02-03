@@ -111,8 +111,56 @@ export function preRenderSprites(): void {
   renderParticleToCache('explosion', COLORS.EFFECTS.SPARK);
   renderParticleToCache('explosion', COLORS.EFFECTS.TRAIL);
 
+  // Render Bullet Sprites
+  renderBulletToCache(false); // Player
+  renderBulletToCache(true);  // Enemy
+
   spriteCache.initialized = true;
   console.log('Sprites pre-rendered. Cache size:', spriteCache.images.size);
+}
+
+function renderBulletToCache(isEnemy: boolean) {
+  const key = isEnemy ? 'bullet_enemy' : 'bullet_player';
+  if (spriteCache.images.has(key)) return;
+
+  const size = 8;
+  const canvasSize = size * 2 + 4; // Margin
+  const center = canvasSize / 2;
+
+  let canvas: HTMLCanvasElement | OffscreenCanvas;
+  let ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null;
+
+  /* v8 ignore start */
+  if (typeof OffscreenCanvas !== 'undefined') {
+    canvas = new OffscreenCanvas(canvasSize, canvasSize);
+    ctx = canvas.getContext('2d');
+  } else {
+    canvas = document.createElement('canvas');
+    canvas.width = canvasSize;
+    canvas.height = canvasSize;
+    ctx = canvas.getContext('2d');
+  }
+  /* v8 ignore stop */
+
+  if (!ctx) return;
+
+  const colorMain = isEnemy ? '#FF6B6B' : '#FFD700';
+  const colorCore = isEnemy ? '#E74C3C' : '#FFF';
+
+  const gradient = ctx.createRadialGradient(center, center, 0, center, center, size);
+  gradient.addColorStop(0, colorMain);
+  gradient.addColorStop(1, 'rgba(255, 215, 0, 0)');
+  ctx.fillStyle = gradient;
+  ctx.beginPath();
+  ctx.arc(center, center, size, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = colorCore;
+  ctx.beginPath();
+  ctx.arc(center, center, 3, 0, Math.PI * 2);
+  ctx.fill();
+
+  spriteCache.images.set(key, canvas);
 }
 
 function renderSoldierToCache(type: Soldier['type'], color: string, size: number, isSuper: boolean, isFlash: boolean) {
@@ -407,7 +455,7 @@ export function addParticle(x: number, y: number, type: Particle['type'], color:
     p.vx = Math.cos(angle) * speed;
     p.vy = Math.sin(angle) * speed - (type === 'star' ? 1.5 : 0);
     p.color = color;
-    p.size = type === 'explosion' ? 2 + Math.random() * 2.5 : 1.5 + Math.random() * 2;
+    p.size = type === 'shockwave' ? 20 : (type === 'explosion' ? 2 + Math.random() * 2.5 : 1.5 + Math.random() * 2);
     p.life = 1;
     p.maxLife = 1;
     p.type = type;
@@ -430,13 +478,19 @@ export function addTrail(x: number, y: number, color: string): void {
 export function updateParticles(): void {
   for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i];
-    p.x += p.vx;
-    p.y += p.vy;
-    p.vy += 0.1; // Gravidade
-    p.life -= 0.03;
-    p.size *= 0.97;
 
-    if (p.life <= 0 || p.size < 0.5) {
+    if (p.type === 'shockwave') {
+       p.size += 5; // Expand fast
+       p.life -= 0.05;
+    } else {
+       p.x += p.vx;
+       p.y += p.vy;
+       p.vy += 0.1; // Gravidade
+       p.life -= 0.03;
+       p.size *= 0.97;
+    }
+
+    if (p.life <= 0 || (p.type !== 'shockwave' && p.size < 0.5)) {
       particlePool.release(p);
       fastRemove(particles, i);
     }
@@ -448,6 +502,18 @@ function drawParticles(ctx: CanvasRenderingContext2D): void {
   for (const p of particles) {
     // Viewport Culling
     if (p.y < -50 || p.y > BASE_HEIGHT + 50) continue;
+
+    if (p.type === 'shockwave') {
+        ctx.save();
+        ctx.strokeStyle = p.color;
+        ctx.lineWidth = 4 * p.life;
+        ctx.globalAlpha = p.life;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+        continue;
+    }
 
     const key = `particle_${p.type}_${p.color}`;
     const cachedCanvas = spriteCache.images.get(key);
@@ -1417,22 +1483,38 @@ function drawDamageOverlay(ctx: CanvasRenderingContext2D, width: number, height:
   ctx.restore();
 }
 
-function drawBullets(ctx: CanvasRenderingContext2D, bullets: Bullet[]): void {
+export function drawBullets(ctx: CanvasRenderingContext2D, bullets: Bullet[]): void {
+  // Ensure initialization if not done (though usually done by army/horde draw)
+  if (!spriteCache.initialized) preRenderSprites();
+
   for (const bullet of bullets) {
     // Viewport Culling
     if (bullet.y < -50 || bullet.y > BASE_HEIGHT + 50) continue;
 
-    const gradient = ctx.createRadialGradient(bullet.x, bullet.y, 0, bullet.x, bullet.y, 8);
-    gradient.addColorStop(0, bullet.isEnemy ? '#FF6B6B' : '#FFD700');
-    gradient.addColorStop(1, 'rgba(255, 215, 0, 0)');
-    ctx.fillStyle = gradient;
-    ctx.beginPath();
-    ctx.arc(bullet.x, bullet.y, 8, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = bullet.isEnemy ? '#E74C3C' : '#FFF';
-    ctx.beginPath();
-    ctx.arc(bullet.x, bullet.y, 3, 0, Math.PI * 2);
-    ctx.fill();
+    const key = bullet.isEnemy ? 'bullet_enemy' : 'bullet_player';
+    const cachedCanvas = spriteCache.images.get(key);
+
+    if (cachedCanvas) {
+      const size = 8;
+      const canvasSize = cachedCanvas.width;
+      // Center alignment
+      ctx.drawImage(cachedCanvas, bullet.x - canvasSize / 2, bullet.y - canvasSize / 2);
+    } else {
+      // Fallback
+      /* v8 ignore start */
+      const gradient = ctx.createRadialGradient(bullet.x, bullet.y, 0, bullet.x, bullet.y, 8);
+      gradient.addColorStop(0, bullet.isEnemy ? '#FF6B6B' : '#FFD700');
+      gradient.addColorStop(1, 'rgba(255, 215, 0, 0)');
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(bullet.x, bullet.y, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = bullet.isEnemy ? '#E74C3C' : '#FFF';
+      ctx.beginPath();
+      ctx.arc(bullet.x, bullet.y, 3, 0, Math.PI * 2);
+      ctx.fill();
+      /* v8 ignore stop */
+    }
   }
 }
 
@@ -1748,6 +1830,7 @@ function drawComboBar(ctx: CanvasRenderingContext2D, gameState: GameState): void
       // Gradient fill
       const grad = ctx.createLinearGradient(x, y, x + barWidth, y);
       grad.addColorStop(0, shadeColor(color, -20));
+      grad.addColorStop(0.5, shadeColor(color, 40)); // Shine center
       grad.addColorStop(1, color);
 
       ctx.fillStyle = grad;

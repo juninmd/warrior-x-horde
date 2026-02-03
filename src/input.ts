@@ -77,7 +77,18 @@ function screenToCanvasX(screenX: number, canvasRect: DOMRect): number {
   return (screenX - canvasRect.left) / currentScale;
 }
 
-export function vibrate(ms: number): void {
+export type HapticPattern = 'light' | 'medium' | 'heavy' | 'success' | 'failure' | 'warning';
+
+const HAPTIC_PATTERNS: Record<HapticPattern, number | number[]> = {
+  light: 15,
+  medium: 40,
+  heavy: 80,
+  success: [40, 30, 40],
+  failure: [50, 50, 100],
+  warning: [30, 50, 30]
+};
+
+export function vibrate(ms: number | number[]): void {
   /* v8 ignore next */
   if (!SettingsManager.getInstance().hapticsEnabled) return;
 
@@ -89,6 +100,10 @@ export function vibrate(ms: number): void {
       /* v8 ignore next 2 */
     }
   }
+}
+
+export function triggerHaptic(pattern: HapticPattern): void {
+  vibrate(HAPTIC_PATTERNS[pattern]);
 }
 
 export function setupInput(canvas: HTMLCanvasElement): void {
