@@ -1,6 +1,7 @@
 // input.ts - Sistema de input (mouse/touch)
 import { GameState } from './types';
 import { activateSuperCannon } from './shooting';
+import { SettingsManager } from './settings';
 
 let mouseX = 0;
 let isDragging = false;
@@ -78,6 +79,8 @@ function screenToCanvasX(screenX: number, canvasRect: DOMRect): number {
 
 export function vibrate(ms: number): void {
   /* v8 ignore next */
+  if (!SettingsManager.getInstance().hapticsEnabled) return;
+
   if (typeof navigator !== 'undefined' && navigator.vibrate) {
     try {
       navigator.vibrate(ms);

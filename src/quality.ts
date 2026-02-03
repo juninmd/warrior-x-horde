@@ -19,6 +19,7 @@ export class QualityManager {
   private lastTime: number = 0;
   private lowQualityTriggered: boolean = false;
   private fpsDropFrames: number = 0;
+  private manualMode: boolean = false;
 
   private constructor() {}
 
@@ -29,7 +30,34 @@ export class QualityManager {
     return QualityManager._instance;
   }
 
+  public setQuality(level: 'low' | 'high' | 'auto'): void {
+    if (level === 'auto') {
+      this.manualMode = false;
+      this.lowQualityTriggered = false;
+      // Reset to defaults (High-ish)
+      this.settings.enableShadows = true;
+      this.settings.particleMultiplier = 1.0;
+      this.settings.simplifiedRendering = false;
+      this.settings.maxRenderedSoldiers = 150;
+      this.fpsDropFrames = 0;
+      console.log("Quality set to AUTO");
+    } else if (level === 'high') {
+      this.manualMode = true;
+      this.lowQualityTriggered = false;
+      this.settings.enableShadows = true;
+      this.settings.particleMultiplier = 1.0;
+      this.settings.simplifiedRendering = false;
+      this.settings.maxRenderedSoldiers = 250; // Extra high for manual high
+      console.log("Quality set to HIGH");
+    } else if (level === 'low') {
+      this.manualMode = true;
+      this.triggerLowQuality();
+      console.log("Quality set to LOW");
+    }
+  }
+
   public updateFPS(dt: number): void {
+    if (this.manualMode) return; // Ignore FPS checks in manual mode
     if (this.lowQualityTriggered) return; // Already low quality
 
     // Estimate FPS from dt (dt is in ms)

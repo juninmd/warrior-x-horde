@@ -5,6 +5,7 @@ import { triggerScreenShake } from './game';
 import { ObjectPool } from './pool';
 import { SpatialHashGrid } from './spatial';
 import { fastRemove } from './utils';
+import { soldierPool } from './soldierPool';
 
 // Grid espacial para otimização de colisão (Célula de 120px cobre bem grupos de inimigos)
 const enemyGrid = new SpatialHashGrid(120);
@@ -454,7 +455,9 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
               // Clean up dead soldiers
               for (let k = horde.soldiers.length - 1; k >= 0; k--) {
                   if (!horde.soldiers[k].isAlive) {
+                      const s = horde.soldiers[k];
                       horde.soldiers.splice(k, 1);
+                      soldierPool.release(s);
                   }
               }
               horde.count = horde.soldiers.length;
@@ -474,6 +477,9 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
         }
       } else if (item.type === 'miniboss') {
         const miniBoss = item.obj as MiniBoss;
+
+        // Check isActive to prevent multiple bullets killing the same miniboss in one frame
+        if (!miniBoss.isActive) continue;
 
         // Colisão AABB simples para MiniBoss
         if (bullet.x > miniBoss.x && bullet.x < miniBoss.x + miniBoss.width &&

@@ -193,10 +193,7 @@ describe('Game Loop - Full Coverage', () => {
         expect(gameState.isPaused).toBe(true);
     });
 
-    it('should handle toggle mute', () => {
-        (window as any).toggleMuteUI();
-        expect(audio.toggleMute).toHaveBeenCalled();
-    });
+    // Removed toggleMuteUI test as button was moved to settings
 
     it('should handle super cannon trigger', () => {
         gameState.isStarted = true;

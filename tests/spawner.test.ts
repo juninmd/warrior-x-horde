@@ -56,6 +56,9 @@ describe('Spawner', () => {
         });
 
         it('should remove passed coins', () => {
+            // Prevent spawning new coins during cleanup test
+            vi.spyOn(Math, 'random').mockReturnValue(1.0);
+
             entities.coins = [
                 { passed: true, y: 100 } as any,
                 { passed: false, y: 1300 } as any, // > 1200

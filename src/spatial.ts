@@ -1,7 +1,6 @@
 // spatial.ts - Sistema de Particionamento Espacial para Otimização de Colisões
 
 // Flattened structure to avoid allocations
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface SpatialItem {
   x: number;
   y: number;
