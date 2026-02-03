@@ -87,17 +87,23 @@ describe('Performance and UX Enhancements', () => {
     } as unknown as GameState;
 
     (ctx.arc as any).mockClear();
+    (ctx.drawImage as any).mockClear();
 
     render(ctx, entities, gameState);
 
     // Check visible bullet calls (x=100, y=100)
-    expect(ctx.arc).toHaveBeenCalledWith(100, 100, expect.any(Number), expect.any(Number), expect.any(Number));
+    // Updated to use cached image drawing instead of arc
+    // Bullet sprite is centered, so drawImage is called with offset
+    // Width is ~16-20 (size 8 * 2 + margin), so offset is ~10
+    expect(ctx.drawImage).toHaveBeenCalledWith(expect.anything(), expect.closeTo(90, 5), expect.closeTo(90, 5));
 
-    // Check off-screen bullet calls (x=100, y=-100) - Should NOT be called
-    expect(ctx.arc).not.toHaveBeenCalledWith(100, -100, expect.any(Number), expect.any(Number), expect.any(Number));
+    // Check off-screen bullet calls - Should NOT be called
+    // We check that drawImage was NOT called with off-screen coords
+    // Top bullet: y = -100 -> draw y ~ -110
+    expect(ctx.drawImage).not.toHaveBeenCalledWith(expect.anything(), expect.any(Number), expect.closeTo(-110, 5));
 
-    // Check off-screen bullet calls (x=100, y=BASE_HEIGHT+100) - Should NOT be called
-    expect(ctx.arc).not.toHaveBeenCalledWith(100, BASE_HEIGHT + 100, expect.any(Number), expect.any(Number), expect.any(Number));
+    // Bottom bullet: y = 900 -> draw y ~ 890
+    expect(ctx.drawImage).not.toHaveBeenCalledWith(expect.anything(), expect.any(Number), expect.closeTo(890, 5));
   });
 
   it('draws the combo bar when combo > 1', () => {

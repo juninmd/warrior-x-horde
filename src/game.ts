@@ -6,9 +6,9 @@ import { render, shareOnX, shareOnWhatsApp, addFloatingText, updateFloatingTexts
 import { checkCollisions } from './collisions';
 import { updateSpawns } from './spawner';
 import { updateMovement } from './movement';
-import { setupInput, getMouseX, initializeMousePosition, setGameStateRef, setInputScale, vibrate, triggerHaptic } from './input';
+import { setupInput, getMouseX, initializeMousePosition, setGameStateRef, setInputScale, triggerHaptic } from './input';
 import { updateShooting, updateBullets, updateSuperCannon, activateSuperCannon } from './shooting';
-import { initAudio, playMusic, playSound, stopAllMusic, audioManager, toggleMute, isMusicMuted } from './audio';
+import { initAudio, playMusic, playSound, stopAllMusic, audioManager, isMusicMuted } from './audio';
 import { BASE_WIDTH, BASE_HEIGHT, ASPECT_RATIO } from './constants';
 import { setupShopUI, updateShopUI, setupSuperCannonUI, updateSuperCannonUI, BuyAction, setupGameOverUI, showGameOverScreen, startCountdown } from './ui-overlay';
 import { QualityManager } from './quality';

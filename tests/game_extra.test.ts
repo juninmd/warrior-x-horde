@@ -18,6 +18,7 @@ vi.mock('../src/input', () => ({
     setGameStateRef: vi.fn(),
     setInputScale: vi.fn(),
     vibrate: vi.fn(),
+  triggerHaptic: vi.fn(),
 }));
 
 vi.mock('../src/audio', () => ({
@@ -184,6 +185,14 @@ describe('Game Extra Coverage', () => {
 
          // Press Escape
          document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+         // togglePause logic: if paused, resumes.
+         // Wait, togglePause implementation:
+         // if (gameState.isPaused) { startCountdown(...) }
+         // So isPaused remains true until countdown finishes?
+         // Let's check src/game.ts logic.
+         // "startCountdown(() => { gameState.isPaused = false; ... })"
+         // The test environment mocks startCountdown as `vi.fn((cb) => cb())` in ui-overlay mock.
+         // So it should be immediate.
          expect(gameState.isPaused).toBe(false);
     });
 

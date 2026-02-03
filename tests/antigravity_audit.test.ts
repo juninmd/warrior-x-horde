@@ -10,7 +10,8 @@ vi.mock('../src/input', () => ({
   setGameStateRef: vi.fn(),
   setupInput: vi.fn(),
   initializeMousePosition: vi.fn(),
-  vibrate: vi.fn()
+  vibrate: vi.fn(),
+  triggerHaptic: vi.fn()
 }));
 vi.mock('../src/renderer-boss', () => ({ drawBoss: vi.fn() }));
 vi.mock('../src/renderer-utils', () => ({

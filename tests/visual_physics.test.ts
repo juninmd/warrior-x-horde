@@ -3,7 +3,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mocks
 vi.mock('../src/input', () => ({
-  virtualJoystick: { active: false, alpha: 0 }
+  virtualJoystick: { active: false, alpha: 0 },
+  triggerHaptic: vi.fn(),
+  vibrate: vi.fn(),
 }));
 vi.mock('../src/renderer-boss', () => ({ drawBoss: vi.fn() }));
 vi.mock('../src/renderer-utils', () => ({
