@@ -1238,14 +1238,36 @@ function drawMysteryBox(ctx: CanvasRenderingContext2D, box: MysteryBox, time: nu
   ctx.restore();
 }
 
-function drawGate(ctx: CanvasRenderingContext2D, gate: Gate): void {
-  if (gate.passed) return;
-  const scale = Math.max(0.5, 1 - (800 - gate.y) / 1500);
-  const width = gate.width * scale;
-  const height = gate.height * scale;
-  const x = gate.x + (gate.width - width) / 2;
+function renderGateToCache(gate: Gate): void {
+  const padding = 40;
+  const width = gate.width;
+  const height = gate.height;
+  const canvasWidth = width + padding * 2;
+  const canvasHeight = height + padding * 2;
 
-  const barrelGradient = ctx.createLinearGradient(x, gate.y, x + width, gate.y);
+  let canvas: HTMLCanvasElement | OffscreenCanvas;
+  let ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null;
+
+  /* v8 ignore start */
+  if (typeof OffscreenCanvas !== 'undefined') {
+    canvas = new OffscreenCanvas(canvasWidth, canvasHeight);
+    ctx = canvas.getContext('2d');
+  } else {
+    canvas = document.createElement('canvas');
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
+    ctx = canvas.getContext('2d');
+  }
+  /* v8 ignore stop */
+
+  if (!ctx) return;
+
+  gate.cachedCanvas = canvas;
+
+  const x = padding;
+  const y = padding;
+
+  const barrelGradient = ctx.createLinearGradient(x, y, x + width, y);
   if (gate.cachedColors) {
     barrelGradient.addColorStop(0, gate.cachedColors.light);
     barrelGradient.addColorStop(0.5, gate.color);
@@ -1256,62 +1278,58 @@ function drawGate(ctx: CanvasRenderingContext2D, gate: Gate): void {
     barrelGradient.addColorStop(1, shadeColor(gate.color, -20));
   }
 
-  ctx.save();
-  // Shadow/Glow - Optimized with Gradient (instead of ShadowBlur)
+  // Shadow/Glow
   if (QualityManager.getInstance().settings.enableShadows) {
       const glowX = x + width / 2;
-      const glowY = gate.y + height / 2;
+      const glowY = y + height / 2;
       const glowRadius = width * 0.8;
       const glow = ctx.createRadialGradient(glowX, glowY, 0, glowX, glowY, glowRadius);
       glow.addColorStop(0, `${gate.color}66`); // 40% opacity
       glow.addColorStop(1, `${gate.color}00`); // 0% opacity
 
       ctx.fillStyle = glow;
-      ctx.fillRect(x - 20, gate.y - 20, width + 40, height + 40);
+      ctx.fillRect(x - 20, y - 20, width + 40, height + 40);
   }
 
   // Ground Shadow
   ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
   ctx.beginPath();
-  ctx.ellipse(x + width / 2 + 5, gate.y + height + 10, width / 2, 15, 0, 0, Math.PI * 2);
+  ctx.ellipse(x + width / 2 + 5, y + height + 10, width / 2, 15, 0, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.fillStyle = '#8B4513'; // Post color
   ctx.beginPath();
-  ctx.roundRect(x + width * 0.05, gate.y + height, width * 0.1, 15, 2);
-  ctx.roundRect(x + width * 0.85, gate.y + height, width * 0.1, 15, 2);
+  ctx.roundRect(x + width * 0.05, y + height, width * 0.1, 15, 2);
+  ctx.roundRect(x + width * 0.85, y + height, width * 0.1, 15, 2);
   ctx.fill();
 
   // Main Body
-  // Removed shadowBlur here too for performance, relying on the gradient glow above
   ctx.fillStyle = barrelGradient;
   ctx.beginPath();
-  ctx.roundRect(x, gate.y, width, height, 12);
+  ctx.roundRect(x, y, width, height, 12);
   ctx.fill();
 
   // Border
   ctx.strokeStyle = '#FFFFFF';
   ctx.lineWidth = 3;
   ctx.stroke();
-  ctx.restore();
 
   // Inner Panel
   ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
   ctx.beginPath();
-  ctx.roundRect(x + 5, gate.y + 5, width - 10, height - 10, 8);
+  ctx.roundRect(x + 5, y + 5, width - 10, height - 10, 8);
   ctx.fill();
 
-  ctx.save();
   ctx.fillStyle = '#FFFFFF';
   ctx.shadowColor = 'rgba(0,0,0,0.5)';
   ctx.shadowBlur = 4;
-  ctx.font = `900 ${Math.floor(36 * scale)}px Arial`; // Thicker, larger font
+  ctx.font = `900 36px Arial`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   let text = '';
   if (gate.customText) {
     text = gate.customText;
-    ctx.font = `bold ${Math.floor(22 * scale)}px Arial`;
+    ctx.font = `bold 22px Arial`;
   } else {
     switch (gate.type) {
       case 'add': text = `+${gate.value}`; break;
@@ -1323,8 +1341,30 @@ function drawGate(ctx: CanvasRenderingContext2D, gate: Gate): void {
       case 'superwarrior': text = `⭐×${gate.value}`; break;
     }
   }
-  ctx.fillText(text, x + width / 2, gate.y + height / 2);
-  ctx.restore();
+  ctx.fillText(text, x + width / 2, y + height / 2);
+}
+
+function drawGate(ctx: CanvasRenderingContext2D, gate: Gate): void {
+  if (gate.passed) return;
+  const scale = Math.max(0.5, 1 - (800 - gate.y) / 1500);
+
+  if (!gate.cachedCanvas) {
+    renderGateToCache(gate);
+  }
+
+  if (gate.cachedCanvas) {
+    const padding = 40;
+    const cachedWidth = gate.cachedCanvas.width;
+    const cachedHeight = gate.cachedCanvas.height;
+    const scaledWidth = cachedWidth * scale;
+    const scaledHeight = cachedHeight * scale;
+
+    const centerX = gate.x + gate.width / 2;
+    const drawX = centerX - scaledWidth / 2;
+    const drawY = gate.y - padding * scale;
+
+    ctx.drawImage(gate.cachedCanvas, drawX, drawY, scaledWidth, scaledHeight);
+  }
 }
 
 function drawMiniBoss(ctx: CanvasRenderingContext2D, miniBoss: MiniBoss, time: number): void {
