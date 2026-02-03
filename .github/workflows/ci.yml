@@ -7,7 +7,7 @@ on:
     branches: [ "main", "master" ]
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build:
@@ -37,7 +37,7 @@ jobs:
       run: pnpm build
 
     - name: Test with Coverage
-      run: pnpm vitest run --coverage --coverage.thresholds.lines=98 --coverage.thresholds.functions=97 --coverage.thresholds.branches=90 --coverage.thresholds.statements=97
+      run: pnpm vitest run --coverage
 
     - name: Upload Build Artifacts
       if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
@@ -50,6 +50,8 @@ jobs:
     needs: build
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     runs-on: ubuntu-22.04
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
         with:

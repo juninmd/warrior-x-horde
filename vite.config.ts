@@ -24,10 +24,10 @@ export default defineConfig({
       include: ['src/**/*.ts'],
       exclude: ['src/types.ts', 'src/vite-env.d.ts', 'src/renderer-boss.ts'], // Exclude types files and visual-only modules
       thresholds: {
-        lines: 95,
-        functions: 95,
-        branches: 85,
-        statements: 95,
+        lines: 98,
+        functions: 97,
+        branches: 90,
+        statements: 97,
       },
     },
   },
