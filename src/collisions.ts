@@ -1,5 +1,5 @@
 // collisions.ts - Sistema de colisões
-import { Entities, GameState, Army, EnemyHorde, Gate, MiniBoss, MysteryBox } from './types';
+import { Entities, GameState, Army, EnemyHorde, Gate, MiniBoss, MysteryBox, Soldier } from './types';
 import { addSoldiersToArmy, multiplySoldiersInArmy, removeSoldiersFromArmy, addSuperSoldiersToArmy, addSpecialSoldiersToArmy } from './entities';
 import { addFloatingText, addExplosion, addParticle } from './renderer';
 import { playSound, audioManager } from './audio';
@@ -7,6 +7,23 @@ import { vibrate } from './input';
 import { triggerScreenShake, triggerHitStop } from './game';
 import { getArmyBounds, checkBounds, getEntityBounds, Rect } from './utils';
 import { COLORS } from './constants';
+import { soldierPool } from './soldierPool';
+
+function cleanupDeadSoldiers(soldiers: Soldier[]): void {
+  let activeCount = 0;
+  for (let i = 0; i < soldiers.length; i++) {
+    const s = soldiers[i];
+    if (s.isAlive) {
+      if (i !== activeCount) {
+        soldiers[activeCount] = s;
+      }
+      activeCount++;
+    } else {
+      soldierPool.release(s);
+    }
+  }
+  soldiers.length = activeCount;
+}
 
 function applyGateEffect(army: Army, gate: Gate, gameState: GameState): void {
   const beforeCount = army.soldiers.length;
@@ -93,10 +110,10 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
       vibrate(30);
 
       // Milestone messages
-      if (gameState.combo === 5) addFloatingText("GREAT!", horde.x, horde.y - 60, COLORS.UI.INFO, 1.5);
-      else if (gameState.combo === 10) addFloatingText("EPIC!", horde.x, horde.y - 60, '#FF00FF', 1.8);
-      else if (gameState.combo === 20) addFloatingText("LEGENDARY!", horde.x, horde.y - 60, COLORS.UI.GOLD, 2.0);
-      else if (gameState.combo === 50) addFloatingText("UNSTOPPABLE!", horde.x, horde.y - 60, COLORS.EFFECTS.EXPLOSION, 2.5);
+      if (gameState.combo === 5) addFloatingText("GREAT!", horde.x, horde.y - 60, COLORS.UI.INFO, 1.5, 'critical');
+      else if (gameState.combo === 10) addFloatingText("EPIC!", horde.x, horde.y - 60, '#FF00FF', 1.8, 'critical');
+      else if (gameState.combo === 20) addFloatingText("LEGENDARY!", horde.x, horde.y - 60, COLORS.UI.GOLD, 2.0, 'critical');
+      else if (gameState.combo === 50) addFloatingText("UNSTOPPABLE!", horde.x, horde.y - 60, COLORS.EFFECTS.EXPLOSION, 2.5, 'critical');
 
       if (gameState.combo >= 2) {
         const isBigCombo = gameState.combo >= 5;
@@ -143,15 +160,15 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
 
       const k = gameState.killStreak;
       // Killstreak Milestones
-      if (k === 5) addFloatingText("KILLING SPREE", horde.x, horde.y - 80, '#2ECC71', 1.3);
-      else if (k === 10) addFloatingText("RAMPAGE!", horde.x, horde.y - 80, '#3498DB', 1.5);
-      else if (k === 20) addFloatingText("DOMINATING!", horde.x, horde.y - 80, '#9B59B6', 1.8);
-      else if (k === 50) addFloatingText("UNSTOPPABLE!", horde.x, horde.y - 80, '#E74C3C', 2.2);
-      else if (k === 100) addFloatingText("GODLIKE!", horde.x, horde.y - 80, '#FFD700', 3.0);
+      if (k === 5) addFloatingText("KILLING SPREE", horde.x, horde.y - 80, '#2ECC71', 1.3, 'critical');
+      else if (k === 10) addFloatingText("RAMPAGE!", horde.x, horde.y - 80, '#3498DB', 1.5, 'critical');
+      else if (k === 20) addFloatingText("DOMINATING!", horde.x, horde.y - 80, '#9B59B6', 1.8, 'critical');
+      else if (k === 50) addFloatingText("UNSTOPPABLE!", horde.x, horde.y - 80, '#E74C3C', 2.2, 'critical');
+      else if (k === 100) addFloatingText("GODLIKE!", horde.x, horde.y - 80, '#FFD700', 3.0, 'critical');
   }
 
-  army.soldiers = army.soldiers.filter(s => s.isAlive);
-  horde.soldiers = horde.soldiers.filter(s => s.isAlive);
+  cleanupDeadSoldiers(army.soldiers);
+  cleanupDeadSoldiers(horde.soldiers);
   horde.count = horde.soldiers.length;
 
   /* v8 ignore next */
@@ -165,10 +182,10 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
     }
 
     // Milestone messages
-    if (gameState.combo === 5) addFloatingText("GREAT!", horde.x, horde.y - 60, COLORS.UI.INFO, 1.5);
-    else if (gameState.combo === 10) addFloatingText("EPIC!", horde.x, horde.y - 60, '#FF00FF', 1.8);
-    else if (gameState.combo === 20) addFloatingText("LEGENDARY!", horde.x, horde.y - 60, COLORS.UI.GOLD, 2.0);
-    else if (gameState.combo === 50) addFloatingText("UNSTOPPABLE!", horde.x, horde.y - 60, COLORS.EFFECTS.EXPLOSION, 2.5);
+    if (gameState.combo === 5) addFloatingText("GREAT!", horde.x, horde.y - 60, COLORS.UI.INFO, 1.5, 'critical');
+    else if (gameState.combo === 10) addFloatingText("EPIC!", horde.x, horde.y - 60, '#FF00FF', 1.8, 'critical');
+    else if (gameState.combo === 20) addFloatingText("LEGENDARY!", horde.x, horde.y - 60, COLORS.UI.GOLD, 2.0, 'critical');
+    else if (gameState.combo === 50) addFloatingText("UNSTOPPABLE!", horde.x, horde.y - 60, COLORS.EFFECTS.EXPLOSION, 2.5, 'critical');
 
     /* v8 ignore next 4 */
     const comboMultiplier = Math.min(gameState.combo, 10);
@@ -222,7 +239,7 @@ function processMiniBossBattle(army: Army, miniBoss: MiniBoss, gameState: GameSt
   const damageToMiniBoss = Math.min(playerCount * 0.5, 5);
   miniBoss.hp -= damageToMiniBoss;
 
-  army.soldiers = army.soldiers.filter(s => s.isAlive);
+  cleanupDeadSoldiers(army.soldiers);
 
   if (miniBoss.hp <= 0) {
     miniBoss.isActive = false;
@@ -442,7 +459,7 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
             if (killed > 0) {
               gameState.damageFlash = Math.min(0.8, gameState.damageFlash + (killed * 0.1));
             }
-            army.soldiers = army.soldiers.filter(s => s.isAlive);
+            cleanupDeadSoldiers(army.soldiers);
         }
 
         const contactDamage = 5;

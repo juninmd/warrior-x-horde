@@ -12,6 +12,7 @@ import { initAudio, playMusic, playSound, stopAllMusic, audioManager, toggleMute
 import { BASE_WIDTH, BASE_HEIGHT, ASPECT_RATIO } from './constants';
 import { setupShopUI, updateShopUI, setupSuperCannonUI, updateSuperCannonUI, BuyAction, setupGameOverUI, showGameOverScreen, startCountdown } from './ui-overlay';
 import { QualityManager } from './quality';
+import { setupSettingsUI, toggleSettingsMenu } from './ui-settings';
 
 // Canvas setup
 export const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
@@ -569,6 +570,7 @@ resizeCanvas(); // Configurar tamanho inicial
 setupInput(canvas);
 initializeMousePosition(BASE_WIDTH);
 initAudio(); // Inicializar sistema de áudio
+setupSettingsUI(); // Inicializar Settings UI
 
 // Auto-pause quando a aba for trocada ou minimizada (Mobile friendly)
 document.addEventListener('visibilitychange', () => {
@@ -668,15 +670,6 @@ export function togglePause(): void {
   }
 }
 
-export function toggleMuteUI(): void {
-  vibrate(10);
-  const muted = toggleMute();
-  const btn = document.getElementById('muteBtn');
-  if (btn) {
-    btn.textContent = muted ? '🔇' : '🔊';
-  }
-}
-
 export function toggleFullscreen(): void {
   vibrate(10);
   if (!document.fullscreenElement) {
@@ -755,16 +748,14 @@ function updateSuperButtonInline(): void {
   debugSetLevel: typeof debugSetLevel;
   togglePause: typeof togglePause;
   triggerSuperCannon: typeof triggerSuperCannon;
-  toggleMuteUI: typeof toggleMuteUI;
-  toggleFullscreen: typeof toggleFullscreen;
   triggerScreenShake: typeof triggerScreenShake;
+  toggleSettingsMenu: typeof toggleSettingsMenu;
 }).debugSetLevel = debugSetLevel;
 
 (window as unknown as { togglePause: typeof togglePause }).togglePause = togglePause;
 (window as unknown as { triggerSuperCannon: typeof triggerSuperCannon }).triggerSuperCannon = triggerSuperCannon;
-(window as unknown as { toggleMuteUI: typeof toggleMuteUI }).toggleMuteUI = toggleMuteUI;
-(window as unknown as { toggleFullscreen: typeof toggleFullscreen }).toggleFullscreen = toggleFullscreen;
 (window as unknown as { triggerScreenShake: typeof triggerScreenShake }).triggerScreenShake = triggerScreenShake;
+(window as unknown as { toggleSettingsMenu: typeof toggleSettingsMenu }).toggleSettingsMenu = toggleSettingsMenu;
 
 // Adicionar atalho de teclado para pause (P ou Escape)
 document.addEventListener('keydown', (e) => {

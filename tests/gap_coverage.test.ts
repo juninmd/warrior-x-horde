@@ -144,24 +144,24 @@ describe('Gap Coverage Tests', () => {
       checkCollisions(entities, gameState);
 
       expect(gameState.killStreak).toBe(5);
-      expect(renderer.addFloatingText).toHaveBeenCalledWith("KILLING SPREE", expect.any(Number), expect.any(Number), '#2ECC71', 1.3);
+      expect(renderer.addFloatingText).toHaveBeenCalledWith("KILLING SPREE", expect.any(Number), expect.any(Number), '#2ECC71', 1.3, 'critical');
 
       // Test other milestones
       gameState.killStreak = 9;
       checkCollisions(entities, gameState); // 10
-      expect(renderer.addFloatingText).toHaveBeenCalledWith("RAMPAGE!", expect.any(Number), expect.any(Number), '#3498DB', 1.5);
+      expect(renderer.addFloatingText).toHaveBeenCalledWith("RAMPAGE!", expect.any(Number), expect.any(Number), '#3498DB', 1.5, 'critical');
 
       gameState.killStreak = 19;
       checkCollisions(entities, gameState); // 20
-      expect(renderer.addFloatingText).toHaveBeenCalledWith("DOMINATING!", expect.any(Number), expect.any(Number), '#9B59B6', 1.8);
+      expect(renderer.addFloatingText).toHaveBeenCalledWith("DOMINATING!", expect.any(Number), expect.any(Number), '#9B59B6', 1.8, 'critical');
 
       gameState.killStreak = 49;
       checkCollisions(entities, gameState); // 50
-      expect(renderer.addFloatingText).toHaveBeenCalledWith("UNSTOPPABLE!", expect.any(Number), expect.any(Number), '#E74C3C', 2.2);
+      expect(renderer.addFloatingText).toHaveBeenCalledWith("UNSTOPPABLE!", expect.any(Number), expect.any(Number), '#E74C3C', 2.2, 'critical');
 
       gameState.killStreak = 99;
       checkCollisions(entities, gameState); // 100
-      expect(renderer.addFloatingText).toHaveBeenCalledWith("GODLIKE!", expect.any(Number), expect.any(Number), '#FFD700', 3.0);
+      expect(renderer.addFloatingText).toHaveBeenCalledWith("GODLIKE!", expect.any(Number), expect.any(Number), '#FFD700', 3.0, 'critical');
     });
 
     it('should trigger victory logic when horde is destroyed', () => {

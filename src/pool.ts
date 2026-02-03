@@ -20,6 +20,10 @@ export class ObjectPool<T> {
   }
 
   public release(item: T): void {
+    if (this.items.includes(item)) {
+      console.warn('ObjectPool: Attempted to release item already in pool', item);
+      return;
+    }
     this.items.push(item);
   }
 

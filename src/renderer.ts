@@ -357,6 +357,7 @@ const floatingTextPool = new ObjectPool<FloatingText>(
     t.vx = 0;
     t.vy = 0;
     t.gravity = 0;
+    t.style = 'normal';
   }
 );
 
@@ -499,7 +500,7 @@ function drawParticles(ctx: CanvasRenderingContext2D): void {
 }
 /* v8 ignore stop */
 
-export function addFloatingText(text: string, x: number, y: number, color: string, sizeMultiplier: number = 1): void {
+export function addFloatingText(text: string, x: number, y: number, color: string, sizeMultiplier: number = 1, style: FloatingText['style'] = 'normal'): void {
   const ft = floatingTextPool.get();
   ft.text = text;
   ft.x = x;
@@ -507,10 +508,17 @@ export function addFloatingText(text: string, x: number, y: number, color: strin
   ft.color = color;
   ft.alpha = 1;
   ft.scale = 1 * sizeMultiplier;
+  ft.style = style;
 
   // Physics "Pop" effect (Juicy!)
-  ft.vx = (Math.random() - 0.5) * 4;
-  ft.vy = -3 - Math.random() * 3;
+  if (style === 'critical') {
+      ft.vx = (Math.random() - 0.5) * 8; // Wider spread
+      ft.vy = -5 - Math.random() * 4;   // Higher jump
+      ft.scale *= 1.2;
+  } else {
+      ft.vx = (Math.random() - 0.5) * 4;
+      ft.vy = -3 - Math.random() * 3;
+  }
   ft.gravity = 0.2;
 
   floatingTexts.push(ft);
@@ -1571,10 +1579,21 @@ function drawFloatingTexts(ctx: CanvasRenderingContext2D): void {
     ctx.save();
     ctx.globalAlpha = ft.alpha;
     ctx.fillStyle = ft.color;
-    ctx.font = `bold ${Math.floor(32 * ft.scale)}px Arial`;
+
+    if (ft.style === 'critical') {
+        ctx.font = `900 ${Math.floor(40 * ft.scale)}px Arial`;
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 3;
+        ctx.strokeText(ft.text, ft.x, ft.y);
+        ctx.shadowColor = '#FF0000';
+        ctx.shadowBlur = 10;
+    } else {
+        ctx.font = `bold ${Math.floor(32 * ft.scale)}px Arial`;
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+        ctx.shadowBlur = 5;
+    }
+
     ctx.textAlign = 'center';
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-    ctx.shadowBlur = 5;
     ctx.fillText(ft.text, ft.x, ft.y);
     ctx.restore();
   }

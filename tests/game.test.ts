@@ -149,14 +149,6 @@ describe('Game', () => {
         expect(audioModule.playSound).toHaveBeenCalledWith('gameStart');
     });
 
-    it('should toggle mute UI', async () => {
-        const gameModule = await import('../src/game');
-        const { toggleMuteUI } = gameModule;
-
-        toggleMuteUI();
-        expect(audioModule.toggleMute).toHaveBeenCalled();
-    });
-
     it('should set level (debug)', async () => {
         const gameModule = await import('../src/game');
         const { debugSetLevel } = gameModule;

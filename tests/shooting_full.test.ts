@@ -77,8 +77,8 @@ describe('Shooting - Full Coverage', () => {
 
           // Mock pool to return a valid bullet object structure
           // Override the mock implementation for this test
-          const mockBullet = { x: 0, y: 0 };
-          vi.spyOn(pool.ObjectPool.prototype, 'get').mockReturnValue(mockBullet as any);
+          // Use mockImplementation to return a FRESH object every time
+          vi.spyOn(pool.ObjectPool.prototype, 'get').mockImplementation(() => ({ x: 0, y: 0 }) as any);
 
           updateShooting(entities, gameState);
 
