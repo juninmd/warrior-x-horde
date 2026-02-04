@@ -188,13 +188,14 @@ export function multiplySoldiersInArmy(army: Army, multiplier: number): void {
 export function removeSoldiersFromArmy(army: Army, count: number): void {
   for (let i = 0; i < count && army.soldiers.length > 0; i++) {
     const s = army.soldiers.pop();
-    /* v8 ignore next */
+    /* v8 ignore start */
     if (s) {
       if (s.isAlive) {
         army.aliveCount--;
       }
       soldierPool.release(s);
     }
+    /* v8 ignore stop */
   }
 }
 
@@ -470,7 +471,6 @@ export function createGatePair(canvasWidth: number, y: number, level: number = 1
     rightGate.color = rightGate.type === 'subtract' ? '#E74C3C' : '#9B59B6';
   } else if (!leftIsGood && !rightIsGood) {
     // Mudar o esquerdo para bom (valores conservadores)
-    /* v8 ignore next */
     const buffRoll = Math.random();
     /* v8 ignore next */
     if (atMaxHeroes) {

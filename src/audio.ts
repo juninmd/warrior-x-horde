@@ -52,9 +52,8 @@ export function initAudio(): void {
       isMuted = true;
     }
   } catch (e) {
-    /* v8 ignore start */
+    /* v8 ignore next */
     console.warn('LocalStorage access denied', e);
-    /* v8 ignore stop */
   }
 
   // Pré-carregar todos os áudios

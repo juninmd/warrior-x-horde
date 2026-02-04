@@ -77,7 +77,7 @@ describe('Extra Coverage Part 2', () => {
         it('should break bucket sort loop if needed satisfied', () => {
              const army: Army = {
                 soldiers: Array(20).fill(null).map((_, i) => ({
-                    id: i, x: 100, y: 100, type: 'laser', isAlive: true, y: 100 + i // Sorted by Y
+                    id: i, x: 100, type: 'laser', isAlive: true, y: 100 + i // Sorted by Y
                 } as any)),
                 aliveCount: 20,
                 centerX: 100, centerY: 100,

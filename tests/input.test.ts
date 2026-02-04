@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { setupInput, VirtualJoystick, getMouseX, setGameStateRef, virtualJoystick, setInputScale, vibrate, initializeMousePosition, resetInput } from '../src/input';
+import { setupInput, VirtualJoystick, getMouseX, setGameStateRef, virtualJoystick, setInputScale, vibrate, initializeMousePosition, resetInput, triggerHaptic } from '../src/input';
 import { GameState } from '../src/types';
 
 // Mock dependencies
@@ -250,5 +250,10 @@ describe('Input', () => {
         // Use existing mock
         vibrate(100);
         expect(navigator.vibrate).toHaveBeenCalledWith(100);
+    });
+
+    it('should trigger haptic pattern', () => {
+        triggerHaptic('success');
+        expect(navigator.vibrate).toHaveBeenCalledWith([40, 30, 40]);
     });
 });

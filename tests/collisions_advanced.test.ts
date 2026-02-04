@@ -16,6 +16,7 @@ vi.mock('../src/renderer', () => ({
 
 vi.mock('../src/input', () => ({
     vibrate: vi.fn(),
+    triggerHaptic: vi.fn(),
 }));
 
 // Mock Audio to avoid issues

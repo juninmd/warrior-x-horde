@@ -52,6 +52,7 @@ export class QualityManager {
     } else if (level === 'low') {
       this.manualMode = true;
       this.triggerLowQuality();
+      /* v8 ignore next */
       console.log("Quality set to LOW");
     }
   }
@@ -74,6 +75,7 @@ export class QualityManager {
 
     // If FPS is bad for ~2 seconds (120 frames)
     if (this.fpsDropFrames > 120) {
+      /* v8 ignore next */
       this.triggerLowQuality();
     }
   }

@@ -9,7 +9,7 @@ export interface Particle {
   size: number;
   life: number;
   maxLife: number;
-  type: 'explosion' | 'trail' | 'spark' | 'star';
+  type: 'explosion' | 'trail' | 'spark' | 'star' | 'shockwave';
 }
 
 export interface GameState {

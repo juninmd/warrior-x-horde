@@ -84,6 +84,7 @@ vi.mock('../src/input', () => ({
     setGameStateRef: vi.fn(),
     initializeMousePosition: vi.fn(),
     vibrate: vi.fn(),
+    triggerHaptic: vi.fn(),
     getMouseX: vi.fn().mockReturnValue(240),
 }));
 
