@@ -1,4 +1,3 @@
-/* v8 ignore start */
 import { SettingsManager } from './settings';
 import { toggleMute, isMusicMuted, playMusic } from './audio';
 import { vibrate } from './input';
@@ -7,11 +6,9 @@ import { toggleFullscreen } from './game';
 
 let settingsModal: HTMLElement | null = null;
 
-/* v8 ignore start */
 export const _testing = {
   reset: () => { settingsModal = null; }
 };
-/* v8 ignore stop */
 
 function createSettingsModal(): void {
   settingsModal = document.createElement('div');
@@ -50,7 +47,6 @@ function createSettingsModal(): void {
   const sm = SettingsManager.getInstance();
 
   // Helper for toggle buttons
-  /* v8 ignore start */
   const createToggle = (label: string, id: string, initialValue: boolean | string, onClick: (btn: HTMLButtonElement) => void) => {
     const container = document.createElement('div');
     container.style.cssText = 'margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;';
@@ -98,10 +94,8 @@ function createSettingsModal(): void {
     content.appendChild(container);
     return { btn, updateStyle };
   };
-  /* v8 ignore stop */
 
   // Sound
-  /* v8 ignore start */
   const soundToggle = createToggle('🔊 SOUND', 'soundBtn', isMusicMuted() ? 'OFF' : 'ON', (btn) => {
      const muted = toggleMute(); // Flips state
      sm.soundEnabled = !muted;
@@ -113,10 +107,8 @@ function createSettingsModal(): void {
          playMusic(gameState.bossActive);
      }
   });
-  /* v8 ignore stop */
 
   // Haptics
-  /* v8 ignore start */
   const hapticsToggle = createToggle('📳 HAPTICS', 'hapticsBtn', sm.hapticsEnabled ? 'ON' : 'OFF', (btn) => {
      sm.hapticsEnabled = !sm.hapticsEnabled;
      const newState = sm.hapticsEnabled ? 'ON' : 'OFF';
@@ -124,10 +116,8 @@ function createSettingsModal(): void {
      hapticsToggle.updateStyle(newState);
      if (sm.hapticsEnabled) vibrate(50);
   });
-  /* v8 ignore stop */
 
   // Quality
-  /* v8 ignore start */
   const qualities = ['auto', 'high', 'low'];
   const qualityToggle = createToggle('🎨 QUALITY', 'qualityBtn', sm.quality.toUpperCase(), (btn) => {
      let idx = qualities.indexOf(sm.quality);
@@ -137,13 +127,11 @@ function createSettingsModal(): void {
      btn.innerText = newQ.toUpperCase();
      qualityToggle.updateStyle(newQ.toUpperCase());
   });
-  /* v8 ignore stop */
 
   // Fullscreen
   createToggle('⛶ SCREEN', 'fullscreenBtn', 'FULL', () => {
-      /* v8 ignore start */
+      /* v8 ignore next */
       toggleFullscreen();
-      /* v8 ignore stop */
   });
 
   // Close Button
@@ -161,12 +149,10 @@ function createSettingsModal(): void {
     cursor: pointer;
     font-size: 16px;
   `;
-  /* v8 ignore start */
   closeBtn.onclick = () => {
       vibrate(20);
       toggleSettingsMenu();
   };
-  /* v8 ignore stop */
   content.appendChild(closeBtn);
 
   settingsModal.appendChild(content);
@@ -181,9 +167,7 @@ export function setupSettingsUI(): void {
 
 export function toggleSettingsMenu(): void {
     if (!settingsModal) setupSettingsUI();
-    /* v8 ignore start */
     if (!settingsModal) return;
-    /* v8 ignore stop */
 
     if (settingsModal.style.display === 'flex') {
         settingsModal.style.display = 'none';
@@ -191,13 +175,10 @@ export function toggleSettingsMenu(): void {
         settingsModal.style.display = 'flex';
         // Sync button states if changed elsewhere (e.g. mute btn)
         const soundBtn = document.getElementById('soundBtn');
-        /* v8 ignore start */
         if (soundBtn) {
            const label = isMusicMuted() ? 'OFF' : 'ON';
            soundBtn.innerText = label;
            soundBtn.style.background = isMusicMuted() ? '#E74C3C' : '#2ECC71';
         }
-        /* v8 ignore stop */
     }
 }
-/* v8 ignore stop */

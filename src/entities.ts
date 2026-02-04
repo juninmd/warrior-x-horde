@@ -471,7 +471,6 @@ export function createGatePair(canvasWidth: number, y: number, level: number = 1
     rightGate.color = rightGate.type === 'subtract' ? '#E74C3C' : '#9B59B6';
   } else if (!leftIsGood && !rightIsGood) {
     // Mudar o esquerdo para bom (valores conservadores)
-    /* v8 ignore next */
     const buffRoll = Math.random();
     /* v8 ignore next */
     if (atMaxHeroes) {

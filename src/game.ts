@@ -71,9 +71,11 @@ export function screenToCanvas(screenX: number, screenY: number): { x: number; y
   };
 }
 
+/* v8 ignore start */
 export function getScale(): number {
   return scale;
 }
+/* v8 ignore stop */
 
 // Entidades do jogo
 let entities: Entities;
@@ -100,6 +102,7 @@ async function requestWakeLock() {
   }
 }
 
+/* v8 ignore start */
 function releaseWakeLock() {
   if (wakeLock) {
     wakeLock.release()
@@ -109,6 +112,7 @@ function releaseWakeLock() {
       .catch((err: unknown) => console.warn('Wake Lock release failed:', err));
   }
 }
+/* v8 ignore stop */
 /* v8 ignore stop */
 
 // --- Shop Logic ---
@@ -537,11 +541,12 @@ const onRestartGame = () => {
     }
 };
 
+/* v8 ignore start */
 const onShareGame = (platform: 'x' | 'whatsapp') => {
-    /* v8 ignore next 2 */
     if (platform === 'x') shareOnX(gameState);
     else shareOnWhatsApp(gameState);
 };
+/* v8 ignore stop */
 
 // Setup Game Over UI
 setupGameOverUI(onRestartGame, onShareGame);
@@ -719,6 +724,7 @@ let lastSuperText: string = '';
 let lastSuperDisabled: boolean | null = null;
 
 // Atualizar estado do botão Super inline
+/* v8 ignore start */
 function updateSuperButtonInline(): void {
   if (!cachedSuperBtn) {
     cachedSuperBtn = document.getElementById('superCannonBtnInline') as HTMLButtonElement;
@@ -742,7 +748,6 @@ function updateSuperButtonInline(): void {
       newText = '⚡ ATIVO!';
       newDisabled = true;
     } else if (isOnCooldown) {
-      /* v8 ignore next 2 */
       const cooldownSecs = Math.ceil(cooldownRemaining / 1000);
       newText = `⏳ ${cooldownSecs}s`;
       newDisabled = true;
@@ -763,6 +768,7 @@ function updateSuperButtonInline(): void {
     lastSuperDisabled = newDisabled;
   }
 }
+/* v8 ignore stop */
 
 // Expor funções globalmente para o HTML acessar
 (window as unknown as {

@@ -9,6 +9,15 @@ vi.mock('../src/game', () => ({
     // Empty mock
 }));
 
+// Mock input to prevent circular dependency via renderer-utils -> input -> game
+vi.mock('../src/input', () => ({
+    virtualJoystick: { draw: vi.fn() },
+    setInputScale: vi.fn(),
+    getMouseX: vi.fn(),
+    initializeMousePosition: vi.fn(),
+    resetInput: vi.fn(),
+}));
+
 describe('Renderer Culling', () => {
   let ctx: CanvasRenderingContext2D;
   let canvas: HTMLCanvasElement;

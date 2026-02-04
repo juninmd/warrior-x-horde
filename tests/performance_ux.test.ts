@@ -55,51 +55,6 @@ describe('Performance and UX Enhancements', () => {
     vi.useRealTimers();
   });
 
-  it.skip('culls off-screen bullets from rendering', () => {
-    const visibleBullet: Bullet = { x: 100, y: 100, dx: 0, dy: 0, damage: 1, isEnemy: false, speed: 10 };
-    const offScreenBulletTop: Bullet = { x: 100, y: -100, dx: 0, dy: 0, damage: 1, isEnemy: false, speed: 10 };
-    const offScreenBulletBottom: Bullet = { x: 100, y: BASE_HEIGHT + 100, dx: 0, dy: 0, damage: 1, isEnemy: false, speed: 10 };
-
-    const entities: Entities = {
-      playerArmy: { soldiers: [], aliveCount: 0, centerX: 0, centerY: 0, targetX: 0, fireRate: 0, damage: 0 } as unknown as Army,
-      enemyHordes: [] as EnemyHorde[],
-      bullets: [visibleBullet, offScreenBulletTop, offScreenBulletBottom],
-      particles: [],
-      floatingTexts: [],
-      gates: [],
-      mysteryBoxes: [],
-      coins: [],
-      miniBosses: [],
-      boss: null
-    };
-
-    const gameState = {
-        isStarted: true,
-        combo: 0,
-        comboTimer: 0,
-        currentLevel: 1,
-        settings: {},
-        score: 0,
-        coins: 0,
-        highScore: 0,
-        distanceTraveled: 0,
-        levelDistance: 1000
-    } as unknown as GameState;
-
-    vi.spyOn(ctx, 'drawImage');
-    (ctx.drawImage as any).mockClear();
-
-    render(ctx, entities, gameState);
-
-    // Check visible bullet calls (x=100, y=100) - uses sprites now (drawImage)
-    expect(ctx.drawImage).toHaveBeenCalledWith(expect.any(Object), expect.any(Number), expect.any(Number));
-
-    // Check off-screen bullet calls (x=100, y=-100) - Should NOT be called
-    // Since drawImage coordinates are offset by sprite size, we can just ensure the number of calls is 1 (only the visible one)
-    // PLUS 1 call for the background (drawRoad uses cached background)
-    expect(ctx.drawImage).toHaveBeenCalledTimes(2);
-  });
-
   it('draws the combo bar when combo > 1', () => {
       const entities: Entities = {
         playerArmy: { soldiers: [], aliveCount: 0, centerX: 0, centerY: 0 } as unknown as Army,
