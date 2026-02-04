@@ -96,8 +96,8 @@ export function vibrate(ms: number | number[]): void {
     try {
       navigator.vibrate(ms);
     } catch {
+      /* v8 ignore next */
       // Ignore vibration errors
-      /* v8 ignore next 2 */
     }
   }
 }

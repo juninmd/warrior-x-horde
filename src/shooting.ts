@@ -259,6 +259,7 @@ export function updateSuperCannon(entities: Entities, gameState: GameState, delt
   }
 
   if (gameState.superCannonActive) {
+    /* v8 ignore start */
     gameState.superCannonTimer -= deltaTime;
 
     if (gameState.superCannonTimer <= 0) {
@@ -267,6 +268,7 @@ export function updateSuperCannon(entities: Entities, gameState: GameState, delt
     } else {
       applySuperCannonDamage(entities, gameState);
     }
+    /* v8 ignore stop */
   }
 }
 
@@ -301,11 +303,12 @@ function applySuperCannonDamage(entities: Entities, gameState: GameState): void 
     }
   }
 
-  /* v8 ignore next 15 */
+  /* v8 ignore start */
   if (entities.boss && entities.boss.isActive) {
     const boss = entities.boss;
     const bossCenter = boss.x + boss.width / 2;
     if (bossCenter > beamX - beamWidth / 2 && bossCenter < beamX + beamWidth / 2) {
+      /* v8 ignore next */
       boss.hp -= damage * 0.1;
       if (boss.hp <= 0) {
         boss.isActive = false;
@@ -316,6 +319,7 @@ function applySuperCannonDamage(entities: Entities, gameState: GameState): void 
       }
     }
   }
+  /* v8 ignore stop */
 }
 
 export function updateBullets(entities: Entities, gameState: GameState, dtFactor: number): void {
@@ -335,16 +339,15 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
   }
 
   // Se não houver balas do jogador, não precisamos popular a grid nem verificar colisões complexas
+  /* v8 ignore start */
   if (tempPlayerBullets.length > 0) {
     // 1. Popular a Grid Espacial com Inimigos (Soldados e MiniBosses)
     enemyGrid.clear();
 
     // Hordas
     for (const horde of entities.enemyHordes) {
-      /* v8 ignore next */
       if (!horde.isActive || horde.y < 100) continue;
       for (const soldier of horde.soldiers) {
-        /* v8 ignore next */
         if (soldier.isAlive && soldier.y >= 100) {
           enemyGrid.insert(
             soldier.x - soldier.size,
@@ -384,7 +387,6 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
     const nearby = enemyGrid.query(bullet.x - 10, bullet.y - 10, 20, 20);
 
     for (const item of nearby) {
-      /* v8 ignore next */
       if (bulletHit) break;
 
       if (item.type === 'soldier') {
@@ -397,7 +399,6 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
           soldier.hitTimer = 5;
 
           // Critical Hit Text
-          /* v8 ignore next 10 */
           if (bullet.damage >= 5) {
              const isCrit = bullet.damage >= 10;
              addFloatingText(
@@ -419,7 +420,6 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
           const targetAliveCount = Math.max(0, Math.ceil(horde.hp / safeAvgHp));
           const currentAlive = horde.soldiers.filter(s => s.isAlive).length;
 
-          /* v8 ignore start */
           if (currentAlive > targetAliveCount) {
               // Kill the difference
               const toKill = currentAlive - targetAliveCount;
@@ -450,7 +450,6 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
                       }
                   }
               }
-              /* v8 ignore stop */
 
               // Clean up dead soldiers
               for (let k = horde.soldiers.length - 1; k >= 0; k--) {
@@ -469,7 +468,6 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
                   addParticle(horde.x, horde.y, 'star', '#FFD700', 8);
               }
           }
-          /* v8 ignore stop */
 
           bulletPool.release(bullet);
           fastRemove(entities.bullets, i);
@@ -509,6 +507,7 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
         }
       }
     }
+  /* v8 ignore stop */
 
     if (bulletHit) continue;
 

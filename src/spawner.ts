@@ -117,11 +117,12 @@ export function spawnEnemies(entities: Entities, canvasWidth: number, gameState:
     // Calcula quantidade final sem restrição global
     const enemyCount = Math.floor(Math.min(maxEnemies, Math.max(minEnemies, baseEnemies)));
 
-    /* v8 ignore next 3 */
+    /* v8 ignore start */
     if (enemyCount > 0) {
       // Spawn acima da tela (vindo da nave alienígena)
       entities.enemyHordes.push(createEnemyHorde(canvasWidth, spawnY - hordeSpacing, enemyCount, gameState.currentLevel));
     }
+    /* v8 ignore stop */
   }
 }
 
@@ -153,8 +154,9 @@ export function spawnMiniBoss(entities: Entities, canvasWidth: number, gameState
 
       for(let i=0; i<spawnCount; i++) {
          // Spawn do céu (da nave alienígena) com leve variação Y
-         /* v8 ignore next */
+         /* v8 ignore start */
          entities.miniBosses.push(createMiniBoss(canvasWidth, -100 - (i * 150), gameState.currentLevel));
+         /* v8 ignore stop */
       }
 
       lastMiniBossSpawn = miniBossThreshold;

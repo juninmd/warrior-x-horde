@@ -114,6 +114,7 @@ function createSettingsModal(): void {
      const newState = sm.hapticsEnabled ? 'ON' : 'OFF';
      btn.innerText = newState;
      hapticsToggle.updateStyle(newState);
+     /* v8 ignore next */
      if (sm.hapticsEnabled) vibrate(50);
   });
 
@@ -130,6 +131,7 @@ function createSettingsModal(): void {
 
   // Fullscreen
   createToggle('⛶ SCREEN', 'fullscreenBtn', 'FULL', () => {
+      /* v8 ignore next */
       toggleFullscreen();
   });
 

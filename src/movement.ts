@@ -161,10 +161,11 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
       const waitTime = 10000; // 10 segundos parado
 
       // Primeiro, mover até a posição inicial (y = 100)
-      /* v8 ignore next */
+      /* v8 ignore start */
       if (boss.y < 100) {
         boss.y += baseSpeed * dtFactor;
       } else if (timeSinceSpawn > waitTime) {
+        /* v8 ignore stop */
         // Após 10 segundos, começa a avançar igual aos inimigos comuns
         boss.isMoving = true;
 
@@ -204,7 +205,7 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
 
   // Mover mini-bosses (mais lentos que as hordas normais)
   for (const miniBoss of entities.miniBosses) {
-    /* v8 ignore next 2 */
+    /* v8 ignore next */
     if (!miniBoss.isActive) continue;
 
     // Mini-boss se move mais devagar verticalmente

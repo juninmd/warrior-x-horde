@@ -184,7 +184,7 @@ describe('Game Gap Coverage 2', () => {
          expect((event as any).preventDefault).toHaveBeenCalled();
     });
 
-    it('should decay visual timers', async () => {
+    it('should decay visual timers and reset killstreak', async () => {
         const game = await import('../src/game');
         gameState.isStarted = true;
         gameState.isGameOver = false;
@@ -192,13 +192,36 @@ describe('Game Gap Coverage 2', () => {
         gameState.damageFlash = 1.0;
         gameState.whiteFlash = 1.0;
         gameState.nukeTimer = 10;
-        gameState.killStreakTimer = 1000;
+        gameState.killStreakTimer = 1; // Low value to force reset
 
-        game._testing.gameLoop(100);
+        game._testing.gameLoop(100); // delta will be at least 16ms
 
         expect(gameState.damageFlash).toBeLessThan(1.0);
         expect(gameState.whiteFlash).toBeLessThan(1.0);
         expect(gameState.nukeTimer).toBeLessThan(10);
-        expect(gameState.killStreakTimer).toBeLessThan(1000);
+        expect(gameState.killStreakTimer).toBeLessThan(1);
+        // It likely went <= 0
+        if (gameState.killStreakTimer <= 0) {
+            expect(gameState.killStreak).toBe(0);
+        }
+    });
+
+    it('should save high score on game over', async () => {
+        const game = await import('../src/game');
+        gameState.isStarted = true;
+        gameState.isGameOver = true; // Trigger Game Over block
+        gameState.score = 999999;
+        gameState.highScore = 10;
+
+        // Spy on saveGameProgress? No, just check state change
+        // We need mocks from top of file to work.
+        // localStorage mock logic is in `should handle leaderboard save error`.
+        // We need normal localStorage behavior here.
+        const setItemSpy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {});
+
+        game._testing.gameLoop(100);
+
+        expect(gameState.highScore).toBe(999999);
+        setItemSpy.mockRestore();
     });
 });

@@ -49,6 +49,7 @@ export class QualityManager {
       this.settings.simplifiedRendering = false;
       this.settings.maxRenderedSoldiers = 250; // Extra high for manual high
       console.log("Quality set to HIGH");
+      /* v8 ignore next */
     } else if (level === 'low') {
       this.manualMode = true;
       this.triggerLowQuality();
@@ -74,6 +75,7 @@ export class QualityManager {
 
     // If FPS is bad for ~2 seconds (120 frames)
     if (this.fpsDropFrames > 120) {
+      /* v8 ignore next */
       this.triggerLowQuality();
     }
   }

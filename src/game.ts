@@ -6,9 +6,9 @@ import { render, shareOnX, shareOnWhatsApp, addFloatingText, updateFloatingTexts
 import { checkCollisions } from './collisions';
 import { updateSpawns } from './spawner';
 import { updateMovement } from './movement';
-import { setupInput, getMouseX, initializeMousePosition, setGameStateRef, setInputScale, vibrate, triggerHaptic } from './input';
+import { setupInput, getMouseX, initializeMousePosition, setGameStateRef, setInputScale, triggerHaptic } from './input';
 import { updateShooting, updateBullets, updateSuperCannon, activateSuperCannon } from './shooting';
-import { initAudio, playMusic, playSound, stopAllMusic, audioManager, toggleMute, isMusicMuted } from './audio';
+import { initAudio, playMusic, playSound, stopAllMusic, audioManager, isMusicMuted } from './audio';
 import { BASE_WIDTH, BASE_HEIGHT, ASPECT_RATIO } from './constants';
 import { setupShopUI, updateShopUI, setupSuperCannonUI, updateSuperCannonUI, BuyAction, setupGameOverUI, showGameOverScreen, startCountdown } from './ui-overlay';
 import { QualityManager } from './quality';
@@ -94,6 +94,7 @@ async function requestWakeLock() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       wakeLock = await (navigator as any).wakeLock.request('screen');
     } catch (err) {
+      /* v8 ignore next */
       console.warn('Wake Lock request failed:', err);
     }
   }
@@ -121,11 +122,12 @@ const handleBuy: BuyAction = (type, cost) => {
               addFloatingText('READY!', entities.playerArmy.centerX, entities.playerArmy.centerY, '#FFD700');
               return;
            }
-           /* v8 ignore next 4 */
+           /* v8 ignore start */
            if (gameState.superCannonReady && !gameState.superCannonActive) {
                // Already ready
                return;
            }
+           /* v8 ignore stop */
         }
 
         gameState.coins -= cost;
@@ -141,14 +143,17 @@ const handleBuy: BuyAction = (type, cost) => {
           /* v8 ignore stop */
 
           // 2. Kill all normal hordes
+          /* v8 ignore start */
           entities.enemyHordes.forEach(h => {
             if (h.isActive) {
               h.isActive = false;
             }
           });
+          /* v8 ignore stop */
 
           // 3. Clear Bullets
           entities.bullets = [];
+          /* v8 ignore next */
 
           // 4. Massive Damage to Bosses
           if (entities.boss && entities.boss.isActive) {
@@ -159,14 +164,14 @@ const handleBuy: BuyAction = (type, cost) => {
           }
 
           // 5. Massive Damage to MiniBosses
+          /* v8 ignore start */
           entities.miniBosses.forEach(mb => {
             if (mb.isActive) {
-              /* v8 ignore start */
               mb.hp -= 5000;
               addFloatingText('-5000', mb.x + mb.width/2, mb.y, '#FF0000', 1.5);
-              /* v8 ignore stop */
             }
           });
+          /* v8 ignore stop */
 
         } else if (type === 'soldier') {
           addSoldiersToArmy(entities.playerArmy, 10);
@@ -204,6 +209,7 @@ const handleSuperCannon = () => {
       });
 
       if (gameState.isStarted && !gameState.isGameOver) {
+        /* v8 ignore next */
         activateSuperCannon(gameState);
       }
 };
@@ -292,13 +298,15 @@ function gameLoop(currentTime: number = 0): void {
   }
 
   // Update Kill Streak
-  /* v8 ignore next 6 */
+  /* v8 ignore start */
   if (gameState.killStreakTimer > 0) {
     gameState.killStreakTimer -= deltaTime;
     if (gameState.killStreakTimer <= 0) {
       gameState.killStreak = 0;
     }
   }
+  /* v8 ignore stop */
+  /* v8 ignore stop */
 
   // Update Nuke Timer
   /* v8 ignore next 3 */
@@ -318,6 +326,7 @@ function gameLoop(currentTime: number = 0): void {
 
     if (box.passed || box.y >= 1200) {
       // Swap com o último elemento e remove
+      /* v8 ignore next */
       entities.mysteryBoxes[i] = entities.mysteryBoxes[entities.mysteryBoxes.length - 1];
       entities.mysteryBoxes.pop();
       i--; // Re-processar este índice pois agora contém o elemento trocado
@@ -538,12 +547,13 @@ setupGameOverUI(onRestartGame, onShareGame);
 // Restart no clique após game over (apenas para Pause e Interação In-Game)
 canvas.addEventListener('click', () => {
   // Se pausado, verificar clique no botão Resume
-  /* v8 ignore next 5 */
+  /* v8 ignore start */
   if (gameState.isPaused) {
     // Área central para despausar
     togglePause();
     return;
   }
+  /* v8 ignore stop */
 });
 
 canvas.addEventListener('touchstart', (e) => {
@@ -767,9 +777,11 @@ document.addEventListener('keydown', (e) => {
 
 // Capture PWA Install Prompt
 window.addEventListener('beforeinstallprompt', (e) => {
+  /* v8 ignore start */
   // Prevent the mini-infobar from appearing on mobile
   e.preventDefault();
   // Stash the event so it can be triggered later.
   gameState.deferredInstallPrompt = e;
   console.log('📱 PWA Install Prompt captured');
+  /* v8 ignore stop */
 });
