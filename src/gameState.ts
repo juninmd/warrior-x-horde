@@ -41,6 +41,7 @@ export const gameState: GameState = {
   lowArmyTriggered: false,
   hitStop: 0,
   slowMoTimer: 0,
+  isDying: false,
   nukeTimer: 0,
   killStreak: 0,
   killStreakTimer: 0,
@@ -75,6 +76,7 @@ export function resetGameState(): void {
   gameState.damageFlash = 0;
   gameState.lowArmyTriggered = false;
   gameState.slowMoTimer = 0;
+  gameState.isDying = false;
   gameState.nukeTimer = 0;
   gameState.killStreak = 0;
   gameState.killStreakTimer = 0;
@@ -82,9 +84,10 @@ export function resetGameState(): void {
   // Do not reset deferredInstallPrompt as it persists across games
 }
 
-export function saveGameProgress(): void {
-  localStorage.setItem('crowdCoins', gameState.coins.toString());
-  if (gameState.highScore > 0) {
-      localStorage.setItem('crowdHighScore', gameState.highScore.toString());
+export function saveGameProgress(stateOverride?: GameState): void {
+  const state = stateOverride || gameState;
+  localStorage.setItem('crowdCoins', state.coins.toString());
+  if (state.highScore > 0) {
+      localStorage.setItem('crowdHighScore', state.highScore.toString());
   }
 }

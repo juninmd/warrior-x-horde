@@ -52,6 +52,7 @@ export interface GameState {
   lowArmyTriggered: boolean;
   hitStop: number;
   slowMoTimer: number;
+  isDying: boolean; // Slow motion death phase
   nukeTimer: number;
   // Killstreak System
   killStreak: number;

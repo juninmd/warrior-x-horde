@@ -287,7 +287,7 @@ describe('Collisions Coverage', () => {
 
          checkCollisions(entities, gameState);
 
-         expect(gameState.isGameOver).toBe(true);
+         expect(gameState.isDying).toBe(true);
          expect(input.triggerHaptic).toHaveBeenCalledWith('failure');
          // Check High Score update
          if (gameState.score > gameState.highScore) {

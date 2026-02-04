@@ -107,7 +107,7 @@ export function triggerHaptic(pattern: HapticPattern): void {
   vibrate(HAPTIC_PATTERNS[pattern]);
 }
 
-export function setupInput(canvas: HTMLCanvasElement): void {
+export function setupInput(canvas: HTMLCanvasElement, onTouchEffect?: (x: number, y: number) => void): void {
   // Mouse events (Desktop - Absolute positioning is fine/expected for mouse)
   canvas.addEventListener('mousedown', (e) => {
     isDragging = true;
@@ -155,6 +155,11 @@ export function setupInput(canvas: HTMLCanvasElement): void {
 
       // Start virtual joystick for visualization
       virtualJoystick.start(touch.clientX, touch.clientY);
+
+      // Visual Feedback
+      if (onTouchEffect) {
+          onTouchEffect(touch.clientX, touch.clientY);
+      }
     }
   }, { passive: false });
 

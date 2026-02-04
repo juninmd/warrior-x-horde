@@ -75,7 +75,7 @@ export function drawJoystick(ctx: CanvasRenderingContext2D): void {
   // Gradient fill for base
   const baseGrad = ctx.createRadialGradient(startX, startY, maxRadius * 0.2, startX, startY, maxRadius);
   baseGrad.addColorStop(0, 'rgba(255, 255, 255, 0.0)');
-  baseGrad.addColorStop(1, 'rgba(255, 255, 255, 0.15)');
+  baseGrad.addColorStop(1, 'rgba(255, 255, 255, 0.3)'); // Increased opacity
   ctx.fillStyle = baseGrad;
 
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';

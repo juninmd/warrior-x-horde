@@ -2,14 +2,14 @@
 import { Entities } from './types';
 import { gameState, resetGameState, saveGameProgress } from './gameState';
 import { createInitialEntities, createEnemyHorde, createSoldier, addSpecialSoldiersToArmy, addSoldiersToArmy } from './entities';
-import { render, shareOnX, shareOnWhatsApp, addFloatingText, updateFloatingTexts } from './renderer';
+import { render, shareOnX, shareOnWhatsApp, addFloatingText, updateFloatingTexts, addParticle } from './renderer';
 import { checkCollisions } from './collisions';
 import { updateSpawns } from './spawner';
 import { updateMovement } from './movement';
 import { setupInput, getMouseX, initializeMousePosition, setGameStateRef, setInputScale, triggerHaptic } from './input';
 import { updateShooting, updateBullets, updateSuperCannon, activateSuperCannon } from './shooting';
 import { initAudio, playMusic, playSound, stopAllMusic, audioManager, isMusicMuted } from './audio';
-import { BASE_WIDTH, BASE_HEIGHT, ASPECT_RATIO } from './constants';
+import { BASE_WIDTH, BASE_HEIGHT, ASPECT_RATIO, COLORS } from './constants';
 import { setupShopUI, updateShopUI, setupSuperCannonUI, updateSuperCannonUI, BuyAction, setupGameOverUI, showGameOverScreen, startCountdown } from './ui-overlay';
 import { QualityManager } from './quality';
 import { setupSettingsUI, toggleSettingsMenu } from './ui-settings';
@@ -212,7 +212,7 @@ const handleSuperCannon = () => {
         superCannonReady: gameState.superCannonReady
       });
 
-      if (gameState.isStarted && !gameState.isGameOver) {
+      if (gameState.isStarted && !gameState.isGameOver && !gameState.isDying) {
         /* v8 ignore next */
         activateSuperCannon(gameState);
       }
@@ -271,7 +271,15 @@ function gameLoop(currentTime: number = 0): void {
 
   // Slow Mo Logic
   let timeScale = 1.0;
-  if (gameState.slowMoTimer > 0) {
+  if (gameState.isDying) {
+      gameState.slowMoTimer -= deltaTime;
+      timeScale = 0.1;
+
+      if (gameState.slowMoTimer <= 0) {
+          gameState.isGameOver = true;
+          gameState.isDying = false;
+      }
+  } else if (gameState.slowMoTimer > 0) {
       // Use real deltaTime for timer
       gameState.slowMoTimer -= deltaTime;
       timeScale = 0.2;
@@ -320,7 +328,8 @@ function gameLoop(currentTime: number = 0): void {
   }
 
   // Atualizar movimento
-  updateMovement(entities, gameState, BASE_WIDTH, getMouseX(), dtFactor);
+  const inputX = gameState.isDying ? entities.playerArmy.centerX : getMouseX();
+  updateMovement(entities, gameState, BASE_WIDTH, inputX, dtFactor);
 
   // Atualizar movimento das Mystery Boxes e limpar usando swap-and-pop
   for (let i = 0; i < entities.mysteryBoxes.length; i++) {
@@ -587,7 +596,12 @@ window.addEventListener('orientationchange', () => {
 // Setup inicial
 /* v8 ignore next */
 resizeCanvas(); // Configurar tamanho inicial
-setupInput(canvas);
+setupInput(canvas, (screenX, screenY) => {
+    // Touch ripple effect
+    const pos = screenToCanvas(screenX, screenY);
+    addParticle(pos.x, pos.y, 'shockwave', COLORS.PLAYER.NORMAL, 1);
+    addParticle(pos.x, pos.y, 'spark', '#FFFFFF', 3);
+});
 initializeMousePosition(BASE_WIDTH);
 initAudio(); // Inicializar sistema de áudio
 setupSettingsUI(); // Inicializar Settings UI
@@ -713,7 +727,7 @@ export function toggleFullscreen(): void {
 export function triggerSuperCannon(): void {
   triggerHaptic('medium');
   /* v8 ignore start */
-  if (gameState.isStarted && !gameState.isGameOver && !gameState.isPaused) {
+  if (gameState.isStarted && !gameState.isGameOver && !gameState.isPaused && !gameState.isDying) {
     activateSuperCannon(gameState);
   }
   /* v8 ignore stop */

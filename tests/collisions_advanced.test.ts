@@ -61,7 +61,7 @@ describe('Collisions - Advanced', () => {
             bullets: [],
             weapons: []
         } as any;
-        const gameState: GameState = { score: 0, isBattling: false } as any;
+        const gameState: GameState = { score: 0, isBattling: false, coins: 0, highScore: 0 } as any;
 
         checkCollisions(entities, gameState);
 
@@ -99,7 +99,7 @@ describe('Collisions - Advanced', () => {
             bullets: [],
             weapons: []
         } as any;
-        const gameState: GameState = { score: 0, isBattling: false } as any;
+        const gameState: GameState = { score: 0, isBattling: false, coins: 0, highScore: 0 } as any;
 
         checkCollisions(entities, gameState);
 
@@ -136,7 +136,7 @@ describe('Collisions - Advanced', () => {
             bullets: [],
             weapons: []
         } as any;
-        const gameState: GameState = { score: 0, isBattling: false } as any;
+        const gameState: GameState = { score: 0, isBattling: false, coins: 0, highScore: 0 } as any;
 
         checkCollisions(entities, gameState);
 
@@ -162,10 +162,11 @@ describe('Collisions - Advanced', () => {
             bullets: [],
             weapons: []
         } as any;
-        const gameState: GameState = { isGameOver: false } as any;
+        const gameState: GameState = { isGameOver: false, isDying: false, coins: 0, highScore: 0, score: 0 } as any;
 
         checkCollisions(entities, gameState);
 
-        expect(gameState.isGameOver).toBe(true);
+        expect(gameState.isDying).toBe(true);
+        // expect(gameState.isGameOver).toBe(true); // Deferred
     });
 });

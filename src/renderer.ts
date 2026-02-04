@@ -1891,6 +1891,15 @@ function drawComboBar(ctx: CanvasRenderingContext2D, gameState: GameState): void
   ctx.roundRect(x, y, barWidth, barHeight, 6);
   ctx.stroke();
 
+  // Multiplier Text (Right Side)
+  const multiplier = Math.min(gameState.combo, 20); // Cap at 20x logic
+  if (multiplier > 1) {
+      ctx.fillStyle = '#FFD700';
+      ctx.font = 'bold 12px Arial';
+      ctx.textAlign = 'right';
+      ctx.fillText(`x${multiplier} SCORE`, x + barWidth, y - 5);
+  }
+
   ctx.restore();
 }
 

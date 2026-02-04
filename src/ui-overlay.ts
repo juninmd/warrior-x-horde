@@ -388,7 +388,7 @@ export function showGameOverScreen(gameState: GameState): void {
         <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 15px; margin-bottom: 20px;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                 <span style="color: #AAA; font-size: 18px;">Score</span>
-                <span style="color: #FFF; font-size: 24px; font-weight: bold;">${gameState.score}</span>
+                <span id="finalScoreDisplay" style="color: #FFF; font-size: 24px; font-weight: bold;">0</span>
             </div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                 <span style="color: #AAA; font-size: 16px;">High Score</span>
@@ -495,6 +495,28 @@ export function showGameOverScreen(gameState: GameState): void {
     void gameOverContainer.offsetHeight;
     gameOverContainer.style.opacity = '1';
     content.style.transform = 'scale(1)';
+
+    // Animate Score
+    const scoreDisplay = document.getElementById('finalScoreDisplay');
+    if (scoreDisplay) {
+        let startTimestamp: number | null = null;
+        const duration = 1500;
+        const start = 0;
+        const end = gameState.score;
+
+        const step = (timestamp: number) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            // Ease out cubic
+            const ease = 1 - Math.pow(1 - progress, 3);
+            const value = Math.floor(ease * (end - start) + start);
+            scoreDisplay.innerHTML = value.toLocaleString();
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            }
+        };
+        window.requestAnimationFrame(step);
+    }
 }
 
 // --- Start Countdown ---

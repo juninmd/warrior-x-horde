@@ -8,6 +8,7 @@ import { triggerScreenShake, triggerHitStop } from './game';
 import { getArmyBounds, checkBounds, getEntityBounds, Rect } from './utils';
 import { COLORS } from './constants';
 import { soldierPool } from './soldierPool';
+import { saveGameProgress } from './gameState';
 
 function cleanupDeadSoldiers(soldiers: Soldier[]): void {
   let activeCount = 0;
@@ -479,13 +480,17 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
       }
   }
 
-  if (army.aliveCount <= 0) {
-    gameState.isGameOver = true;
+  if (army.aliveCount <= 0 && !gameState.isGameOver && !gameState.isDying) {
+    gameState.isDying = true;
+    gameState.slowMoTimer = 2000; // 2 seconds of dramatic slow motion
     triggerHaptic('failure');
+    triggerScreenShake(10, 2000); // Shake during death
+
+    // Update High Score immediately for safety
     if (gameState.score > gameState.highScore) {
       gameState.highScore = gameState.score;
-      localStorage.setItem('crowdHighScore', gameState.highScore.toString());
     }
+    saveGameProgress(gameState);
   }
 
 }
