@@ -479,13 +479,11 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
       }
   }
 
-  if (army.aliveCount <= 0) {
-    gameState.isGameOver = true;
+  if (army.aliveCount <= 0 && !gameState.isGameOver && !gameState.isDying) {
+    gameState.isDying = true;
+    gameState.slowMoTimer = 2000; // 2 seconds of dramatic slow motion
     triggerHaptic('failure');
-    if (gameState.score > gameState.highScore) {
-      gameState.highScore = gameState.score;
-      localStorage.setItem('crowdHighScore', gameState.highScore.toString());
-    }
+    triggerScreenShake(10, 2000); // Shake during death
   }
 
 }

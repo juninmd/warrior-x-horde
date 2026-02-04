@@ -41,6 +41,7 @@ export const gameState: GameState = {
   lowArmyTriggered: false,
   hitStop: 0,
   slowMoTimer: 0,
+  isDying: false,
   nukeTimer: 0,
   killStreak: 0,
   killStreakTimer: 0,
@@ -75,6 +76,7 @@ export function resetGameState(): void {
   gameState.damageFlash = 0;
   gameState.lowArmyTriggered = false;
   gameState.slowMoTimer = 0;
+  gameState.isDying = false;
   gameState.nukeTimer = 0;
   gameState.killStreak = 0;
   gameState.killStreakTimer = 0;

@@ -20,8 +20,17 @@ export class QualityManager {
   private lowQualityTriggered: boolean = false;
   private fpsDropFrames: number = 0;
   private manualMode: boolean = false;
+  private isMobile: boolean = false;
 
-  private constructor() {}
+  private constructor() {
+    if (typeof navigator !== 'undefined') {
+       this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    }
+    if (this.isMobile) {
+        // Default slightly lower for mobile to ensure 60fps start
+        this.settings.particleMultiplier = 0.8;
+    }
+  }
 
   public static getInstance(): QualityManager {
     if (!QualityManager._instance) {
@@ -74,7 +83,9 @@ export class QualityManager {
     }
 
     // If FPS is bad for ~2 seconds (120 frames)
-    if (this.fpsDropFrames > 120) {
+    // On mobile, trigger faster (0.5s / 30 frames) to save battery/UX
+    const threshold = this.isMobile ? 30 : 120;
+    if (this.fpsDropFrames > threshold) {
       /* v8 ignore next */
       this.triggerLowQuality();
     }
