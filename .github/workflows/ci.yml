@@ -37,7 +37,7 @@ jobs:
       run: pnpm build
 
     - name: Test with Coverage
-      run: pnpm vitest run --coverage --coverage.thresholds.lines=98 --coverage.thresholds.functions=97 --coverage.thresholds.branches=90 --coverage.thresholds.statements=97
+      run: pnpm vitest run --coverage --coverage.thresholds.lines=100 --coverage.thresholds.functions=100 --coverage.thresholds.branches=100 --coverage.thresholds.statements=100
 
     - name: Upload Build Artifacts
       if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')

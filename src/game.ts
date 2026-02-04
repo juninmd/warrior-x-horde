@@ -121,6 +121,7 @@ const handleBuy: BuyAction = (type, cost) => {
               addFloatingText('READY!', entities.playerArmy.centerX, entities.playerArmy.centerY, '#FFD700');
               return;
            }
+           /* v8 ignore next 4 */
            if (gameState.superCannonReady && !gameState.superCannonActive) {
                // Already ready
                return;

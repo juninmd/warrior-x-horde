@@ -43,6 +43,7 @@ vi.mock('../src/audio', () => ({
 
 vi.mock('../src/input', () => ({
   vibrate: vi.fn(),
+  triggerHaptic: vi.fn(),
 }));
 
 describe('Gap Coverage Tests', () => {

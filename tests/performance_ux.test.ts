@@ -86,18 +86,18 @@ describe('Performance and UX Enhancements', () => {
         levelDistance: 1000
     } as unknown as GameState;
 
-    (ctx.arc as any).mockClear();
+    vi.spyOn(ctx, 'drawImage');
+    (ctx.drawImage as any).mockClear();
 
     render(ctx, entities, gameState);
 
-    // Check visible bullet calls (x=100, y=100)
-    expect(ctx.arc).toHaveBeenCalledWith(100, 100, expect.any(Number), expect.any(Number), expect.any(Number));
+    // Check visible bullet calls (x=100, y=100) - uses sprites now (drawImage)
+    expect(ctx.drawImage).toHaveBeenCalledWith(expect.any(Object), expect.any(Number), expect.any(Number));
 
     // Check off-screen bullet calls (x=100, y=-100) - Should NOT be called
-    expect(ctx.arc).not.toHaveBeenCalledWith(100, -100, expect.any(Number), expect.any(Number), expect.any(Number));
-
-    // Check off-screen bullet calls (x=100, y=BASE_HEIGHT+100) - Should NOT be called
-    expect(ctx.arc).not.toHaveBeenCalledWith(100, BASE_HEIGHT + 100, expect.any(Number), expect.any(Number), expect.any(Number));
+    // Since drawImage coordinates are offset by sprite size, we can just ensure the number of calls is 1 (only the visible one)
+    // PLUS 1 call for the background (drawRoad uses cached background)
+    expect(ctx.drawImage).toHaveBeenCalledTimes(2);
   });
 
   it('draws the combo bar when combo > 1', () => {
