@@ -142,7 +142,6 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
   }
 
   if (killed > 0) {
-    /* v8 ignore next */
     gameState.damageFlash = Math.min(0.8, gameState.damageFlash + (killed * 0.05));
   }
 
@@ -173,7 +172,6 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
   cleanupDeadSoldiers(horde.soldiers);
   horde.count = horde.soldiers.length;
 
-  /* v8 ignore next */
   if (horde.soldiers.length <= 0) {
     horde.isActive = false;
     triggerHitStop(5); // Hit Stop on Horde Clear
@@ -189,10 +187,8 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
     else if (gameState.combo === 20) addFloatingText("LEGENDARY!", horde.x, horde.y - 60, COLORS.UI.GOLD, 2.0, 'critical');
     else if (gameState.combo === 50) addFloatingText("UNSTOPPABLE!", horde.x, horde.y - 60, COLORS.EFFECTS.EXPLOSION, 2.5, 'critical');
 
-    /* v8 ignore next 4 */
     const comboMultiplier = Math.min(gameState.combo, 10);
     const scoreGain = 100 * comboMultiplier;
-    gameState.score += scoreGain;
     gameState.score += scoreGain;
 
     addExplosion(horde.x, horde.y, COLORS.UI.GOLD);

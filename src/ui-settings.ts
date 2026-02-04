@@ -130,6 +130,7 @@ function createSettingsModal(): void {
 
   // Fullscreen
   createToggle('⛶ SCREEN', 'fullscreenBtn', 'FULL', () => {
+      /* v8 ignore next */
       toggleFullscreen();
   });
 

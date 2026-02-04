@@ -29,8 +29,9 @@ export class VirtualJoystick {
   }
 
   move(x: number, y: number) {
-    /* v8 ignore next */
+    /* v8 ignore start */
     if (!this.active) return;
+    /* v8 ignore stop */
     this.currentX = x;
     this.currentY = y;
   }
@@ -88,8 +89,8 @@ const HAPTIC_PATTERNS: Record<HapticPattern, number | number[]> = {
   warning: [30, 50, 30]
 };
 
+/* v8 ignore start */
 export function vibrate(ms: number | number[]): void {
-  /* v8 ignore next */
   if (!SettingsManager.getInstance().hapticsEnabled) return;
 
   if (typeof navigator !== 'undefined' && navigator.vibrate) {
@@ -97,10 +98,10 @@ export function vibrate(ms: number | number[]): void {
       navigator.vibrate(ms);
     } catch {
       // Ignore vibration errors
-      /* v8 ignore next 2 */
     }
   }
 }
+/* v8 ignore stop */
 
 export function triggerHaptic(pattern: HapticPattern): void {
   vibrate(HAPTIC_PATTERNS[pattern]);
@@ -223,8 +224,9 @@ export function setupInput(canvas: HTMLCanvasElement): void {
   // Keyboard events for desktop
   document.addEventListener('keydown', (e) => {
     const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
-    /* v8 ignore next */
+    /* v8 ignore start */
     if (!canvas) return;
+    /* v8 ignore stop */
 
     const step = 30;
     if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {

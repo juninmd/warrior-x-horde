@@ -28,6 +28,7 @@ vi.mock('../src/input', () => ({
     setGameStateRef: vi.fn(),
     setInputScale: vi.fn(),
     vibrate: vi.fn(),
+    triggerHaptic: vi.fn(),
 }));
 
 vi.mock('../src/audio', () => ({
@@ -171,7 +172,7 @@ describe('Game Loop - Full Coverage', () => {
         // Pause
         (window as any).togglePause();
         expect(gameState.isPaused).toBe(true);
-        expect(input.vibrate).toHaveBeenCalled();
+        expect(input.triggerHaptic).toHaveBeenCalled();
 
         // Reset mocks
         vi.clearAllMocks();

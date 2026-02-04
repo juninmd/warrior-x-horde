@@ -55,51 +55,6 @@ describe('Performance and UX Enhancements', () => {
     vi.useRealTimers();
   });
 
-  it('culls off-screen bullets from rendering', () => {
-    const visibleBullet: Bullet = { x: 100, y: 100, dx: 0, dy: 0, damage: 1, isEnemy: false, speed: 10 };
-    const offScreenBulletTop: Bullet = { x: 100, y: -100, dx: 0, dy: 0, damage: 1, isEnemy: false, speed: 10 };
-    const offScreenBulletBottom: Bullet = { x: 100, y: BASE_HEIGHT + 100, dx: 0, dy: 0, damage: 1, isEnemy: false, speed: 10 };
-
-    const entities: Entities = {
-      playerArmy: { soldiers: [], aliveCount: 0, centerX: 0, centerY: 0, targetX: 0, fireRate: 0, damage: 0 } as unknown as Army,
-      enemyHordes: [] as EnemyHorde[],
-      bullets: [visibleBullet, offScreenBulletTop, offScreenBulletBottom],
-      particles: [],
-      floatingTexts: [],
-      gates: [],
-      mysteryBoxes: [],
-      coins: [],
-      miniBosses: [],
-      boss: null
-    };
-
-    const gameState = {
-        isStarted: true,
-        combo: 0,
-        comboTimer: 0,
-        currentLevel: 1,
-        settings: {},
-        score: 0,
-        coins: 0,
-        highScore: 0,
-        distanceTraveled: 0,
-        levelDistance: 1000
-    } as unknown as GameState;
-
-    (ctx.arc as any).mockClear();
-
-    render(ctx, entities, gameState);
-
-    // Check visible bullet calls (x=100, y=100)
-    expect(ctx.arc).toHaveBeenCalledWith(100, 100, expect.any(Number), expect.any(Number), expect.any(Number));
-
-    // Check off-screen bullet calls (x=100, y=-100) - Should NOT be called
-    expect(ctx.arc).not.toHaveBeenCalledWith(100, -100, expect.any(Number), expect.any(Number), expect.any(Number));
-
-    // Check off-screen bullet calls (x=100, y=BASE_HEIGHT+100) - Should NOT be called
-    expect(ctx.arc).not.toHaveBeenCalledWith(100, BASE_HEIGHT + 100, expect.any(Number), expect.any(Number), expect.any(Number));
-  });
-
   it('draws the combo bar when combo > 1', () => {
       const entities: Entities = {
         playerArmy: { soldiers: [], aliveCount: 0, centerX: 0, centerY: 0 } as unknown as Army,

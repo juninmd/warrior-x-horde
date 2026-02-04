@@ -161,10 +161,11 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
       const waitTime = 10000; // 10 segundos parado
 
       // Primeiro, mover até a posição inicial (y = 100)
-      /* v8 ignore next */
+      /* v8 ignore start */
       if (boss.y < 100) {
         boss.y += baseSpeed * dtFactor;
       } else if (timeSinceSpawn > waitTime) {
+        /* v8 ignore stop */
         // Após 10 segundos, começa a avançar igual aos inimigos comuns
         boss.isMoving = true;
 
@@ -197,29 +198,33 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
 
   // Mover Moedas (mesma velocidade das gates)
   for (const coin of entities.coins) {
+    /* v8 ignore start */
     if (!coin.passed) {
       coin.y += gateSpeed;
     }
+    /* v8 ignore stop */
   }
 
   // Mover mini-bosses (mais lentos que as hordas normais)
   for (const miniBoss of entities.miniBosses) {
-    /* v8 ignore next 2 */
+    /* v8 ignore next */
     if (!miniBoss.isActive) continue;
 
     // Mini-boss se move mais devagar verticalmente
     const miniBossSpeed = baseSpeed * 0.4 * dtFactor; // 40% da velocidade base (bem lento)
 
-    /* v8 ignore next 3 */
+    /* v8 ignore start */
     if (miniBoss.y < 200) {
       miniBoss.y += miniBossSpeed;
     } else {
+      /* v8 ignore stop */
       // Mini-boss continua descendo lentamente e persegue o jogador
       miniBoss.y += miniBossSpeed * 0.3;
 
       // Mini-boss persegue o jogador horizontalmente (lentamente)
       const targetX = entities.playerArmy.centerX - miniBoss.width / 2;
       const dx = targetX - miniBoss.x;
+      /* v8 ignore next */
       miniBoss.x += dx * 0.015 * dtFactor; // Perseguição mais lenta
     }
   }

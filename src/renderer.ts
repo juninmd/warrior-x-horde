@@ -1535,7 +1535,6 @@ export function drawBullets(ctx: CanvasRenderingContext2D, bullets: Bullet[]): v
     const cachedCanvas = spriteCache.images.get(key);
 
     if (cachedCanvas) {
-      const size = 8;
       const canvasSize = cachedCanvas.width;
       // Center alignment
       ctx.drawImage(cachedCanvas, bullet.x - canvasSize / 2, bullet.y - canvasSize / 2);
