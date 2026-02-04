@@ -35,7 +35,7 @@ This file serves as the "Living Memory" for Jules and other agents working on th
 
 ### ⚡ Performance (Bolt)
 - [x] **Soldier Caching:** Implemented via `spriteCache`.
-- [ ] **Gate Caching:** Cache `Gate` visuals to avoid per-frame gradient generation. (Current Task)
+- [x] **Gate Caching:** Cache `Gate` visuals to avoid per-frame gradient generation.
 - [ ] **Collision Optimization:** Implement Spatial Partitioning (QuadTree or Grid) for Army vs Horde collisions if unit count increases significantly.
 
 ### 🎨 UX & Accessibility (Palette)
