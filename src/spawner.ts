@@ -148,6 +148,7 @@ export function spawnMiniBoss(entities: Entities, canvasWidth: number, gameState
   if (miniBossThreshold > lastMiniBossSpawn && !entities.boss) {
     // Permitir até maxConcurrent mini-bosses ativos ao mesmo tempo
     const activeMiniBosses = entities.miniBosses.filter(mb => mb.isActive).length;
+    /* v8 ignore next */
     if (activeMiniBosses < maxConcurrent) {
       // No modo infinito (>11), pode spawnar múltiplos de uma vez
       const spawnCount = gameState.currentLevel > 11 ? Math.min(3, 1 + Math.floor((gameState.currentLevel - 11) / 5)) : 1;

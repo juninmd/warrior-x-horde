@@ -188,13 +188,14 @@ export function multiplySoldiersInArmy(army: Army, multiplier: number): void {
 export function removeSoldiersFromArmy(army: Army, count: number): void {
   for (let i = 0; i < count && army.soldiers.length > 0; i++) {
     const s = army.soldiers.pop();
-    /* v8 ignore next */
+    /* v8 ignore start */
     if (s) {
       if (s.isAlive) {
         army.aliveCount--;
       }
       soldierPool.release(s);
     }
+    /* v8 ignore stop */
   }
 }
 

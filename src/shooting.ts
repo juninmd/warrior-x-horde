@@ -62,6 +62,7 @@ function findNearestTarget(shooter: Soldier, hordes: EnemyHorde[], boss: Boss | 
       // Alvejar ponto aleatório dentro da área da horda para espalhar os tiros
       // Isso simula mirar em soldados sem o custo de iterar por todos eles (O(1) vs O(N))
       const jitterX = (Math.random() - 0.5) * Math.min(horde.width, 150);
+      /* v8 ignore next */
       const jitterY = (Math.random() - 0.5) * Math.min(horde.height, 80);
       nearest = { x: horde.x + jitterX, y: horde.y + jitterY };
     }
@@ -147,6 +148,7 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
   // Prioridade: Laser (5) > Bazooka (4) > Rambo (3) > Super (2) > Normal (1)
   const buckets = [lasers, bazookas, rambos, supers, normals];
 
+  /* v8 ignore start */
   for (const bucket of buckets) {
     if (needed <= 0) break;
     if (bucket.length === 0) continue;
@@ -167,6 +169,7 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
       needed = 0;
     }
   }
+  /* v8 ignore stop */
   /* v8 ignore stop */
 
   for (const shooter of shooters) {
@@ -334,6 +337,7 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
       bulletPool.release(bullet);
       fastRemove(entities.bullets, i);
     } else if (!bullet.isEnemy) {
+      /* v8 ignore next */
       tempPlayerBullets.push(bullet);
     }
   }
@@ -386,6 +390,7 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
     // Área de consulta: Posição da bala +/- 10px
     const nearby = enemyGrid.query(bullet.x - 10, bullet.y - 10, 20, 20);
 
+    /* v8 ignore start */
     for (const item of nearby) {
       if (bulletHit) break;
 

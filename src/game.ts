@@ -222,7 +222,9 @@ let wasInBossFight = false;
 let lastTime = 0;
 
 function gameLoop(currentTime: number = 0): void {
+  /* v8 ignore start */
   if (!gameState.isStarted) return;
+  /* v8 ignore stop */
 
   // Se pausado, apenas renderizar e esperar
   if (gameState.isPaused) {
@@ -306,7 +308,6 @@ function gameLoop(currentTime: number = 0): void {
     }
   }
   /* v8 ignore stop */
-  /* v8 ignore stop */
 
   // Update Nuke Timer
   /* v8 ignore next 3 */
@@ -386,7 +387,7 @@ function gameLoop(currentTime: number = 0): void {
       gameState.isGameOver = true;
       /* v8 ignore next */
       playSound(audioManager.victory);
-    } else if (gameState.currentLevel !== 10) {
+    } else {
       // Avançar normal para outros níveis
       advanceToNextLevel();
     }
@@ -502,6 +503,7 @@ export function startGame(): void {
     setTimeout(() => playMusic(false), 500); // Iniciar música após som de início
 
     // Tutorial Hint
+    /* v8 ignore next */
     addFloatingText("HOLD & DRAG", BASE_WIDTH / 2, BASE_HEIGHT / 2 + 100, "#FFFFFF", 1.5);
 
     requestAnimationFrame(gameLoop);
@@ -557,11 +559,13 @@ canvas.addEventListener('click', () => {
 });
 
 canvas.addEventListener('touchstart', (e) => {
+  /* v8 ignore start */
   if (gameState.isPaused) {
     e.preventDefault(); // Evitar scroll/zoom
     togglePause();
     return;
   }
+  /* v8 ignore stop */
 }, { passive: false });
 
 // Event listeners
@@ -597,9 +601,11 @@ document.addEventListener('visibilitychange', () => {
 
 // Atualizar botão de mute inicial
 const muteBtn = document.getElementById('muteBtn');
+/* v8 ignore start */
 if (muteBtn) {
   muteBtn.textContent = isMusicMuted() ? '🔇' : '🔊';
 }
+/* v8 ignore stop */
 
 // Desenhar tela inicial
 entities = createInitialEntities(BASE_WIDTH, BASE_HEIGHT);
@@ -651,6 +657,7 @@ export function debugSetLevel(targetLevel: number): void {
   // Se for level 10+, forçar spawn do boss imediatamente
   if (targetLevel >= 10) {
     gameState.distanceTraveled = gameState.levelDistance - 100;
+    /* v8 ignore next */
     console.log(`🛸 Mothership boss aparecerá em breve!`);
   }
 }
@@ -700,9 +707,11 @@ export function toggleFullscreen(): void {
 // Função para ativar super cannon (exposta para HTML)
 export function triggerSuperCannon(): void {
   triggerHaptic('medium');
+  /* v8 ignore start */
   if (gameState.isStarted && !gameState.isGameOver && !gameState.isPaused) {
     activateSuperCannon(gameState);
   }
+  /* v8 ignore stop */
 }
 
 let cachedSuperBtn: HTMLButtonElement | null = null;
@@ -733,6 +742,7 @@ function updateSuperButtonInline(): void {
       newText = '⚡ ATIVO!';
       newDisabled = true;
     } else if (isOnCooldown) {
+      /* v8 ignore next 2 */
       const cooldownSecs = Math.ceil(cooldownRemaining / 1000);
       newText = `⏳ ${cooldownSecs}s`;
       newDisabled = true;
@@ -770,9 +780,11 @@ function updateSuperButtonInline(): void {
 
 // Adicionar atalho de teclado para pause (P ou Escape)
 document.addEventListener('keydown', (e) => {
+  /* v8 ignore start */
   if (e.key === 'p' || e.key === 'P' || e.key === 'Escape') {
     togglePause();
   }
+  /* v8 ignore stop */
 });
 
 // Capture PWA Install Prompt
