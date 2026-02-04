@@ -368,7 +368,7 @@ describe('Collisions - Full Coverage', () => {
           entities.playerArmy.soldiers = [];
           entities.playerArmy.aliveCount = 0;
           checkCollisions(entities, gameState);
-          expect(gameState.isGameOver).toBe(true);
+          expect(gameState.isDying).toBe(true);
       });
   });
 });

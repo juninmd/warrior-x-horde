@@ -162,10 +162,11 @@ describe('Collisions - Advanced', () => {
             bullets: [],
             weapons: []
         } as any;
-        const gameState: GameState = { isGameOver: false } as any;
+        const gameState: GameState = { isGameOver: false, isDying: false } as any;
 
         checkCollisions(entities, gameState);
 
-        expect(gameState.isGameOver).toBe(true);
+        expect(gameState.isDying).toBe(true);
+        // expect(gameState.isGameOver).toBe(true); // Deferred
     });
 });

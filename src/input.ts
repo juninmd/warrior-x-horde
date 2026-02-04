@@ -158,16 +158,6 @@ export function setupInput(canvas: HTMLCanvasElement, onTouchEffect?: (x: number
 
       // Visual Feedback
       if (onTouchEffect) {
-          const rect = canvas.getBoundingClientRect();
-          const cx = screenToCanvasX(touch.clientX, rect);
-          // y is not tracked in mouseX logic (1D movement), but we can estimate or just use touch Y relative to canvas
-          // Note: screenToCanvasX handles X. For Y we need height logic.
-          // But `addParticle` expects game coordinates.
-          // Input logic only tracks X.
-          // Let's pass the raw canvas coordinates if possible?
-          // Actually, `game.ts` `screenToCanvas` does both.
-          // But `input.ts` doesn't export `screenToCanvas`.
-          // We can just pass touch.clientX/Y to the callback and let game.ts convert it?
           onTouchEffect(touch.clientX, touch.clientY);
       }
     }
