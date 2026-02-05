@@ -21,6 +21,10 @@ const ctx = canvas.getContext('2d')!;
 // Escala atual
 let scale = 1;
 
+let cachedSuperBtn: HTMLButtonElement | null = null;
+let lastSuperText: string = '';
+let lastSuperDisabled: boolean | null = null;
+
 // Função para redimensionar o canvas responsivamente
 /* v8 ignore start */
 function resizeCanvas(): void {
@@ -733,10 +737,6 @@ export function triggerSuperCannon(): void {
   }
   /* v8 ignore stop */
 }
-
-let cachedSuperBtn: HTMLButtonElement | null = null;
-let lastSuperText: string = '';
-let lastSuperDisabled: boolean | null = null;
 
 // Atualizar estado do botão Super inline
 /* v8 ignore start */
