@@ -3,7 +3,7 @@ import { COLORS } from './constants';
 import { GameState } from './types';
 import { vibrate } from './input';
 
-// Container elements
+// Container elements (Declared at top to avoid TDZ)
 let shopContainer: HTMLElement | null = null;
 let superCannonContainer: HTMLElement | null = null;
 let gameOverContainer: HTMLElement | null = null;
