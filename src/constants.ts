@@ -10,6 +10,8 @@ export const MAX_ENEMIES = 20000;
 export const MAX_PARTICLES = 300; // Increased for more juice
 export const MAX_RENDERED_SOLDIERS = 150; // Increased for better visual density
 
+export const FONT_FAMILY = '"Segoe UI", Roboto, system-ui, sans-serif';
+
 // --- Colors ---
 export const COLORS = {
   PLAYER: {

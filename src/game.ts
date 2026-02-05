@@ -10,7 +10,7 @@ import { setupInput, getMouseX, initializeMousePosition, setGameStateRef, setInp
 import { updateShooting, updateBullets, updateSuperCannon, activateSuperCannon } from './shooting';
 import { initAudio, playMusic, playSound, stopAllMusic, audioManager, isMusicMuted } from './audio';
 import { BASE_WIDTH, BASE_HEIGHT, ASPECT_RATIO, COLORS } from './constants';
-import { setupShopUI, updateShopUI, setupSuperCannonUI, updateSuperCannonUI, BuyAction, setupGameOverUI, showGameOverScreen, startCountdown } from './ui-overlay';
+import { setupShopUI, updateShopUI, setupSuperCannonUI, updateSuperCannonUI, BuyAction, setupGameOverUI, showGameOverScreen, startCountdown, updateStartScreenLeaderboard } from './ui-overlay';
 import { QualityManager } from './quality';
 import { setupSettingsUI, toggleSettingsMenu } from './ui-settings';
 
@@ -605,6 +605,7 @@ setupInput(canvas, (screenX, screenY) => {
 initializeMousePosition(BASE_WIDTH);
 initAudio(); // Inicializar sistema de áudio
 setupSettingsUI(); // Inicializar Settings UI
+updateStartScreenLeaderboard(); // Show leaderboard on start
 
 // Auto-pause quando a aba for trocada ou minimizada (Mobile friendly)
 document.addEventListener('visibilitychange', () => {

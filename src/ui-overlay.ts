@@ -11,6 +11,62 @@ let gameOverContainer: HTMLElement | null = null;
 // Buttons
 const buttons: Record<string, HTMLButtonElement> = {};
 
+function getLeaderboardHTML(currentScore: number = -1): string {
+    let leaderboard = [];
+    try {
+        leaderboard = JSON.parse(localStorage.getItem('crowdLeaderboard') || '[]');
+    } catch (e) {
+        console.error('Failed to load leaderboard', e);
+    }
+
+    if (leaderboard.length === 0) return '';
+
+    return `
+    <div style="background: rgba(0,0,0,0.4); border-radius: 10px; padding: 10px; margin-bottom: 20px; width: 100%;">
+        <h3 style="color: #FFD700; font-size: 14px; margin-bottom: 5px; text-transform: uppercase;">Top Commanders</h3>
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px; color: #DDD;">
+            ${leaderboard.map((entry: { score: number }, index: number) => {
+                const isCurrent = entry.score === currentScore;
+                const rowColor = isCurrent ? 'rgba(255, 215, 0, 0.2)' : 'transparent';
+                const textColor = isCurrent ? '#FFF' : '#AAA';
+                const weight = isCurrent ? 'bold' : 'normal';
+                return `
+                <tr style="background: ${rowColor}; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <td style="padding: 4px; text-align: left; color: ${index === 0 ? '#FFD700' : textColor}; font-weight: ${weight};">#${index + 1}</td>
+                    <td style="padding: 4px; text-align: right; color: ${textColor}; font-weight: ${weight};">${entry.score}</td>
+                </tr>
+                `;
+            }).join('')}
+        </table>
+    </div>
+    `;
+}
+
+export function updateStartScreenLeaderboard(): void {
+    const startScreenContent = document.querySelector('.start-screen-content');
+    if (!startScreenContent) return;
+
+    // Check if leaderboard already exists to avoid duplication if called multiple times
+    let lbContainer = document.getElementById('startScreenLeaderboard');
+    if (lbContainer) lbContainer.remove();
+
+    const lbHTML = getLeaderboardHTML();
+    if (!lbHTML) return;
+
+    lbContainer = document.createElement('div');
+    lbContainer.id = 'startScreenLeaderboard';
+    lbContainer.innerHTML = lbHTML;
+
+    // Insert before the button (last element usually) or append
+    // Structure: Logo, P, Button. We want Logo, P, Leaderboard, Button
+    const btn = startScreenContent.querySelector('.start-btn');
+    if (btn) {
+        startScreenContent.insertBefore(lbContainer, btn);
+    } else {
+        startScreenContent.appendChild(lbContainer);
+    }
+}
+
 // --- Helper: Create Shop Button ---
 function createShopButton(type: string, price: number, color: string, label: string): HTMLButtonElement {
   const btn = document.createElement('button');
@@ -331,37 +387,7 @@ export function showGameOverScreen(gameState: GameState): void {
     content.style.borderColor = titleColor;
     content.style.boxShadow = `0 0 30px ${isVictory ? 'rgba(46, 204, 113, 0.3)' : 'rgba(231, 76, 60, 0.3)'}`;
 
-    // Load Leaderboard
-    let leaderboard = [];
-    try {
-        leaderboard = JSON.parse(localStorage.getItem('crowdLeaderboard') || '[]');
-    } catch (e) {
-        console.error('Failed to load leaderboard', e);
-    }
-
-    let leaderboardHTML = '';
-    if (leaderboard.length > 0) {
-        leaderboardHTML = `
-        <div style="background: rgba(0,0,0,0.4); border-radius: 10px; padding: 10px; margin-bottom: 20px;">
-            <h3 style="color: #FFD700; font-size: 14px; margin-bottom: 5px; text-transform: uppercase;">Top Commanders</h3>
-            <table style="width: 100%; border-collapse: collapse; font-size: 13px; color: #DDD;">
-                ${leaderboard.map((entry: { score: number }, index: number) => {
-                    const isCurrent = entry.score === gameState.score;
-                    const rowColor = isCurrent ? 'rgba(255, 215, 0, 0.2)' : 'transparent';
-                    const textColor = isCurrent ? '#FFF' : '#AAA';
-                    const weight = isCurrent ? 'bold' : 'normal';
-                    return `
-                    <tr style="background: ${rowColor}; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                        <td style="padding: 4px; text-align: left; color: ${index === 0 ? '#FFD700' : textColor}; font-weight: ${weight};">#${index + 1}</td>
-                        <td style="padding: 4px; text-align: right; color: ${textColor}; font-weight: ${weight};">${entry.score}</td>
-                    </tr>
-                    `;
-                    /* v8 ignore stop */
-                }).join('')}
-            </table>
-        </div>
-        `;
-    }
+    const leaderboardHTML = getLeaderboardHTML(gameState.score);
 
     content.innerHTML = `
         <h1 style="color: ${titleColor}; font-size: 42px; margin: 0 0 10px 0; text-shadow: 0 2px 5px rgba(0,0,0,0.5);">${title}</h1>

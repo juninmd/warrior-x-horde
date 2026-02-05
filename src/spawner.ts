@@ -1,10 +1,16 @@
 // spawner.ts - Gerador de obstáculos e inimigos
 import { Entities, GameState } from './types';
 import { createGatePair, createEnemyHorde, createBoss, createMiniBoss, createMysteryBox, createCoin } from './entities';
+import { fastRemove } from './utils';
 
 export function spawnCoins(entities: Entities, canvasWidth: number, gameState: GameState, dtFactor: number): void {
   // Remover moedas que já passaram
-  entities.coins = entities.coins.filter(coin => !coin.passed && coin.y < 1200);
+  for (let i = entities.coins.length - 1; i >= 0; i--) {
+    const coin = entities.coins[i];
+    if (coin.passed || coin.y >= 1200) {
+      fastRemove(entities.coins, i);
+    }
+  }
 
   // Spawn de moedas no chão (baixa probabilidade ajustada por dt)
   if (Math.random() < 0.005 * dtFactor) { // 0.5% chance por frame (normalizado)
@@ -16,7 +22,12 @@ export function spawnCoins(entities: Entities, canvasWidth: number, gameState: G
 
 export function spawnMysteryBoxes(entities: Entities, canvasWidth: number, _gameState: GameState, dtFactor: number): void {
   // Remover caixas que já passaram
-  entities.mysteryBoxes = entities.mysteryBoxes.filter(box => box && !box.passed && box.y < 1200);
+  for (let i = entities.mysteryBoxes.length - 1; i >= 0; i--) {
+    const box = entities.mysteryBoxes[i];
+    if (!box || box.passed || box.y >= 1200) {
+      fastRemove(entities.mysteryBoxes, i);
+    }
+  }
 
   // Chance de spawn (raro)
   if (Math.random() < 0.002 * dtFactor && entities.mysteryBoxes.length < 1) { // 0.2% chance por frame (normalizado)
@@ -32,7 +43,11 @@ export function spawnGates(entities: Entities, canvasWidth: number, gameState: G
   const gateSpacing = Math.max(500, baseSpacing - levelReduction); // Mínimo 500
 
   // Remover gates que já passaram
-  entities.gates = entities.gates.filter(gate => gate.y < 1200);
+  for (let i = entities.gates.length - 1; i >= 0; i--) {
+    if (entities.gates[i].y >= 1200) {
+      fastRemove(entities.gates, i);
+    }
+  }
 
   // Spawnar novos gates se necessário
   const lowestGateY = entities.gates.length > 0
@@ -65,7 +80,12 @@ export function spawnEnemies(entities: Entities, canvasWidth: number, gameState:
 
   // SISTEMA ANTI-ASTOLFO: Sem limite de inimigos
   // Apenas removemos hordas que saíram da tela
-  entities.enemyHordes = entities.enemyHordes.filter(horde => horde.isActive && horde.y < 1200);
+  for (let i = entities.enemyHordes.length - 1; i >= 0; i--) {
+    const horde = entities.enemyHordes[i];
+    if (!horde.isActive || horde.y >= 1200) {
+      fastRemove(entities.enemyHordes, i);
+    }
+  }
 
   // Espaçamento menor = hordas mais frequentes
   const baseSpacing = 80; // Reduzido de 180 para spawnar mais rápido
