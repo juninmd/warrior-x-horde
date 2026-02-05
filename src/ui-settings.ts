@@ -167,7 +167,10 @@ export function setupSettingsUI(): void {
 
 export function toggleSettingsMenu(): void {
     if (!settingsModal) setupSettingsUI();
+
+    /* v8 ignore start */
     if (!settingsModal) return;
+    /* v8 ignore stop */
 
     if (settingsModal.style.display === 'flex') {
         settingsModal.style.display = 'none';

@@ -39,6 +39,13 @@ export class QualityManager {
     return QualityManager._instance;
   }
 
+  /* v8 ignore start */
+  public static resetInstance(): void {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (QualityManager as any)._instance = undefined;
+  }
+  /* v8 ignore stop */
+
   public setQuality(level: 'low' | 'high' | 'auto'): void {
     if (level === 'auto') {
       this.manualMode = false;

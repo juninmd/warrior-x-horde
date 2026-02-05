@@ -740,6 +740,8 @@ let lastSuperDisabled: boolean | null = null;
 // Atualizar estado do botão Super inline
 /* v8 ignore start */
 function updateSuperButtonInline(): void {
+  if (typeof document === 'undefined') return;
+
   if (!cachedSuperBtn) {
     cachedSuperBtn = document.getElementById('superCannonBtnInline') as HTMLButtonElement;
   }
