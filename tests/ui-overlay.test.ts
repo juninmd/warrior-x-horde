@@ -257,5 +257,21 @@ describe('UI Overlay', () => {
             updateStartScreenLeaderboard();
             // Should just return
         });
+
+        it('should remove existing leaderboard container to avoid duplicates', () => {
+            const data = [{ score: 1000 }];
+            vi.spyOn(window.localStorage, 'getItem').mockReturnValue(JSON.stringify(data));
+
+            // Call first time
+            updateStartScreenLeaderboard();
+            const lb1 = document.getElementById('startScreenLeaderboard');
+            expect(lb1).not.toBeNull();
+
+            // Call second time - should replace
+            updateStartScreenLeaderboard();
+            const lb2 = document.getElementById('startScreenLeaderboard');
+            expect(lb2).not.toBeNull();
+            expect(lb2).not.toBe(lb1); // Should be a new element
+        });
     });
 });

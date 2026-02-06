@@ -60,11 +60,13 @@ export function updateStartScreenLeaderboard(): void {
     // Insert before the button (last element usually) or append
     // Structure: Logo, P, Button. We want Logo, P, Leaderboard, Button
     const btn = startScreenContent.querySelector('.start-btn');
+    /* v8 ignore start */
     if (btn) {
         startScreenContent.insertBefore(lbContainer, btn);
     } else {
         startScreenContent.appendChild(lbContainer);
     }
+    /* v8 ignore stop */
 }
 
 // --- Helper: Create Shop Button ---

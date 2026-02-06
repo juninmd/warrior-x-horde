@@ -472,7 +472,6 @@ export function createGatePair(canvasWidth: number, y: number, level: number = 1
   } else if (!leftIsGood && !rightIsGood) {
     // Mudar o esquerdo para bom (valores conservadores)
     const buffRoll = Math.random();
-    /* v8 ignore next */
     if (atMaxHeroes) {
       // Apenas firerate e damage quando no máximo
       if (buffRoll < 0.5) {
