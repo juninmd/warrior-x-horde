@@ -3,6 +3,7 @@ export interface QualitySettings {
   particleMultiplier: number; // 0.0 to 1.0
   simplifiedRendering: boolean; // Use simple shapes/colors if true
   maxRenderedSoldiers: number;
+  resolutionScale: number; // Dynamic resolution scaling (0.5 to 1.0)
 }
 
 export class QualityManager {
@@ -12,7 +13,8 @@ export class QualityManager {
     enableShadows: true,
     particleMultiplier: 1.0,
     simplifiedRendering: false,
-    maxRenderedSoldiers: 150
+    maxRenderedSoldiers: 150,
+    resolutionScale: 1.0
   };
 
   private frameTimes: number[] = [];
@@ -55,6 +57,7 @@ export class QualityManager {
       this.settings.particleMultiplier = 1.0;
       this.settings.simplifiedRendering = false;
       this.settings.maxRenderedSoldiers = 150;
+      this.settings.resolutionScale = 1.0;
       this.fpsDropFrames = 0;
       console.log("Quality set to AUTO");
     } else if (level === 'high') {
@@ -64,6 +67,7 @@ export class QualityManager {
       this.settings.particleMultiplier = 1.0;
       this.settings.simplifiedRendering = false;
       this.settings.maxRenderedSoldiers = 250; // Extra high for manual high
+      this.settings.resolutionScale = 1.0;
       console.log("Quality set to HIGH");
     } else if (level === 'low') {
       this.manualMode = true;
@@ -105,5 +109,13 @@ export class QualityManager {
     this.settings.particleMultiplier = 0.3;
     this.settings.simplifiedRendering = true;
     this.settings.maxRenderedSoldiers = 60;
+    this.settings.resolutionScale = this.isMobile ? 0.75 : 0.85; // Lower resolution to save fill-rate
+
+    // Trigger resize to apply resolution change if needed
+    /* v8 ignore start */
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('resize'));
+    }
+    /* v8 ignore stop */
   }
 }
