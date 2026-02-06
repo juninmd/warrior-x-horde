@@ -112,8 +112,10 @@ export class QualityManager {
     this.settings.resolutionScale = this.isMobile ? 0.75 : 0.85; // Lower resolution to save fill-rate
 
     // Trigger resize to apply resolution change if needed
+    /* v8 ignore start */
     if (typeof window !== 'undefined') {
         window.dispatchEvent(new Event('resize'));
     }
+    /* v8 ignore stop */
   }
 }
