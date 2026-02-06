@@ -10,7 +10,7 @@ import { setupInput, getMouseX, initializeMousePosition, setGameStateRef, setInp
 import { updateShooting, updateBullets, updateSuperCannon, activateSuperCannon } from './shooting';
 import { initAudio, playMusic, playSound, stopAllMusic, audioManager, isMusicMuted } from './audio';
 import { BASE_WIDTH, BASE_HEIGHT, ASPECT_RATIO, COLORS } from './constants';
-import { setupShopUI, updateShopUI, setupSuperCannonUI, updateSuperCannonUI, BuyAction, setupGameOverUI, showGameOverScreen, startCountdown } from './ui-overlay';
+import { setupShopUI, updateShopUI, setupSuperCannonUI, updateSuperCannonUI, BuyAction, setupGameOverUI, showGameOverScreen, startCountdown, updateStartScreenLeaderboard } from './ui-overlay';
 import { QualityManager } from './quality';
 import { setupSettingsUI, toggleSettingsMenu } from './ui-settings';
 
@@ -20,6 +20,10 @@ const ctx = canvas.getContext('2d')!;
 
 // Escala atual
 let scale = 1;
+
+let cachedSuperBtn: HTMLButtonElement | null = null;
+let lastSuperText: string = '';
+let lastSuperDisabled: boolean | null = null;
 
 // Função para redimensionar o canvas responsivamente
 /* v8 ignore start */
@@ -605,6 +609,7 @@ setupInput(canvas, (screenX, screenY) => {
 initializeMousePosition(BASE_WIDTH);
 initAudio(); // Inicializar sistema de áudio
 setupSettingsUI(); // Inicializar Settings UI
+updateStartScreenLeaderboard(); // Show leaderboard on start
 
 // Auto-pause quando a aba for trocada ou minimizada (Mobile friendly)
 document.addEventListener('visibilitychange', () => {
@@ -732,10 +737,6 @@ export function triggerSuperCannon(): void {
   }
   /* v8 ignore stop */
 }
-
-let cachedSuperBtn: HTMLButtonElement | null = null;
-let lastSuperText: string = '';
-let lastSuperDisabled: boolean | null = null;
 
 // Atualizar estado do botão Super inline
 /* v8 ignore start */

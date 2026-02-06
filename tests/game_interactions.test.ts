@@ -74,6 +74,7 @@ vi.mock('../src/ui-overlay', () => ({
   },
   showGameOverScreen: vi.fn(),
   startCountdown: (cb: any) => cb(),
+  updateStartScreenLeaderboard: vi.fn(),
 }));
 
 // Import game AFTER mocks

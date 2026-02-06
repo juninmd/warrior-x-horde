@@ -2,7 +2,7 @@
 import { Entities, GameState, FloatingText, Army, EnemyHorde, Gate, Bullet, Particle, MysteryBox, Soldier, MiniBoss } from './types';
 import { ObjectPool } from './pool';
 import { shadeColor, getBiomeColors, fastRemove } from './utils';
-import { COLORS, MAX_PARTICLES, MAX_RENDERED_SOLDIERS, ThemeConfig, BASE_WIDTH, BASE_HEIGHT } from './constants';
+import { COLORS, MAX_PARTICLES, MAX_RENDERED_SOLDIERS, ThemeConfig, BASE_WIDTH, BASE_HEIGHT, FONT_FAMILY } from './constants';
 import { drawGlassBadge, drawStar, drawJoystick, getComboColor } from './renderer-utils';
 import { drawBoss } from './renderer-boss';
 import { QualityManager } from './quality';
@@ -1203,7 +1203,7 @@ function drawArmy(ctx: CanvasRenderingContext2D, army: Army, time: number): void
 
       // Star overhead (simple text, could be sprite too)
       ctx.fillStyle = '#FFD700';
-      ctx.font = '10px Arial';
+      ctx.font = `10px ${FONT_FAMILY}`;
       ctx.textAlign = 'center';
       ctx.fillText('⭐', soldier.x, soldier.y - soldier.size - 5);
     } else {
@@ -1297,7 +1297,7 @@ function drawMysteryBox(ctx: CanvasRenderingContext2D, box: MysteryBox, time: nu
   ctx.lineWidth = 3;
   ctx.stroke();
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = `bold ${Math.floor(30 * scale)}px Arial`;
+  ctx.font = `bold ${Math.floor(30 * scale)}px ${FONT_FAMILY}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText('?', 0, 0);
@@ -1389,13 +1389,13 @@ function renderGateToCache(gate: Gate): void {
   ctx.fillStyle = '#FFFFFF';
   ctx.shadowColor = 'rgba(0,0,0,0.5)';
   ctx.shadowBlur = 4;
-  ctx.font = `900 36px Arial`;
+  ctx.font = `900 36px ${FONT_FAMILY}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   let text = '';
   if (gate.customText) {
     text = gate.customText;
-    ctx.font = `bold 22px Arial`;
+    ctx.font = `bold 22px ${FONT_FAMILY}`;
   } else {
     switch (gate.type) {
       case 'add': text = `+${gate.value}`; break;
@@ -1499,7 +1499,7 @@ function drawBossAtmosphere(ctx: CanvasRenderingContext2D, width: number, height
     const warningAlpha = (Math.sin(time * 0.01) + 1) / 2;
     ctx.save();
     ctx.fillStyle = `rgba(255, 0, 0, ${warningAlpha * intensity * 0.8})`;
-    ctx.font = 'bold 28px Arial';
+    ctx.font = `bold 28px ${FONT_FAMILY}`;
     ctx.textAlign = 'center';
     ctx.shadowColor = '#FF0000';
     ctx.shadowBlur = 20;
@@ -1656,7 +1656,7 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
 
   // Skull icon text
   ctx.fillStyle = '#FFF';
-  ctx.font = '12px Arial';
+  ctx.font = `12px ${FONT_FAMILY}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText('💀', endX, endY + 1);
@@ -1677,7 +1677,7 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
     ctx.shadowColor = getComboColor(gameState.combo);
     ctx.shadowBlur = 20;
     ctx.fillStyle = getComboColor(gameState.combo);
-    ctx.font = `900 ${Math.min(48, 28 + gameState.combo)}px Arial`; // Grow with combo
+    ctx.font = `900 ${Math.min(48, 28 + gameState.combo)}px ${FONT_FAMILY}`; // Grow with combo
     ctx.textAlign = 'center';
     ctx.strokeStyle = '#FFFFFF';
     ctx.lineWidth = 2;
@@ -1702,14 +1702,14 @@ function drawFloatingTexts(ctx: CanvasRenderingContext2D): void {
     ctx.fillStyle = ft.color;
 
     if (ft.style === 'critical') {
-        ctx.font = `900 ${Math.floor(40 * ft.scale)}px Arial`;
+        ctx.font = `900 ${Math.floor(40 * ft.scale)}px ${FONT_FAMILY}`;
         ctx.strokeStyle = '#000';
         ctx.lineWidth = 3;
         ctx.strokeText(ft.text, ft.x, ft.y);
         ctx.shadowColor = '#FF0000';
         ctx.shadowBlur = 10;
     } else {
-        ctx.font = `bold ${Math.floor(32 * ft.scale)}px Arial`;
+        ctx.font = `bold ${Math.floor(32 * ft.scale)}px ${FONT_FAMILY}`;
         ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
         ctx.shadowBlur = 5;
     }
@@ -1826,7 +1826,7 @@ export function drawPauseScreen(ctx: CanvasRenderingContext2D, width: number, he
   ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
   ctx.fillRect(0, 0, width, height);
   ctx.fillStyle = '#FFD700';
-  ctx.font = 'bold 36px Arial';
+  ctx.font = `bold 36px ${FONT_FAMILY}`;
   ctx.textAlign = 'center';
   ctx.fillText('⏸️ PAUSADO', width / 2, height / 2);
 }
@@ -1895,7 +1895,7 @@ function drawComboBar(ctx: CanvasRenderingContext2D, gameState: GameState): void
   const multiplier = Math.min(gameState.combo, 20); // Cap at 20x logic
   if (multiplier > 1) {
       ctx.fillStyle = '#FFD700';
-      ctx.font = 'bold 12px Arial';
+      ctx.font = `bold 12px ${FONT_FAMILY}`;
       ctx.textAlign = 'right';
       ctx.fillText(`x${multiplier} SCORE`, x + barWidth, y - 5);
   }

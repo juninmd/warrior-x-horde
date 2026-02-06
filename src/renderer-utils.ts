@@ -1,5 +1,5 @@
 // renderer-utils.ts - Shared rendering helpers
-import { COLORS } from './constants';
+import { COLORS, FONT_FAMILY } from './constants';
 import { virtualJoystick } from './input';
 
 // --- UI Drawing Helpers ---
@@ -25,7 +25,7 @@ export function drawGlassBadge(ctx: CanvasRenderingContext2D, x: number, y: numb
 
   // Texto
   ctx.fillStyle = '#FFF';
-  ctx.font = `bold ${fontSize}px "Segoe UI", Arial`;
+  ctx.font = `bold ${fontSize}px ${FONT_FAMILY}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(text, x + w / 2, y + h / 2 - 2);
