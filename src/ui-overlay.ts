@@ -72,20 +72,24 @@ export function updateStartScreenLeaderboard(): void {
 // --- Helper: Create Shop Button ---
 function createShopButton(type: string, price: number, color: string, label: string): HTMLButtonElement {
   const btn = document.createElement('button');
-  btn.innerHTML = `<span style="font-size: 18px;">${label}</span><br><span style="font-size: 12px;">💰 ${price}</span>`;
+  // Use a slightly lighter/darker version of the accent color for gradient
+  const bgGradient = `linear-gradient(135deg, rgba(30, 30, 40, 0.95) 0%, rgba(20, 20, 30, 0.95) 100%)`;
+
+  btn.innerHTML = `<span style="font-size: 20px; filter: drop-shadow(0 0 5px ${color});">${label}</span><br><span style="font-size: 11px; color: #EEE;">💰 ${price}</span>`;
   btn.style.cssText = `
-    width: 70px;
-    height: 70px;
-    padding: 5px;
-    font-size: 12px;
+    width: 72px;
+    height: 72px;
+    padding: 4px;
+    font-family: 'Segoe UI', sans-serif;
     font-weight: bold;
-    background: rgba(20, 20, 30, 0.8);
+    background: ${bgGradient};
     color: #FFF;
-    border: 2px solid ${color};
-    border-radius: 10px;
+    border: 1px solid ${color};
+    border-bottom: 3px solid ${color};
+    border-radius: 12px;
     cursor: pointer;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(4px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4), inset 0 0 10px rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(8px);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -93,7 +97,9 @@ function createShopButton(type: string, price: number, color: string, label: str
     touch-action: manipulation;
     user-select: none;
     -webkit-user-select: none;
-    transition: transform 0.1s, opacity 0.2s;
+    transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
   `;
 
   // Effects

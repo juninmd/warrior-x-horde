@@ -1619,7 +1619,19 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
 
   // High Score (Topo Esquerda, pequeno)
   if (gameState.highScore > 0) {
-    drawGlassBadge(ctx, 10, 30, 100, 24, `👑 HI: ${gameState.highScore}`, '#CCCCCC', 12);
+    // Pulse if beaten
+    const isBeaten = gameState.score > gameState.highScore;
+    const color = isBeaten ? '#FFD700' : '#CCCCCC';
+    const scale = isBeaten ? 1 + Math.sin(Date.now() * 0.01) * 0.1 : 1;
+
+    ctx.save();
+    if (isBeaten) {
+        ctx.translate(60, 42); // Center of badge roughly
+        ctx.scale(scale, scale);
+        ctx.translate(-60, -42);
+    }
+    drawGlassBadge(ctx, 10, 30, 100, 24, `👑 HI: ${Math.max(gameState.score, gameState.highScore)}`, color, 12);
+    ctx.restore();
   }
 
   // Progress Bar (Topo, mais visível)
@@ -1633,10 +1645,25 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
   ctx.beginPath();
   ctx.roundRect(progressX, progressY, progressWidth, progressHeight, 4);
   ctx.fill();
-  ctx.fillStyle = '#00C9FF';
+
+  // Progress Gradient
+  const progGrad = ctx.createLinearGradient(progressX, 0, progressX + progressWidth, 0);
+  progGrad.addColorStop(0, '#00C9FF');
+  progGrad.addColorStop(1, '#92FE9D');
+
+  ctx.fillStyle = progGrad;
   ctx.beginPath();
   ctx.roundRect(progressX, progressY, progressWidth * progress, progressHeight, 4);
   ctx.fill();
+
+  // Progress Glow
+  ctx.shadowColor = '#00C9FF';
+  ctx.shadowBlur = 10;
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+  ctx.beginPath();
+  ctx.roundRect(progressX, progressY, progressWidth * progress, progressHeight / 2, 4);
+  ctx.fill();
+  ctx.shadowBlur = 0;
 
   // Boss/Goal Icon at the end
   const endX = progressX + progressWidth;
@@ -1686,13 +1713,7 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
     ctx.restore();
   }
 
-  // New Record Celebration
-  if (gameState.score > gameState.highScore && gameState.highScore > 0 && !gameState.newRecordReached) {
-      // Just triggered logic handled in game loop, but visual here
-      // We can use a property in gameState to track if we should show celebration
-      // For now, simpler: if score is > old highscore (we'd need to know old highscore, which we don't track separately here easily without adding state)
-      // Actually, game.ts handles logic.
-  }
+  // Confetti/Sparks logic for Record would be handled by particle system updates in game loop
 }
 
 function drawFloatingTexts(ctx: CanvasRenderingContext2D): void {

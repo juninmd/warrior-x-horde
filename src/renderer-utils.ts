@@ -68,17 +68,28 @@ export function drawJoystick(ctx: CanvasRenderingContext2D): void {
   ctx.save();
   ctx.globalAlpha = alpha;
 
+  // Animated pulse when active
+  if (virtualJoystick.active) {
+      const pulse = (Date.now() % 1000) / 1000;
+      const pulseRadius = maxRadius + pulse * 15;
+      ctx.beginPath();
+      ctx.arc(startX, startY, pulseRadius, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(74, 144, 217, ${0.5 * (1 - pulse)})`;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+  }
+
   // Base (Outer Ring)
   ctx.beginPath();
   ctx.arc(startX, startY, maxRadius, 0, Math.PI * 2);
 
-  // Gradient fill for base
+  // Gradient fill for base - Sci-fi blueish tint
   const baseGrad = ctx.createRadialGradient(startX, startY, maxRadius * 0.2, startX, startY, maxRadius);
-  baseGrad.addColorStop(0, 'rgba(255, 255, 255, 0.0)');
-  baseGrad.addColorStop(1, 'rgba(255, 255, 255, 0.3)'); // Increased opacity
+  baseGrad.addColorStop(0, 'rgba(74, 144, 217, 0.05)');
+  baseGrad.addColorStop(1, 'rgba(74, 144, 217, 0.3)');
   ctx.fillStyle = baseGrad;
 
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+  ctx.strokeStyle = 'rgba(74, 144, 217, 0.5)';
   ctx.lineWidth = 2;
   ctx.fill();
   ctx.stroke();
@@ -91,35 +102,46 @@ export function drawJoystick(ctx: CanvasRenderingContext2D): void {
   let stickX = currentX;
   let stickY = currentY;
 
+  // Clamp stick
   if (distance > maxRadius) {
     const angle = Math.atan2(dy, dx);
     stickX = startX + Math.cos(angle) * maxRadius;
     stickY = startY + Math.sin(angle) * maxRadius;
   }
 
+  // Draw connector line (Vector)
+  ctx.beginPath();
+  ctx.moveTo(startX, startY);
+  ctx.lineTo(stickX, stickY);
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+  ctx.lineWidth = 4;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
   // Stick (Knob)
   ctx.beginPath();
-  ctx.arc(stickX, stickY, 25, 0, Math.PI * 2);
+  ctx.arc(stickX, stickY, 22, 0, Math.PI * 2);
 
-  // Knob Gradient
-  const knobGrad = ctx.createRadialGradient(stickX - 5, stickY - 5, 0, stickX, stickY, 25);
+  // Knob Gradient - Metallic/Glassy
+  const knobGrad = ctx.createRadialGradient(stickX - 8, stickY - 8, 2, stickX, stickY, 22);
   knobGrad.addColorStop(0, '#FFFFFF');
-  knobGrad.addColorStop(1, '#B0BEC5');
+  knobGrad.addColorStop(0.3, '#E0F7FA');
+  knobGrad.addColorStop(1, '#4A90D9');
   ctx.fillStyle = knobGrad;
 
   // Knob Shadow
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-  ctx.shadowBlur = 10;
-  ctx.shadowOffsetY = 4;
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+  ctx.shadowBlur = 12;
+  ctx.shadowOffsetY = 5;
 
   ctx.fill();
 
-  // Inner detail of Knob
+  // Shine reflection
   ctx.shadowBlur = 0;
   ctx.shadowOffsetY = 0;
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
   ctx.beginPath();
-  ctx.arc(stickX, stickY, 12, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+  ctx.ellipse(stickX - 6, stickY - 8, 8, 4, Math.PI / 4, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.restore();

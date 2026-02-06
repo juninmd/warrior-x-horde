@@ -31,18 +31,36 @@ function resizeCanvas(): void {
   const container = canvas.parentElement;
   if (!container) return;
 
-  // Calcular espaço disponível (deixar espaço para o botão Super Cannon no mobile)
-  const maxWidth = Math.min(window.innerWidth - 20, 600); // Max 600px de largura
-  const maxHeight = window.innerHeight - 150; // Deixar espaço para título, dicas e botão
+  // Mobile Fullscreen Logic
+  const isMobile = window.innerWidth <= 768;
 
-  // Calcular dimensões mantendo aspect ratio
-  let newWidth = maxWidth;
-  let newHeight = newWidth / ASPECT_RATIO;
+  let newWidth: number;
+  let newHeight: number;
 
-  // Se altura excede, ajustar pela altura
-  if (newHeight > maxHeight) {
-    newHeight = maxHeight;
-    newWidth = newHeight * ASPECT_RATIO;
+  if (isMobile) {
+      // Full width on mobile
+      newWidth = window.innerWidth;
+      // Height is screen height minus UI space (less padding than desktop)
+      newHeight = window.innerHeight;
+
+      // Ensure aspect ratio isn't too extreme (e.g., very long phones)
+      // We clip the height if it gets too tall relative to width
+      const maxAspectRatio = 2.2; // roughly 20:9
+      if (newHeight / newWidth > maxAspectRatio) {
+          newHeight = newWidth * maxAspectRatio;
+      }
+  } else {
+      // Desktop: Keep constrained
+      const maxWidth = Math.min(window.innerWidth - 20, 600);
+      const maxHeight = window.innerHeight - 100;
+
+      newWidth = maxWidth;
+      newHeight = newWidth / ASPECT_RATIO;
+
+      if (newHeight > maxHeight) {
+        newHeight = maxHeight;
+        newWidth = newHeight * ASPECT_RATIO;
+      }
   }
 
   // Mínimo para não ficar muito pequeno
@@ -53,12 +71,18 @@ function resizeCanvas(): void {
   canvas.style.width = `${newWidth}px`;
   canvas.style.height = `${newHeight}px`;
 
-  // Manter dimensões internas do canvas (resolução do jogo) com suporte a High DPI
-  const dpr = window.devicePixelRatio || 1;
-  canvas.width = BASE_WIDTH * dpr;
-  canvas.height = BASE_HEIGHT * dpr;
+  // Manter dimensões internas do canvas (resolução do jogo) com suporte a High DPI e Dynamic Resolution
+  const quality = QualityManager.getInstance().settings;
+  const resolutionScale = quality.resolutionScale || 1.0;
 
-  ctx.scale(dpr, dpr);
+  // Base DPR (capped at 3 for sanity on super high density screens)
+  const baseDpr = Math.min(window.devicePixelRatio || 1, 3);
+  const effectiveDpr = baseDpr * resolutionScale;
+
+  canvas.width = BASE_WIDTH * effectiveDpr;
+  canvas.height = BASE_HEIGHT * effectiveDpr;
+
+  ctx.scale(effectiveDpr, effectiveDpr);
 
   // Calcular escala para eventos de input
   scale = newWidth / BASE_WIDTH;

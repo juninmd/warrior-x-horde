@@ -27,6 +27,7 @@ canvas.getContext = vi.fn().mockReturnValue({
   lineTo: vi.fn(),
   stroke: vi.fn(),
   arc: vi.fn(),
+  ellipse: vi.fn(),
   fill: vi.fn(),
   createRadialGradient: vi.fn().mockReturnValue({ addColorStop: vi.fn() }),
   createLinearGradient: vi.fn().mockReturnValue({ addColorStop: vi.fn() }),
