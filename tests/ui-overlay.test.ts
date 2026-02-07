@@ -288,6 +288,24 @@ describe('UI Overlay', () => {
             // Should NOT contain script tags
             expect(html).not.toContain('<script>');
         });
+        it('should handle invalid entry types with type guards', () => {
+            const data = [
+                null,                          // null entry
+                'not an object',               // primitive string
+                123,                           // primitive number
+                { noScore: 'missing' },        // object without score
+                { score: 500 }                 // valid entry
+            ];
+            vi.spyOn(window.localStorage, 'getItem').mockReturnValue(JSON.stringify(data));
+
+            const html = _testing.getLeaderboardHTML();
+
+            // Should contain the valid score
+            expect(html).toContain('500');
+            // Invalid entries should become 0 (4 times)
+            const zeros = (html.match(/>0<\/td>/g) || []).length;
+            expect(zeros).toBe(4);
+        });
         it('should highlight current player score', () => {
             const data = [{ score: 1000 }];
             vi.spyOn(window.localStorage, 'getItem').mockReturnValue(JSON.stringify(data));
