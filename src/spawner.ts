@@ -45,13 +45,13 @@ export function spawnGates(entities: Entities, canvasWidth: number, gameState: G
   // Remover gates que já passaram
   for (let i = entities.gates.length - 1; i >= 0; i--) {
     if (entities.gates[i].y >= 1200) {
-      entities.gates.splice(i, 1);
+      fastRemove(entities.gates, i);
     }
   }
 
   // Spawnar novos gates se necessário
   const lowestGateY = entities.gates.length > 0
-    ? entities.gates[entities.gates.length - 1].y
+    ? Math.min(...entities.gates.map(g => g.y))
     : spawnY + gateSpacing;
 
   if (lowestGateY > spawnY) {
