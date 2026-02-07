@@ -288,6 +288,57 @@ describe('UI Overlay', () => {
             // Should NOT contain script tags
             expect(html).not.toContain('<script>');
         });
+
+        it('should sanitize XSS img tag in leaderboard score', () => {
+            const data = [
+                { score: '<img src=x onerror=alert(1)>' as any },
+                { score: 100 }
+            ];
+            vi.spyOn(window.localStorage, 'getItem').mockReturnValue(JSON.stringify(data));
+
+            const html = _testing.getLeaderboardHTML();
+
+            // XSS string becomes NaN -> 0
+            expect(html).toContain('>0</td>');
+            expect(html).toContain('>100</td>');
+            // Should NOT contain the raw malicious string
+            expect(html).not.toContain('<img');
+            expect(html).not.toContain('onerror');
+            expect(html).not.toContain('alert');
+        });
+
+        it('should handle Infinity score value', () => {
+            const data = [
+                { score: Infinity as any },
+                { score: -Infinity as any },
+                { score: 500 }
+            ];
+            vi.spyOn(window.localStorage, 'getItem').mockReturnValue(JSON.stringify(data));
+
+            const html = _testing.getLeaderboardHTML();
+
+            // Infinity values should become 0
+            expect(html).toContain('>0</td>');
+            expect(html).toContain('>500</td>');
+            // Should NOT contain the word "Infinity"
+            expect(html).not.toContain('Infinity');
+        });
+
+        it('should handle null score value', () => {
+            const data = [
+                { score: null as any },
+                { score: 250 }
+            ];
+            vi.spyOn(window.localStorage, 'getItem').mockReturnValue(JSON.stringify(data));
+
+            const html = _testing.getLeaderboardHTML();
+
+            // null becomes 0
+            expect(html).toContain('>0</td>');
+            expect(html).toContain('>250</td>');
+            // Should NOT contain the word "null"
+            expect(html).not.toContain('null');
+        });
         it('should highlight current player score', () => {
             const data = [{ score: 1000 }];
             vi.spyOn(window.localStorage, 'getItem').mockReturnValue(JSON.stringify(data));
