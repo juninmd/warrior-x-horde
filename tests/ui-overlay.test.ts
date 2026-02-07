@@ -315,5 +315,59 @@ describe('UI Overlay', () => {
             expect(lb2).not.toBeNull();
             expect(lb2).not.toBe(lb1); // Should be a new element
         });
+
+        it('should cap leaderboard to top 5 to prevent DoS from huge arrays', () => {
+            // Create a huge array (100 entries) to simulate DoS attack
+            const hugeArray = Array.from({ length: 100 }, (_, i) => ({ score: 1000 - i }));
+            vi.spyOn(window.localStorage, 'getItem').mockReturnValue(JSON.stringify(hugeArray));
+
+            const html = _testing.getLeaderboardHTML();
+
+            // Should only render top 5 entries
+            expect(html).toContain('#1');
+            expect(html).toContain('#5');
+            expect(html).not.toContain('#6'); // Should not render 6th entry
+            expect(html).toContain('1000'); // Top score
+            expect(html).toContain('996'); // 5th score
+        });
+
+        it('should filter out non-object entries to prevent DoS', () => {
+            const maliciousData = [
+                { score: 1000 }, // Valid
+                'string entry', // Invalid - should be filtered
+                123, // Invalid - should be filtered
+                null, // Invalid - should be filtered
+                { score: 500 }, // Valid
+                undefined, // Invalid - should be filtered
+                { noScore: 'missing' } // Invalid - missing score field
+            ];
+            vi.spyOn(window.localStorage, 'getItem').mockReturnValue(JSON.stringify(maliciousData));
+
+            const html = _testing.getLeaderboardHTML();
+
+            // Should only render valid entries with score field
+            expect(html).toContain('1000');
+            expect(html).toContain('500');
+            // Should only show 2 rows (valid entries)
+            const rowCount = (html.match(/<tr/g) || []).length;
+            expect(rowCount).toBe(2);
+        });
+
+        it('should handle combined DoS attack (huge array + invalid entries)', () => {
+            // Mix of huge array with invalid entries
+            const attackData = [
+                ...Array.from({ length: 50 }, (_, i) => ({ score: 2000 - i })), // 50 valid
+                ...Array.from({ length: 50 }, (_, i) => 'invalid' + i) // 50 invalid strings
+            ];
+            vi.spyOn(window.localStorage, 'getItem').mockReturnValue(JSON.stringify(attackData));
+
+            const html = _testing.getLeaderboardHTML();
+
+            // Should cap to top 5 valid entries only
+            expect(html).toContain('2000'); // Top score
+            expect(html).toContain('1996'); // 5th score
+            const rowCount = (html.match(/<tr/g) || []).length;
+            expect(rowCount).toBe(5);
+        });
     });
 });

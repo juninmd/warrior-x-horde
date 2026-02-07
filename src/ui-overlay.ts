@@ -16,6 +16,14 @@ function getLeaderboardHTML(currentScore: number = -1): string {
     try {
         leaderboard = JSON.parse(localStorage.getItem('crowdLeaderboard') || '[]');
         if (!Array.isArray(leaderboard)) leaderboard = [];
+        
+        // Security: Normalize leaderboard to prevent DoS from huge arrays or invalid entries
+        // 1. Filter out non-object entries
+        leaderboard = leaderboard.filter((entry: unknown) => 
+            entry && typeof entry === 'object' && 'score' in entry
+        );
+        // 2. Cap to top 5 to prevent UI freeze from massive arrays
+        leaderboard = leaderboard.slice(0, 5);
     } catch (e) {
         console.error('Failed to load leaderboard', e);
         leaderboard = [];
