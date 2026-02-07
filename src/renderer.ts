@@ -1954,8 +1954,12 @@ export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameSt
 
   drawRoad(ctx, gameState);
 
-  const sortedGates = [...entities.gates].sort((a, b) => a.y - b.y);
-  for (const gate of sortedGates) drawGate(ctx, gate);
+  // Optimization: Draw gates in reverse order (back to front) to avoid sorting
+  // Gates are naturally sorted by Y descending (largest Y at index 0)
+  for (let i = entities.gates.length - 1; i >= 0; i--) {
+    drawGate(ctx, entities.gates[i]);
+  }
+
 
   for (const horde of entities.enemyHordes) {
     if (horde.isActive) drawEnemyHorde(ctx, horde, time);
