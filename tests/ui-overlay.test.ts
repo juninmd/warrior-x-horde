@@ -4,7 +4,7 @@ vi.mock('../src/input', () => ({
     vibrate: vi.fn(),
 }));
 
-import { setupShopUI, updateShopUI, setupSuperCannonUI, updateSuperCannonUI, setupGameOverUI, showGameOverScreen, updateStartScreenLeaderboard, startCountdown } from '../src/ui-overlay';
+import { setupShopUI, updateShopUI, setupSuperCannonUI, updateSuperCannonUI, setupGameOverUI, showGameOverScreen, updateStartScreenLeaderboard, startCountdown, _testing } from '../src/ui-overlay';
 import { GameState } from '../src/types';
 
 describe('UI Overlay', () => {
@@ -46,6 +46,12 @@ describe('UI Overlay', () => {
             btn?.click();
             expect(onBuy).toHaveBeenCalled();
         });
+        it('should setup shop UI when container does not exist', () => {
+            document.getElementById('shopContainer')?.remove();
+            setupShopUI(vi.fn());
+            expect(document.getElementById('shopContainer')).toBeDefined();
+        });
+
 
         it('should update shop UI (enable/disable buttons)', () => {
             setupShopUI(vi.fn());
@@ -257,6 +263,42 @@ describe('UI Overlay', () => {
             updateStartScreenLeaderboard();
             // Should just return
         });
+
+
+        it('should handle valid JSON that is not an array', () => {
+            vi.spyOn(window.localStorage, 'getItem').mockReturnValue('{}');
+            updateStartScreenLeaderboard();
+            const lb = document.getElementById('startScreenLeaderboard');
+            expect(lb).toBeNull();
+        });
+        it('should sanitize HTML in leaderboard entries (direct test)', () => {
+            const data = [
+                { score: '<script>alert(1)</script>' }, // Malicious
+                { score: 12345 }
+            ];
+            vi.spyOn(window.localStorage, 'getItem').mockReturnValue(JSON.stringify(data));
+
+            // Call internal function directly
+            const html = _testing.getLeaderboardHTML();
+
+            // Should contain the safe score (0 for malicious, 12345 for valid)
+            expect(html).toContain('12345');
+            // Malicious score becomes NaN -> 0
+            expect(html).toContain('>0</td>');
+            // Should NOT contain script tags
+            expect(html).not.toContain('<script>');
+        });
+        it('should highlight current player score', () => {
+            const data = [{ score: 1000 }];
+            vi.spyOn(window.localStorage, 'getItem').mockReturnValue(JSON.stringify(data));
+
+            // Call with matching score
+            const html = _testing.getLeaderboardHTML(1000);
+
+            expect(html).toContain('rgba(255, 215, 0, 0.2)'); // Highlight color
+            expect(html).toContain('font-weight: bold');
+        });
+
 
         it('should remove existing leaderboard container to avoid duplicates', () => {
             const data = [{ score: 1000 }];

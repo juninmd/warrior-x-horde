@@ -29,14 +29,9 @@ function getLeaderboardHTML(currentScore: number = -1): string {
         <table style="width: 100%; border-collapse: collapse; font-size: 13px; color: #DDD;">
             ${leaderboard.map((entry: { score: number }, index: number) => {
                 // Security: Sanitize score to prevent XSS from manipulated localStorage
-                let safeScore = 0;
-                try {
-                    safeScore = Number(entry.score);
-                    if (isNaN(safeScore) || !isFinite(safeScore)) safeScore = 0;
-                    safeScore = Math.floor(safeScore);
-                } catch {
-                    safeScore = 0;
-                }
+                let safeScore = Number(entry.score);
+                if (isNaN(safeScore) || !isFinite(safeScore)) safeScore = 0;
+                safeScore = Math.floor(safeScore);
 
                 const isCurrent = safeScore === currentScore;
                 const rowColor = isCurrent ? 'rgba(255, 215, 0, 0.2)' : 'transparent';
@@ -621,3 +616,5 @@ export function startCountdown(onComplete: () => void): void {
 
     tick();
 }
+
+export const _testing = { getLeaderboardHTML };
