@@ -22,7 +22,9 @@ function getLeaderboardHTML(currentScore: number = -1): string {
         leaderboard = leaderboard.filter((entry: unknown) => 
             entry && typeof entry === 'object' && 'score' in entry
         );
-        // 2. Cap to top 5 to prevent UI freeze from massive arrays
+        // 2. Sort by score descending to get top scores
+        leaderboard.sort((a: { score: number }, b: { score: number }) => b.score - a.score);
+        // 3. Cap to top 5 to prevent UI freeze from massive arrays
         leaderboard = leaderboard.slice(0, 5);
     } catch (e) {
         console.error('Failed to load leaderboard', e);

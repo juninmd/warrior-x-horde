@@ -329,6 +329,12 @@ describe('UI Overlay', () => {
             expect(html).not.toContain('#6'); // Should not render 6th entry
             expect(html).toContain('1000'); // Top score
             expect(html).toContain('996'); // 5th score
+            
+            // Verify 5th position has score 996
+            const rows = html.match(/<tr[^>]*>.*?<\/tr>/gs) || [];
+            expect(rows).toHaveLength(5);
+            expect(rows[4]).toContain('#5');
+            expect(rows[4]).toContain('996');
         });
 
         it('should filter out non-object entries to prevent DoS', () => {
@@ -368,6 +374,42 @@ describe('UI Overlay', () => {
             expect(html).toContain('1996'); // 5th score
             const rowCount = (html.match(/<tr/g) || []).length;
             expect(rowCount).toBe(5);
+        });
+
+        it('should sort leaderboard by score before capping', () => {
+            // Unsorted array to verify sorting happens
+            const unsortedData = [
+                { score: 100 },
+                { score: 500 },
+                { score: 200 },
+                { score: 1000 }, // Highest
+                { score: 50 },
+                { score: 300 },
+                { score: 800 }
+            ];
+            vi.spyOn(window.localStorage, 'getItem').mockReturnValue(JSON.stringify(unsortedData));
+
+            const html = _testing.getLeaderboardHTML();
+
+            // Extract rows to verify order
+            const rows = html.match(/<tr[^>]*>.*?<\/tr>/gs) || [];
+            expect(rows).toHaveLength(5);
+            
+            // Verify descending order
+            expect(rows[0]).toContain('#1');
+            expect(rows[0]).toContain('1000');
+            expect(rows[1]).toContain('#2');
+            expect(rows[1]).toContain('800');
+            expect(rows[2]).toContain('#3');
+            expect(rows[2]).toContain('500');
+            expect(rows[3]).toContain('#4');
+            expect(rows[3]).toContain('300');
+            expect(rows[4]).toContain('#5');
+            expect(rows[4]).toContain('200');
+            
+            // 100 and 50 should not appear (outside top 5)
+            expect(html).not.toContain('>100<');
+            expect(html).not.toContain('>50<');
         });
     });
 });
