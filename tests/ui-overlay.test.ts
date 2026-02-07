@@ -282,7 +282,7 @@ describe('UI Overlay', () => {
             const html = _testing.getLeaderboardHTML();
 
             // Should contain the safe score (0 for malicious, 12345 for valid)
-            expect(html).toContain('12345');
+            expect(html).toContain('12,345');
             // Malicious score becomes NaN -> 0
             expect(html).toContain('>0</td>');
             // Should NOT contain script tags

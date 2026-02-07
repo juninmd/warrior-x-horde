@@ -1,3 +1,4 @@
+
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { GameState } from '../src/types';
 import * as audio from '../src/audio';
@@ -69,10 +70,6 @@ describe('Game Gap Coverage 2', () => {
         vi.resetModules();
         document.body.innerHTML = '<canvas id="gameCanvas"></canvas><div id="startScreen"></div>';
 
-        // Mock requestAnimationFrame globally for this suite
-        vi.stubGlobal('requestAnimationFrame', vi.fn((cb) => setTimeout(cb, 16)));
-        vi.stubGlobal('cancelAnimationFrame', vi.fn((id) => clearTimeout(id)));
-
         // Load game
         await import('../src/game');
         const gameStateModule = await import('../src/gameState');
@@ -82,7 +79,6 @@ describe('Game Gap Coverage 2', () => {
 
     afterEach(() => {
         vi.clearAllMocks();
-        vi.unstubAllGlobals();
     });
 
     it('should handle "recharge_super" shop action when already ready', () => {
@@ -148,6 +144,15 @@ describe('Game Gap Coverage 2', () => {
          canvas?.click();
 
          // Should toggle pause (start countdown -> effectively unpaused process initiated)
+         // togglePause sets isPaused=false inside callback of countdown
+         // But wait, togglePause implementation:
+         /*
+          if (gameState.isPaused) {
+            startCountdown(() => { gameState.isPaused = false; ... });
+          }
+         */
+         // And setupGameOverUI mock runs callback immediately: `startCountdown: vi.fn((cb) => cb())`
+
          expect(gameState.isPaused).toBe(false);
     });
 
