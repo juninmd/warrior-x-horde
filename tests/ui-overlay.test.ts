@@ -293,6 +293,7 @@ describe('UI Overlay', () => {
                 null,                          // null entry
                 'not an object',               // primitive string
                 123,                           // primitive number
+                [1, 2, 3],                     // array
                 { noScore: 'missing' },        // object without score
                 { score: 500 }                 // valid entry
             ];
@@ -302,9 +303,9 @@ describe('UI Overlay', () => {
 
             // Should contain the valid score
             expect(html).toContain('500');
-            // Invalid entries should become 0 (4 times)
+            // Invalid entries should become 0 (5 times)
             const zeros = (html.match(/>0<\/td>/g) || []).length;
-            expect(zeros).toBe(4);
+            expect(zeros).toBe(5);
         });
         it('should highlight current player score', () => {
             const data = [{ score: 1000 }];

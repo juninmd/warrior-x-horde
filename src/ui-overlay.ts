@@ -31,7 +31,7 @@ function getLeaderboardHTML(currentScore: number = -1): string {
                 // Security: Sanitize score to prevent XSS from manipulated localStorage
                 // Use explicit type guards instead of try/catch for control flow
                 let safeScore = 0;
-                if (entry && typeof entry === 'object' && 'score' in entry) {
+                if (entry && typeof entry === 'object' && !Array.isArray(entry) && 'score' in entry) {
                     const numScore = Number(entry.score);
                     if (!isNaN(numScore) && isFinite(numScore)) {
                         safeScore = Math.floor(numScore);
