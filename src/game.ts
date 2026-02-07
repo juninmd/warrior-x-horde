@@ -614,6 +614,41 @@ canvas.addEventListener('touchstart', (e) => {
 if (startBtnOverlay) {
   startBtnOverlay.addEventListener('click', startGame);
 }
+// UI Event Listeners (Security Fix: Removed inline handlers)
+const pauseBtnTop = document.getElementById('pauseBtnTop');
+if (pauseBtnTop) pauseBtnTop.addEventListener('click', () => togglePause());
+
+const settingsBtn = document.getElementById('settingsBtn');
+if (settingsBtn) settingsBtn.addEventListener('click', () => toggleSettingsMenu());
+
+const storyBtn = document.querySelector('.story-btn');
+if (storyBtn) storyBtn.addEventListener('click', () => {
+     const modal = document.getElementById('storyModal');
+     if (modal) modal.classList.add('active');
+});
+
+const storyCloseBtn = document.querySelector('.story-close-btn');
+if (storyCloseBtn) storyCloseBtn.addEventListener('click', () => {
+     const modal = document.getElementById('storyModal');
+     if (modal) modal.classList.remove('active');
+});
+
+const goBtn = document.querySelector('.go-btn');
+const levelSelector = document.getElementById('levelSelector') as HTMLSelectElement;
+if (goBtn && levelSelector) {
+     goBtn.addEventListener('click', () => {
+         const lvl = parseInt(levelSelector.value);
+         debugSetLevel(lvl);
+     });
+}
+
+const superCannonBtnInline = document.getElementById('superCannonBtnInline');
+if (superCannonBtnInline) {
+     superCannonBtnInline.addEventListener('click', () => {
+         triggerSuperCannon();
+     });
+}
+
 
 // Resize handler
 window.addEventListener('resize', resizeCanvas);
@@ -844,3 +879,12 @@ window.addEventListener('beforeinstallprompt', (e) => {
   console.log('📱 PWA Install Prompt captured');
   /* v8 ignore stop */
 });
+
+// Service Worker Registration
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then((reg) => console.log('SW Registered'))
+      .catch((err) => console.log('SW Failed', err));
+  });
+}
