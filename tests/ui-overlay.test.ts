@@ -288,6 +288,16 @@ describe('UI Overlay', () => {
             // Should NOT contain script tags
             expect(html).not.toContain('<script>');
         });
+        it('should handle valid JSON that is not an array (direct test)', () => {
+            // Test the branch: if (!Array.isArray(leaderboard)) leaderboard = []
+            vi.spyOn(window.localStorage, 'getItem').mockReturnValue('{}');
+            
+            // Call internal function directly
+            const html = _testing.getLeaderboardHTML();
+            
+            // Should return empty string when leaderboard is not an array
+            expect(html).toBe('');
+        });
         it('should highlight current player score', () => {
             const data = [{ score: 1000 }];
             vi.spyOn(window.localStorage, 'getItem').mockReturnValue(JSON.stringify(data));
