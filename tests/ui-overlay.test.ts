@@ -238,7 +238,7 @@ describe('UI Overlay', () => {
             const lb = document.getElementById('startScreenLeaderboard');
             expect(lb).not.toBeNull();
             expect(lb?.innerHTML).toContain('Top Commanders');
-            expect(lb?.innerHTML).toContain('1000');
+            expect(lb?.innerHTML).toContain('1,000');
         });
 
         it('should handle corrupt localStorage data', () => {
