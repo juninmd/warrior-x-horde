@@ -15,8 +15,10 @@ function getLeaderboardHTML(currentScore: number = -1): string {
     let leaderboard = [];
     try {
         leaderboard = JSON.parse(localStorage.getItem('crowdLeaderboard') || '[]');
+        if (!Array.isArray(leaderboard)) leaderboard = [];
     } catch (e) {
         console.error('Failed to load leaderboard', e);
+        leaderboard = [];
     }
 
     if (leaderboard.length === 0) return '';
@@ -26,14 +28,24 @@ function getLeaderboardHTML(currentScore: number = -1): string {
         <h3 style="color: #FFD700; font-size: 14px; margin-bottom: 5px; text-transform: uppercase;">Top Commanders</h3>
         <table style="width: 100%; border-collapse: collapse; font-size: 13px; color: #DDD;">
             ${leaderboard.map((entry: { score: number }, index: number) => {
-                const isCurrent = entry.score === currentScore;
+                // Security: Sanitize score to prevent XSS from manipulated localStorage
+                let safeScore = 0;
+                try {
+                    safeScore = Number(entry.score);
+                    if (isNaN(safeScore) || !isFinite(safeScore)) safeScore = 0;
+                    safeScore = Math.floor(safeScore);
+                } catch {
+                    safeScore = 0;
+                }
+
+                const isCurrent = safeScore === currentScore;
                 const rowColor = isCurrent ? 'rgba(255, 215, 0, 0.2)' : 'transparent';
                 const textColor = isCurrent ? '#FFF' : '#AAA';
                 const weight = isCurrent ? 'bold' : 'normal';
                 return `
                 <tr style="background: ${rowColor}; border-bottom: 1px solid rgba(255,255,255,0.05);">
                     <td style="padding: 4px; text-align: left; color: ${index === 0 ? '#FFD700' : textColor}; font-weight: ${weight};">#${index + 1}</td>
-                    <td style="padding: 4px; text-align: right; color: ${textColor}; font-weight: ${weight};">${entry.score}</td>
+                    <td style="padding: 4px; text-align: right; color: ${textColor}; font-weight: ${weight};">${safeScore}</td>
                 </tr>
                 `;
             }).join('')}
