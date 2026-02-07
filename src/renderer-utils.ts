@@ -99,6 +99,9 @@ export function drawJoystick(ctx: CanvasRenderingContext2D): void {
   const dy = currentY - startY;
   const distance = Math.sqrt(dx * dx + dy * dy);
 
+  // Calculate intensity (0 to 1) based on pull distance
+  const intensity = Math.min(1, distance / maxRadius);
+
   let stickX = currentX;
   let stickY = currentY;
 
@@ -113,7 +116,7 @@ export function drawJoystick(ctx: CanvasRenderingContext2D): void {
   ctx.beginPath();
   ctx.moveTo(startX, startY);
   ctx.lineTo(stickX, stickY);
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+  ctx.strokeStyle = `rgba(255, 255, 255, ${0.3 + intensity * 0.4})`; // Brighter line when pulled hard
   ctx.lineWidth = 4;
   ctx.lineCap = 'round';
   ctx.stroke();
@@ -122,16 +125,22 @@ export function drawJoystick(ctx: CanvasRenderingContext2D): void {
   ctx.beginPath();
   ctx.arc(stickX, stickY, 22, 0, Math.PI * 2);
 
-  // Knob Gradient - Metallic/Glassy
+  // Knob Gradient - Metallic/Glassy - changes with intensity
   const knobGrad = ctx.createRadialGradient(stickX - 8, stickY - 8, 2, stickX, stickY, 22);
   knobGrad.addColorStop(0, '#FFFFFF');
-  knobGrad.addColorStop(0.3, '#E0F7FA');
-  knobGrad.addColorStop(1, '#4A90D9');
+  // Middle color shifts from pale blue to intense gold/orange on full pull
+  if (intensity > 0.8) {
+      knobGrad.addColorStop(0.3, '#FFFACD'); // Lemon Chiffon
+      knobGrad.addColorStop(1, '#FFD700');   // Gold
+  } else {
+      knobGrad.addColorStop(0.3, '#E0F7FA');
+      knobGrad.addColorStop(1, '#4A90D9');
+  }
   ctx.fillStyle = knobGrad;
 
   // Knob Shadow
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
-  ctx.shadowBlur = 12;
+  ctx.shadowColor = intensity > 0.8 ? 'rgba(255, 215, 0, 0.6)' : 'rgba(0, 0, 0, 0.4)';
+  ctx.shadowBlur = 12 + intensity * 10;
   ctx.shadowOffsetY = 5;
 
   ctx.fill();

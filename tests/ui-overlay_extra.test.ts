@@ -288,8 +288,8 @@ describe('UI Overlay Extra Coverage', () => {
 
             const container = document.getElementById('gameOverContainer');
             expect(container?.innerHTML).toContain('Top Commanders');
-            expect(container?.innerHTML).toContain('5000');
-            expect(container?.innerHTML).toContain('3000');
+            expect(container?.innerHTML).toContain('5,000');
+            expect(container?.innerHTML).toContain('3,000');
         });
 
         it('should handle broken leaderboard in localStorage', () => {

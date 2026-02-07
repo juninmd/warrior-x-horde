@@ -24,9 +24,9 @@ function getLeaderboardHTML(currentScore: number = -1): string {
     if (leaderboard.length === 0) return '';
 
     return `
-    <div style="background: rgba(0,0,0,0.4); border-radius: 10px; padding: 10px; margin-bottom: 20px; width: 100%;">
-        <h3 style="color: #FFD700; font-size: 14px; margin-bottom: 5px; text-transform: uppercase;">Top Commanders</h3>
-        <table style="width: 100%; border-collapse: collapse; font-size: 13px; color: #DDD;">
+    <div style="background: rgba(16, 20, 30, 0.6); backdrop-filter: blur(5px); border: 1px solid rgba(74, 144, 217, 0.2); border-radius: 12px; padding: 15px; margin-bottom: 20px; width: 100%;">
+        <h3 style="color: #FFD700; font-family: 'Rajdhani', sans-serif; font-size: 16px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid rgba(255, 215, 0, 0.3); padding-bottom: 5px;">Top Commanders</h3>
+        <div style="display: flex; flex-direction: column; gap: 5px;">
             ${leaderboard.map((entry: { score: number }, index: number) => {
                 // Security: Sanitize score to prevent XSS from manipulated localStorage
                 let safeScore = Number(entry.score);
@@ -44,7 +44,7 @@ function getLeaderboardHTML(currentScore: number = -1): string {
                 </tr>
                 `;
             }).join('')}
-        </table>
+        </div>
     </div>
     `;
 }
@@ -87,7 +87,7 @@ function createShopButton(type: string, price: number, color: string, label: str
     width: 72px;
     height: 72px;
     padding: 4px;
-    font-family: 'Segoe UI', sans-serif;
+    font-family: 'Rajdhani', sans-serif;
     font-weight: bold;
     background: ${bgGradient};
     color: #FFF;
@@ -403,10 +403,27 @@ export function showGameOverScreen(gameState: GameState): void {
     content.style.boxShadow = `0 0 30px ${isVictory ? 'rgba(46, 204, 113, 0.3)' : 'rgba(231, 76, 60, 0.3)'}`;
 
     const leaderboardHTML = getLeaderboardHTML(gameState.score);
+    const isNewRecord = gameState.score >= gameState.highScore && gameState.score > 0;
 
     content.innerHTML = `
-        <h1 style="color: ${titleColor}; font-size: 42px; margin: 0 0 10px 0; text-shadow: 0 2px 5px rgba(0,0,0,0.5);">${title}</h1>
-        ${isVictory ? '<p style="color: #00FF88; font-weight: bold; font-size: 18px; margin-bottom: 20px;">🛸 MOTHERSHIP DESTROYED!</p>' : ''}
+        <h1 style="font-family: 'Rajdhani', sans-serif; color: ${titleColor}; font-size: 48px; font-weight: 700; margin: 0 0 5px 0; text-shadow: 0 0 15px rgba(0,0,0,0.5); letter-spacing: 2px;">${title}</h1>
+        ${isVictory ? '<p style="color: #00FF88; font-weight: bold; font-size: 18px; margin-bottom: 15px; font-family: \'Rajdhani\', sans-serif; letter-spacing: 1px;">🛸 MOTHERSHIP DESTROYED!</p>' : ''}
+
+        ${isNewRecord ? `
+        <div style="
+            background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.2), transparent);
+            color: #FFD700;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 20px;
+            font-weight: bold;
+            padding: 5px 0;
+            margin-bottom: 15px;
+            animation: pulse 1.5s infinite;
+            text-shadow: 0 0 10px #FFD700;
+        ">
+            ✨ NEW HIGH SCORE! ✨
+        </div>
+        ` : ''}
 
         <!-- Rank Badge -->
         <div style="margin-bottom: 20px;">

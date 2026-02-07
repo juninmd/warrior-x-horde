@@ -1722,13 +1722,25 @@ function drawFloatingTexts(ctx: CanvasRenderingContext2D): void {
     ctx.globalAlpha = ft.alpha;
     ctx.fillStyle = ft.color;
 
+    // Position translation to allow scaling from center
+    ctx.translate(ft.x, ft.y);
+
     if (ft.style === 'critical') {
+        // Pulse effect for critical text
+        const pulse = 1 + Math.sin(Date.now() * 0.02) * 0.1;
+        ctx.scale(pulse, pulse);
+
         ctx.font = `900 ${Math.floor(40 * ft.scale)}px ${FONT_FAMILY}`;
         ctx.strokeStyle = '#000';
         ctx.lineWidth = 3;
-        ctx.strokeText(ft.text, ft.x, ft.y);
+        ctx.strokeText(ft.text, 0, 0); // Draw at 0,0 relative to translate
         ctx.shadowColor = '#FF0000';
-        ctx.shadowBlur = 10;
+        ctx.shadowBlur = 15;
+
+        // Add a secondary glow
+        if (Math.random() > 0.5) {
+             ctx.fillStyle = '#FFF';
+        }
     } else {
         ctx.font = `bold ${Math.floor(32 * ft.scale)}px ${FONT_FAMILY}`;
         ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
@@ -1736,7 +1748,7 @@ function drawFloatingTexts(ctx: CanvasRenderingContext2D): void {
     }
 
     ctx.textAlign = 'center';
-    ctx.fillText(ft.text, ft.x, ft.y);
+    ctx.fillText(ft.text, 0, 0); // Draw at 0,0 relative to translate
     ctx.restore();
   }
 }
@@ -1954,8 +1966,12 @@ export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameSt
 
   drawRoad(ctx, gameState);
 
-  const sortedGates = [...entities.gates].sort((a, b) => a.y - b.y);
-  for (const gate of sortedGates) drawGate(ctx, gate);
+  // Optimization: Draw gates in reverse order (back to front) to avoid sorting
+  // Gates are naturally sorted by Y descending (largest Y at index 0)
+  for (let i = entities.gates.length - 1; i >= 0; i--) {
+    drawGate(ctx, entities.gates[i]);
+  }
+
 
   for (const horde of entities.enemyHordes) {
     if (horde.isActive) drawEnemyHorde(ctx, horde, time);
