@@ -1,5 +1,5 @@
 // tests/antigravity_audit.test.ts
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { GameState, Entities } from '../src/types';
 
 // Mocks
@@ -45,6 +45,16 @@ import { _testing as gameTesting } from '../src/game';
 import { gameState, resetGameState } from '../src/gameState';
 
 describe('Antigravity Audit', () => {
+
+  beforeEach(() => {
+    // Mock requestAnimationFrame globally for this suite
+    vi.stubGlobal('requestAnimationFrame', vi.fn((cb) => setTimeout(cb, 16)));
+    vi.stubGlobal('cancelAnimationFrame', vi.fn((id) => clearTimeout(id)));
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
 
   describe('FloatingText Physics', () => {
     beforeEach(() => {
