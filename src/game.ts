@@ -847,17 +847,13 @@ function updateSuperButtonInline(): void {
 /* v8 ignore stop */
 
 // Expor funções globalmente para o HTML acessar
-(window as unknown as {
-  debugSetLevel: typeof debugSetLevel;
-  togglePause: typeof togglePause;
-  triggerSuperCannon: typeof triggerSuperCannon;
-  triggerScreenShake: typeof triggerScreenShake;
-  toggleSettingsMenu: typeof toggleSettingsMenu;
-}).debugSetLevel = debugSetLevel;
+if (import.meta.env.DEV) {
+  (window as unknown as { debugSetLevel: typeof debugSetLevel }).debugSetLevel = debugSetLevel;
+  (window as unknown as { triggerScreenShake: typeof triggerScreenShake }).triggerScreenShake = triggerScreenShake;
+}
 
 (window as unknown as { togglePause: typeof togglePause }).togglePause = togglePause;
 (window as unknown as { triggerSuperCannon: typeof triggerSuperCannon }).triggerSuperCannon = triggerSuperCannon;
-(window as unknown as { triggerScreenShake: typeof triggerScreenShake }).triggerScreenShake = triggerScreenShake;
 (window as unknown as { toggleSettingsMenu: typeof toggleSettingsMenu }).toggleSettingsMenu = toggleSettingsMenu;
 
 // Adicionar atalho de teclado para pause (P ou Escape)
