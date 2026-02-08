@@ -1634,6 +1634,47 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
     ctx.restore();
   }
 
+  // Live Rank (Topo Esquerda, abaixo do High Score)
+  const rankScore = gameState.score;
+  let rank = 'D';
+  let rankColor = '#7f8c8d'; // Gray
+  if (rankScore >= 5000) { rank = 'S'; rankColor = '#FFD700'; }
+  else if (rankScore >= 3000) { rank = 'A'; rankColor = '#9B59B6'; }
+  else if (rankScore >= 1000) { rank = 'B'; rankColor = '#3498DB'; }
+  else if (rankScore >= 500) { rank = 'C'; rankColor = '#2ECC71'; }
+
+  ctx.save();
+  ctx.translate(35, 85);
+
+  // Glow
+  ctx.shadowColor = rankColor;
+  ctx.shadowBlur = 10;
+
+  // Circle bg
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  ctx.beginPath();
+  ctx.arc(0, 0, 18, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Ring
+  ctx.strokeStyle = rankColor;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // Rank Text
+  ctx.fillStyle = rankColor;
+  ctx.font = `900 20px ${FONT_FAMILY}`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(rank, 0, 1);
+
+  // Label
+  ctx.fillStyle = '#AAA';
+  ctx.font = `bold 8px ${FONT_FAMILY}`;
+  ctx.fillText('RANK', 0, 26);
+  ctx.restore();
+
   // Progress Bar (Topo, mais visível)
   const progressWidth = width - 40;
   const progressX = 20;

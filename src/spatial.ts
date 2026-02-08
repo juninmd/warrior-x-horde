@@ -134,7 +134,8 @@ export class SpatialHashGrid {
   }
 
   // Buscar itens próximos a uma área
-  query(x: number, y: number, width: number, height: number): SpatialItem[] {
+  // OTIMIZAÇÃO: Suporta um array de saída opcional para evitar alocações (GC)
+  query(x: number, y: number, width: number, height: number, outArray?: SpatialItem[]): SpatialItem[] {
     // We can't return a Set or new Array easily without allocation.
     // But updateBullets iterates this list immediately.
     // We can populate a reused array and return it.
@@ -142,7 +143,11 @@ export class SpatialHashGrid {
     // Returning a new array is safer for now, but to optimize we could pass a target array.
     // For now, let's keep array return but optimize creation.
 
-    const results: SpatialItem[] = [];
+    const results: SpatialItem[] = outArray || [];
+    if (outArray) {
+      outArray.length = 0;
+    }
+
     // Simple deduplication using a unique ID per frame?
     // Or just Set. A temporary Set is cleaner logic-wise.
     // Performance-wise, Set iteration is slower than Array.

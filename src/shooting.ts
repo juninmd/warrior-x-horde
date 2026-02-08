@@ -3,7 +3,7 @@ import { Entities, GameState, Bullet, EnemyHorde, Boss, Soldier, MiniBoss } from
 import { addFloatingText, addExplosion, addParticle } from './renderer';
 import { triggerScreenShake } from './game';
 import { ObjectPool } from './pool';
-import { SpatialHashGrid } from './spatial';
+import { SpatialHashGrid, SpatialItem } from './spatial';
 import { fastRemove } from './utils';
 import { soldierPool } from './soldierPool';
 
@@ -12,6 +12,7 @@ const enemyGrid = new SpatialHashGrid(120);
 
 // Reusable array to avoid allocations
 const tempPlayerBullets: Bullet[] = [];
+const tempQueryResults: SpatialItem[] = [];
 
 const bulletPool = new ObjectPool<Bullet>(
   () => ({ x: 0, y: 0, targetX: 0, targetY: 0, speed: 0, damage: 0, isEnemy: false }),
@@ -388,7 +389,7 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
 
     // Usar a Grid para buscar candidatos a colisão
     // Área de consulta: Posição da bala +/- 10px
-    const nearby = enemyGrid.query(bullet.x - 10, bullet.y - 10, 20, 20);
+    const nearby = enemyGrid.query(bullet.x - 10, bullet.y - 10, 20, 20, tempQueryResults);
 
     /* v8 ignore start */
     for (const item of nearby) {

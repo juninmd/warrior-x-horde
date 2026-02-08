@@ -232,10 +232,13 @@ describe('UI Overlay', () => {
             expect(lb).toBeNull();
         });
 
-        it('should handle populated leaderboard', () => {
+        it('should handle populated leaderboard with full rank coverage', () => {
+            // Entries for 1st, 2nd, 3rd, and 4th place to cover all rank color branches
             const data = [
                 { score: 1000, date: Date.now() },
-                { score: 500, date: Date.now() }
+                { score: 900, date: Date.now() },
+                { score: 800, date: Date.now() },
+                { score: 700, date: Date.now() }
             ];
             vi.spyOn(window.localStorage, 'getItem').mockReturnValue(JSON.stringify(data));
 
@@ -245,6 +248,12 @@ describe('UI Overlay', () => {
             expect(lb).not.toBeNull();
             expect(lb?.innerHTML).toContain('Top Commanders');
             expect(lb?.innerHTML).toContain('1,000');
+
+            // Verify Rank Colors
+            expect(lb?.innerHTML).toContain('#FFD700'); // Gold
+            expect(lb?.innerHTML).toContain('#C0C0C0'); // Silver
+            expect(lb?.innerHTML).toContain('#CD7F32'); // Bronze
+            expect(lb?.innerHTML).toContain('#AAA');    // Default
         });
 
         it('should handle corrupt localStorage data', () => {
@@ -284,7 +293,7 @@ describe('UI Overlay', () => {
             // Should contain the safe score (0 for malicious, 12345 for valid)
             expect(html).toContain('12,345');
             // Malicious score becomes NaN -> 0
-            expect(html).toContain('>0</td>');
+            expect(html).toContain('>0</span>');
             // Should NOT contain script tags
             expect(html).not.toContain('<script>');
         });
@@ -295,8 +304,8 @@ describe('UI Overlay', () => {
             // Call with matching score
             const html = _testing.getLeaderboardHTML(1000);
 
-            expect(html).toContain('rgba(255, 215, 0, 0.2)'); // Highlight color
-            expect(html).toContain('font-weight: bold');
+            expect(html).toContain('linear-gradient(90deg, rgba(255, 215, 0, 0.2), transparent)'); // Highlight color
+            expect(html).toContain('font-weight: 800');
         });
 
 
