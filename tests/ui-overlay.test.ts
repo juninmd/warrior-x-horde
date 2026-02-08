@@ -232,10 +232,13 @@ describe('UI Overlay', () => {
             expect(lb).toBeNull();
         });
 
-        it('should handle populated leaderboard', () => {
+        it('should handle populated leaderboard with full rank coverage', () => {
+            // Entries for 1st, 2nd, 3rd, and 4th place to cover all rank color branches
             const data = [
                 { score: 1000, date: Date.now() },
-                { score: 500, date: Date.now() }
+                { score: 900, date: Date.now() },
+                { score: 800, date: Date.now() },
+                { score: 700, date: Date.now() }
             ];
             vi.spyOn(window.localStorage, 'getItem').mockReturnValue(JSON.stringify(data));
 
@@ -245,6 +248,12 @@ describe('UI Overlay', () => {
             expect(lb).not.toBeNull();
             expect(lb?.innerHTML).toContain('Top Commanders');
             expect(lb?.innerHTML).toContain('1,000');
+
+            // Verify Rank Colors
+            expect(lb?.innerHTML).toContain('#FFD700'); // Gold
+            expect(lb?.innerHTML).toContain('#C0C0C0'); // Silver
+            expect(lb?.innerHTML).toContain('#CD7F32'); // Bronze
+            expect(lb?.innerHTML).toContain('#AAA');    // Default
         });
 
         it('should handle corrupt localStorage data', () => {
