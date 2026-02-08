@@ -24,9 +24,9 @@ function getLeaderboardHTML(currentScore: number = -1): string {
     if (leaderboard.length === 0) return '';
 
     return `
-    <div style="background: rgba(0,0,0,0.4); border-radius: 10px; padding: 10px; margin-bottom: 20px; width: 100%;">
-        <h3 style="color: #FFD700; font-size: 14px; margin-bottom: 5px; text-transform: uppercase;">Top Commanders</h3>
-        <table style="width: 100%; border-collapse: collapse; font-size: 13px; color: #DDD;">
+    <div style="background: rgba(0,0,0,0.4); border-radius: 12px; padding: 12px; margin-bottom: 20px; width: 100%; backdrop-filter: blur(5px);">
+        <h3 style="color: #FFD700; font-size: 12px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">Top Commanders</h3>
+        <div style="display: flex; flex-direction: column; gap: 4px;">
             ${leaderboard.map((entry: { score: number }, index: number) => {
                 // Security: Sanitize score to prevent XSS from manipulated localStorage
                 let safeScore = Number(entry.score);
@@ -34,17 +34,19 @@ function getLeaderboardHTML(currentScore: number = -1): string {
                 safeScore = Math.floor(safeScore);
 
                 const isCurrent = safeScore === currentScore;
-                const rowColor = isCurrent ? 'rgba(255, 215, 0, 0.2)' : 'transparent';
+                const bg = isCurrent ? 'linear-gradient(90deg, rgba(255, 215, 0, 0.2), transparent)' : 'rgba(255, 255, 255, 0.02)';
                 const textColor = isCurrent ? '#FFF' : '#AAA';
-                const weight = isCurrent ? 'bold' : 'normal';
+                const weight = isCurrent ? '800' : 'normal';
+                const rankColor = index === 0 ? '#FFD700' : (index === 1 ? '#C0C0C0' : (index === 2 ? '#CD7F32' : textColor));
+
                 return `
-                <tr style="background: ${rowColor}; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                    <td style="padding: 4px; text-align: left; color: ${index === 0 ? '#FFD700' : textColor}; font-weight: ${weight};">#${index + 1}</td>
-                    <td style="padding: 4px; text-align: right; color: ${textColor}; font-weight: ${weight};">${safeScore.toLocaleString()}</td>
-                </tr>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; border-radius: 6px; background: ${bg};">
+                    <span style="color: ${rankColor}; font-weight: bold; font-size: 14px; width: 30px;">#${index + 1}</span>
+                    <span style="color: ${textColor}; font-weight: ${weight}; font-size: 14px; font-family: monospace;">${safeScore.toLocaleString()}</span>
+                </div>
                 `;
             }).join('')}
-        </table>
+        </div>
     </div>
     `;
 }

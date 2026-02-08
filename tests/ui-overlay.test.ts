@@ -284,7 +284,7 @@ describe('UI Overlay', () => {
             // Should contain the safe score (0 for malicious, 12345 for valid)
             expect(html).toContain('12,345');
             // Malicious score becomes NaN -> 0
-            expect(html).toContain('>0</td>');
+            expect(html).toContain('>0</span>');
             // Should NOT contain script tags
             expect(html).not.toContain('<script>');
         });
@@ -295,8 +295,8 @@ describe('UI Overlay', () => {
             // Call with matching score
             const html = _testing.getLeaderboardHTML(1000);
 
-            expect(html).toContain('rgba(255, 215, 0, 0.2)'); // Highlight color
-            expect(html).toContain('font-weight: bold');
+            expect(html).toContain('linear-gradient(90deg, rgba(255, 215, 0, 0.2), transparent)'); // Highlight color
+            expect(html).toContain('font-weight: 800');
         });
 
 
