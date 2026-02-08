@@ -1,9 +1,10 @@
 // spawner.ts - Gerador de obstáculos e inimigos
 import { Entities, GameState } from './types';
-import { createGatePair, createEnemyHorde, createBoss, createMiniBoss, createMysteryBox, createCoin } from './entities';
+import { createGatePair, createEnemyHorde, createBoss, createMiniBoss, createMysteryBox } from './entities';
 import { fastRemove } from './utils';
 
-export function spawnCoins(entities: Entities, canvasWidth: number, gameState: GameState, dtFactor: number): void {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function spawnCoins(entities: Entities, _canvasWidth: number, _gameState: GameState, _dtFactor: number): void {
   // Remover moedas que já passaram
   for (let i = entities.coins.length - 1; i >= 0; i--) {
     const coin = entities.coins[i];
@@ -12,12 +13,15 @@ export function spawnCoins(entities: Entities, canvasWidth: number, gameState: G
     }
   }
 
+  /*
+  // Disable Coin Spawning as per new requirement: only get money from enemies
   // Spawn de moedas no chão (baixa probabilidade ajustada por dt)
   if (Math.random() < 0.005 * dtFactor) { // 0.5% chance por frame (normalizado)
     const margin = 20;
     const x = margin + Math.random() * (canvasWidth - margin * 2);
     entities.coins.push(createCoin(x, -50, 10)); // Moedas valem 10
   }
+  */
 }
 
 export function spawnMysteryBoxes(entities: Entities, canvasWidth: number, _gameState: GameState, dtFactor: number): void {

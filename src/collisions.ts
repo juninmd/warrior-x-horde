@@ -110,10 +110,12 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
       const baseScore = 100 + gameState.currentLevel * 20;
       const scoreGain = baseScore * comboMultiplier;
       gameState.score += scoreGain;
+      gameState.coins += 100;
 
       addExplosion(horde.x, horde.y, COLORS.UI.GOLD);
-      addParticle(horde.x, horde.y, 'star', COLORS.UI.GOLD, 3);
-      triggerHaptic('medium');
+      addParticle(horde.x, horde.y, "star", COLORS.UI.GOLD, 3);
+      addFloatingText("+$100", horde.x, horde.y - 20, COLORS.UI.GOLD, 1.2);
+      triggerHaptic("medium");
 
       // Milestone messages
       if (gameState.combo === 5) addFloatingText("GREAT!", horde.x, horde.y - 60, COLORS.UI.INFO, 1.5, 'critical');
@@ -198,6 +200,8 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
     addExplosion(horde.x, horde.y, COLORS.UI.GOLD);
     addParticle(horde.x, horde.y, 'star', COLORS.UI.GOLD, 8);
     addFloatingText('VICTORY!', horde.x, horde.y, COLORS.UI.GOLD, 1.3);
+    gameState.coins += 100;
+    addFloatingText('+$100', horde.x, horde.y - 20, COLORS.UI.GOLD, 1.2);
     triggerHaptic('success');
   }
 
