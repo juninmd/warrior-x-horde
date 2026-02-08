@@ -75,4 +75,38 @@ describe('Entities Gate Rebalance Coverage', () => {
     // Logic: right.value = max(right.value, left.value + 1)
     expect(right.value).toBeGreaterThanOrEqual(left.value + 1);
   });
+
+  it('should NOT rebalance if types do not match (branch coverage)', () => {
+    const randomSpy = vi.spyOn(Math, 'random');
+    randomSpy.mockReset(); // Ensure clean slate
+
+    // Case 1: !leftIsGood && rightIsGood, but not subtract/add
+    // Left: divide (bad), Right: multiply (good)
+    // 1. Math check (0.5 > 0.4)
+    // 2. Left type (0.98 -> divide)
+    // 3. Right type (0.55 -> multiply)
+    randomSpy
+        .mockReturnValueOnce(0.5)
+        .mockReturnValueOnce(0.98)
+        .mockReturnValueOnce(0.55);
+
+    let gates = createGatePair(800, 100, 1, 10, 10);
+    expect(gates[0].type).toBe('divide');
+    expect(gates[1].type).toBe('multiply');
+
+    // Case 2: leftIsGood && !rightIsGood, but not add/subtract
+    // Left: multiply (good), Right: divide (bad)
+    // 1. Math check (0.5 > 0.4)
+    // 2. Left type (0.55 -> multiply)
+    // 3. Right type (0.98 -> divide)
+    randomSpy.mockReset(); // Clear previous mocks
+    randomSpy
+        .mockReturnValueOnce(0.5)
+        .mockReturnValueOnce(0.55)
+        .mockReturnValueOnce(0.98);
+
+    gates = createGatePair(800, 100, 1, 10, 10);
+    expect(gates[0].type).toBe('multiply');
+    expect(gates[1].type).toBe('divide');
+  });
 });
