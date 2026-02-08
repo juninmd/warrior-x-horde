@@ -8,7 +8,7 @@ let settingsModal: HTMLElement | null = null;
 let onLevelChangeCallback: ((level: number) => void) | null = null;
 
 export const _testing = {
-  reset: () => { settingsModal = null; }
+  reset: () => { settingsModal = null; onLevelChangeCallback = null; }
 };
 
 function createSettingsModal(): void {

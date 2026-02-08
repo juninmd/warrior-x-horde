@@ -1,9 +1,10 @@
 // spawner.ts - Gerador de obstáculos e inimigos
 import { Entities, GameState } from './types';
-import { createGatePair, createEnemyHorde, createBoss, createMiniBoss, createMysteryBox, createCoin } from './entities';
+import { createGatePair, createEnemyHorde, createBoss, createMiniBoss, createMysteryBox } from './entities';
 import { fastRemove } from './utils';
 
-export function spawnCoins(entities: Entities, canvasWidth: number, gameState: GameState, dtFactor: number): void {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function spawnCoins(entities: Entities, _canvasWidth: number, _gameState: GameState, _dtFactor: number): void {
   // Remover moedas que já passaram
   for (let i = entities.coins.length - 1; i >= 0; i--) {
     const coin = entities.coins[i];
