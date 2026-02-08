@@ -505,7 +505,6 @@ export function createGatePair(canvasWidth: number, y: number, level: number = 1
   }
 
   // Garantir que o gate bom tenha valor ligeiramente vantajoso
-  /* v8 ignore start */
   if (!leftIsGood && rightIsGood) {
     if (leftGate.type === 'subtract' && rightGate.type === 'add') {
       rightGate.value = Math.max(rightGate.value, leftGate.value + 1);
@@ -515,7 +514,6 @@ export function createGatePair(canvasWidth: number, y: number, level: number = 1
       leftGate.value = Math.max(leftGate.value, rightGate.value + 1);
     }
   }
-  /* v8 ignore stop */
 
   updateGateColorCache(leftGate);
   updateGateColorCache(rightGate);
