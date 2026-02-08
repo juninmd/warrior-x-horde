@@ -632,7 +632,7 @@ setupInput(canvas, (screenX, screenY) => {
 });
 initializeMousePosition(BASE_WIDTH);
 initAudio(); // Inicializar sistema de áudio
-setupSettingsUI(); // Inicializar Settings UI
+setupSettingsUI(debugSetLevel); // Inicializar Settings UI
 updateStartScreenLeaderboard(); // Show leaderboard on start
 
 // Auto-pause quando a aba for trocada ou minimizada (Mobile friendly)

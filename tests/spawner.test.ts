@@ -48,11 +48,11 @@ describe('Spawner', () => {
     });
 
     describe('Coins', () => {
-        it('should spawn coins', () => {
+        it('should NOT spawn coins', () => {
             const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0.001); // < 0.005
             spawnCoins(entities, 480, gameState, 1);
-            expect(createCoin).toHaveBeenCalled();
-            expect(entities.coins.length).toBe(1);
+            expect(createCoin).not.toHaveBeenCalled();
+            expect(entities.coins.length).toBe(0);
         });
 
         it('should remove passed coins', () => {

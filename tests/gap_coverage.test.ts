@@ -340,11 +340,11 @@ describe('Gap Coverage Tests', () => {
           expect(entities.miniBosses.length).toBeGreaterThanOrEqual(1);
       });
 
-      it('should spawn coins and mystery boxes', () => {
+      it('should spawn mystery boxes but NOT coins', () => {
          const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0.0001); // Always < 0.005
 
          spawnCoins(entities, 800, gameState, 1.0);
-         expect(entities.coins.length).toBeGreaterThan(0);
+         expect(entities.coins.length).toBe(0);
 
          spawnMysteryBoxes(entities, 800, gameState, 1.0);
          expect(entities.mysteryBoxes.length).toBeGreaterThan(0);

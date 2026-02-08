@@ -12,12 +12,15 @@ export function spawnCoins(entities: Entities, canvasWidth: number, gameState: G
     }
   }
 
+  /*
+  // Disable Coin Spawning as per new requirement: only get money from enemies
   // Spawn de moedas no chão (baixa probabilidade ajustada por dt)
   if (Math.random() < 0.005 * dtFactor) { // 0.5% chance por frame (normalizado)
     const margin = 20;
     const x = margin + Math.random() * (canvasWidth - margin * 2);
     entities.coins.push(createCoin(x, -50, 10)); // Moedas valem 10
   }
+  */
 }
 
 export function spawnMysteryBoxes(entities: Entities, canvasWidth: number, _gameState: GameState, dtFactor: number): void {
