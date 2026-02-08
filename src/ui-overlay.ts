@@ -16,6 +16,16 @@ function getLeaderboardHTML(currentScore: number = -1): string {
     try {
         leaderboard = JSON.parse(localStorage.getItem('crowdLeaderboard') || '[]');
         if (!Array.isArray(leaderboard)) leaderboard = [];
+        
+        // Security: Normalize leaderboard to prevent DoS from huge arrays or invalid entries
+        // 1. Filter out non-object entries
+        leaderboard = leaderboard.filter((entry: unknown) => 
+            entry && typeof entry === 'object' && 'score' in entry
+        );
+        // 2. Sort by score descending to get top scores
+        leaderboard.sort((a: { score: number }, b: { score: number }) => b.score - a.score);
+        // 3. Cap to top 5 to prevent UI freeze from massive arrays
+        leaderboard = leaderboard.slice(0, 5);
     } catch (e) {
         console.error('Failed to load leaderboard', e);
         leaderboard = [];
@@ -29,9 +39,14 @@ function getLeaderboardHTML(currentScore: number = -1): string {
         <table style="width: 100%; border-collapse: collapse; font-size: 13px; color: #DDD;">
             ${leaderboard.map((entry: { score: number }, index: number) => {
                 // Security: Sanitize score to prevent XSS from manipulated localStorage
-                let safeScore = Number(entry.score);
-                if (isNaN(safeScore) || !isFinite(safeScore)) safeScore = 0;
-                safeScore = Math.floor(safeScore);
+                // Use explicit type guards instead of try/catch for control flow
+                let safeScore = 0;
+                if (entry && typeof entry === 'object' && !Array.isArray(entry) && 'score' in entry) {
+                    const numScore = Number(entry.score);
+                    if (!isNaN(numScore) && isFinite(numScore)) {
+                        safeScore = Math.floor(numScore);
+                    }
+                }
 
                 const isCurrent = safeScore === currentScore;
                 const rowColor = isCurrent ? 'rgba(255, 215, 0, 0.2)' : 'transparent';
@@ -40,7 +55,7 @@ function getLeaderboardHTML(currentScore: number = -1): string {
                 return `
                 <tr style="background: ${rowColor}; border-bottom: 1px solid rgba(255,255,255,0.05);">
                     <td style="padding: 4px; text-align: left; color: ${index === 0 ? '#FFD700' : textColor}; font-weight: ${weight};">#${index + 1}</td>
-                    <td style="padding: 4px; text-align: right; color: ${textColor}; font-weight: ${weight};">${safeScore}</td>
+                    <td style="padding: 4px; text-align: right; color: ${textColor}; font-weight: ${weight};">${safeScore.toLocaleString()}</td>
                 </tr>
                 `;
             }).join('')}
