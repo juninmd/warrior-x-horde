@@ -1,3 +1,4 @@
+/* v8 ignore start */
 // collisions.ts - Sistema de colisões
 /* v8 ignore start */
 import { Entities, GameState, Army, EnemyHorde, Gate, MiniBoss, MysteryBox, Soldier } from './types';
@@ -26,6 +27,7 @@ function cleanupDeadSoldiers(soldiers: Soldier[]): void {
   }
   soldiers.length = activeCount;
 }
+/* v8 ignore stop */
 
 function applyGateEffect(army: Army, gate: Gate, gameState: GameState): void {
   const beforeCount = army.soldiers.length;
@@ -95,7 +97,6 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
   const playerCount = army.aliveCount;
   const enemyCount = horde.soldiers.filter(s => s.isAlive).length;
 
-  /* v8 ignore start */
   if (playerCount <= 0 || enemyCount <= 0) {
     if (enemyCount <= 0) {
       horde.isActive = false;
@@ -129,7 +130,6 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
     }
     return;
   }
-  /* v8 ignore stop */
 
   const casualties = Math.min(1, playerCount, enemyCount);
 
@@ -207,7 +207,6 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
 function processMiniBossBattle(army: Army, miniBoss: MiniBoss, gameState: GameState): void {
   const playerCount = army.aliveCount;
 
-  /* v8 ignore start */
   if (playerCount <= 0 || miniBoss.hp <= 0) {
     if (miniBoss.hp <= 0) {
       miniBoss.isActive = false;
@@ -218,7 +217,6 @@ function processMiniBossBattle(army: Army, miniBoss: MiniBoss, gameState: GameSt
     }
     return;
   }
-  /* v8 ignore stop */
 
   // Optimize: Remove soldiers in a single pass
   const casualties = 1;
