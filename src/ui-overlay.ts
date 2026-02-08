@@ -29,9 +29,14 @@ function getLeaderboardHTML(currentScore: number = -1): string {
         <table style="width: 100%; border-collapse: collapse; font-size: 13px; color: #DDD;">
             ${leaderboard.map((entry: { score: number }, index: number) => {
                 // Security: Sanitize score to prevent XSS from manipulated localStorage
-                let safeScore = Number(entry.score);
-                if (isNaN(safeScore) || !isFinite(safeScore)) safeScore = 0;
-                safeScore = Math.floor(safeScore);
+                // Use explicit type guards instead of try/catch for control flow
+                let safeScore = 0;
+                if (entry && typeof entry === 'object' && !Array.isArray(entry) && 'score' in entry) {
+                    const numScore = Number(entry.score);
+                    if (!isNaN(numScore) && isFinite(numScore)) {
+                        safeScore = Math.floor(numScore);
+                    }
+                }
 
                 const isCurrent = safeScore === currentScore;
                 const rowColor = isCurrent ? 'rgba(255, 215, 0, 0.2)' : 'transparent';
