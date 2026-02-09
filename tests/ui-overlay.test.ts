@@ -288,6 +288,58 @@ describe('UI Overlay', () => {
             // Should NOT contain script tags
             expect(html).not.toContain('<script>');
         });
+
+        it('should sanitize XSS img tag in leaderboard score', () => {
+            const data = [
+                { score: '<img src=x onerror=alert(1)>' as any },
+                { score: 100 }
+            ];
+            vi.spyOn(window.localStorage, 'getItem').mockReturnValue(JSON.stringify(data));
+
+            const html = _testing.getLeaderboardHTML();
+
+            // XSS string becomes NaN -> 0
+            expect(html).toContain('>0</td>');
+            expect(html).toContain('>100</td>');
+            // Should NOT contain the raw malicious string
+            expect(html).not.toContain('<img');
+            expect(html).not.toContain('onerror');
+            expect(html).not.toContain('alert');
+        });
+
+        it('should handle Infinity score value', () => {
+            const data = [
+                { score: Infinity as any },
+                { score: -Infinity as any },
+                { score: 500 }
+            ];
+            vi.spyOn(window.localStorage, 'getItem').mockReturnValue(JSON.stringify(data));
+
+            const html = _testing.getLeaderboardHTML();
+
+            // Infinity values should become 0
+            expect(html).toContain('>0</td>');
+            expect(html).toContain('>500</td>');
+            // Should NOT contain the word "Infinity"
+            expect(html).not.toContain('Infinity');
+        });
+
+        it('should handle null score value', () => {
+            const data = [
+                { score: null as any },
+                { score: 250 }
+            ];
+            vi.spyOn(window.localStorage, 'getItem').mockReturnValue(JSON.stringify(data));
+
+            const html = _testing.getLeaderboardHTML();
+
+            // null becomes 0
+            expect(html).toContain('>0</td>');
+            expect(html).toContain('>250</td>');
+            // Should NOT contain the word "null"
+            expect(html).not.toContain('null');
+        });
+
         it('should handle invalid entry types with type guards', () => {
             const data = [
                 null,                          // null entry
@@ -303,9 +355,9 @@ describe('UI Overlay', () => {
 
             // Should contain the valid score
             expect(html).toContain('500');
-            // Invalid entries should become 0 (5 times)
-            const zeros = (html.match(/>0<\/td>/g) || []).length;
-            expect(zeros).toBe(5);
+            // Invalid entries should be filtered out, not rendered as 0
+            const rowCount = (html.match(/<tr/g) || []).length;
+            expect(rowCount).toBe(1); // Only 1 valid entry
         });
         it('should highlight current player score', () => {
             const data = [{ score: 1000 }];
@@ -342,11 +394,11 @@ describe('UI Overlay', () => {
 
             const html = _testing.getLeaderboardHTML();
 
-            // Should only render top 5 entries
+            // Should only render top 5 entries (formatted with commas)
             expect(html).toContain('#1');
             expect(html).toContain('#5');
             expect(html).not.toContain('#6'); // Should not render 6th entry
-            expect(html).toContain('1000'); // Top score
+            expect(html).toContain('1,000'); // Top score
             expect(html).toContain('996'); // 5th score
             
             // Verify 5th position has score 996
@@ -370,8 +422,8 @@ describe('UI Overlay', () => {
 
             const html = _testing.getLeaderboardHTML();
 
-            // Should only render valid entries with score field
-            expect(html).toContain('1000');
+            // Should only render valid entries with score field (formatted with commas)
+            expect(html).toContain('1,000');
             expect(html).toContain('500');
             // Should only show 2 rows (valid entries)
             const rowCount = (html.match(/<tr/g) || []).length;
@@ -388,9 +440,9 @@ describe('UI Overlay', () => {
 
             const html = _testing.getLeaderboardHTML();
 
-            // Should cap to top 5 valid entries only
-            expect(html).toContain('2000'); // Top score
-            expect(html).toContain('1996'); // 5th score
+            // Should cap to top 5 valid entries only (formatted with commas)
+            expect(html).toContain('2,000'); // Top score
+            expect(html).toContain('1,996'); // 5th score
             const rowCount = (html.match(/<tr/g) || []).length;
             expect(rowCount).toBe(5);
         });
@@ -414,9 +466,9 @@ describe('UI Overlay', () => {
             const rows = html.match(/<tr[^>]*>.*?<\/tr>/gs) || [];
             expect(rows).toHaveLength(5);
             
-            // Verify descending order
+            // Verify descending order (formatted with commas)
             expect(rows[0]).toContain('#1');
-            expect(rows[0]).toContain('1000');
+            expect(rows[0]).toContain('1,000');
             expect(rows[1]).toContain('#2');
             expect(rows[1]).toContain('800');
             expect(rows[2]).toContain('#3');
