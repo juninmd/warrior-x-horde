@@ -61,6 +61,7 @@ vi.mock('../src/ui-overlay', () => ({
     showGameOverScreen: vi.fn(),
     startCountdown: vi.fn((cb) => cb()),
   updateStartScreenLeaderboard: vi.fn(),
+  setupStartScreenInstallBtn: vi.fn(),
 }));
 
 describe('Game Gap Coverage 2', () => {
@@ -68,6 +69,9 @@ describe('Game Gap Coverage 2', () => {
 
     beforeEach(async () => {
         vi.resetModules();
+        // Polyfill requestAnimationFrame for tests
+        vi.stubGlobal('requestAnimationFrame', vi.fn());
+
         document.body.innerHTML = '<canvas id="gameCanvas"></canvas><div id="startScreen"></div>';
 
         // Load game
