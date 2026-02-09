@@ -252,7 +252,6 @@ setupSuperCannonUI(handleSuperCannon);
 // Game loop
 let wasInBossFight = false;
 let lastTime = 0;
-let timeAccumulator = 0;
 
 function gameLoop(currentTime: number = 0): void {
   /* v8 ignore start */
