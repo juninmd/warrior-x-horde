@@ -48,7 +48,7 @@ function createSettingsModal(): void {
   const sm = SettingsManager.getInstance();
 
   // Helper for toggle buttons
-  const createToggle = (label: string, id: string, initialValue: boolean | string, onClick: (btn: HTMLButtonElement) => void) => {
+  const createToggle = (label: string, id: string, initialValue: string, onClick: (btn: HTMLButtonElement) => void) => {
     const container = document.createElement('div');
     container.style.cssText = 'margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;';
 
@@ -70,11 +70,11 @@ function createSettingsModal(): void {
         font-weight: bold;
     `;
 
-    const updateStyle = (val: boolean | string) => {
-        if (val === true || val === 'ON') {
+    const updateStyle = (val: string) => {
+        if (val === 'ON') {
              btn.style.background = '#2ECC71';
              btn.style.borderColor = '#27AE60';
-        } else if (val === false || val === 'OFF') {
+        } else if (val === 'OFF') {
              btn.style.background = '#E74C3C';
              btn.style.borderColor = '#C0392B';
         } else {

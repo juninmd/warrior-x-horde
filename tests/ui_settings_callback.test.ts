@@ -84,4 +84,39 @@ describe('UI Settings Callback Coverage', () => {
 
       expect(onLevelChangeSpy).not.toHaveBeenCalled();
   });
+
+  it('should not call callback if callback is removed after setup', () => {
+      const onLevelChangeSpy = vi.fn();
+      setupSettingsUI(onLevelChangeSpy);
+      toggleSettingsMenu();
+
+      const input = document.querySelector('input[type="number"]') as HTMLInputElement;
+      const goBtn = Array.from(document.querySelectorAll('button')).find(b => b.innerText === 'GO') as HTMLButtonElement;
+
+      expect(input).toBeTruthy();
+      expect(goBtn).toBeTruthy();
+
+      // Reset the module state (nulls out onLevelChangeCallback) but keeps DOM elements
+      _testing.reset();
+
+      input.value = '5';
+      goBtn.click();
+
+      expect(onLevelChangeSpy).not.toHaveBeenCalled();
+  });
+
+  it('should use default level 1 if currentLevel is invalid', () => {
+    const originalLevel = gameState.currentLevel;
+    // @ts-ignore
+    gameState.currentLevel = 0;
+
+    setupSettingsUI(() => {});
+    toggleSettingsMenu();
+
+    const input = document.querySelector('input[type="number"]') as HTMLInputElement;
+    expect(input.value).toBe('1');
+
+    // Restore
+    gameState.currentLevel = originalLevel;
+  });
 });
