@@ -1,7 +1,7 @@
 {
   "name": "warrior-x-horder",
   "version": "1.0.0",
-  "description": "",
+  "description": "Endless horde survival game where you multiply your army and defeat bosses.",
   "main": "index.js",
   "type": "module",
   "scripts": {
@@ -14,8 +14,18 @@
     "test": "vitest",
     "coverage": "vitest run --coverage"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "game",
+    "survival",
+    "horde",
+    "army",
+    "multiplier",
+    "boss",
+    "web",
+    "typescript",
+    "vite"
+  ],
+  "author": "Warrior X Horde Team",
   "license": "ISC",
   "devDependencies": {
     "@types/node": "^22.15.2",

@@ -1,7 +1,7 @@
 {
   "name": "Crowd Runner - Warrior x Horde",
   "short_name": "Crowd Runner",
-  "start_url": "./index.html",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#1a1a2e",
   "theme_color": "#1a1a2e",
