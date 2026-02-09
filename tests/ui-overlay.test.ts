@@ -244,7 +244,7 @@ describe('UI Overlay', () => {
             const lb = document.getElementById('startScreenLeaderboard');
             expect(lb).not.toBeNull();
             expect(lb?.innerHTML).toContain('Top Commanders');
-            expect(lb?.innerHTML).toContain('1000');
+            expect(lb?.innerHTML).toContain('1,000');
         });
 
         it('should handle corrupt localStorage data', () => {
@@ -282,7 +282,7 @@ describe('UI Overlay', () => {
             const html = _testing.getLeaderboardHTML();
 
             // Should contain the safe score (0 for malicious, 12345 for valid)
-            expect(html).toContain('12345');
+            expect(html).toContain('12,345');
             // Malicious score becomes NaN -> 0
             expect(html).toContain('>0</td>');
             // Should NOT contain script tags
@@ -324,6 +324,102 @@ describe('UI Overlay', () => {
             const lb2 = document.getElementById('startScreenLeaderboard');
             expect(lb2).not.toBeNull();
             expect(lb2).not.toBe(lb1); // Should be a new element
+        });
+
+        it('should cap leaderboard to top 5 to prevent DoS from huge arrays', () => {
+            // Create a huge array (100 entries) to simulate DoS attack
+            const hugeArray = Array.from({ length: 100 }, (_, i) => ({ score: 1000 - i }));
+            vi.spyOn(window.localStorage, 'getItem').mockReturnValue(JSON.stringify(hugeArray));
+
+            const html = _testing.getLeaderboardHTML();
+
+            // Should only render top 5 entries (formatted with commas)
+            expect(html).toContain('#1');
+            expect(html).toContain('#5');
+            expect(html).not.toContain('#6'); // Should not render 6th entry
+            expect(html).toContain('1,000'); // Top score
+            expect(html).toContain('996'); // 5th score
+            
+            // Verify 5th position has score 996
+            const rows = html.match(/<tr[^>]*>.*?<\/tr>/gs) || [];
+            expect(rows).toHaveLength(5);
+            expect(rows[4]).toContain('#5');
+            expect(rows[4]).toContain('996');
+        });
+
+        it('should filter out non-object entries to prevent DoS', () => {
+            const maliciousData = [
+                { score: 1000 }, // Valid
+                'string entry', // Invalid - should be filtered
+                123, // Invalid - should be filtered
+                null, // Invalid - should be filtered
+                { score: 500 }, // Valid
+                undefined, // Invalid - should be filtered
+                { noScore: 'missing' } // Invalid - missing score field
+            ];
+            vi.spyOn(window.localStorage, 'getItem').mockReturnValue(JSON.stringify(maliciousData));
+
+            const html = _testing.getLeaderboardHTML();
+
+            // Should only render valid entries with score field (formatted with commas)
+            expect(html).toContain('1,000');
+            expect(html).toContain('500');
+            // Should only show 2 rows (valid entries)
+            const rowCount = (html.match(/<tr/g) || []).length;
+            expect(rowCount).toBe(2);
+        });
+
+        it('should handle combined DoS attack (huge array + invalid entries)', () => {
+            // Mix of huge array with invalid entries
+            const attackData = [
+                ...Array.from({ length: 50 }, (_, i) => ({ score: 2000 - i })), // 50 valid
+                ...Array.from({ length: 50 }, (_, i) => 'invalid' + i) // 50 invalid strings
+            ];
+            vi.spyOn(window.localStorage, 'getItem').mockReturnValue(JSON.stringify(attackData));
+
+            const html = _testing.getLeaderboardHTML();
+
+            // Should cap to top 5 valid entries only (formatted with commas)
+            expect(html).toContain('2,000'); // Top score
+            expect(html).toContain('1,996'); // 5th score
+            const rowCount = (html.match(/<tr/g) || []).length;
+            expect(rowCount).toBe(5);
+        });
+
+        it('should sort leaderboard by score before capping', () => {
+            // Unsorted array to verify sorting happens
+            const unsortedData = [
+                { score: 100 },
+                { score: 500 },
+                { score: 200 },
+                { score: 1000 }, // Highest
+                { score: 50 },
+                { score: 300 },
+                { score: 800 }
+            ];
+            vi.spyOn(window.localStorage, 'getItem').mockReturnValue(JSON.stringify(unsortedData));
+
+            const html = _testing.getLeaderboardHTML();
+
+            // Extract rows to verify order
+            const rows = html.match(/<tr[^>]*>.*?<\/tr>/gs) || [];
+            expect(rows).toHaveLength(5);
+            
+            // Verify descending order (formatted with commas)
+            expect(rows[0]).toContain('#1');
+            expect(rows[0]).toContain('1,000');
+            expect(rows[1]).toContain('#2');
+            expect(rows[1]).toContain('800');
+            expect(rows[2]).toContain('#3');
+            expect(rows[2]).toContain('500');
+            expect(rows[3]).toContain('#4');
+            expect(rows[3]).toContain('300');
+            expect(rows[4]).toContain('#5');
+            expect(rows[4]).toContain('200');
+            
+            // 100 and 50 should not appear (outside top 5)
+            expect(html).not.toContain('>100<');
+            expect(html).not.toContain('>50<');
         });
     });
 });
