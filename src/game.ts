@@ -10,7 +10,7 @@ import { setupInput, getMouseX, initializeMousePosition, setGameStateRef, setInp
 import { updateShooting, updateBullets, updateSuperCannon, activateSuperCannon } from './shooting';
 import { initAudio, playMusic, playSound, stopAllMusic, audioManager, isMusicMuted } from './audio';
 import { BASE_WIDTH, BASE_HEIGHT, ASPECT_RATIO, COLORS } from './constants';
-import { setupShopUI, updateShopUI, setupSuperCannonUI, updateSuperCannonUI, BuyAction, setupGameOverUI, showGameOverScreen, startCountdown, updateStartScreenLeaderboard } from './ui-overlay';
+import { setupShopUI, updateShopUI, setupSuperCannonUI, updateSuperCannonUI, BuyAction, setupGameOverUI, showGameOverScreen, startCountdown, updateStartScreenLeaderboard, setupStartScreenInstallBtn } from './ui-overlay';
 import { QualityManager } from './quality';
 import { setupSettingsUI, toggleSettingsMenu } from './ui-settings';
 
@@ -252,11 +252,22 @@ setupSuperCannonUI(handleSuperCannon);
 // Game loop
 let wasInBossFight = false;
 let lastTime = 0;
+let timeAccumulator = 0;
 
 function gameLoop(currentTime: number = 0): void {
   /* v8 ignore start */
   if (!gameState.isStarted) return;
   /* v8 ignore stop */
+
+  // Power Saving Mode: Cap FPS to 30
+  const quality = QualityManager.getInstance().settings;
+  if (quality.powerSavingMode) {
+      // If time since last frame is less than 33ms (approx 30fps), skip
+      if (currentTime - lastTime < 32) {
+          requestAnimationFrame(gameLoop);
+          return;
+      }
+  }
 
   // Se pausado, apenas renderizar e esperar
   if (gameState.isPaused) {
@@ -355,6 +366,12 @@ function gameLoop(currentTime: number = 0): void {
     gameState.nukeTimer -= dtFactor;
   }
 
+  // Update Warp Effect Timer
+  /* v8 ignore next 3 */
+  if (gameState.warpEffectTimer > 0) {
+      gameState.warpEffectTimer -= dtFactor;
+  }
+
   // Atualizar movimento
   const inputX = gameState.isDying ? entities.playerArmy.centerX : getMouseX();
   updateMovement(entities, gameState, BASE_WIDTH, inputX, dtFactor);
@@ -411,7 +428,26 @@ function gameLoop(currentTime: number = 0): void {
     if (gameState.comboTimer <= 0) {
       gameState.combo = 0;
       gameState.comboTimer = 0;
+      gameState.comboTier = 0; // Reset tier
     }
+  }
+
+  // Update Combo Tier
+  let newTier = 0;
+  if (gameState.combo >= 50) newTier = 5;
+  else if (gameState.combo >= 20) newTier = 4;
+  else if (gameState.combo >= 10) newTier = 3;
+  else if (gameState.combo >= 5) newTier = 2;
+  else if (gameState.combo >= 2) newTier = 1;
+
+  if (newTier > gameState.comboTier) {
+      // Tier Up!
+      gameState.comboTier = newTier;
+      triggerHaptic('medium');
+      // Visual flair handled in renderer
+  } else if (newTier < gameState.comboTier && gameState.combo > 0) {
+      // Degrade tier gracefully only if combo drops significantly (unlikely with timer logic, but safe)
+      gameState.comboTier = newTier;
   }
 
   // Música do boss
@@ -508,6 +544,9 @@ function advanceToNextLevel(): void {
   gameState.levelDistance += 900; // Incremento 3x maior por level (era 300)
   gameState.isVictory = false;
   gameState.gameSpeed = Math.min(1.5, gameState.baseGameSpeed + gameState.currentLevel * 0.08); // Máximo 1.5x, incremento menor
+
+  // Trigger Warp Effect
+  gameState.warpEffectTimer = 60; // 1 second roughly at 60fps
 
   // Limpar entidades antigas, manter o exército
   entities.gates = [];
@@ -877,6 +916,11 @@ window.addEventListener('beforeinstallprompt', (e) => {
   // Stash the event so it can be triggered later.
   gameState.deferredInstallPrompt = e;
   console.log('📱 PWA Install Prompt captured');
+
+  // If on Start Screen, show button immediately
+  if (!gameState.isStarted) {
+      setupStartScreenInstallBtn(e);
+  }
   /* v8 ignore stop */
 });
 

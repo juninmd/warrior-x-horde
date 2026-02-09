@@ -4,6 +4,7 @@ export interface QualitySettings {
   simplifiedRendering: boolean; // Use simple shapes/colors if true
   maxRenderedSoldiers: number;
   resolutionScale: number; // Dynamic resolution scaling (0.5 to 1.0)
+  powerSavingMode: boolean; // Cap FPS to 30 and reduce effects
 }
 
 export class QualityManager {
@@ -14,7 +15,8 @@ export class QualityManager {
     particleMultiplier: 1.0,
     simplifiedRendering: false,
     maxRenderedSoldiers: 150,
-    resolutionScale: 1.0
+    resolutionScale: 1.0,
+    powerSavingMode: false
   };
 
   private frameTimes: number[] = [];

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { setupSettingsUI, toggleSettingsMenu, _testing } from '../src/ui-settings';
 import { SettingsManager } from '../src/settings';
+import { QualityManager } from '../src/quality';
 import * as audio from '../src/audio';
 import * as input from '../src/input';
 import * as game from '../src/game';
@@ -8,6 +9,12 @@ import { gameState } from '../src/gameState';
 
 vi.mock('../src/settings', () => ({
   SettingsManager: {
+    getInstance: vi.fn(),
+  }
+}));
+
+vi.mock('../src/quality', () => ({
+  QualityManager: {
     getInstance: vi.fn(),
   }
 }));
@@ -28,6 +35,7 @@ vi.mock('../src/game', () => ({
 
 describe('UI Settings', () => {
   let mockSettings: any;
+  let mockQualitySettings: any;
 
   beforeEach(() => {
     vi.restoreAllMocks();
@@ -40,8 +48,16 @@ describe('UI Settings', () => {
       quality: 'auto',
     };
 
+    mockQualitySettings = {
+        settings: {
+            powerSavingMode: false,
+        }
+    };
+
     // @ts-ignore
     SettingsManager.getInstance.mockReturnValue(mockSettings);
+    // @ts-ignore
+    QualityManager.getInstance.mockReturnValue(mockQualitySettings);
     // @ts-ignore
     audio.isMusicMuted.mockReturnValue(false);
   });

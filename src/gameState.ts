@@ -46,6 +46,8 @@ export const gameState: GameState = {
   killStreak: 0,
   killStreakTimer: 0,
   whiteFlash: 0,
+    warpEffectTimer: 0,
+    comboTier: 0,
   deferredInstallPrompt: null,
 };
 

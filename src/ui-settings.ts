@@ -1,4 +1,5 @@
 import { SettingsManager } from './settings';
+import { QualityManager } from './quality';
 import { toggleMute, isMusicMuted, playMusic } from './audio';
 import { vibrate } from './input';
 import { gameState } from './gameState';
@@ -127,6 +128,15 @@ function createSettingsModal(): void {
      sm.quality = newQ;
      btn.innerText = newQ.toUpperCase();
      qualityToggle.updateStyle(newQ.toUpperCase());
+  });
+
+  // Power Saver
+  const qm = QualityManager.getInstance();
+  const powerToggle = createToggle('⚡ SAVER', 'powerBtn', qm.settings.powerSavingMode ? 'ON' : 'OFF', (btn) => {
+     qm.settings.powerSavingMode = !qm.settings.powerSavingMode;
+     const newState = qm.settings.powerSavingMode ? 'ON' : 'OFF';
+     btn.innerText = newState;
+     powerToggle.updateStyle(newState);
   });
 
   // Fullscreen
