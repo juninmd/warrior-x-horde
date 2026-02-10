@@ -1619,17 +1619,32 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
 
   // High Score (Topo Esquerda, pequeno)
   if (gameState.highScore > 0) {
-    // Pulse if beaten
     const isBeaten = gameState.score > gameState.highScore;
-    const color = isBeaten ? '#FFD700' : '#CCCCCC';
-    const scale = isBeaten ? 1 + Math.sin(Date.now() * 0.01) * 0.1 : 1;
+    const isClose = !isBeaten && gameState.score > gameState.highScore * 0.9;
+
+    let color = '#CCCCCC';
+    let scale = 1;
+    let shakeX = 0;
+    let shakeY = 0;
+
+    if (isBeaten) {
+        color = '#FFD700'; // Gold
+        scale = 1 + Math.sin(Date.now() * 0.01) * 0.1; // Gentle pulse
+    } else if (isClose) {
+        // Urgent Pulse
+        const pulse = Math.sin(Date.now() * 0.015);
+        color = pulse > 0 ? '#FF4500' : '#CCCCCC'; // Flash Red/Gray
+        scale = 1 + Math.abs(pulse) * 0.15; // Aggressive pulse
+        shakeX = (Math.random() - 0.5) * 2;
+        shakeY = (Math.random() - 0.5) * 2;
+    }
 
     ctx.save();
-    if (isBeaten) {
-        ctx.translate(60, 42); // Center of badge roughly
-        ctx.scale(scale, scale);
-        ctx.translate(-60, -42);
-    }
+    // Center of badge roughly (10 + 100/2, 30 + 24/2) = (60, 42)
+    ctx.translate(60 + shakeX, 42 + shakeY);
+    ctx.scale(scale, scale);
+    ctx.translate(-60, -42);
+
     drawGlassBadge(ctx, 10, 30, 100, 24, `👑 HI: ${Math.max(gameState.score, gameState.highScore)}`, color, 12);
     ctx.restore();
   }

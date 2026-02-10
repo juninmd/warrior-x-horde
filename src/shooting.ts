@@ -14,6 +14,14 @@ const enemyGrid = new SpatialHashGrid(120);
 const tempPlayerBullets: Bullet[] = [];
 const tempQueryResults: SpatialItem[] = [];
 
+// Reusable arrays for updateShooting to avoid per-frame allocation
+const tempLasers: Soldier[] = [];
+const tempBazookas: Soldier[] = [];
+const tempRambos: Soldier[] = [];
+const tempSupers: Soldier[] = [];
+const tempNormals: Soldier[] = [];
+const tempShooters: Soldier[] = [];
+
 const bulletPool = new ObjectPool<Bullet>(
   () => ({ x: 0, y: 0, targetX: 0, targetY: 0, speed: 0, damage: 0, isEnemy: false }),
   (b) => {
@@ -119,11 +127,12 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
   // PERFORMANCE OPTIMIZATION: Use bucket sort instead of full sort
   /* v8 ignore start */
   // Avoids allocating filtered array and expensive sort with function calls
-  const lasers: Soldier[] = [];
-  const bazookas: Soldier[] = [];
-  const rambos: Soldier[] = [];
-  const supers: Soldier[] = [];
-  const normals: Soldier[] = [];
+  tempLasers.length = 0;
+  tempBazookas.length = 0;
+  tempRambos.length = 0;
+  tempSupers.length = 0;
+  tempNormals.length = 0;
+  tempShooters.length = 0;
 
   // Use cached aliveCount for performance
   if (army.aliveCount === 0) return;
@@ -131,23 +140,22 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
   for (const s of army.soldiers) {
     if (!s.isAlive) continue;
 
-    if (s.type === 'laser') { lasers.push(s); continue; }
-    if (s.type === 'bazooka') { bazookas.push(s); continue; }
-    if (s.type === 'rambo') { rambos.push(s); continue; }
-    if (s.isSuper) { supers.push(s); continue; }
-    normals.push(s);
+    if (s.type === 'laser') { tempLasers.push(s); continue; }
+    if (s.type === 'bazooka') { tempBazookas.push(s); continue; }
+    if (s.type === 'rambo') { tempRambos.push(s); continue; }
+    if (s.isSuper) { tempSupers.push(s); continue; }
+    tempNormals.push(s);
   }
 
   // Mais soldados atiram baseado no tamanho do exército
   // Aumentado para 30 para permitir que classes especiais tenham mais chance de atirar
   const shootersCount = Math.min(Math.ceil(army.aliveCount / 5), 30);
 
-  const shooters: Soldier[] = [];
   let needed = shootersCount;
 
   // Coleta ordenada (Special -> Super -> Normal)
   // Prioridade: Laser (5) > Bazooka (4) > Rambo (3) > Super (2) > Normal (1)
-  const buckets = [lasers, bazookas, rambos, supers, normals];
+  const buckets = [tempLasers, tempBazookas, tempRambos, tempSupers, tempNormals];
 
   /* v8 ignore start */
   for (const bucket of buckets) {
@@ -158,14 +166,14 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
       // Se o bucket cabe inteiro, pegamos todos.
       // A ordenação interna por Y não afeta quem é selecionado (pegamos todos),
       // e a ordem de processamento de tiro não é crítica.
-      for (const s of bucket) shooters.push(s);
+      for (const s of bucket) tempShooters.push(s);
       needed -= bucket.length;
     } else {
       // Se o bucket é maior que o necessário, pegamos os 'needed' melhores (menor Y = mais à frente)
       // Ordenamos apenas este bucket específico (muito mais rápido que ordenar tudo)
       bucket.sort((a, b) => a.y - b.y);
       for (let i = 0; i < needed; i++) {
-        shooters.push(bucket[i]);
+        tempShooters.push(bucket[i]);
       }
       needed = 0;
     }
@@ -173,7 +181,7 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
   /* v8 ignore stop */
   /* v8 ignore stop */
 
-  for (const shooter of shooters) {
+  for (const shooter of tempShooters) {
     // Cada atirador procura seu alvo mais próximo
     const target = findNearestTarget(shooter, entities.enemyHordes, entities.boss, entities.miniBosses);
     if (!target) continue;
