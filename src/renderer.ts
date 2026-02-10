@@ -1966,7 +1966,7 @@ function drawComboTier(ctx: CanvasRenderingContext2D, width: number, height: num
 
     let text = '';
     let color = '';
-    let subText = `${combo} HIT COMBO`;
+    const subText = `${combo} HIT COMBO`;
 
     switch(tier) {
         case 1: text = 'DOUBLE KILL'; color = '#3498DB'; break; // Blue

@@ -78,7 +78,12 @@ export function updateStartScreenLeaderboard(): void {
     /* v8 ignore stop */
 }
 
-export function setupStartScreenInstallBtn(deferredPrompt: any): void {
+interface BeforeInstallPromptEvent extends Event {
+    prompt: () => Promise<void>;
+    userChoice: Promise<{ outcome: 'accepted' | 'dismissed', platform: string }>;
+}
+
+export function setupStartScreenInstallBtn(deferredPrompt: BeforeInstallPromptEvent): void {
     const startScreenContent = document.querySelector('.start-screen-content');
     if (!startScreenContent || !deferredPrompt) return;
 
