@@ -78,7 +78,12 @@ export function updateStartScreenLeaderboard(): void {
     /* v8 ignore stop */
 }
 
-export function setupStartScreenInstallBtn(deferredPrompt: any): void {
+interface BeforeInstallPromptEvent extends Event {
+    prompt: () => Promise<void>;
+    userChoice: Promise<{ outcome: 'accepted' | 'dismissed', platform: string }>;
+}
+
+export function setupStartScreenInstallBtn(deferredPrompt: BeforeInstallPromptEvent): void {
     const startScreenContent = document.querySelector('.start-screen-content');
     if (!startScreenContent || !deferredPrompt) return;
 
@@ -450,6 +455,23 @@ export function showGameOverScreen(gameState: GameState): void {
     const leaderboardHTML = getLeaderboardHTML(gameState.score);
 
     content.innerHTML = `
+        <style>
+            @keyframes rank-stamp {
+                0% { transform: scale(3) rotate(-10deg); opacity: 0; }
+                50% { transform: scale(0.8) rotate(5deg); opacity: 1; }
+                70% { transform: scale(1.1) rotate(-3deg); }
+                100% { transform: scale(1) rotate(0deg); opacity: 1; }
+            }
+            @keyframes pulse-btn {
+                0% { transform: scale(1); box-shadow: 0 4px 0 #1A5276; }
+                50% { transform: scale(1.02); box-shadow: 0 6px 10px rgba(74, 144, 217, 0.3); }
+                100% { transform: scale(1); box-shadow: 0 4px 0 #1A5276; }
+            }
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        </style>
         <h1 style="color: ${titleColor}; font-size: 42px; margin: 0 0 10px 0; text-shadow: 0 2px 5px rgba(0,0,0,0.5);">${title}</h1>
         ${isVictory ? '<p style="color: #00FF88; font-weight: bold; font-size: 18px; margin-bottom: 20px;">🛸 MOTHERSHIP DESTROYED!</p>' : ''}
 
@@ -465,10 +487,11 @@ export function showGameOverScreen(gameState: GameState): void {
                 background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
                 border: 2px solid ${rankColor};
                 box-shadow: 0 0 15px ${rankColor};
+                animation: rank-stamp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.3s backwards;
             ">
                 <span style="font-size: 32px; font-weight: 900; color: ${rankColor}; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">${rank}</span>
             </div>
-            <div style="color: ${rankColor}; font-size: 12px; font-weight: bold; margin-top: 5px; letter-spacing: 1px;">RANK</div>
+            <div style="color: ${rankColor}; font-size: 12px; font-weight: bold; margin-top: 5px; letter-spacing: 1px; animation: fadeIn 0.5s 0.8s backwards;">RANK</div>
         </div>
 
         <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 15px; margin-bottom: 20px;">
@@ -517,6 +540,7 @@ export function showGameOverScreen(gameState: GameState): void {
             margin-bottom: 15px;
             box-shadow: 0 4px 0 #1A5276;
             transition: transform 0.1s;
+            animation: pulse-btn 2s infinite ease-in-out;
         ">${isVictory ? 'CONTINUE LEVEL 11 ➡️' : '🔄 TRY AGAIN'}</button>
 
         <div style="display: flex; gap: 10px;">
