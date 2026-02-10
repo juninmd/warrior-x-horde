@@ -1,6 +1,5 @@
 /* v8 ignore start */
 // collisions.ts - Sistema de colisões
-/* v8 ignore start */
 import { Entities, GameState, Army, EnemyHorde, Gate, MiniBoss, MysteryBox, Soldier } from './types';
 import { addSoldiersToArmy, multiplySoldiersInArmy, removeSoldiersFromArmy, addSuperSoldiersToArmy, addSpecialSoldiersToArmy } from './entities';
 import { addFloatingText, addExplosion, addParticle } from './renderer';
@@ -27,7 +26,6 @@ function cleanupDeadSoldiers(soldiers: Soldier[]): void {
   }
   soldiers.length = activeCount;
 }
-/* v8 ignore stop */
 
 function applyGateEffect(army: Army, gate: Gate, gameState: GameState): void {
   const beforeCount = army.soldiers.length;
