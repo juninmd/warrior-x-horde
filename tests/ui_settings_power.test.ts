@@ -15,7 +15,6 @@ vi.mock('../src/input', () => ({
 
 // Mock game.ts to avoid side effects during import if possible,
 // but ui-settings imports toggleFullscreen from it.
-// Ideally we mock game.ts too since we are testing ui-settings in isolation.
 vi.mock('../src/game', () => ({
   toggleFullscreen: vi.fn(),
   // Add other exports if ui-settings uses them
@@ -45,5 +44,15 @@ describe('UI Settings Power Saver Coverage', () => {
     btn.click();
     expect(QualityManager.getInstance().settings.powerSavingMode).toBe(false);
     expect(btn.innerText).toBe('OFF');
+  });
+
+  it('should initialize with Power Saver ON if setting is true', () => {
+    QualityManager.getInstance().settings.powerSavingMode = true;
+    setupSettingsUI();
+    toggleSettingsMenu();
+
+    const btn = document.getElementById('powerBtn') as HTMLButtonElement;
+    expect(btn).not.toBeNull();
+    expect(btn.innerText).toBe('ON');
   });
 });
