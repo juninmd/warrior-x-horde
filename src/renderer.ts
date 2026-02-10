@@ -1902,6 +1902,97 @@ function drawWhiteFlash(ctx: CanvasRenderingContext2D, width: number, height: nu
   ctx.restore();
 }
 
+function drawWarpEffect(ctx: CanvasRenderingContext2D, width: number, height: number, timer: number): void {
+    if (timer <= 0) return;
+
+    // Timer goes from e.g. 60 down to 0
+    // Peak intensity around middle (30)
+    const progress = timer / 60; // normalized 1 to 0
+
+    // Speed lines
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const numLines = 40;
+
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, Math.sin(progress * Math.PI)); // Fade in/out
+    ctx.strokeStyle = '#00FFFF';
+    ctx.lineWidth = 3;
+
+    for (let i = 0; i < numLines; i++) {
+        const angle = (i / numLines) * Math.PI * 2;
+        const radiusStart = 50 + Math.random() * 50;
+        const length = 200 + Math.random() * 400 * (1 - Math.abs(progress - 0.5)*2); // Longer in middle
+
+        const x1 = centerX + Math.cos(angle) * radiusStart;
+        const y1 = centerY + Math.sin(angle) * radiusStart;
+        const x2 = centerX + Math.cos(angle) * (radiusStart + length);
+        const y2 = centerY + Math.sin(angle) * (radiusStart + length);
+
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+    }
+
+    // Central Glow
+    const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, width);
+    gradient.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+    gradient.addColorStop(0.3, 'rgba(0, 255, 255, 0.4)');
+    gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.restore();
+}
+
+function drawComboTier(ctx: CanvasRenderingContext2D, width: number, height: number, tier: number, combo: number): void {
+    if (tier <= 0) return;
+
+    let text = '';
+    let color = '';
+    let subText = `${combo} HIT COMBO`;
+
+    switch(tier) {
+        case 1: text = 'DOUBLE KILL'; color = '#3498DB'; break; // Blue
+        case 2: text = 'MULTI KILL'; color = '#2ECC71'; break; // Green
+        case 3: text = 'ULTRA KILL'; color = '#F39C12'; break; // Orange
+        case 4: text = 'MONSTER KILL'; color = '#E74C3C'; break; // Red
+        case 5: text = 'GODLIKE'; color = '#FFD700'; break; // Gold
+    }
+
+    const centerX = width / 2;
+    const centerY = height * 0.25; // Top quarter
+
+    ctx.save();
+
+    // Pulse effect
+    const pulse = 1 + Math.sin(Date.now() * 0.01) * 0.1;
+    ctx.translate(centerX, centerY);
+    ctx.scale(pulse, pulse);
+
+    // Glow
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 20;
+
+    // Main Text
+    ctx.font = `900 42px ${FONT_FAMILY}`;
+    ctx.textAlign = 'center';
+    ctx.fillStyle = color;
+    ctx.strokeStyle = '#FFF';
+    ctx.lineWidth = 2;
+    ctx.strokeText(text, 0, 0);
+    ctx.fillText(text, 0, 0);
+
+    // Sub Text
+    ctx.shadowBlur = 0;
+    ctx.font = `bold 16px ${FONT_FAMILY}`;
+    ctx.fillStyle = '#FFF';
+    ctx.fillText(subText, 0, 30);
+
+    ctx.restore();
+}
+
 function drawComboBar(ctx: CanvasRenderingContext2D, gameState: GameState): void {
   if (gameState.combo <= 1) return;
 
@@ -2043,7 +2134,16 @@ export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameSt
     drawWhiteFlash(ctx, width, height, gameState.whiteFlash);
   }
 
+  if (gameState.warpEffectTimer > 0) {
+      drawWarpEffect(ctx, width, height, gameState.warpEffectTimer);
+  }
+
   drawUI(ctx, gameState, entities.playerArmy.soldiers.filter(s => s.isAlive).length, entities.playerArmy.fireRate, entities.playerArmy.damage, entities.playerArmy);
+
+  if (gameState.comboTier > 0 && gameState.combo > 0) {
+      drawComboTier(ctx, width, height, gameState.comboTier, gameState.combo);
+  }
+
   drawComboBar(ctx, gameState);
   drawJoystick(ctx);
   // updateFloatingTexts() moved to game loop to respect pause

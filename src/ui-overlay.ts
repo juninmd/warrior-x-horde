@@ -78,6 +78,49 @@ export function updateStartScreenLeaderboard(): void {
     /* v8 ignore stop */
 }
 
+export function setupStartScreenInstallBtn(deferredPrompt: any): void {
+    const startScreenContent = document.querySelector('.start-screen-content');
+    if (!startScreenContent || !deferredPrompt) return;
+
+    // Avoid duplicates
+    if (document.getElementById('startInstallBtn')) return;
+
+    const installBtn = document.createElement('button');
+    installBtn.id = 'startInstallBtn';
+    installBtn.innerText = '📲 INSTALL APP';
+    installBtn.style.cssText = `
+        background: #FFD700;
+        color: #333;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 25px;
+        font-weight: bold;
+        font-size: 16px;
+        cursor: pointer;
+        margin-top: 15px;
+        width: 80%;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        animation: pulse 2s infinite;
+    `;
+
+    installBtn.onclick = async () => {
+        vibrate(20);
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`User response to install prompt: ${outcome}`);
+        // Remove button after interaction
+        installBtn.remove();
+    };
+
+    // Insert after the start button
+    const startBtn = startScreenContent.querySelector('.start-btn');
+    if (startBtn && startBtn.nextSibling) {
+        startScreenContent.insertBefore(installBtn, startBtn.nextSibling);
+    } else {
+        startScreenContent.appendChild(installBtn);
+    }
+}
+
 // --- Helper: Create Shop Button ---
 function createShopButton(type: string, price: number, color: string, label: string): HTMLButtonElement {
   const btn = document.createElement('button');

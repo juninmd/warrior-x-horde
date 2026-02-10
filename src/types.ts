@@ -59,8 +59,11 @@ export interface GameState {
   killStreakTimer: number;
   // Visuals
   whiteFlash: number;
+  warpEffectTimer: number; // For level transitions
   // PWA
   deferredInstallPrompt: BeforeInstallPromptEvent | null;
+  // Combo Tier (visual state)
+  comboTier: number; // 0=None, 1=Double, 2=Multi, 3=Ultra, 4=Monster
 }
 
 export interface BeforeInstallPromptEvent extends Event {
