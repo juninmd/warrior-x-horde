@@ -38,6 +38,7 @@ jobs:
       run: pnpm build
 
     - name: Test with Coverage
+      # Enforce 100% coverage for lines, functions, branches, and statements
       run: pnpm vitest run --coverage --coverage.thresholds.lines=100 --coverage.thresholds.functions=100 --coverage.thresholds.branches=100 --coverage.thresholds.statements=100
 
     - name: Upload Build Artifacts
