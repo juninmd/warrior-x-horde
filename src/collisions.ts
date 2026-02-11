@@ -1,4 +1,3 @@
-/* v8 ignore start */
 // collisions.ts - Sistema de colisões
 import { Entities, GameState, Army, EnemyHorde, Gate, MiniBoss, MysteryBox, Soldier } from './types';
 import { addSoldiersToArmy, multiplySoldiersInArmy, removeSoldiersFromArmy, addSuperSoldiersToArmy, addSpecialSoldiersToArmy } from './entities';
@@ -135,30 +134,31 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
 
   // Optimize: Remove soldiers in a single pass instead of repeated findIndex
   let killed = 0;
-  for (let i = army.soldiers.length - 1; i >= 0 && killed < casualties; i--) {
-    if (army.soldiers[i].isAlive) {
-      const soldier = army.soldiers[i];
-      addExplosion(soldier.x, soldier.y, COLORS.PLAYER.NORMAL);
-      soldier.isAlive = false;
-      army.aliveCount--;
-      killed++;
-    }
+  for (let i = army.soldiers.length - 1; i >= 0; i--) {
+    if (killed >= casualties) break;
+    if (!army.soldiers[i].isAlive) continue;
+
+    const soldier = army.soldiers[i];
+    addExplosion(soldier.x, soldier.y, COLORS.PLAYER.NORMAL);
+    soldier.isAlive = false;
+    army.aliveCount--;
+    killed++;
   }
 
-  if (killed > 0) {
-    gameState.damageFlash = Math.min(0.8, gameState.damageFlash + (killed * 0.05));
-  }
+  gameState.damageFlash = Math.min(0.8, gameState.damageFlash + (killed * 0.05));
 
   killed = 0;
-  for (let i = horde.soldiers.length - 1; i >= 0 && killed < casualties; i--) {
-    if (horde.soldiers[i].isAlive) {
-      const soldier = horde.soldiers[i];
-      addExplosion(soldier.x, soldier.y, COLORS.ENEMY.BASE);
-      soldier.isAlive = false;
-      killed++;
-    }
+  for (let i = horde.soldiers.length - 1; i >= 0; i--) {
+    if (killed >= casualties) break;
+    if (!horde.soldiers[i].isAlive) continue;
+
+    const soldier = horde.soldiers[i];
+    addExplosion(soldier.x, soldier.y, COLORS.ENEMY.BASE);
+    soldier.isAlive = false;
+    killed++;
   }
 
+  /* v8 ignore start */
   if (killed > 0) {
       gameState.killStreak += killed;
       gameState.killStreakTimer = 2500; // 2.5 seconds window
@@ -171,6 +171,7 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
       else if (k === 50) addFloatingText("UNSTOPPABLE!", horde.x, horde.y - 80, '#E74C3C', 2.2, 'critical');
       else if (k === 100) addFloatingText("GODLIKE!", horde.x, horde.y - 80, '#FFD700', 3.0, 'critical');
   }
+  /* v8 ignore stop */
 
   cleanupDeadSoldiers(army.soldiers);
   cleanupDeadSoldiers(horde.soldiers);
@@ -224,19 +225,18 @@ function processMiniBossBattle(army: Army, miniBoss: MiniBoss, gameState: GameSt
   const casualties = 1;
   let killed = 0;
 
-  for (let i = army.soldiers.length - 1; i >= 0 && killed < casualties; i--) {
-    if (army.soldiers[i].isAlive) {
-      const soldier = army.soldiers[i];
-      addExplosion(soldier.x, soldier.y, COLORS.PLAYER.NORMAL);
-      soldier.isAlive = false;
-      army.aliveCount--;
-      killed++;
-    }
+  for (let i = army.soldiers.length - 1; i >= 0; i--) {
+    if (killed >= casualties) break;
+    if (!army.soldiers[i].isAlive) continue;
+
+    const soldier = army.soldiers[i];
+    addExplosion(soldier.x, soldier.y, COLORS.PLAYER.NORMAL);
+    soldier.isAlive = false;
+    army.aliveCount--;
+    killed++;
   }
 
-  if (killed > 0) {
-    gameState.damageFlash = Math.min(0.8, gameState.damageFlash + (killed * 0.05));
-  }
+  gameState.damageFlash = Math.min(0.8, gameState.damageFlash + (killed * 0.05));
 
   const damageToMiniBoss = Math.min(playerCount * 0.5, 5);
   miniBoss.hp -= damageToMiniBoss;
@@ -449,18 +449,17 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
         if (entities.playerArmy.soldiers.length > 0) {
             const casualties = 2;
             let killed = 0;
-            for (let i = army.soldiers.length - 1; i >= 0 && killed < casualties; i--) {
-                if (army.soldiers[i].isAlive) {
-                  const soldier = army.soldiers[i];
-                  addExplosion(soldier.x, soldier.y, COLORS.PLAYER.NORMAL);
-                  army.soldiers[i].isAlive = false;
-                  army.aliveCount--;
-                  killed++;
-                }
+            for (let i = army.soldiers.length - 1; i >= 0; i--) {
+                if (killed >= casualties) break;
+                if (!army.soldiers[i].isAlive) continue;
+
+                const soldier = army.soldiers[i];
+                addExplosion(soldier.x, soldier.y, COLORS.PLAYER.NORMAL);
+                army.soldiers[i].isAlive = false;
+                army.aliveCount--;
+                killed++;
             }
-            if (killed > 0) {
-              gameState.damageFlash = Math.min(0.8, gameState.damageFlash + (killed * 0.1));
-            }
+            gameState.damageFlash = Math.min(0.8, gameState.damageFlash + (killed * 0.1));
             cleanupDeadSoldiers(army.soldiers);
         }
 
@@ -496,4 +495,3 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
   }
 
 }
-/* v8 ignore stop */
