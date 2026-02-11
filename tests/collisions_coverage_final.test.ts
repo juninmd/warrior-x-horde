@@ -304,11 +304,23 @@ describe('Collisions Coverage Final', () => {
       const mb = { isActive: true, x: 100, y: 500, width: 60, height: 60, hp: 100, maxHp: 100 };
       mockEntities.miniBosses.push(mb);
 
-      // Add a dead soldier at the end (iteration starts from end)
-      mockEntities.playerArmy.soldiers.push({ x: 100, y: 500, isAlive: false });
-      // And an alive one
-      mockEntities.playerArmy.soldiers.push({ x: 100, y: 500, isAlive: true });
-      mockEntities.playerArmy.aliveCount++; // +1 for the alive one we just added (dead one doesn't count for aliveCount logic but exists in array)
+      // The loop iterates backwards: i = length - 1 down to 0.
+      // Casualties = 1.
+      // We want to hit the `continue` (skip dead) branch AND the process logic.
+
+      // Index 2 (last): Alive. Will be processed and killed. Loop breaks if we don't add enough casualties?
+      // Actually, casualties is just a limit.
+
+      // Let's set up:
+      // Index 2: Dead (Hit continue)
+      // Index 1: Alive (Processed, killed)
+      // Index 0: Alive (Alive)
+
+      mockEntities.playerArmy.soldiers.push({ x: 100, y: 500, isAlive: true }); // Index 10 (from setup)
+      mockEntities.playerArmy.soldiers.push({ x: 100, y: 500, isAlive: true }); // Index 11
+      mockEntities.playerArmy.soldiers.push({ x: 100, y: 500, isAlive: false }); // Index 12 (Last)
+
+      mockEntities.playerArmy.aliveCount += 2; // +2 alive
 
       vi.spyOn(utils, 'getArmyBounds').mockReturnValue({ left: 80, right: 120, top: 480, bottom: 520 });
       vi.spyOn(utils, 'getEntityBounds').mockReturnValue({ left: 100, right: 160, top: 500, bottom: 560 });
@@ -316,7 +328,10 @@ describe('Collisions Coverage Final', () => {
 
       checkCollisions(mockEntities, mockGameState);
 
-      // Dead soldier skipped, alive one killed
+      // Dead soldier (index 12) skipped -> hits `continue`
+      // Alive soldier (index 11) processed -> killed
+      // Loop condition `killed >= casualties` (1 >= 1) -> break
+
       expect(mockGameState.damageFlash).toBeGreaterThan(0);
   });
 
