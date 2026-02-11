@@ -499,6 +499,10 @@ export function updateParticles(): void {
 
 /* v8 ignore start */
 function drawParticles(ctx: CanvasRenderingContext2D): void {
+  ctx.save();
+  // Performance: Use additive blending for neon glow instead of expensive shadowBlur
+  ctx.globalCompositeOperation = 'lighter';
+
   for (const p of particles) {
     // Viewport Culling
     if (p.y < -50 || p.y > BASE_HEIGHT + 50) continue;
@@ -537,18 +541,15 @@ function drawParticles(ctx: CanvasRenderingContext2D): void {
       // Inverse Transform
       ctx.scale(1/scale, 1/scale);
       ctx.translate(-px, -py);
-      ctx.globalAlpha = 1.0;
 
     } else {
       // Fallback if not cached
       ctx.save();
       ctx.globalAlpha = p.life;
 
-      if (p.type === 'spark' || p.type === 'star') {
-        // Brilho
-        ctx.shadowColor = p.color;
-        ctx.shadowBlur = 10;
-      }
+      // Use lighter composition instead of shadowBlur for fallback too
+      // ctx.shadowColor = p.color;
+      // ctx.shadowBlur = 10;
 
       ctx.fillStyle = p.color;
       ctx.beginPath();
@@ -563,6 +564,7 @@ function drawParticles(ctx: CanvasRenderingContext2D): void {
       ctx.restore();
     }
   }
+  ctx.restore();
 }
 /* v8 ignore stop */
 
@@ -1527,6 +1529,9 @@ export function drawBullets(ctx: CanvasRenderingContext2D, bullets: Bullet[]): v
   // Ensure initialization if not done (though usually done by army/horde draw)
   if (!spriteCache.initialized) preRenderSprites();
 
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter'; // Neon glow effect
+
   for (const bullet of bullets) {
     // Viewport Culling
     if (bullet.y < -50 || bullet.y > BASE_HEIGHT + 50) continue;
@@ -1555,6 +1560,7 @@ export function drawBullets(ctx: CanvasRenderingContext2D, bullets: Bullet[]): v
       /* v8 ignore stop */
     }
   }
+  ctx.restore();
 }
 
 function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: number, fireRate: number, damage: number, army: Army): void {
@@ -1815,12 +1821,15 @@ function drawSuperCannonBeam(ctx: CanvasRenderingContext2D, centerX: number, cen
   const beamX = centerX - beamWidth / 2;
   const pulse = Math.sin(Date.now() / 50) * 0.2 + 0.8;
 
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter'; // Intense beam
   const gradient = ctx.createLinearGradient(beamX, 0, beamX + beamWidth, 0);
   gradient.addColorStop(0, `rgba(255, 200, 50, ${0.3 * pulse})`);
   gradient.addColorStop(0.5, `rgba(255, 255, 255, ${1 * pulse})`);
   gradient.addColorStop(1, `rgba(255, 200, 50, ${0.3 * pulse})`);
   ctx.fillStyle = gradient;
   ctx.fillRect(beamX, 0, beamWidth, centerY);
+  ctx.restore();
 
   // Time bar
   const progress = gameState.superCannonTimer / gameState.superCannonDuration;

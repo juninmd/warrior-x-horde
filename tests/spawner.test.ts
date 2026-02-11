@@ -161,8 +161,8 @@ describe('Spawner', () => {
             const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(1.0);
 
             entities.enemyHordes = [
-                { isActive: true, y: 1300 } as any,
-                { isActive: true, y: 100 } as any
+                { isActive: true, y: 1300, soldiers: [{ id: 1 }] } as any, // Add a mock soldier
+                { isActive: true, y: 100, soldiers: [] } as any
             ];
 
             spawnEnemies(entities, 480, gameState, 1);
