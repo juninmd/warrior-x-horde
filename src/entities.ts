@@ -672,6 +672,13 @@ export function createCoin(x: number, y: number, value: number = 1): Coin {
   };
 }
 
+export function releaseHorde(horde: EnemyHorde): void {
+  for (const s of horde.soldiers) {
+    soldierPool.release(s);
+  }
+  horde.soldiers.length = 0;
+}
+
 export function createInitialEntities(canvasWidth: number, canvasHeight: number): Entities {
   // Criar hordas iniciais com mínimo de 15
   const initialHordes = [];

@@ -1,6 +1,6 @@
 // spawner.ts - Gerador de obstáculos e inimigos
 import { Entities, GameState } from './types';
-import { createGatePair, createEnemyHorde, createBoss, createMiniBoss, createMysteryBox } from './entities';
+import { createGatePair, createEnemyHorde, releaseHorde, createBoss, createMiniBoss, createMysteryBox } from './entities';
 import { fastRemove } from './utils';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -87,6 +87,7 @@ export function spawnEnemies(entities: Entities, canvasWidth: number, gameState:
   for (let i = entities.enemyHordes.length - 1; i >= 0; i--) {
     const horde = entities.enemyHordes[i];
     if (!horde.isActive || horde.y >= 1200) {
+      releaseHorde(horde);
       fastRemove(entities.enemyHordes, i);
     }
   }

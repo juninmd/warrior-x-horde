@@ -67,32 +67,25 @@ export function drawJoystick(ctx: CanvasRenderingContext2D): void {
 
   ctx.save();
   ctx.globalAlpha = alpha;
+  ctx.globalCompositeOperation = 'lighter'; // Neon Glow Mode
 
-  // Animated pulse when active
-  if (virtualJoystick.active) {
-      const pulse = (Date.now() % 1000) / 1000;
-      const pulseRadius = maxRadius + pulse * 15;
-      ctx.beginPath();
-      ctx.arc(startX, startY, pulseRadius, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(74, 144, 217, ${0.5 * (1 - pulse)})`;
-      ctx.lineWidth = 2;
-      ctx.stroke();
-  }
-
-  // Base (Outer Ring)
+  // Outer Ring (Base) - Cyberpunk Style
   ctx.beginPath();
   ctx.arc(startX, startY, maxRadius, 0, Math.PI * 2);
-
-  // Gradient fill for base - Sci-fi blueish tint
-  const baseGrad = ctx.createRadialGradient(startX, startY, maxRadius * 0.2, startX, startY, maxRadius);
-  baseGrad.addColorStop(0, 'rgba(74, 144, 217, 0.05)');
-  baseGrad.addColorStop(1, 'rgba(74, 144, 217, 0.3)');
-  ctx.fillStyle = baseGrad;
-
-  ctx.strokeStyle = 'rgba(74, 144, 217, 0.5)';
   ctx.lineWidth = 2;
-  ctx.fill();
+  ctx.strokeStyle = 'rgba(0, 255, 255, 0.5)'; // Cyan
   ctx.stroke();
+
+  // Pulse Ring (if active)
+  if (virtualJoystick.active) {
+      const pulse = (Date.now() % 1000) / 1000;
+      const pulseRadius = maxRadius * (0.8 + pulse * 0.4);
+      ctx.beginPath();
+      ctx.arc(startX, startY, pulseRadius, 0, Math.PI * 2);
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = `rgba(0, 255, 255, ${0.3 * (1 - pulse)})`;
+      ctx.stroke();
+  }
 
   // Stick Position Calculation
   const dx = currentX - startX;
@@ -113,36 +106,28 @@ export function drawJoystick(ctx: CanvasRenderingContext2D): void {
   ctx.beginPath();
   ctx.moveTo(startX, startY);
   ctx.lineTo(stickX, stickY);
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-  ctx.lineWidth = 4;
-  ctx.lineCap = 'round';
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = 'rgba(0, 255, 255, 0.3)';
   ctx.stroke();
 
-  // Stick (Knob)
-  ctx.beginPath();
-  ctx.arc(stickX, stickY, 22, 0, Math.PI * 2);
+  // Knob (Glowing Orb)
+  const knobRadius = 25;
+  const knobGrad = ctx.createRadialGradient(stickX, stickY, 0, stickX, stickY, knobRadius);
+  knobGrad.addColorStop(0, '#FFFFFF'); // White hot center
+  knobGrad.addColorStop(0.4, '#00FFFF'); // Cyan core
+  knobGrad.addColorStop(1, 'rgba(0, 255, 255, 0)'); // Fade out
 
-  // Knob Gradient - Metallic/Glassy
-  const knobGrad = ctx.createRadialGradient(stickX - 8, stickY - 8, 2, stickX, stickY, 22);
-  knobGrad.addColorStop(0, '#FFFFFF');
-  knobGrad.addColorStop(0.3, '#E0F7FA');
-  knobGrad.addColorStop(1, '#4A90D9');
   ctx.fillStyle = knobGrad;
-
-  // Knob Shadow
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
-  ctx.shadowBlur = 12;
-  ctx.shadowOffsetY = 5;
-
-  ctx.fill();
-
-  // Shine reflection
-  ctx.shadowBlur = 0;
-  ctx.shadowOffsetY = 0;
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
   ctx.beginPath();
-  ctx.ellipse(stickX - 6, stickY - 8, 8, 4, Math.PI / 4, 0, Math.PI * 2);
+  ctx.arc(stickX, stickY, knobRadius, 0, Math.PI * 2);
   ctx.fill();
+
+  // Inner detail (Tech ring inside knob)
+  ctx.beginPath();
+  ctx.arc(stickX, stickY, 12, 0, Math.PI * 2);
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.stroke();
 
   ctx.restore();
 }
