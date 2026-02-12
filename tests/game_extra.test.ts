@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as audio from '../src/audio';
 import * as shooting from '../src/shooting';
-import * as input from '../src/input';
+// import * as input from '../src/input'; // We will use input-state for setInputScale
 
 // Mock dependencies
 vi.mock('../src/renderer', () => ({
@@ -11,12 +11,20 @@ vi.mock('../src/renderer', () => ({
     shareOnWhatsApp: vi.fn(),
 }));
 
+vi.mock('../src/input-state', () => ({
+    setInputScale: vi.fn(),
+    getCurrentScale: vi.fn(() => 1),
+    virtualJoystick: { active: false }
+}));
+
+import { setInputScale } from '../src/input-state';
+
 vi.mock('../src/input', () => ({
     setupInput: vi.fn(),
     getMouseX: vi.fn(() => 240),
     initializeMousePosition: vi.fn(),
     setGameStateRef: vi.fn(),
-    setInputScale: vi.fn(),
+    // setInputScale is now imported from input-state in game.ts
     vibrate: vi.fn(),
     triggerHaptic: vi.fn(),
 }));
@@ -225,11 +233,12 @@ describe('Game Extra Coverage', () => {
     it('should handle orientation change', () => {
         vi.useFakeTimers();
 
-        // setInputScale is mocked at top level
+        // setInputScale is mocked at top level via input-state
         window.dispatchEvent(new Event('orientationchange'));
 
         vi.advanceTimersByTime(100);
-        expect(input.setInputScale).toHaveBeenCalled();
+        // expect(input.setInputScale).toHaveBeenCalled();
+        expect(setInputScale).toHaveBeenCalled();
 
         vi.useRealTimers();
     });

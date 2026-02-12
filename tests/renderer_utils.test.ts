@@ -7,7 +7,8 @@ vi.mock('../src/game', () => ({
     canvas: { width: 480, height: 800 }
 }));
 
-vi.mock('../src/input', () => ({
+// Mock input-state to control joystick state
+vi.mock('../src/input-state', () => ({
     virtualJoystick: {
         active: false,
         startX: 0,
@@ -21,7 +22,7 @@ vi.mock('../src/input', () => ({
 
 import { drawGlassBadge, drawStar, drawJoystick, getComboColor } from '../src/renderer-utils';
 import { COLORS } from '../src/constants';
-import { virtualJoystick } from '../src/input';
+import { virtualJoystick } from '../src/input-state';
 
 describe('Renderer Utils', () => {
     it('should get combo color', () => {
@@ -55,12 +56,15 @@ describe('Renderer Utils', () => {
 
     it('should draw active joystick', () => {
         const ctx = document.createElement('canvas').getContext('2d')!;
-        // Manually set active
+        // Manually set active on the mock
         virtualJoystick.active = true;
         virtualJoystick.startX = 100;
         virtualJoystick.startY = 100;
         virtualJoystick.currentX = 120;
         virtualJoystick.currentY = 120;
+        // Important: alpha must be > 0.01 to draw.
+        // The drawJoystick function increases alpha if active.
+        // alpha starts at 0. +0.2 = 0.2. 0.2 > 0.01. So it draws.
 
         drawJoystick(ctx);
 

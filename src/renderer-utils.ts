@@ -1,6 +1,6 @@
 // renderer-utils.ts - Shared rendering helpers
 import { COLORS, FONT_FAMILY } from './constants';
-import { virtualJoystick } from './input';
+import { virtualJoystick } from './input-state';
 
 // --- UI Drawing Helpers ---
 
