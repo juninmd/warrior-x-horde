@@ -2,54 +2,14 @@
 import { GameState } from './types';
 import { activateSuperCannon } from './shooting';
 import { SettingsManager } from './settings';
+import { virtualJoystick, getCurrentScale } from './input-state';
+
+export { setInputScale, virtualJoystick, VirtualJoystick } from './input-state';
 
 let mouseX = 0;
 let isDragging = false;
 let gameStateRef: GameState | null = null;
-let currentScale = 1;
 let activeTouchId: number | null = null;
-
-// Virtual Joystick
-export class VirtualJoystick {
-  active: boolean = false;
-  alpha: number = 0;
-  startX: number = 0;
-  startY: number = 0;
-  currentX: number = 0;
-  currentY: number = 0;
-  maxRadius: number = 50;
-  deadZone: number = 5; // Pixels de movimento ignorados
-
-  start(x: number, y: number) {
-    this.active = true;
-    this.startX = x;
-    this.startY = y;
-    this.currentX = x;
-    this.currentY = y;
-  }
-
-  move(x: number, y: number) {
-    /* v8 ignore start */
-    if (!this.active) return;
-    /* v8 ignore stop */
-    this.currentX = x;
-    this.currentY = y;
-  }
-
-  end() {
-    this.active = false;
-  }
-
-  getDeltaX(): number {
-    /* v8 ignore next 2 */
-    if (!this.active) return 0;
-    const dx = this.currentX - this.startX;
-    if (Math.abs(dx) < this.deadZone) return 0;
-    return dx;
-  }
-}
-
-export const virtualJoystick = new VirtualJoystick();
 
 // Variaveis para controle relativo (Touch)
 let touchStartX = 0;
@@ -63,10 +23,6 @@ export function setGameStateRef(gs: GameState): void {
   gameStateRef = gs;
 }
 
-export function setInputScale(scale: number): void {
-  currentScale = scale;
-}
-
 export function resetInput(): void {
   activeTouchId = null;
   isDragging = false;
@@ -75,7 +31,7 @@ export function resetInput(): void {
 
 // Converter coordenadas da tela para coordenadas do canvas
 function screenToCanvasX(screenX: number, canvasRect: DOMRect): number {
-  return (screenX - canvasRect.left) / currentScale;
+  return (screenX - canvasRect.left) / getCurrentScale();
 }
 
 export type HapticPattern = 'light' | 'medium' | 'heavy' | 'success' | 'failure' | 'warning';
