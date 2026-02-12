@@ -18,7 +18,7 @@ This file serves as the "Living Memory" for Jules and other agents working on th
 ### Coding Conventions
 - **Language:** TypeScript (Strict mode).
 - **Styling:** ESLint with standard config.
-- **Testing:** Vitest with JSDOM. Coverage thresholds: 98% Lines, 97% Functions, 90% Branches, 97% Statements.
+- **Testing:** Vitest with JSDOM. Coverage thresholds: 100% Lines, 100% Functions, 100% Branches, 100% Statements.
 - **Performance:**
     - Avoid `new` inside loops. Use pools or reused objects/arrays.
     - Prefer `OffscreenCanvas` for static heavy rendering.
