@@ -29,17 +29,16 @@ jobs:
         cache: 'pnpm'
 
     - name: Install dependencies
-      run: pnpm install
+      run: pnpm install --frozen-lockfile
 
     - name: Lint
       run: pnpm lint
 
+    - name: Test with Coverage
+      run: pnpm run coverage
+
     - name: Build
       run: pnpm build
-
-    - name: Test with Coverage
-      # Enforce 100% coverage for lines, functions, branches, and statements
-      run: pnpm vitest run --coverage --coverage.thresholds.lines=100 --coverage.thresholds.functions=100 --coverage.thresholds.branches=100 --coverage.thresholds.statements=100
 
     - name: Upload Build Artifacts
       if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
