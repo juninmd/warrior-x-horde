@@ -411,9 +411,9 @@ const floatingTextPool = new ObjectPool<FloatingText>(
 
 // Pool de partículas
 const particlePool = new ObjectPool<Particle>(
-  () => ({ x: 0, y: 0, vx: 0, vy: 0, color: '#FFF', size: 0, life: 0, maxLife: 0, type: 'spark' }),
+  () => ({ x: 0, y: 0, vx: 0, vy: 0, color: '#FFF', size: 0, life: 0, maxLife: 0, type: 'spark', rotation: 0, rotationSpeed: 0 }),
   (p) => {
-    /* v8 ignore next 10 */
+    /* v8 ignore next 12 */
     p.x = 0;
     p.y = 0;
     p.vx = 0;
@@ -423,6 +423,8 @@ const particlePool = new ObjectPool<Particle>(
     p.life = 0;
     p.maxLife = 0;
     p.type = 'spark';
+    p.rotation = 0;
+    p.rotationSpeed = 0;
   }
 );
 
@@ -447,17 +449,27 @@ export function addParticle(x: number, y: number, type: Particle['type'], color:
 
   for (let i = 0; i < actualCount; i++) {
     const angle = Math.random() * Math.PI * 2;
-    const speed = type === 'explosion' ? 1.5 + Math.random() * 2.5 : 0.8 + Math.random() * 1.5;
+    let speed = type === 'explosion' ? 1.5 + Math.random() * 2.5 : 0.8 + Math.random() * 1.5;
 
     const p = particlePool.get();
     p.x = x;
     p.y = y;
+
+    if (type === 'debris') {
+       speed = 1.0 + Math.random() * 3.0; // Faster debris
+       p.rotation = Math.random() * Math.PI * 2;
+       p.rotationSpeed = (Math.random() - 0.5) * 0.4;
+       p.size = 3 + Math.random() * 4;
+       p.life = 0.8 + Math.random() * 0.4; // Live longer
+    } else {
+       p.size = type === 'shockwave' ? 20 : (type === 'explosion' ? 2 + Math.random() * 2.5 : 1.5 + Math.random() * 2);
+       p.life = 1;
+    }
+
     p.vx = Math.cos(angle) * speed;
     p.vy = Math.sin(angle) * speed - (type === 'star' ? 1.5 : 0);
     p.color = color;
-    p.size = type === 'shockwave' ? 20 : (type === 'explosion' ? 2 + Math.random() * 2.5 : 1.5 + Math.random() * 2);
-    p.life = 1;
-    p.maxLife = 1;
+    p.maxLife = p.life;
     p.type = type;
 
     particles.push(p);
@@ -486,7 +498,9 @@ export function updateParticles(): void {
        p.x += p.vx;
        p.y += p.vy;
        p.vy += 0.1; // Gravidade
-       p.life -= 0.03;
+       if (p.rotationSpeed) p.rotation = (p.rotation || 0) + p.rotationSpeed;
+
+       p.life -= p.type === 'debris' ? 0.02 : 0.03;
        p.size *= 0.97;
     }
 
@@ -506,6 +520,18 @@ function drawParticles(ctx: CanvasRenderingContext2D): void {
   for (const p of particles) {
     // Viewport Culling
     if (p.y < -50 || p.y > BASE_HEIGHT + 50) continue;
+
+    if (p.type === 'debris') {
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation || 0);
+        ctx.globalAlpha = p.life;
+        ctx.fillStyle = p.color;
+        const s = p.size;
+        ctx.fillRect(-s/2, -s/2, s, s);
+        ctx.restore();
+        continue;
+    }
 
     if (p.type === 'shockwave') {
         ctx.save();
@@ -2080,6 +2106,54 @@ function drawComboBar(ctx: CanvasRenderingContext2D, gameState: GameState): void
   ctx.restore();
 }
 
+function drawKillstreakOverlay(ctx: CanvasRenderingContext2D, width: number, height: number, killStreak: number): void {
+  if (killStreak < 5) return;
+
+  const centerX = width / 2;
+  const centerY = height * 0.4; // Slightly above center
+
+  let text = '';
+  let color = '';
+  let scale = 1.0;
+
+  if (killStreak >= 100) { text = 'GODLIKE'; color = '#FFD700'; scale = 2.0; }
+  else if (killStreak >= 50) { text = 'UNSTOPPABLE'; color = '#E74C3C'; scale = 1.8; }
+  else if (killStreak >= 20) { text = 'DOMINATING'; color = '#9B59B6'; scale = 1.5; }
+  else if (killStreak >= 10) { text = 'RAMPAGE'; color = '#3498DB'; scale = 1.2; }
+  else if (killStreak >= 5) { text = 'KILLING SPREE'; color = '#2ECC71'; scale = 1.0; }
+
+  if (!text) return;
+
+  const pulse = 1 + Math.sin(Date.now() * 0.02) * 0.1;
+
+  ctx.save();
+  ctx.translate(centerX, centerY);
+  ctx.scale(scale * pulse, scale * pulse);
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 20;
+
+  ctx.font = `900 36px ${FONT_FAMILY}`;
+  ctx.textAlign = 'center';
+
+  // Stroke
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = '#000';
+  ctx.strokeText(text, 0, 0);
+
+  // Fill
+  ctx.fillStyle = color;
+  ctx.fillText(text, 0, 0);
+
+  // Subtext
+  ctx.shadowBlur = 0;
+  ctx.font = `bold 14px ${FONT_FAMILY}`;
+  ctx.fillStyle = '#FFF';
+  ctx.strokeText(`${killStreak} KILLS`, 0, 25);
+  ctx.fillText(`${killStreak} KILLS`, 0, 25);
+
+  ctx.restore();
+}
+
 export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameState: GameState): void {
   const width = BASE_WIDTH;
   const height = BASE_HEIGHT;
@@ -2168,6 +2242,7 @@ export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameSt
       drawComboTier(ctx, width, height, gameState.comboTier, gameState.combo);
   }
 
+  drawKillstreakOverlay(ctx, width, height, gameState.killStreak);
   drawComboBar(ctx, gameState);
   drawJoystick(ctx);
   // updateFloatingTexts() moved to game loop to respect pause

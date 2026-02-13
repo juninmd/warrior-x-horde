@@ -135,8 +135,8 @@ export function setupInput(canvas: HTMLCanvasElement, onTouchEffect?: (x: number
           // Relative movement
           const delta = currentTouchX - touchStartX;
 
-          // Sensitivity factor (1.2 for slightly faster response than finger)
-          const sensitivity = 1.2;
+          // Sensitivity factor (1.5 for faster response on mobile)
+          const sensitivity = 1.5;
 
           let newX = armyStartX + delta * sensitivity;
 

@@ -144,6 +144,9 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
 
     const soldier = army.soldiers[i];
     addExplosion(soldier.x, soldier.y, COLORS.PLAYER.NORMAL);
+    addParticle(soldier.x, soldier.y, 'debris', soldier.color, 3);
+    addFloatingText("-1", soldier.x, soldier.y - 10, '#FF0000', 0.8);
+    horde.perfectClearEligible = false;
     soldier.isAlive = false;
     army.aliveCount--;
     killed++;
@@ -158,6 +161,7 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
 
     const soldier = horde.soldiers[i];
     addExplosion(soldier.x, soldier.y, COLORS.ENEMY.BASE);
+    addParticle(soldier.x, soldier.y, 'debris', soldier.color, 3);
     soldier.isAlive = false;
     killed++;
   }

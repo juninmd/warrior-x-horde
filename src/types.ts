@@ -9,7 +9,9 @@ export interface Particle {
   size: number;
   life: number;
   maxLife: number;
-  type: 'explosion' | 'trail' | 'spark' | 'star' | 'shockwave';
+  type: 'explosion' | 'trail' | 'spark' | 'star' | 'shockwave' | 'debris';
+  rotation?: number;
+  rotationSpeed?: number;
 }
 
 export interface GameState {
@@ -116,6 +118,7 @@ export interface EnemyHorde {
   isMini?: boolean; // Mini-boss horde
   hp: number; // Shared HP for the horde
   maxHp: number;
+  perfectClearEligible?: boolean;
 }
 
 export interface MiniBoss {

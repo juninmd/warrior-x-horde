@@ -72,8 +72,8 @@ export function drawJoystick(ctx: CanvasRenderingContext2D): void {
   // Outer Ring (Base) - Cyberpunk Style
   ctx.beginPath();
   ctx.arc(startX, startY, maxRadius, 0, Math.PI * 2);
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = 'rgba(0, 255, 255, 0.5)'; // Cyan
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = 'rgba(0, 255, 255, 0.8)'; // Cyan Brighter
   ctx.stroke();
 
   // Pulse Ring (if active)
@@ -82,8 +82,8 @@ export function drawJoystick(ctx: CanvasRenderingContext2D): void {
       const pulseRadius = maxRadius * (0.8 + pulse * 0.4);
       ctx.beginPath();
       ctx.arc(startX, startY, pulseRadius, 0, Math.PI * 2);
-      ctx.lineWidth = 1;
-      ctx.strokeStyle = `rgba(0, 255, 255, ${0.3 * (1 - pulse)})`;
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = `rgba(0, 255, 255, ${0.5 * (1 - pulse)})`;
       ctx.stroke();
   }
 
@@ -106,12 +106,12 @@ export function drawJoystick(ctx: CanvasRenderingContext2D): void {
   ctx.beginPath();
   ctx.moveTo(startX, startY);
   ctx.lineTo(stickX, stickY);
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = 'rgba(0, 255, 255, 0.3)';
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = 'rgba(0, 255, 255, 0.6)';
   ctx.stroke();
 
   // Knob (Glowing Orb)
-  const knobRadius = 25;
+  const knobRadius = 30;
   const knobGrad = ctx.createRadialGradient(stickX, stickY, 0, stickX, stickY, knobRadius);
   knobGrad.addColorStop(0, '#FFFFFF'); // White hot center
   knobGrad.addColorStop(0.4, '#00FFFF'); // Cyan core
