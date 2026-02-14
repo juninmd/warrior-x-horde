@@ -1,6 +1,6 @@
 // ui-overlay.ts - Manages HTML/DOM overlays
 import { COLORS } from './constants';
-import { GameState } from './types';
+import { GameState, BeforeInstallPromptEvent } from './types';
 import { vibrate } from './input';
 
 // Container elements (Declared at top to avoid TDZ)
@@ -76,11 +76,6 @@ export function updateStartScreenLeaderboard(): void {
         startScreenContent.appendChild(lbContainer);
     }
     /* v8 ignore stop */
-}
-
-interface BeforeInstallPromptEvent extends Event {
-    prompt: () => Promise<void>;
-    userChoice: Promise<{ outcome: 'accepted' | 'dismissed', platform: string }>;
 }
 
 export function setupStartScreenInstallBtn(deferredPrompt: BeforeInstallPromptEvent): void {
@@ -585,6 +580,7 @@ export function showGameOverScreen(gameState: GameState): void {
     const installBtn = document.getElementById('goInstallBtn');
     if (installBtn && gameState.deferredInstallPrompt) {
         installBtn.addEventListener('click', async () => {
+            if (!gameState.deferredInstallPrompt) return;
             vibrate(20);
             /* v8 ignore start */
             gameState.deferredInstallPrompt.prompt();

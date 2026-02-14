@@ -1,5 +1,5 @@
 // game.ts - Loop principal do jogo Crowd Runner
-import { Entities } from './types';
+import { Entities, BeforeInstallPromptEvent } from './types';
 import { gameState, resetGameState, saveGameProgress } from './gameState';
 import { createInitialEntities, createEnemyHorde, createSoldier, addSpecialSoldiersToArmy, addSoldiersToArmy } from './entities';
 import { render, shareOnX, shareOnWhatsApp, addFloatingText, updateFloatingTexts, addParticle } from './renderer';
@@ -404,7 +404,7 @@ function gameLoop(currentTime: number = 0): void {
   updateShopUI(gameState);
 
   // Spawnar elementos
-  updateSpawns(entities, BASE_WIDTH, gameState, BASE_HEIGHT, dtFactor);
+  updateSpawns(entities, BASE_WIDTH, gameState, dtFactor);
 
   // Verificar colisões
   checkCollisions(entities, gameState);
@@ -911,15 +911,16 @@ document.addEventListener('keydown', (e) => {
 // Capture PWA Install Prompt
 window.addEventListener('beforeinstallprompt', (e) => {
   /* v8 ignore start */
+  const event = e as BeforeInstallPromptEvent;
   // Prevent the mini-infobar from appearing on mobile
-  e.preventDefault();
+  event.preventDefault();
   // Stash the event so it can be triggered later.
-  gameState.deferredInstallPrompt = e;
+  gameState.deferredInstallPrompt = event;
   console.log('📱 PWA Install Prompt captured');
 
   // If on Start Screen, show button immediately
   if (!gameState.isStarted) {
-      setupStartScreenInstallBtn(e);
+      setupStartScreenInstallBtn(event);
   }
   /* v8 ignore stop */
 });
