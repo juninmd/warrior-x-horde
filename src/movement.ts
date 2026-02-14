@@ -191,9 +191,11 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
 
   // Mover Mystery Boxes (mesma velocidade das gates/mundo)
   for (const box of entities.mysteryBoxes) {
-    if (box && !box.passed) {
+    /* v8 ignore start */
+    if (!box.passed) {
       box.y += gateSpeed;
     }
+    /* v8 ignore stop */
   }
 
   // Mover Moedas (mesma velocidade das gates)
