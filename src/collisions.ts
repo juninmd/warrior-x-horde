@@ -124,8 +124,10 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
         const isBigCombo = gameState.combo >= 5;
         addFloatingText(`${gameState.combo}x COMBO! +${scoreGain}`, horde.x, horde.y - 30, COLORS.UI.GOLD, isBigCombo ? 1.5 : 1.1);
       } else if (horde.perfectClearEligible) {
-        addFloatingText('PERFECT!', horde.x, horde.y - 40, '#00FFFF', 1.6, 'critical');
-        gameState.score += 50;
+        addFloatingText('PERFECT!', horde.x, horde.y - 40, '#00FFFF', 2.0, 'critical');
+        gameState.score += 200; // Increased Bonus
+        triggerScreenShake(5, 200);
+        triggerHaptic('success');
         addFloatingText(`+${scoreGain}`, horde.x, horde.y, COLORS.UI.GOLD);
       } else {
         addFloatingText(`+${scoreGain}`, horde.x, horde.y, COLORS.UI.GOLD);

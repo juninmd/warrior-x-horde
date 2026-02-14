@@ -19,7 +19,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      font-family: 'Segoe UI', Arial, sans-serif;
+      font-family: 'Rajdhani', 'Segoe UI', Arial, sans-serif;
       touch-action: none;
       user-select: none;
       -webkit-user-select: none;
@@ -335,8 +335,27 @@
       box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
-      max-width: 90%;
-      width: 400px;
+      max-width: 95%;
+      width: 500px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .start-screen-content::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255, 215, 0, 0.1) 0%, transparent 60%);
+      animation: rotate-bg 10s linear infinite;
+      z-index: -1;
+    }
+
+    @keyframes rotate-bg {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
 
     .game-logo {
@@ -346,6 +365,14 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+      animation: logo-pulse 3s infinite ease-in-out;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    @keyframes logo-pulse {
+      0%, 100% { transform: scale(1); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+      50% { transform: scale(1.05); filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.6)); }
     }
 
     .start-btn {

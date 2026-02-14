@@ -75,6 +75,12 @@ export function updateStartScreenLeaderboard(): void {
     } else {
         startScreenContent.appendChild(lbContainer);
     }
+
+    // Add visual flair to logo if not already done via CSS
+    const logo = startScreenContent.querySelector('.game-logo');
+    if (logo) {
+      (logo as HTMLElement).style.fontFamily = '"Rajdhani", sans-serif';
+    }
     /* v8 ignore stop */
 }
 

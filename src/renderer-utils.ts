@@ -56,7 +56,7 @@ export function drawStar(ctx: CanvasRenderingContext2D, cx: number, cy: number, 
 export function drawJoystick(ctx: CanvasRenderingContext2D): void {
   // Update Alpha for fade in/out
   if (virtualJoystick.active) {
-    virtualJoystick.alpha = Math.min(1, virtualJoystick.alpha + 0.15);
+    virtualJoystick.alpha = Math.min(0.6, virtualJoystick.alpha + 0.15); // Lower max alpha for less obstruction
   } else {
     virtualJoystick.alpha = Math.max(0, virtualJoystick.alpha - 0.1);
   }
@@ -67,25 +67,7 @@ export function drawJoystick(ctx: CanvasRenderingContext2D): void {
 
   ctx.save();
   ctx.globalAlpha = alpha;
-  ctx.globalCompositeOperation = 'lighter'; // Neon Glow Mode
-
-  // Outer Ring (Base) - Cyberpunk Style
-  ctx.beginPath();
-  ctx.arc(startX, startY, maxRadius, 0, Math.PI * 2);
-  ctx.lineWidth = 3;
-  ctx.strokeStyle = 'rgba(0, 255, 255, 0.8)'; // Cyan Brighter
-  ctx.stroke();
-
-  // Pulse Ring (if active)
-  if (virtualJoystick.active) {
-      const pulse = (Date.now() % 1000) / 1000;
-      const pulseRadius = maxRadius * (0.8 + pulse * 0.4);
-      ctx.beginPath();
-      ctx.arc(startX, startY, pulseRadius, 0, Math.PI * 2);
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = `rgba(0, 255, 255, ${0.5 * (1 - pulse)})`;
-      ctx.stroke();
-  }
+  // Removed 'lighter' composite mode to make it cleaner and less "bloom-heavy"
 
   // Stick Position Calculation
   const dx = currentX - startX;
@@ -102,31 +84,41 @@ export function drawJoystick(ctx: CanvasRenderingContext2D): void {
     stickY = startY + Math.sin(angle) * maxRadius;
   }
 
-  // Draw connector line (Vector)
+  // Outer Ring (Base) - Clean Minimalist
   ctx.beginPath();
-  ctx.moveTo(startX, startY);
-  ctx.lineTo(stickX, stickY);
-  ctx.lineWidth = 3;
-  ctx.strokeStyle = 'rgba(0, 255, 255, 0.6)';
+  ctx.arc(startX, startY, maxRadius, 0, Math.PI * 2);
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
   ctx.stroke();
 
-  // Knob (Glowing Orb)
-  const knobRadius = 30;
-  const knobGrad = ctx.createRadialGradient(stickX, stickY, 0, stickX, stickY, knobRadius);
-  knobGrad.addColorStop(0, '#FFFFFF'); // White hot center
-  knobGrad.addColorStop(0.4, '#00FFFF'); // Cyan core
-  knobGrad.addColorStop(1, 'rgba(0, 255, 255, 0)'); // Fade out
-
-  ctx.fillStyle = knobGrad;
-  ctx.beginPath();
-  ctx.arc(stickX, stickY, knobRadius, 0, Math.PI * 2);
+  // Base Fill
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
   ctx.fill();
 
-  // Inner detail (Tech ring inside knob)
+  // Inner Dot (Center Anchor)
   ctx.beginPath();
-  ctx.arc(stickX, stickY, 12, 0, Math.PI * 2);
+  ctx.arc(startX, startY, 4, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+  ctx.fill();
+
+  // Knob (Thumb Position)
+  const knobRadius = 20;
+
+  // Shadow/Glow for Knob
+  ctx.shadowColor = COLORS.PLAYER.NORMAL; // Match player color
+  ctx.shadowBlur = 15;
+
+  ctx.beginPath();
+  ctx.arc(stickX, stickY, knobRadius, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+  ctx.fill();
+
+  // Reset shadow
+  ctx.shadowBlur = 0;
+
+  // Knob Border
   ctx.lineWidth = 2;
-  ctx.strokeStyle = '#FFFFFF';
+  ctx.strokeStyle = COLORS.PLAYER.NORMAL;
   ctx.stroke();
 
   ctx.restore();
