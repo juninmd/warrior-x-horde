@@ -162,7 +162,8 @@ describe('Renderer Extra Coverage', () => {
                 army.soldiers.push({ isAlive: true, type: 'normal', isSuper: true, y: i } as any);
             }
             for (let i = 0; i < 100; i++) {
-                army.soldiers.push({ isAlive: true, type: 'normal', isSuper: false, y: 1000 + i } as any);
+                // Keep y within view to avoid culling (view is 0-800)
+                army.soldiers.push({ isAlive: true, type: 'normal', isSuper: false, y: 100 + i } as any);
             }
 
             const qm = QualityManager.getInstance();

@@ -1156,9 +1156,15 @@ export function prepareSoldiersToDraw(army: Army): Soldier[] {
   tempSuperSoldiers.length = 0;
   tempSoldiersToDraw.length = 0;
 
-  // Single pass to separate types
+  // Single pass to separate types with Viewport Culling
+  // Add a margin to avoid popping
+  const cullMargin = 50;
+
   for (const s of army.soldiers) {
     if (s.isAlive) {
+      // Culling
+      if (s.y < -cullMargin || s.y > BASE_HEIGHT + cullMargin) continue;
+
       if (s.isSuper) tempSuperSoldiers.push(s);
       else tempAliveNormalSoldiers.push(s);
     }

@@ -14,6 +14,7 @@ import { BASE_WIDTH, BASE_HEIGHT, ASPECT_RATIO, COLORS } from './constants';
 import { setupShopUI, updateShopUI, setupSuperCannonUI, updateSuperCannonUI, BuyAction, setupGameOverUI, showGameOverScreen, startCountdown, updateStartScreenLeaderboard, setupStartScreenInstallBtn } from './ui-overlay';
 import { QualityManager } from './quality';
 import { setupSettingsUI, toggleSettingsMenu } from './ui-settings';
+import { MOBILE_RESOLUTION_SCALE } from './constants';
 
 // Canvas setup
 export const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
@@ -74,7 +75,12 @@ function resizeCanvas(): void {
 
   // Manter dimensões internas do canvas (resolução do jogo) com suporte a High DPI e Dynamic Resolution
   const quality = QualityManager.getInstance().settings;
-  const resolutionScale = quality.resolutionScale || 1.0;
+  let resolutionScale = quality.resolutionScale || 1.0;
+
+  // Auto-downgrade resolution on mobile for performance (Stable 60fps target)
+  if (isMobile && resolutionScale === 1.0) {
+      resolutionScale = MOBILE_RESOLUTION_SCALE;
+  }
 
   // Base DPR (capped at 3 for sanity on super high density screens)
   const baseDpr = Math.min(window.devicePixelRatio || 1, 3);

@@ -115,10 +115,10 @@ describe('Game Extra Coverage', () => {
         window.dispatchEvent(new Event('resize'));
 
         // Check if canvas dimensions updated
-        // logic: canvas.width = BASE_WIDTH * dpr
-        // 480 * 2 = 960
-        expect(canvas.width).toBe(960);
-        expect(canvas.height).toBe(1600); // 800 * 2
+        // logic: canvas.width = BASE_WIDTH * dpr * mobileScale
+        // 480 * 2 * 0.85 = 816
+        expect(canvas.width).toBe(816);
+        expect(canvas.height).toBe(1360); // 800 * 2 * 0.85
     });
 
     it('should handle screenToCanvas conversion', () => {
