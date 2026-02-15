@@ -33,7 +33,7 @@ jobs:
     - name: Lint
       run: pnpm lint
 
-    - name: Test with Coverage
+    - name: Test with 100% Coverage Enforcement
       run: pnpm run coverage
 
     - name: Build
