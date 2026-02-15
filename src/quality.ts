@@ -21,8 +21,9 @@ export class QualityManager {
 
   private frameTimes: number[] = [];
   private lastTime: number = 0;
-  private lowQualityTriggered: boolean = false;
+  public lowQualityTriggered: boolean = false;
   private fpsDropFrames: number = 0;
+  private recoveryFrames: number = 0;
   private manualMode: boolean = false;
   private isMobile: boolean = false;
 
@@ -102,6 +103,45 @@ export class QualityManager {
       /* v8 ignore next */
       this.triggerLowQuality();
     }
+  }
+
+  public checkRecovery(dt: number): void {
+      if (this.manualMode) return;
+      if (!this.lowQualityTriggered) return;
+
+      if (dt > 100) return; // Skip massive lags
+      const fps = 1000 / Math.max(1, dt);
+
+      if (fps > 55) {
+          this.recoveryFrames++;
+      } else if (fps < 50) {
+          // Reset if it dips again
+          this.recoveryFrames = 0;
+      }
+
+      // If stable for 5 seconds (approx 300 frames)
+      if (this.recoveryFrames > 300) {
+          this.restoreQuality();
+      }
+  }
+
+  private restoreQuality(): void {
+      console.log("✅ Performance stabilized. Restoring Quality.");
+      this.lowQualityTriggered = false;
+      this.recoveryFrames = 0;
+      this.fpsDropFrames = 0;
+
+      this.settings.enableShadows = true;
+      this.settings.particleMultiplier = this.isMobile ? 0.8 : 1.0;
+      this.settings.simplifiedRendering = false;
+      this.settings.maxRenderedSoldiers = 150;
+      this.settings.resolutionScale = 1.0;
+
+      /* v8 ignore start */
+      if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('resize'));
+      }
+      /* v8 ignore stop */
   }
 
   private triggerLowQuality(): void {

@@ -22,7 +22,8 @@ vi.mock('../src/quality', () => ({
       getInstance: () => ({
           settings: { particleMultiplier: 1, enableShadows: true, simplifiedRendering: false, maxRenderedSoldiers: 100 },
           updateFPS: vi.fn(),
-          setQuality: vi.fn()
+          setQuality: vi.fn(),
+          checkRecovery: vi.fn()
       })
   }
 }));

@@ -11,7 +11,7 @@ import { setInputScale } from './input-state';
 import { updateShooting, updateBullets, updateSuperCannon, activateSuperCannon } from './shooting';
 import { initAudio, playMusic, playSound, stopAllMusic, audioManager, isMusicMuted } from './audio';
 import { BASE_WIDTH, BASE_HEIGHT, ASPECT_RATIO, COLORS } from './constants';
-import { setupShopUI, updateShopUI, setupSuperCannonUI, updateSuperCannonUI, BuyAction, setupGameOverUI, showGameOverScreen, startCountdown, updateStartScreenLeaderboard, setupStartScreenInstallBtn } from './ui-overlay';
+import { setupShopUI, updateShopUI, setupSuperCannonUI, updateSuperCannonUI, BuyAction, setupGameOverUI, showGameOverScreen, startCountdown, updateStartScreenLeaderboard, setupStartScreenInstallBtn, createPauseModal } from './ui-overlay';
 import { QualityManager } from './quality';
 import { setupSettingsUI, toggleSettingsMenu } from './ui-settings';
 import { MOBILE_RESOLUTION_SCALE } from './constants';
@@ -278,20 +278,6 @@ function gameLoop(currentTime: number = 0): void {
   // Se pausado, apenas renderizar e esperar
   if (gameState.isPaused) {
     render(ctx, entities, gameState);
-    // Desenhar texto de PAUSADO
-    /* v8 ignore start */
-    ctx.save();
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-    ctx.fillRect(0, 0, BASE_WIDTH, BASE_HEIGHT);
-    ctx.fillStyle = '#FFD700';
-    ctx.font = 'bold 48px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('⏸️ PAUSADO', BASE_WIDTH / 2, BASE_HEIGHT / 2);
-    ctx.font = '18px Arial';
-    ctx.fillStyle = '#FFF';
-    ctx.fillText('Toque para continuar', BASE_WIDTH / 2, BASE_HEIGHT / 2 + 40);
-    ctx.restore();
-    /* v8 ignore stop */
     return; // Não continua o loop enquanto pausado
   }
 
@@ -313,6 +299,7 @@ function gameLoop(currentTime: number = 0): void {
 
   // Monitor Performance
   QualityManager.getInstance().updateFPS(deltaTime);
+  QualityManager.getInstance().checkRecovery(deltaTime);
 
   // Slow Mo Logic
   let timeScale = 1.0;
@@ -576,6 +563,10 @@ export function startGame(): void {
   setGameStateRef(gameState); // Configurar referência para input de Super Cannon
   wasInBossFight = false; // Resetar flag de boss
 
+  // Set Start Time for Stats
+  gameState.runStartTime = Date.now();
+  gameState.totalKills = 0;
+
   // Esconder overlay de start
   if (startScreen) startScreen.classList.remove('active');
 
@@ -796,8 +787,25 @@ export function togglePause(): void {
 
   triggerHaptic('light');
 
+  // Ensure modal exists (lazy creation)
+  createPauseModal(
+    () => togglePause(), // Resume
+    () => {
+        // Force unpause explicitly to avoid resume countdown
+        gameState.isPaused = false;
+        const m = document.getElementById('pauseModal');
+        if (m) m.style.display = 'none';
+        startGame();
+    },
+    () => toggleSettingsMenu()
+  );
+
+  const modal = document.getElementById('pauseModal');
+
   if (gameState.isPaused) {
     // Resume with countdown
+    if (modal) modal.style.display = 'none';
+
     startCountdown(() => {
       gameState.isPaused = false;
       requestWakeLock();
@@ -813,6 +821,7 @@ export function togglePause(): void {
     const pauseBtn = document.getElementById('pauseBtnTop');
     if (pauseBtn) pauseBtn.textContent = '▶️';
     console.log('⏸️ Jogo pausado');
+    if (modal) modal.style.display = 'flex';
   }
 }
 
@@ -910,6 +919,9 @@ document.addEventListener('keydown', (e) => {
   /* v8 ignore start */
   if (e.key === 'p' || e.key === 'P' || e.key === 'Escape') {
     togglePause();
+  }
+  if (e.key === ' ') {
+    triggerSuperCannon();
   }
   /* v8 ignore stop */
 });

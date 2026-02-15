@@ -11,7 +11,11 @@ vi.mock('../src/renderer-utils', () => ({
 }));
 vi.mock('../src/quality', () => ({
   QualityManager: {
-      getInstance: () => ({ settings: { particleMultiplier: 1, enableShadows: true, simplifiedRendering: false, maxRenderedSoldiers: 100 } })
+      getInstance: () => ({
+          settings: { particleMultiplier: 1, enableShadows: true, simplifiedRendering: false, maxRenderedSoldiers: 100 },
+          updateFPS: vi.fn(),
+          checkRecovery: vi.fn()
+      })
   }
 }));
 

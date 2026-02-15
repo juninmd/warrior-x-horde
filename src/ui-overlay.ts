@@ -454,6 +454,7 @@ export function showGameOverScreen(gameState: GameState): void {
     content.style.boxShadow = `0 0 30px ${isVictory ? 'rgba(46, 204, 113, 0.3)' : 'rgba(231, 76, 60, 0.3)'}`;
 
     const leaderboardHTML = getLeaderboardHTML(gameState.score);
+    const timeStr = new Date(Date.now() - gameState.runStartTime).toISOString().substr(14, 5);
 
     content.innerHTML = `
         <style>
@@ -504,9 +505,17 @@ export function showGameOverScreen(gameState: GameState): void {
                 <span style="color: #AAA; font-size: 16px;">High Score</span>
                 <span style="color: #FFD700; font-size: 20px; font-weight: bold;">${gameState.highScore}</span>
             </div>
-            <div style="display: flex; justify-content: space-between;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                 <span style="color: #AAA; font-size: 16px;">Max Combo</span>
                 <span style="color: #FF00FF; font-size: 20px; font-weight: bold;">${gameState.maxCombo}x</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="color: #AAA; font-size: 16px;">Kills</span>
+                <span style="color: #E74C3C; font-size: 20px; font-weight: bold;">${gameState.totalKills}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span style="color: #AAA; font-size: 16px;">Time</span>
+                <span style="color: #3498DB; font-size: 20px; font-weight: bold;">${timeStr}</span>
             </div>
         </div>
 
@@ -686,6 +695,92 @@ export function startCountdown(onComplete: () => void): void {
     };
 
     tick();
+}
+
+export function createPauseModal(
+    onResume: () => void,
+    onRestart: () => void,
+    onSettings: () => void
+): void {
+    if (document.getElementById('pauseModal')) return;
+
+    const modal = document.createElement('div');
+    modal.id = 'pauseModal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(5px);
+        display: none;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+    `;
+    modal.style.display = 'none';
+
+    const title = document.createElement('h1');
+    title.innerText = 'PAUSED';
+    title.style.cssText = `
+        color: #FFD700;
+        font-size: 48px;
+        font-weight: 900;
+        letter-spacing: 5px;
+        margin-bottom: 40px;
+        text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    `;
+
+    const btnStyle = `
+        width: 200px;
+        padding: 15px;
+        margin: 10px;
+        font-size: 18px;
+        font-weight: bold;
+        color: #FFF;
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        cursor: pointer;
+        backdrop-filter: blur(5px);
+        transition: all 0.2s;
+    `;
+
+    const createBtn = (text: string, onClick: () => void, specialColor?: string) => {
+        const btn = document.createElement('button');
+        btn.innerText = text;
+        btn.style.cssText = btnStyle;
+        if (specialColor) {
+            btn.style.borderColor = specialColor;
+            btn.style.color = specialColor;
+        }
+        btn.onclick = () => {
+            vibrate(20);
+            onClick();
+        };
+        // Hover effect via JS since inline styles are tricky with pseudo-classes
+        btn.onmouseenter = () => {
+            btn.style.background = 'rgba(255, 255, 255, 0.2)';
+            btn.style.transform = 'scale(1.05)';
+        };
+        btn.onmouseleave = () => {
+            btn.style.background = 'rgba(255, 255, 255, 0.1)';
+            btn.style.transform = 'scale(1)';
+        };
+        return btn;
+    };
+
+    const resumeBtn = createBtn('RESUME', onResume, '#2ECC71');
+    const restartBtn = createBtn('RESTART', onRestart);
+    const settingsBtn = createBtn('SETTINGS', onSettings);
+    const quitBtn = createBtn('QUIT', () => window.location.reload(), '#E74C3C');
+
+    modal.appendChild(title);
+    modal.appendChild(resumeBtn);
+    modal.appendChild(restartBtn);
+    modal.appendChild(settingsBtn);
+    modal.appendChild(quitBtn);
+
+    document.body.appendChild(modal);
 }
 
 export const _testing = { getLeaderboardHTML };

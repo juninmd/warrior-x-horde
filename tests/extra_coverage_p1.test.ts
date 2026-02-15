@@ -76,7 +76,7 @@ vi.mock('../src/ui-overlay', async () => {
     return {
         ...actual,
         setupShopUI: vi.fn(),
-        updateStartScreenLeaderboard: vi.fn(),
+        updateStartScreenLeaderboard: vi.fn(), createPauseModal: vi.fn(),
     };
 });
 

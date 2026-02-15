@@ -56,7 +56,7 @@ export function drawStar(ctx: CanvasRenderingContext2D, cx: number, cy: number, 
 export function drawJoystick(ctx: CanvasRenderingContext2D): void {
   // Update Alpha for fade in/out
   if (virtualJoystick.active) {
-    virtualJoystick.alpha = Math.min(0.6, virtualJoystick.alpha + 0.15); // Lower max alpha for less obstruction
+    virtualJoystick.alpha = Math.min(0.8, virtualJoystick.alpha + 0.15); // Higher max alpha
   } else {
     virtualJoystick.alpha = Math.max(0, virtualJoystick.alpha - 0.1);
   }
@@ -67,9 +67,7 @@ export function drawJoystick(ctx: CanvasRenderingContext2D): void {
 
   ctx.save();
   ctx.globalAlpha = alpha;
-  // Removed 'lighter' composite mode to make it cleaner and less "bloom-heavy"
 
-  // Stick Position Calculation
   const dx = currentX - startX;
   const dy = currentY - startY;
   const distance = Math.sqrt(dx * dx + dy * dy);
@@ -84,41 +82,53 @@ export function drawJoystick(ctx: CanvasRenderingContext2D): void {
     stickY = startY + Math.sin(angle) * maxRadius;
   }
 
-  // Outer Ring (Base) - Clean Minimalist
+  // Cyber Ring Animation
+  const pulse = Math.sin(Date.now() / 200) * 5;
+
+  // Outer Glow Ring
+  ctx.beginPath();
+  ctx.arc(startX, startY, maxRadius + pulse, 0, Math.PI * 2);
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = `rgba(0, 255, 255, ${0.3 * alpha})`; // Cyan fade
+  ctx.stroke();
+
+  // Main Base Ring
   ctx.beginPath();
   ctx.arc(startX, startY, maxRadius, 0, Math.PI * 2);
   ctx.lineWidth = 2;
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+  ctx.strokeStyle = '#00FFFF'; // Cyan
   ctx.stroke();
 
   // Base Fill
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+  ctx.fillStyle = 'rgba(0, 255, 255, 0.1)';
   ctx.fill();
 
-  // Inner Dot (Center Anchor)
+  // Crosshair / Anchor
   ctx.beginPath();
-  ctx.arc(startX, startY, 4, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-  ctx.fill();
+  ctx.moveTo(startX - 10, startY);
+  ctx.lineTo(startX + 10, startY);
+  ctx.moveTo(startX, startY - 10);
+  ctx.lineTo(startX, startY + 10);
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(0, 255, 255, 0.5)';
+  ctx.stroke();
 
   // Knob (Thumb Position)
   const knobRadius = 20;
 
-  // Shadow/Glow for Knob
-  ctx.shadowColor = COLORS.PLAYER.NORMAL; // Match player color
+  // Knob Glow
+  ctx.shadowColor = '#00FFFF';
   ctx.shadowBlur = 15;
 
   ctx.beginPath();
   ctx.arc(stickX, stickY, knobRadius, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+  ctx.fillStyle = '#FFFFFF';
   ctx.fill();
 
-  // Reset shadow
-  ctx.shadowBlur = 0;
-
   // Knob Border
+  ctx.shadowBlur = 0;
   ctx.lineWidth = 2;
-  ctx.strokeStyle = COLORS.PLAYER.NORMAL;
+  ctx.strokeStyle = '#00FFFF';
   ctx.stroke();
 
   ctx.restore();

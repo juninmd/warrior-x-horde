@@ -168,6 +168,10 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
     killed++;
   }
 
+  if (killed > 0) {
+      gameState.totalKills += killed;
+  }
+
   /* v8 ignore start */
   if (killed > 0) {
       gameState.killStreak += killed;
@@ -255,6 +259,7 @@ function processMiniBossBattle(army: Army, miniBoss: MiniBoss, gameState: GameSt
 
   if (miniBoss.hp <= 0) {
     miniBoss.isActive = false;
+    gameState.totalKills++; // Boss Kill
     triggerHitStop(10); // Hit Stop on MiniBoss
     gameState.score += 300;
     gameState.coins += 50;
@@ -478,6 +483,7 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
 
         if (boss.hp <= 0) {
           boss.isActive = false;
+          gameState.totalKills++; // Boss Kill
           gameState.whiteFlash = 1.0;
           triggerHitStop(20); // Massive Hit Stop on Boss Kill
           gameState.slowMoTimer = 2000; // 2 seconds of Slow Mo
