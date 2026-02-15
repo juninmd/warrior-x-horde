@@ -132,7 +132,11 @@ export class QualityManager {
       this.fpsDropFrames = 0;
 
       this.settings.enableShadows = true;
-      this.settings.particleMultiplier = this.isMobile ? 0.8 : 1.0;
+      if (this.isMobile) {
+          this.settings.particleMultiplier = 0.8;
+      } else {
+          this.settings.particleMultiplier = 1.0;
+      }
       this.settings.simplifiedRendering = false;
       this.settings.maxRenderedSoldiers = 150;
       this.settings.resolutionScale = 1.0;

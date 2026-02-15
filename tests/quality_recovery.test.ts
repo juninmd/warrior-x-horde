@@ -95,4 +95,45 @@ describe('QualityManager Recovery', () => {
          qm.checkRecovery(150);
          expect(qm['recoveryFrames']).toBe(initialFrames);
     });
+
+    it('should maintain recovery frames if FPS is between 50 and 55', () => {
+        const qm = QualityManager.getInstance();
+        qm.setQuality('auto');
+        // Manually set triggered to check recovery logic
+        qm.lowQualityTriggered = true;
+
+        // Good frames to set a base
+        for(let i=0; i<10; i++) qm.checkRecovery(16);
+        const baseFrames = qm['recoveryFrames'];
+        expect(baseFrames).toBe(10);
+
+        // Mediocre frame (19ms = ~52fps)
+        qm.checkRecovery(19);
+
+        expect(qm['recoveryFrames']).toBe(baseFrames); // Should not change
+    });
+
+    it('should restore mobile specific settings', () => {
+        // Mock Mobile
+        Object.defineProperty(navigator, 'userAgent', {
+            value: 'iPhone',
+            configurable: true
+        });
+        QualityManager.resetInstance();
+
+        const qm = QualityManager.getInstance();
+        qm.setQuality('auto');
+
+        // Trigger low
+        for (let i = 0; i < 150; i++) qm.updateFPS(30);
+        expect(qm.lowQualityTriggered).toBe(true);
+        expect(qm.settings.particleMultiplier).toBe(0.3); // Low quality value
+
+        // Recover
+        for (let i = 0; i < 310; i++) qm.checkRecovery(16);
+
+        expect(qm.lowQualityTriggered).toBe(false);
+        // Mobile Restore Value is 0.8
+        expect(qm.settings.particleMultiplier).toBe(0.8);
+    });
 });
