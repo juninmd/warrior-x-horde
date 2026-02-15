@@ -52,7 +52,7 @@ vi.mock('../src/ui-overlay', () => ({
     }),
     showGameOverScreen: vi.fn(),
     startCountdown: vi.fn((cb) => cb && cb()),
-    updateStartScreenLeaderboard: vi.fn(),
+    updateStartScreenLeaderboard: vi.fn(), createPauseModal: vi.fn(),
 }));
 
 // Mock DOM elements required by game.ts

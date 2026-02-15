@@ -1,6 +1,5 @@
 // input.ts - Sistema de input (mouse/touch)
 import { GameState } from './types';
-import { activateSuperCannon } from './shooting';
 import { SettingsManager } from './settings';
 import { virtualJoystick, getCurrentScale } from './input-state';
 import { SENSITIVITY } from './constants';
@@ -195,11 +194,6 @@ export function setupInput(canvas: HTMLCanvasElement, onTouchEffect?: (x: number
     if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
       mouseX = Math.min(canvas.width, mouseX + step);
       isDragging = true;
-    }
-    // Super Cannon - Spacebar
-    if (e.key === ' ' && gameStateRef) {
-      e.preventDefault();
-      activateSuperCannon(gameStateRef);
     }
   });
 }

@@ -14,7 +14,7 @@ vi.mock('../src/ui-overlay', () => ({
   setupGameOverUI: vi.fn(),
   showGameOverScreen: vi.fn(),
   startCountdown: vi.fn((cb) => cb()),
-  updateStartScreenLeaderboard: vi.fn(),
+  updateStartScreenLeaderboard: vi.fn(), createPauseModal: vi.fn(),
 }));
 
 // Mock Audio

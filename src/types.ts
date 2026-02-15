@@ -59,6 +59,9 @@ export interface GameState {
   // Killstreak System
   killStreak: number;
   killStreakTimer: number;
+  // Stats
+  totalKills: number;
+  runStartTime: number;
   // Visuals
   whiteFlash: number;
   warpEffectTimer: number; // For level transitions

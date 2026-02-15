@@ -234,16 +234,6 @@ describe('Input', () => {
 
         const keyD = new KeyboardEvent('keydown', { key: 'd' });
         document.dispatchEvent(keyD);
-
-        // Space for Super Cannon
-        setGameStateRef({ isGameOver: false } as any);
-        const keySpace = new KeyboardEvent('keydown', { key: ' ' });
-        const preventDefaultSpy = vi.spyOn(keySpace, 'preventDefault');
-
-        document.dispatchEvent(keySpace);
-
-        expect(preventDefaultSpy).toHaveBeenCalled();
-        expect(activateSuperCannon).toHaveBeenCalled();
     });
 
     it('should vibrate', () => {

@@ -148,10 +148,6 @@ describe('Input Coverage', () => {
 
     // Arrow Right
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight' }));
-
-    // Space (Super Cannon)
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: ' ' }));
-    expect(shootingMock.activateSuperCannon).toHaveBeenCalled();
   });
 
   it('should vibrate safely', () => {

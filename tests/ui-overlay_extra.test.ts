@@ -33,7 +33,9 @@ describe('UI Overlay Extra Coverage', () => {
             superCannonDuration: 5000,
             superCannonTimer: 0,
             maxCombo: 10,
-            isVictory: false
+            isVictory: false,
+            totalKills: 0,
+            runStartTime: Date.now() - 5000
         } as any;
 
         vi.clearAllMocks();

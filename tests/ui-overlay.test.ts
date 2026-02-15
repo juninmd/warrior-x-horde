@@ -23,7 +23,9 @@ describe('UI Overlay', () => {
             score: 100,
             highScore: 200,
             maxCombo: 5,
-            currentLevel: 1
+            currentLevel: 1,
+            totalKills: 50,
+            runStartTime: Date.now() - 10000 // 10 seconds ago
         } as any;
         vi.clearAllMocks();
     });

@@ -213,7 +213,7 @@ describe('Extra Coverage Part 2', () => {
              const onRestart = vi.fn();
              uiOverlay.setupGameOverUI(onRestart, vi.fn());
 
-             const gs: any = { score: 100, highScore: 100, maxCombo: 10, isVictory: false, currentLevel: 1 };
+             const gs: any = { score: 100, highScore: 100, maxCombo: 10, isVictory: false, currentLevel: 1, totalKills: 0, runStartTime: Date.now() };
              uiOverlay.showGameOverScreen(gs);
 
              const container = document.getElementById('gameOverContainer');

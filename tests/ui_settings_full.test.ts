@@ -51,7 +51,9 @@ describe('UI Settings', () => {
     mockQualitySettings = {
         settings: {
             powerSavingMode: false,
-        }
+        },
+        updateFPS: vi.fn(),
+        checkRecovery: vi.fn()
     };
 
     // @ts-ignore
