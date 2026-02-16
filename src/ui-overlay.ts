@@ -23,29 +23,30 @@ function getLeaderboardHTML(currentScore: number = -1): string {
 
     if (leaderboard.length === 0) return '';
 
+    const items = leaderboard.map((entry: { score: number }, index: number) => {
+        let safeScore = Number(entry.score);
+        if (isNaN(safeScore) || !isFinite(safeScore)) safeScore = 0;
+        safeScore = Math.floor(safeScore);
+
+        const isCurrent = safeScore === currentScore;
+        const currentClass = isCurrent ? 'current' : '';
+        const textColor = isCurrent ? '#FFF' : '#AAA';
+        const weight = isCurrent ? '800' : 'normal';
+        const rankColor = index === 0 ? '#FFD700' : (index === 1 ? '#C0C0C0' : (index === 2 ? '#CD7F32' : textColor));
+
+        return `
+        <div class="leaderboard-item ${currentClass}">
+            <span style="color: ${rankColor}; font-weight: bold; font-size: 14px; width: 30px;">#${index + 1}</span>
+            <span style="color: ${textColor}; font-weight: ${weight}; font-size: 14px; font-family: monospace;">${safeScore.toLocaleString()}</span>
+        </div>
+        `;
+    }).join('');
+
     return `
-    <div style="background: rgba(0,0,0,0.4); border-radius: 12px; padding: 12px; margin-bottom: 20px; width: 100%; backdrop-filter: blur(5px);">
-        <h3 style="color: #FFD700; font-size: 12px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">Top Commanders</h3>
-        <div style="display: flex; flex-direction: column; gap: 4px;">
-            ${leaderboard.map((entry: { score: number }, index: number) => {
-                // Security: Sanitize score to prevent XSS from manipulated localStorage
-                let safeScore = Number(entry.score);
-                if (isNaN(safeScore) || !isFinite(safeScore)) safeScore = 0;
-                safeScore = Math.floor(safeScore);
-
-                const isCurrent = safeScore === currentScore;
-                const bg = isCurrent ? 'linear-gradient(90deg, rgba(255, 215, 0, 0.2), transparent)' : 'rgba(255, 255, 255, 0.02)';
-                const textColor = isCurrent ? '#FFF' : '#AAA';
-                const weight = isCurrent ? '800' : 'normal';
-                const rankColor = index === 0 ? '#FFD700' : (index === 1 ? '#C0C0C0' : (index === 2 ? '#CD7F32' : textColor));
-
-                return `
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; border-radius: 6px; background: ${bg};">
-                    <span style="color: ${rankColor}; font-weight: bold; font-size: 14px; width: 30px;">#${index + 1}</span>
-                    <span style="color: ${textColor}; font-weight: ${weight}; font-size: 14px; font-family: monospace;">${safeScore.toLocaleString()}</span>
-                </div>
-                `;
-            }).join('')}
+    <div class="leaderboard-box">
+        <h3 class="leaderboard-title">Top Commanders</h3>
+        <div class="leaderboard-list">
+            ${items}
         </div>
     </div>
     `;
@@ -55,7 +56,6 @@ export function updateStartScreenLeaderboard(): void {
     const startScreenContent = document.querySelector('.start-screen-content');
     if (!startScreenContent) return;
 
-    // Check if leaderboard already exists to avoid duplication if called multiple times
     let lbContainer = document.getElementById('startScreenLeaderboard');
     if (lbContainer) lbContainer.remove();
 
@@ -66,59 +66,44 @@ export function updateStartScreenLeaderboard(): void {
     lbContainer.id = 'startScreenLeaderboard';
     lbContainer.innerHTML = lbHTML;
 
-    // Insert before the button (last element usually) or append
-    // Structure: Logo, P, Button. We want Logo, P, Leaderboard, Button
     const btn = startScreenContent.querySelector('.start-btn');
-    /* v8 ignore start */
     if (btn) {
         startScreenContent.insertBefore(lbContainer, btn);
     } else {
         startScreenContent.appendChild(lbContainer);
     }
 
-    // Add visual flair to logo if not already done via CSS
     const logo = startScreenContent.querySelector('.game-logo');
     if (logo) {
       (logo as HTMLElement).style.fontFamily = '"Rajdhani", sans-serif';
     }
-    /* v8 ignore stop */
 }
 
 export function setupStartScreenInstallBtn(deferredPrompt: BeforeInstallPromptEvent): void {
     const startScreenContent = document.querySelector('.start-screen-content');
     if (!startScreenContent || !deferredPrompt) return;
 
-    // Avoid duplicates
     if (document.getElementById('startInstallBtn')) return;
 
     const installBtn = document.createElement('button');
     installBtn.id = 'startInstallBtn';
     installBtn.innerText = '📲 INSTALL APP';
-    installBtn.style.cssText = `
-        background: #FFD700;
-        color: #333;
-        border: none;
-        padding: 12px 24px;
-        border-radius: 25px;
-        font-weight: bold;
-        font-size: 16px;
-        cursor: pointer;
-        margin-top: 15px;
-        width: 80%;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        animation: pulse 2s infinite;
-    `;
+    // Keeping some inline styles for specific button tweaks not general enough for CSS
+    installBtn.className = 'start-btn';
+    installBtn.style.background = '#FFD700';
+    installBtn.style.color = '#333';
+    installBtn.style.marginTop = '15px';
+    installBtn.style.fontSize = '16px';
+    installBtn.style.boxShadow = '0 4px 10px rgba(0,0,0,0.3)';
 
     installBtn.onclick = async () => {
         vibrate(20);
         deferredPrompt.prompt();
         const { outcome } = await deferredPrompt.userChoice;
         console.log(`User response to install prompt: ${outcome}`);
-        // Remove button after interaction
         installBtn.remove();
     };
 
-    // Insert after the start button
     const startBtn = startScreenContent.querySelector('.start-btn');
     if (startBtn && startBtn.nextSibling) {
         startScreenContent.insertBefore(installBtn, startBtn.nextSibling);
@@ -130,45 +115,16 @@ export function setupStartScreenInstallBtn(deferredPrompt: BeforeInstallPromptEv
 // --- Helper: Create Shop Button ---
 function createShopButton(type: string, price: number, color: string, label: string): HTMLButtonElement {
   const btn = document.createElement('button');
-  // Use a slightly lighter/darker version of the accent color for gradient
-  const bgGradient = `linear-gradient(135deg, rgba(30, 30, 40, 0.95) 0%, rgba(20, 20, 30, 0.95) 100%)`;
+  btn.className = 'shop-btn';
+  btn.style.borderColor = color;
+  btn.style.borderBottomColor = color; // Maintain the colored border
 
-  btn.innerHTML = `<span style="font-size: 20px; filter: drop-shadow(0 0 5px ${color});">${label}</span><br><span style="font-size: 11px; color: #EEE;">💰 ${price}</span>`;
-  btn.style.cssText = `
-    width: 72px;
-    height: 72px;
-    padding: 4px;
-    font-family: 'Segoe UI', sans-serif;
-    font-weight: bold;
-    background: ${bgGradient};
-    color: #FFF;
-    border: 1px solid ${color};
-    border-bottom: 3px solid ${color};
-    border-radius: 12px;
-    cursor: pointer;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4), inset 0 0 10px rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(8px);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    touch-action: manipulation;
-    user-select: none;
-    -webkit-user-select: none;
-    transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    position: relative;
-    overflow: hidden;
-  `;
+  btn.innerHTML = `<span class="shop-icon" style="filter: drop-shadow(0 0 5px ${color});">${label}</span><span class="shop-price">💰 ${price}</span>`;
 
-  // Effects
-  // Use pointer events for unified handling
   btn.addEventListener('pointerdown', () => {
-      btn.style.transform = 'scale(0.95)';
-      // Optional: Prevent default if necessary, but careful with scrolling
+      // transform handled by CSS :active, but scale logic was JS based before.
+      // Keeping JS listener if we need specific logic, otherwise CSS :active covers it.
   });
-
-  btn.addEventListener('pointerup', () => btn.style.transform = 'scale(1)');
-  btn.addEventListener('pointerleave', () => btn.style.transform = 'scale(1)');
 
   return btn;
 }
@@ -177,25 +133,14 @@ function createShopButton(type: string, price: number, color: string, label: str
 export type BuyAction = (type: 'bazooka' | 'rambo' | 'laser' | 'soldier' | 'nuke' | 'recharge_super', cost: number) => void;
 
 export function setupShopUI(onBuy: BuyAction): void {
-  // Clean up existing container if any
   const existing = document.getElementById('shopContainer');
   if (existing) existing.remove();
 
   shopContainer = document.createElement('div');
   shopContainer.id = 'shopContainer';
-  shopContainer.style.cssText = `
-    position: absolute;
-    top: 150px;
-    right: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    z-index: 10;
-    display: none;
-  `;
+  shopContainer.className = 'shop-container';
   document.body.appendChild(shopContainer);
 
-  // Define buttons config
   const configs = [
     { id: 'soldier', type: 'soldier', price: 50, color: COLORS.PLAYER.NORMAL, label: '🛡️ +10' },
     { id: 'bazooka', type: 'bazooka', price: 50, color: COLORS.PLAYER.BAZOOKA, label: '🚀' },
@@ -208,29 +153,18 @@ export function setupShopUI(onBuy: BuyAction): void {
   configs.forEach(cfg => {
     const btn = createShopButton(cfg.type, cfg.price, cfg.color, cfg.label);
 
-    // Add specific text overrides if needed
     if (cfg.id === 'soldier') {
-         /* v8 ignore next */
-         btn.innerHTML = `<span style="font-size: 20px;">🛡️</span><span style="font-size: 10px; font-weight: 800; display: block; margin-top: -2px;">+10 UNITS</span><span style="font-size: 11px;">💰 ${cfg.price}</span>`;
+         btn.innerHTML = `<span class="shop-icon">🛡️</span><span class="shop-label">+10 UNITS</span><span class="shop-price">💰 ${cfg.price}</span>`;
     } else if (cfg.id === 'nuke') {
-         /* v8 ignore next */
-         btn.innerHTML = `<span style="font-size: 20px;">☢️</span><span style="font-size: 10px; font-weight: 800; display: block; margin-top: -2px;">NUKE</span><span style="font-size: 11px;">💰 ${cfg.price}</span>`;
+         btn.innerHTML = `<span class="shop-icon">☢️</span><span class="shop-label">NUKE</span><span class="shop-price">💰 ${cfg.price}</span>`;
     } else if (cfg.id === 'recharge') {
-         btn.innerHTML = `<span style="font-size: 20px;">🔋</span><span style="font-size: 10px; font-weight: 800; display: block; margin-top: -2px;">RECARGA</span><span style="font-size: 11px;">💰 ${cfg.price}</span>`;
+         btn.innerHTML = `<span class="shop-icon">🔋</span><span class="shop-label">RECARGA</span><span class="shop-price">💰 ${cfg.price}</span>`;
     }
 
-    // Event listeners
-    // Using click with touch-action: manipulation is standard for mobile buttons now.
-    // It avoids the double-fire issue of listening to both touch and click.
     const handler = (e: Event) => {
-        /* v8 ignore start */
         e.stopPropagation();
-        vibrate(15); // Haptic feedback
+        vibrate(15);
         onBuy(cfg.type as Parameters<BuyAction>[0], cfg.price);
-        // Persistir moedas após compra
-        // Nota: gameState não é acessível diretamente aqui, mas o callback onBuy atualiza o estado
-        // Idealmente, a persistência deveria ser feita no callback, mas podemos adicionar um pequeno delay ou acessar globalmente se necessário.
-        // A melhor prática é mover a lógica de persistência para o callback 'handleBuy' em game.ts.
     };
     btn.addEventListener('click', handler);
 
@@ -248,7 +182,6 @@ export function updateShopUI(gameState: GameState): void {
   }
   shopContainer.style.display = 'flex';
 
-  // Config map to match buttons to costs
   const costs: Record<string, number> = {
       'soldier': 50, 'bazooka': 50, 'rambo': 100, 'laser': 150, 'nuke': 500, 'recharge': 200
   };
@@ -256,12 +189,8 @@ export function updateShopUI(gameState: GameState): void {
   Object.entries(buttons).forEach(([id, btn]) => {
       const cost = costs[id];
       if (gameState.coins >= cost) {
-          btn.style.opacity = '1';
-          btn.style.filter = 'grayscale(0%)';
           btn.disabled = false;
       } else {
-          btn.style.opacity = '0.5';
-          btn.style.filter = 'grayscale(100%)';
           btn.disabled = true;
       }
   });
@@ -272,54 +201,32 @@ export type SuperCannonAction = () => void;
 
 export function setupSuperCannonUI(onActivate: SuperCannonAction): void {
     superCannonContainer = document.getElementById('superCannonContainer');
-    if (!superCannonContainer) return;
+    if (!superCannonContainer) {
+        // Create it if it doesn't exist (it wasn't in game.ts, but let's be safe)
+        // Actually game.ts usually relies on HTML existing or creates it?
+        // Let's create it if missing to be robust
+        superCannonContainer = document.createElement('div');
+        superCannonContainer.id = 'superCannonContainer';
+        document.body.appendChild(superCannonContainer);
+    }
 
-    // Clear previous
+    superCannonContainer.className = 'super-cannon-container';
     superCannonContainer.innerHTML = '';
 
     const btn = document.createElement('button');
     btn.id = 'superCannonBtn';
+    btn.className = 'super-cannon-btn';
     btn.innerHTML = '⚡ SUPER';
-    btn.style.cssText = `
-        min-width: 120px;
-        height: 45px;
-        padding: 8px 20px;
-        font-size: 16px;
-        font-weight: bold;
-        background: linear-gradient(180deg, #FFD700 0%, #FFA500 100%);
-        color: #333;
-        border: 3px solid #FFD700;
-        border-radius: 12px;
-        cursor: pointer;
-        box-shadow: 0 4px 15px rgba(255, 215, 0, 0.5), 0 0 15px rgba(255, 215, 0, 0.3);
-        touch-action: manipulation;
-        user-select: none;
-        -webkit-user-select: none;
-        -webkit-tap-highlight-color: transparent;
-        -webkit-touch-callout: none;
-        transition: transform 0.1s;
-    `;
 
     const trigger = (e: Event) => {
-        /* v8 ignore start */
-        // Prevent default only if it's touch to avoid synthesized click if we handle both?
-        // Actually, just handle click is safest with touch-action: manipulation.
-        // But for "Game Actions" sometimes touchstart is preferred for lower latency.
-        // Let's stick to click for consistency, or careful pointerdown.
-        // Given this is a big action button, click is fine.
         e.stopPropagation();
-        vibrate(25); // Stronger vibration for Super Cannon
+        vibrate(25);
         onActivate();
-
-        // Visual feedback
         btn.style.transform = 'scale(0.95)';
         setTimeout(() => btn.style.transform = 'scale(1)', 100);
-        /* v8 ignore stop */
     };
 
     btn.addEventListener('click', trigger);
-    // Remove touchstart to avoid double trigger, rely on browser fast-tap via touch-action
-
     superCannonContainer.appendChild(btn);
     buttons['superCannon'] = btn;
 }
@@ -334,7 +241,6 @@ export function updateSuperCannonUI(gameState: GameState): void {
     }
 
     superCannonContainer.style.display = 'flex';
-    superCannonContainer.style.justifyContent = 'center';
 
     const now = Date.now();
     const timeSinceLastUse = now - gameState.superCannonLastUsed;
@@ -343,24 +249,16 @@ export function updateSuperCannonUI(gameState: GameState): void {
 
     if (gameState.superCannonActive) {
         btn.innerHTML = '⚡ ATIVO!';
-        btn.style.background = 'linear-gradient(180deg, #FFEB3B 0%, #FF9800 100%)';
-        btn.style.boxShadow = '0 0 25px rgba(255, 215, 0, 0.9), 0 0 50px rgba(255, 215, 0, 0.5)';
-        btn.style.borderColor = '#FFEB3B';
+        btn.classList.add('active');
         btn.disabled = true;
     } else if (isOnCooldown) {
         const cooldownSecs = Math.ceil(cooldownRemaining / 1000);
         btn.innerHTML = `⏳ ${cooldownSecs}s`;
-        btn.style.background = 'linear-gradient(180deg, #555 0%, #333 100%)';
-        btn.style.boxShadow = '0 4px 10px rgba(0, 0, 0, 0.4)';
-        btn.style.borderColor = '#555';
-        btn.style.color = '#999';
+        btn.classList.remove('active');
         btn.disabled = true;
     } else {
         btn.innerHTML = '⚡ SUPER';
-        btn.style.background = 'linear-gradient(180deg, #FFD700 0%, #FFA500 100%)';
-        btn.style.boxShadow = '0 4px 15px rgba(255, 215, 0, 0.5), 0 0 15px rgba(255, 215, 0, 0.3)';
-        btn.style.borderColor = '#FFD700';
-        btn.style.color = '#333';
+        btn.classList.remove('active');
         btn.disabled = false;
     }
 }
@@ -372,49 +270,16 @@ export function setupGameOverUI(onRestart: () => void, onShare: (platform: 'x' |
     if (!gameOverContainer) {
         gameOverContainer = document.createElement('div');
         gameOverContainer.id = 'gameOverContainer';
-        gameOverContainer.style.cssText = `
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(5px);
-            z-index: 100;
-            opacity: 0;
-            transition: opacity 0.5s ease;
-        `;
+        gameOverContainer.className = 'game-over-container';
         document.body.appendChild(gameOverContainer);
     }
 
-    // Clear content
     gameOverContainer.innerHTML = '';
 
     const content = document.createElement('div');
-    content.style.cssText = `
-        background: rgba(30, 30, 40, 0.9);
-        border: 2px solid #4A90D9;
-        border-radius: 20px;
-        padding: 30px;
-        width: 85%;
-        max-width: 400px;
-        text-align: center;
-        box-shadow: 0 0 30px rgba(74, 144, 217, 0.3);
-        transform: scale(0.9);
-        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    `;
-
-    // Add class for animation targeting
     content.className = 'game-over-content';
-
     gameOverContainer.appendChild(content);
 
-    // Storing callbacks for dynamic button creation in showGameOverScreen
-    // Using dataset or just storing in module level variables would be cleaner, but adhering to existing pattern with type safety:
     interface GameOverContainer extends HTMLElement {
         _onRestart?: () => void;
         _onShare?: (platform: 'x' | 'whatsapp') => void;
@@ -443,12 +308,12 @@ export function showGameOverScreen(gameState: GameState): void {
     const content = gameOverContainer.querySelector('.game-over-content') as HTMLElement;
     if (!content) return;
 
-    // Rank Calculation
     let rank = 'C';
-    let rankColor = '#95a5a6'; // Gray
-    if (gameState.score >= 5000) { rank = 'S'; rankColor = '#FFD700'; } // Gold
-    else if (gameState.score >= 3000) { rank = 'A'; rankColor = '#9B59B6'; } // Purple
-    else if (gameState.score >= 1000) { rank = 'B'; rankColor = '#3498DB'; } // Blue
+    let rankColor = '#95a5a6';
+    if (gameState.score >= 5000) { rank = 'S'; rankColor = '#FFD700'; }
+    else if (gameState.score >= 3000) { rank = 'A'; rankColor = '#9B59B6'; }
+    else if (gameState.score >= 1000) { rank = 'B'; rankColor = '#3498DB'; }
+    else if (gameState.score >= 500) { rank = 'C'; rankColor = '#2ECC71'; }
 
     content.style.borderColor = titleColor;
     content.style.boxShadow = `0 0 30px ${isVictory ? 'rgba(46, 204, 113, 0.3)' : 'rgba(231, 76, 60, 0.3)'}`;
@@ -457,27 +322,9 @@ export function showGameOverScreen(gameState: GameState): void {
     const timeStr = new Date(Date.now() - gameState.runStartTime).toISOString().substr(14, 5);
 
     content.innerHTML = `
-        <style>
-            @keyframes rank-stamp {
-                0% { transform: scale(3) rotate(-10deg); opacity: 0; }
-                50% { transform: scale(0.8) rotate(5deg); opacity: 1; }
-                70% { transform: scale(1.1) rotate(-3deg); }
-                100% { transform: scale(1) rotate(0deg); opacity: 1; }
-            }
-            @keyframes pulse-btn {
-                0% { transform: scale(1); box-shadow: 0 4px 0 #1A5276; }
-                50% { transform: scale(1.02); box-shadow: 0 6px 10px rgba(74, 144, 217, 0.3); }
-                100% { transform: scale(1); box-shadow: 0 4px 0 #1A5276; }
-            }
-            @keyframes fadeIn {
-                from { opacity: 0; transform: translateY(10px); }
-                to { opacity: 1; transform: translateY(0); }
-            }
-        </style>
-        <h1 style="color: ${titleColor}; font-size: 42px; margin: 0 0 10px 0; text-shadow: 0 2px 5px rgba(0,0,0,0.5);">${title}</h1>
+        <h1 class="game-over-title" style="color: ${titleColor};">${title}</h1>
         ${isVictory ? '<p style="color: #00FF88; font-weight: bold; font-size: 18px; margin-bottom: 20px;">🛸 MOTHERSHIP DESTROYED!</p>' : ''}
 
-        <!-- Rank Badge -->
         <div style="margin-bottom: 20px;">
             <div style="
                 display: inline-flex;
@@ -496,92 +343,43 @@ export function showGameOverScreen(gameState: GameState): void {
             <div style="color: ${rankColor}; font-size: 12px; font-weight: bold; margin-top: 5px; letter-spacing: 1px; animation: fadeIn 0.5s 0.8s backwards;">RANK</div>
         </div>
 
-        <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 15px; margin-bottom: 20px;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                <span style="color: #AAA; font-size: 18px;">Score</span>
-                <span id="finalScoreDisplay" style="color: #FFF; font-size: 24px; font-weight: bold;">0</span>
+        <div class="game-over-stats">
+            <div class="stat-row">
+                <span class="stat-label">Score</span>
+                <span id="finalScoreDisplay" class="stat-value">0</span>
             </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                <span style="color: #AAA; font-size: 16px;">High Score</span>
-                <span style="color: #FFD700; font-size: 20px; font-weight: bold;">${gameState.highScore}</span>
+            <div class="stat-row">
+                <span class="stat-label">High Score</span>
+                <span class="stat-value" style="color: #FFD700;">${gameState.highScore}</span>
             </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                <span style="color: #AAA; font-size: 16px;">Max Combo</span>
-                <span style="color: #FF00FF; font-size: 20px; font-weight: bold;">${gameState.maxCombo}x</span>
+            <div class="stat-row">
+                <span class="stat-label">Max Combo</span>
+                <span class="stat-value" style="color: #FF00FF;">${gameState.maxCombo}x</span>
             </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                <span style="color: #AAA; font-size: 16px;">Kills</span>
-                <span style="color: #E74C3C; font-size: 20px; font-weight: bold;">${gameState.totalKills}</span>
+            <div class="stat-row">
+                <span class="stat-label">Kills</span>
+                <span class="stat-value" style="color: #E74C3C;">${gameState.totalKills}</span>
             </div>
-            <div style="display: flex; justify-content: space-between;">
-                <span style="color: #AAA; font-size: 16px;">Time</span>
-                <span style="color: #3498DB; font-size: 20px; font-weight: bold;">${timeStr}</span>
+            <div class="stat-row">
+                <span class="stat-label">Time</span>
+                <span class="stat-value" style="color: #3498DB;">${timeStr}</span>
             </div>
         </div>
 
         ${leaderboardHTML}
 
         ${gameState.deferredInstallPrompt ? `
-        <button id="goInstallBtn" style="
-            width: 100%;
-            padding: 15px;
-            font-size: 16px;
-            font-weight: bold;
-            color: #333;
-            background: #FFD700;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            margin-bottom: 15px;
-            box-shadow: 0 4px 0 #DAA520;
-        ">📲 INSTALL APP</button>
+        <button id="goInstallBtn" class="game-over-btn" style="background: #FFD700; color: #333; box-shadow: 0 4px 0 #DAA520;">📲 INSTALL APP</button>
         ` : ''}
 
-        <button id="goRestartBtn" style="
-            width: 100%;
-            padding: 15px;
-            font-size: 20px;
-            font-weight: bold;
-            color: #FFF;
-            background: linear-gradient(180deg, #4A90D9 0%, #2980B9 100%);
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            margin-bottom: 15px;
-            box-shadow: 0 4px 0 #1A5276;
-            transition: transform 0.1s;
-            animation: pulse-btn 2s infinite ease-in-out;
-        ">${isVictory ? 'CONTINUE LEVEL 11 ➡️' : '🔄 TRY AGAIN'}</button>
+        <button id="goRestartBtn" class="game-over-btn">${isVictory ? 'CONTINUE LEVEL 11 ➡️' : '🔄 TRY AGAIN'}</button>
 
-        <div style="display: flex; gap: 10px;">
-            <button id="goShareX" style="
-                flex: 1;
-                padding: 10px;
-                font-size: 14px;
-                font-weight: bold;
-                color: #FFF;
-                background: #1DA1F2;
-                border: none;
-                border-radius: 8px;
-                cursor: pointer;
-                box-shadow: 0 3px 0 #0C7ABF;
-            ">𝕏 SHARE</button>
-            <button id="goShareWa" style="
-                flex: 1;
-                padding: 10px;
-                font-size: 14px;
-                font-weight: bold;
-                color: #FFF;
-                background: #25D366;
-                border: none;
-                border-radius: 8px;
-                cursor: pointer;
-                box-shadow: 0 3px 0 #128C7E;
-            ">WHATSAPP</button>
+        <div class="share-btn-group">
+            <button id="goShareX" class="share-btn x">𝕏 SHARE</button>
+            <button id="goShareWa" class="share-btn wa">WHATSAPP</button>
         </div>
     `;
 
-    // Attach listeners
     const restartBtn = document.getElementById('goRestartBtn');
     restartBtn?.addEventListener('click', () => {
         vibrate(20);
@@ -597,27 +395,22 @@ export function showGameOverScreen(gameState: GameState): void {
         installBtn.addEventListener('click', async () => {
             if (!gameState.deferredInstallPrompt) return;
             vibrate(20);
-            /* v8 ignore start */
             gameState.deferredInstallPrompt.prompt();
             const { outcome } = await gameState.deferredInstallPrompt.userChoice;
             console.log(`User response to install prompt: ${outcome}`);
             gameState.deferredInstallPrompt = null;
             installBtn.style.display = 'none';
-            /* v8 ignore stop */
         });
     }
 
     document.getElementById('goShareX')?.addEventListener('click', () => onShare('x'));
     document.getElementById('goShareWa')?.addEventListener('click', () => onShare('whatsapp'));
 
-    // Show
     gameOverContainer.style.display = 'flex';
-    // Force reflow
     void gameOverContainer.offsetHeight;
     gameOverContainer.style.opacity = '1';
     content.style.transform = 'scale(1)';
 
-    // Animate Score
     const scoreDisplay = document.getElementById('finalScoreDisplay');
     if (scoreDisplay) {
         let startTimestamp: number | null = null;
@@ -628,7 +421,6 @@ export function showGameOverScreen(gameState: GameState): void {
         const step = (timestamp: number) => {
             if (!startTimestamp) startTimestamp = timestamp;
             const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-            // Ease out cubic
             const ease = 1 - Math.pow(1 - progress, 3);
             const value = Math.floor(ease * (end - start) + start);
             scoreDisplay.innerHTML = value.toLocaleString();
@@ -640,7 +432,6 @@ export function showGameOverScreen(gameState: GameState): void {
     }
 }
 
-// --- Start Countdown ---
 export function startCountdown(onComplete: () => void): void {
     const el = document.createElement('div');
     el.style.cssText = `
@@ -665,7 +456,6 @@ export function startCountdown(onComplete: () => void): void {
             el.style.transform = 'scale(1.5)';
             el.style.opacity = '0';
 
-            // Animate
             el.animate([
                 { transform: 'scale(0.5)', opacity: 0 },
                 { transform: 'scale(1.2)', opacity: 1, offset: 0.5 },
@@ -706,73 +496,28 @@ export function createPauseModal(
 
     const modal = document.createElement('div');
     modal.id = 'pauseModal';
-    modal.style.cssText = `
-        position: fixed;
-        top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0, 0, 0, 0.7);
-        backdrop-filter: blur(5px);
-        display: none;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        z-index: 2000;
-    `;
+    modal.className = 'pause-modal';
     modal.style.display = 'none';
 
     const title = document.createElement('h1');
     title.innerText = 'PAUSED';
-    title.style.cssText = `
-        color: #FFD700;
-        font-size: 48px;
-        font-weight: 900;
-        letter-spacing: 5px;
-        margin-bottom: 40px;
-        text-shadow: 0 4px 10px rgba(0,0,0,0.5);
-    `;
+    title.className = 'pause-title';
 
-    const btnStyle = `
-        width: 200px;
-        padding: 15px;
-        margin: 10px;
-        font-size: 18px;
-        font-weight: bold;
-        color: #FFF;
-        background: rgba(255, 255, 255, 0.1);
-        border: 2px solid rgba(255, 255, 255, 0.2);
-        border-radius: 8px;
-        cursor: pointer;
-        backdrop-filter: blur(5px);
-        transition: all 0.2s;
-    `;
-
-    const createBtn = (text: string, onClick: () => void, specialColor?: string) => {
+    const createBtn = (text: string, onClick: () => void, className: string = '') => {
         const btn = document.createElement('button');
         btn.innerText = text;
-        btn.style.cssText = btnStyle;
-        if (specialColor) {
-            btn.style.borderColor = specialColor;
-            btn.style.color = specialColor;
-        }
+        btn.className = `pause-btn ${className}`;
         btn.onclick = () => {
             vibrate(20);
             onClick();
         };
-        // Hover effect via JS since inline styles are tricky with pseudo-classes
-        btn.onmouseenter = () => {
-            btn.style.background = 'rgba(255, 255, 255, 0.2)';
-            btn.style.transform = 'scale(1.05)';
-        };
-        btn.onmouseleave = () => {
-            btn.style.background = 'rgba(255, 255, 255, 0.1)';
-            btn.style.transform = 'scale(1)';
-        };
         return btn;
     };
 
-    const resumeBtn = createBtn('RESUME', onResume, '#2ECC71');
+    const resumeBtn = createBtn('RESUME', onResume, 'resume');
     const restartBtn = createBtn('RESTART', onRestart);
     const settingsBtn = createBtn('SETTINGS', onSettings);
-    const quitBtn = createBtn('QUIT', () => window.location.reload(), '#E74C3C');
+    const quitBtn = createBtn('QUIT', () => window.location.reload(), 'quit');
 
     modal.appendChild(title);
     modal.appendChild(resumeBtn);

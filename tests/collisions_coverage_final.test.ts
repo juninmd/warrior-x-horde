@@ -170,7 +170,7 @@ describe('Collisions Coverage Final', () => {
 
       // Now combo is 2.
       expect(mockGameState.combo).toBe(2);
-      expect(renderer.addFloatingText).toHaveBeenCalledWith(expect.stringContaining('2x COMBO!'), expect.any(Number), expect.any(Number), COLORS.UI.GOLD, 1.1);
+      expect(renderer.addFloatingText).toHaveBeenCalledWith(expect.stringContaining('2x COMBO!'), expect.any(Number), expect.any(Number), COLORS.UI.GOLD, 1.3);
   });
 
   it('should handle soldier deaths in horde battle (damageFlash)', () => {

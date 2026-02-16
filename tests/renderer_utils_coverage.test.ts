@@ -1,66 +1,84 @@
 import { describe, it, expect, vi } from 'vitest';
+
+// Mock input-state to control joystick state
+vi.mock('../src/input-state', () => ({
+    virtualJoystick: {
+        active: false,
+        startX: 0,
+        startY: 0,
+        currentX: 0,
+        currentY: 0,
+        maxRadius: 50,
+        alpha: 0
+    }
+}));
+
 import { drawJoystick } from '../src/renderer-utils';
 import { virtualJoystick } from '../src/input-state';
 
 describe('Renderer Utils Coverage', () => {
-  it('should draw joystick when active and hit pulse logic', () => {
-    // Mock canvas context
-    const ctx = {
-      save: vi.fn(),
-      restore: vi.fn(),
-      beginPath: vi.fn(),
-      arc: vi.fn(),
-      fill: vi.fn(),
-      stroke: vi.fn(),
-      moveTo: vi.fn(),
-      lineTo: vi.fn(),
-      createRadialGradient: vi.fn(() => ({ addColorStop: vi.fn() })),
-      setLineDash: vi.fn(),
-      globalAlpha: 1,
-      globalCompositeOperation: '',
-      lineWidth: 1,
-      strokeStyle: '',
-      fillStyle: '',
-    } as any;
+    it('should draw joystick when active and hit pulse logic', () => {
+        const ctx = {
+            save: vi.fn(),
+            restore: vi.fn(),
+            beginPath: vi.fn(),
+            moveTo: vi.fn(),
+            lineTo: vi.fn(),
+            closePath: vi.fn(),
+            stroke: vi.fn(),
+            fill: vi.fn(),
+            setLineDash: vi.fn(),
+            translate: vi.fn(),
+            rotate: vi.fn(),
+            fillRect: vi.fn(),
+            strokeRect: vi.fn(),
+            globalAlpha: 0,
+            strokeStyle: '',
+            lineWidth: 0,
+            fillStyle: '',
+            shadowColor: '',
+            shadowBlur: 0
+        } as unknown as CanvasRenderingContext2D;
 
-    // Set joystick to active
-    virtualJoystick.start(100, 100);
-    virtualJoystick.move(150, 150);
+        virtualJoystick.active = true;
+        virtualJoystick.startX = 100;
+        virtualJoystick.startY = 100;
+        virtualJoystick.currentX = 200; // Far away to trigger clamp
+        virtualJoystick.currentY = 200;
+        virtualJoystick.alpha = 0.5;
 
-    // This should hit the 'if (virtualJoystick.active)' block including line 80
-    drawJoystick(ctx);
+        drawJoystick(ctx);
 
-    expect(ctx.save).toHaveBeenCalled();
-    expect(ctx.restore).toHaveBeenCalled();
+        expect(ctx.save).toHaveBeenCalled();
+        expect(ctx.restore).toHaveBeenCalled();
+        // Check clamp logic indirectly by ensuring it ran through
+        expect(ctx.translate).toHaveBeenCalled();
+    });
 
-    // Reset
-    virtualJoystick.end();
-  });
+    it('should draw joystick when fading out', () => {
+        const ctx = {
+            save: vi.fn(),
+            restore: vi.fn(),
+            beginPath: vi.fn(),
+            moveTo: vi.fn(),
+            lineTo: vi.fn(),
+            closePath: vi.fn(),
+            stroke: vi.fn(),
+            fill: vi.fn(),
+            setLineDash: vi.fn(),
+            translate: vi.fn(),
+            rotate: vi.fn(),
+            fillRect: vi.fn(),
+            strokeRect: vi.fn(),
+            globalAlpha: 0
+        } as unknown as CanvasRenderingContext2D;
 
-  it('should draw joystick when fading out', () => {
-    const ctx = {
-      save: vi.fn(),
-      restore: vi.fn(),
-      beginPath: vi.fn(),
-      arc: vi.fn(),
-      fill: vi.fn(),
-      stroke: vi.fn(),
-      moveTo: vi.fn(),
-      lineTo: vi.fn(),
-      createRadialGradient: vi.fn(() => ({ addColorStop: vi.fn() })),
-      setLineDash: vi.fn(),
-      globalAlpha: 1,
-      globalCompositeOperation: '',
-      lineWidth: 1,
-      strokeStyle: '',
-      fillStyle: '',
-    } as any;
+        virtualJoystick.active = false;
+        virtualJoystick.alpha = 0.5; // Start with some alpha
 
-    virtualJoystick.active = false;
-    virtualJoystick.alpha = 0.5; // visible but fading
+        drawJoystick(ctx);
 
-    drawJoystick(ctx);
-
-    expect(ctx.save).toHaveBeenCalled();
-  });
+        expect(virtualJoystick.alpha).toBeLessThan(0.5);
+        expect(ctx.save).toHaveBeenCalled();
+    });
 });

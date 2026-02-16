@@ -238,7 +238,7 @@ describe('Collisions System', () => {
       expect(horde.isActive).toBe(false);
       expect(mockGameState.combo).toBe(1);
       expect(renderer.addFloatingText).toHaveBeenCalledWith('VICTORY!', expect.any(Number), expect.any(Number), COLORS.UI.GOLD, 1.3);
-      expect(input.triggerHaptic).toHaveBeenCalledWith('success');
+      expect(input.triggerHaptic).toHaveBeenCalledWith('medium');
   });
 
   it('should process combo milestones on victory', () => {

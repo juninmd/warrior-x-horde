@@ -10,7 +10,6 @@ export function drawGlassBadge(ctx: CanvasRenderingContext2D, x: number, y: numb
   ctx.fillStyle = 'rgba(10, 10, 20, 0.7)';
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
   ctx.lineWidth = 1;
-  // ctx.backdropFilter = 'blur(4px)'; // Not widely supported in Canvas yet
 
   ctx.beginPath();
   ctx.roundRect(x, y, w, h, 12);
@@ -53,6 +52,18 @@ export function drawStar(ctx: CanvasRenderingContext2D, cx: number, cy: number, 
 
 // --- Input Visuals ---
 
+function drawHexagon(ctx: CanvasRenderingContext2D, x: number, y: number, radius: number): void {
+  ctx.beginPath();
+  for (let i = 0; i < 6; i++) {
+    const angle = (Math.PI / 3) * i;
+    const px = x + Math.cos(angle) * radius;
+    const py = y + Math.sin(angle) * radius;
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+}
+
 export function drawJoystick(ctx: CanvasRenderingContext2D): void {
   // Update Alpha for fade in/out
   if (virtualJoystick.active) {
@@ -82,55 +93,49 @@ export function drawJoystick(ctx: CanvasRenderingContext2D): void {
     stickY = startY + Math.sin(angle) * maxRadius;
   }
 
-  // Cyber Ring Animation
-  const pulse = Math.sin(Date.now() / 200) * 5;
+  // Cyber Ring Animation (Pulse)
+  const pulse = Math.sin(Date.now() / 150) * 3;
 
-  // Outer Glow Ring
-  ctx.beginPath();
-  ctx.arc(startX, startY, maxRadius + pulse, 0, Math.PI * 2);
-  ctx.lineWidth = 1;
-  ctx.strokeStyle = `rgba(0, 255, 255, ${0.3 * alpha})`; // Cyan fade
-  ctx.stroke();
-
-  // Main Base Ring
-  ctx.beginPath();
-  ctx.arc(startX, startY, maxRadius, 0, Math.PI * 2);
+  // Outer Hexagon (Base)
+  ctx.strokeStyle = `rgba(0, 255, 255, ${0.4 * alpha})`; // Cyan fade
   ctx.lineWidth = 2;
-  ctx.strokeStyle = '#00FFFF'; // Cyan
+  drawHexagon(ctx, startX, startY, maxRadius + 5 + pulse);
   ctx.stroke();
 
-  // Base Fill
+  // Inner Hexagon (Filled Base)
   ctx.fillStyle = 'rgba(0, 255, 255, 0.1)';
+  drawHexagon(ctx, startX, startY, maxRadius);
   ctx.fill();
-
-  // Crosshair / Anchor
-  ctx.beginPath();
-  ctx.moveTo(startX - 10, startY);
-  ctx.lineTo(startX + 10, startY);
-  ctx.moveTo(startX, startY - 10);
-  ctx.lineTo(startX, startY + 10);
+  ctx.strokeStyle = '#00FFFF';
   ctx.lineWidth = 1;
-  ctx.strokeStyle = 'rgba(0, 255, 255, 0.5)';
   ctx.stroke();
 
-  // Knob (Thumb Position)
-  const knobRadius = 20;
+  // Connection Line
+  ctx.beginPath();
+  ctx.moveTo(startX, startY);
+  ctx.lineTo(stickX, stickY);
+  ctx.strokeStyle = 'rgba(0, 255, 255, 0.6)';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([5, 3]); // Tech-style dash
+  ctx.stroke();
+  ctx.setLineDash([]);
 
-  // Knob Glow
+  // Thumb Stick (Diamond Shape)
+  const knobSize = 15;
+  ctx.translate(stickX, stickY);
+  ctx.rotate(Math.PI / 4); // Rotate square to make diamond
+
   ctx.shadowColor = '#00FFFF';
   ctx.shadowBlur = 15;
 
-  ctx.beginPath();
-  ctx.arc(stickX, stickY, knobRadius, 0, Math.PI * 2);
   ctx.fillStyle = '#FFFFFF';
-  ctx.fill();
+  ctx.fillRect(-knobSize/2, -knobSize/2, knobSize, knobSize);
 
-  // Knob Border
-  ctx.shadowBlur = 0;
-  ctx.lineWidth = 2;
   ctx.strokeStyle = '#00FFFF';
-  ctx.stroke();
+  ctx.lineWidth = 2;
+  ctx.strokeRect(-knobSize/2, -knobSize/2, knobSize, knobSize);
 
+  ctx.shadowBlur = 0;
   ctx.restore();
 }
 

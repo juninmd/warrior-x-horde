@@ -415,3 +415,320 @@
       color: #ddd;
       margin: 15px 0;
     }
+
+/* --- Shop UI --- */
+.shop-container {
+  position: absolute;
+  top: 150px;
+  right: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 10;
+  display: none;
+}
+
+.shop-btn {
+  width: 72px;
+  height: 72px;
+  padding: 4px;
+  font-family: 'Segoe UI', sans-serif;
+  font-weight: bold;
+  background: linear-gradient(135deg, rgba(30, 30, 40, 0.95) 0%, rgba(20, 20, 30, 0.95) 100%);
+  color: #FFF;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-bottom: 3px solid rgba(255, 255, 255, 0.2); /* Default fallback */
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4), inset 0 0 10px rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  overflow: hidden;
+}
+
+.shop-btn:active {
+  transform: scale(0.95);
+}
+
+.shop-btn:disabled {
+  opacity: 0.5;
+  filter: grayscale(100%);
+  cursor: not-allowed;
+}
+
+.shop-icon {
+  font-size: 20px;
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5));
+}
+
+.shop-label {
+  font-size: 10px;
+  font-weight: 800;
+  display: block;
+  margin-top: -2px;
+}
+
+.shop-price {
+  font-size: 11px;
+  color: #EEE;
+}
+
+/* --- Super Cannon UI --- */
+.super-cannon-container {
+  position: absolute;
+  bottom: 20px; /* Safe area handled by container usually */
+  left: 0;
+  width: 100%;
+  display: none;
+  justify-content: center;
+  z-index: 10;
+  pointer-events: none; /* Let clicks pass through container */
+}
+
+.super-cannon-btn {
+  pointer-events: auto;
+  min-width: 120px;
+  height: 45px;
+  padding: 8px 20px;
+  font-size: 16px;
+  font-weight: bold;
+  background: linear-gradient(180deg, #FFD700 0%, #FFA500 100%);
+  color: #333;
+  border: 3px solid #FFD700;
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.5), 0 0 15px rgba(255, 215, 0, 0.3);
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  transition: transform 0.1s;
+}
+
+.super-cannon-btn:active {
+  transform: scale(0.95);
+}
+
+.super-cannon-btn.active {
+  background: linear-gradient(180deg, #FFEB3B 0%, #FF9800 100%);
+  box-shadow: 0 0 25px rgba(255, 215, 0, 0.9), 0 0 50px rgba(255, 215, 0, 0.5);
+  border-color: #FFEB3B;
+  cursor: default;
+}
+
+.super-cannon-btn:disabled {
+  background: linear-gradient(180deg, #555 0%, #333 100%);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+  border-color: #555;
+  color: #999;
+  cursor: not-allowed;
+}
+
+/* --- Pause Modal --- */
+.pause-modal {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(5px);
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.pause-title {
+  color: #FFD700;
+  font-size: 48px;
+  font-weight: 900;
+  letter-spacing: 5px;
+  margin-bottom: 40px;
+  text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+
+.pause-btn {
+  width: 200px;
+  padding: 15px;
+  margin: 10px;
+  font-size: 18px;
+  font-weight: bold;
+  color: #FFF;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  backdrop-filter: blur(5px);
+  transition: all 0.2s;
+}
+
+.pause-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
+}
+
+.pause-btn.resume {
+  border-color: #2ECC71;
+  color: #2ECC71;
+}
+
+.pause-btn.quit {
+  border-color: #E74C3C;
+  color: #E74C3C;
+}
+
+/* --- Game Over UI --- */
+.game-over-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(5px);
+  z-index: 100;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.game-over-content {
+  background: rgba(30, 30, 40, 0.9);
+  border: 2px solid #4A90D9;
+  border-radius: 20px;
+  padding: 30px;
+  width: 85%;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 0 30px rgba(74, 144, 217, 0.3);
+  transform: scale(0.9);
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.game-over-title {
+  font-size: 42px;
+  margin: 0 0 10px 0;
+  text-shadow: 0 2px 5px rgba(0,0,0,0.5);
+}
+
+.game-over-stats {
+  background: rgba(0,0,0,0.3);
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.stat-label {
+  color: #AAA;
+  font-size: 16px;
+}
+
+.stat-value {
+  color: #FFF;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.game-over-btn {
+  width: 100%;
+  padding: 15px;
+  font-size: 20px;
+  font-weight: bold;
+  color: #FFF;
+  background: linear-gradient(180deg, #4A90D9 0%, #2980B9 100%);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-bottom: 15px;
+  box-shadow: 0 4px 0 #1A5276;
+  transition: transform 0.1s;
+  animation: pulse-btn 2s infinite ease-in-out;
+}
+
+.game-over-btn:active {
+  transform: scale(0.98);
+  box-shadow: 0 2px 0 #1A5276;
+}
+
+.share-btn-group {
+  display: flex;
+  gap: 10px;
+}
+
+.share-btn {
+  flex: 1;
+  padding: 10px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #FFF;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.share-btn.x {
+  background: #1DA1F2;
+  box-shadow: 0 3px 0 #0C7ABF;
+}
+
+.share-btn.wa {
+  background: #25D366;
+  box-shadow: 0 3px 0 #128C7E;
+}
+
+/* Leaderboard */
+.leaderboard-box {
+  background: rgba(0,0,0,0.4);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 20px;
+  width: 100%;
+  backdrop-filter: blur(5px);
+}
+
+.leaderboard-title {
+  color: #FFD700;
+  font-size: 12px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  padding-bottom: 4px;
+}
+
+.leaderboard-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.leaderboard-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.leaderboard-item.current {
+  background: linear-gradient(90deg, rgba(255, 215, 0, 0.2), transparent);
+}
