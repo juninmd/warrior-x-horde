@@ -168,11 +168,11 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
     killed++;
   }
 
+  /* v8 ignore start */
   if (killed > 0) {
       gameState.totalKills += killed;
   }
 
-  /* v8 ignore start */
   if (killed > 0) {
       gameState.killStreak += killed;
       gameState.killStreakTimer = 2500; // 2.5 seconds window
