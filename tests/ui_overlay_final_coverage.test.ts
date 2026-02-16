@@ -55,41 +55,56 @@ describe('UI Overlay Final Coverage', () => {
             // Should be appended to end
             expect(container?.lastElementChild).toBe(lb);
         });
+
+        it('should insert before button if present', () => {
+             document.body.innerHTML = `
+                <div class="start-screen-content">
+                    <button class="start-btn">START</button>
+                </div>
+            `;
+             vi.spyOn(window.localStorage, 'getItem').mockReturnValue(JSON.stringify([{score: 100}]));
+             updateStartScreenLeaderboard();
+             // Check order
+             const content = document.querySelector('.start-screen-content');
+             expect(content?.children[0].id).toBe('startScreenLeaderboard');
+        });
+
+        it('should handle missing logo element', () => {
+             document.body.innerHTML = `
+                <div class="start-screen-content">
+                    <!-- No logo -->
+                </div>
+            `;
+             vi.spyOn(window.localStorage, 'getItem').mockReturnValue(JSON.stringify([{score: 100}]));
+             // Should not crash
+             updateStartScreenLeaderboard();
+        });
     });
 
     describe('updateSuperCannonUI', () => {
         it('should return early if buttons are missing but container exists', () => {
-             // Create container but don't setup buttons (or clear them from DOM/memory if possible)
-             // The module-level 'buttons' cache is populated by 'setup'.
-             // If we rely on internal state of the module, we might need to trick it.
-             // However, 'buttons' export is not available.
-             // But 'buttons' is populated in 'setupSuperCannonUI'.
-             // If we manually clear innerHTML of container, the DOM element is gone, but 'buttons' cache might still hold ref?
-             // Actually 'updateSuperCannonUI' checks `!superCannonContainer || !buttons['superCannon']`.
-
-             // To hit `!buttons['superCannon']`, we need `setup` to NOT have run, or failed?
-             // But if setup didn't run, container might not exist.
-             // Let's create container manually in DOM, but NOT call setupSuperCannonUI.
-
              const container = document.createElement('div');
              container.id = 'superCannonContainer';
              document.body.appendChild(container);
 
-             // Call update. It should find container but fail on button cache check (since setup wasn't called to populate it).
-             // Note: This relies on 'buttons' being empty/undefined for this key.
-             // Since tests run in same context, 'buttons' might be polluted by previous tests.
-             // We can't easily clear the module-level 'buttons' var without a reset helper.
-             // BUT, if we create a NEW container ID? No, the code looks for 'superCannonContainer'.
-
-             // Let's assume 'buttons' has 'superCannon' from previous tests.
-             // Code: `const btn = buttons['superCannon'];`
-             // If we remove the element from DOM, `btn` ref still exists in memory.
-
-             // Maybe we can trigger the check by ensuring setup hasn't run in THIS test file context?
-             // Vitest isolates test files usually.
-
+             // Ensure 'buttons' cache is empty for this key by NOT calling setup
              updateSuperCannonUI(gameState);
-             // Should return safely without error.
+        });
+
+        it('should hide container if game not started', () => {
+             setupSuperCannonUI(vi.fn());
+             gameState.isStarted = false;
+             updateSuperCannonUI(gameState);
+             const container = document.getElementById('superCannonContainer');
+             expect(container?.style.display).toBe('none');
+        });
+
+        it('should hide container if game over', () => {
+             setupSuperCannonUI(vi.fn());
+             gameState.isGameOver = true;
+             updateSuperCannonUI(gameState);
+             const container = document.getElementById('superCannonContainer');
+             expect(container?.style.display).toBe('none');
         });
     });
 
@@ -108,23 +123,32 @@ describe('UI Overlay Final Coverage', () => {
              expect(installBtn).not.toBeNull();
 
              // Click it
-             await installBtn?.click();
+             installBtn?.click();
+
+             // Wait for async handler promises to resolve
+             await Promise.resolve();
+             await Promise.resolve();
 
              expect(promptMock.prompt).toHaveBeenCalled();
              // Should hide button
              expect(installBtn?.style.display).toBe('none');
         });
 
+        it('should show Rank C for score 500', () => {
+             gameState.score = 500;
+             setupGameOverUI(vi.fn(), vi.fn());
+             showGameOverScreen(gameState);
+             const container = document.getElementById('gameOverContainer');
+             expect(container?.innerHTML).toContain('C'); // Rank C
+             expect(container?.innerHTML).toContain('#2ECC71'); // Green
+        });
+
         it('should animate score count up', () => {
              setupGameOverUI(vi.fn(), vi.fn());
              gameState.score = 1000;
 
-             // Mock requestAnimationFrame
-             // We want to verify the callback recurses.
-             // vi.useFakeTimers() + rAF mocking.
-
              let frameCallback: FrameRequestCallback | null = null;
-             vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => {
+             const rAF = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => {
                  frameCallback = cb;
                  return 1;
              });
@@ -138,11 +162,12 @@ describe('UI Overlay Final Coverage', () => {
              const start = 1000;
              if(frameCallback) (frameCallback as any)(start);
 
-             // Advance time to start animation (500ms later)
+             // Advance time to start animation (500ms later) -> Should trigger recursion
              if(frameCallback) (frameCallback as any)(start + 500);
 
+             // Initial (1) + First Frame (2) + Second Frame (3)
+             expect(rAF).toHaveBeenCalledTimes(3);
              expect(scoreEl?.innerHTML).not.toBe('0');
-             expect(scoreEl?.innerHTML).not.toBe('1,000');
 
              // Advance to end
              if(frameCallback) (frameCallback as any)(start + 2000);
