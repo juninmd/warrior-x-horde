@@ -1549,7 +1549,8 @@ function drawDamageOverlay(ctx: CanvasRenderingContext2D, width: number, height:
   // Red vignette
   const gradient = ctx.createRadialGradient(width/2, height/2, height * 0.4, width/2, height/2, height * 0.9);
   gradient.addColorStop(0, 'rgba(255, 0, 0, 0)');
-  gradient.addColorStop(1, `rgba(255, 0, 0, ${intensity * 0.6})`);
+  // Reduced max intensity to 0.6 for better visibility
+  gradient.addColorStop(1, `rgba(255, 0, 0, ${Math.min(0.6, intensity * 0.6)})`);
 
   ctx.fillStyle = gradient;
   ctx.globalCompositeOperation = 'source-over';
@@ -1627,8 +1628,15 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
       ? (Math.floor(Date.now() / 200) % 2 === 0 ? '#FFD700' : '#FF4500') // Pulse Gold/Orange
       : '#FFD700';
 
+  // Add Combo Multiplier Text to Score Badge if Combo > 1
+  let scoreText = `🏆 ${gameState.score}`;
+  if (gameState.combo > 1) {
+     const mult = (1 + gameState.combo * 0.05).toFixed(2);
+     scoreText += ` (x${mult})`;
+  }
+
   const badges = [
-      { text: `🏆 ${gameState.score}`, color: scoreColor, width: 0 },
+      { text: scoreText, color: scoreColor, width: 0 },
       { text: `💰 ${gameState.coins}`, color: '#F1C40F', width: 0 },
       { text: `Lv.${gameState.currentLevel}`, color: '#4A90D9', width: 0 },
       { text: `🪖 ${armyCount}`, color: '#2ECC71', width: 0 }, // Show count, power is implied in Attack
@@ -2101,8 +2109,8 @@ function drawComboBar(ctx: CanvasRenderingContext2D, gameState: GameState): void
   ctx.stroke();
 
   // Multiplier Text (Right Side)
-  const multiplier = Math.min(gameState.combo, 20); // Cap at 20x logic
-  if (multiplier > 1) {
+  const multiplier = (1 + gameState.combo * 0.05).toFixed(2);
+  if (gameState.combo > 1) {
       ctx.fillStyle = '#FFD700';
       ctx.font = `bold 12px ${FONT_FAMILY}`;
       ctx.textAlign = 'right';
@@ -2254,4 +2262,3 @@ export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameSt
   // updateFloatingTexts() moved to game loop to respect pause
   drawFloatingTexts(ctx);
 }
-/* v8 ignore stop */

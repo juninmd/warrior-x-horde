@@ -110,8 +110,10 @@ describe('Collisions Coverage', () => {
 
         expect(horde.isActive).toBe(false);
         expect(gameState.combo).toBe(1);
-        // It should show score gain text, not VICTORY (VICTORY is for combat kill)
-        expect(renderer.addFloatingText).toHaveBeenCalledWith(expect.stringContaining('+'), expect.any(Number), expect.any(Number), expect.any(String));
+
+        // Should show Victory text AND score gain text
+        expect(renderer.addFloatingText).toHaveBeenCalledWith('VICTORY!', expect.any(Number), expect.any(Number), expect.any(String), expect.any(Number));
+        expect(renderer.addFloatingText).toHaveBeenCalledWith(expect.stringContaining('+'), expect.any(Number), expect.any(Number), expect.any(String), expect.any(Number));
     });
 
     it('should handle bullet hitting mystery box', () => {
