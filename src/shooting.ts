@@ -387,6 +387,19 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
         mb
       );
     }
+
+    // Mystery Boxes
+    for (const box of entities.mysteryBoxes) {
+      if (!box.passed) {
+        enemyGrid.insert({
+          x: box.x,
+          y: box.y,
+          width: box.width,
+          height: box.height,
+          ref: { type: 'mysterybox', obj: box }
+        });
+      }
+    }
   }
 
   for (let i = entities.bullets.length - 1; i >= 0; i--) {
