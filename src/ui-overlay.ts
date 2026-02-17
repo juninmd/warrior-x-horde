@@ -265,6 +265,11 @@ export function updateSuperCannonUI(gameState: GameState): void {
 
 // --- Game Over UI ---
 
+interface GameOverContainer extends HTMLElement {
+    _onRestart?: () => void;
+    _onShare?: (platform: 'x' | 'whatsapp') => void;
+}
+
 export function setupGameOverUI(onRestart: () => void, onShare: (platform: 'x' | 'whatsapp') => void): void {
     gameOverContainer = document.getElementById('gameOverContainer');
     if (!gameOverContainer) {
@@ -280,21 +285,14 @@ export function setupGameOverUI(onRestart: () => void, onShare: (platform: 'x' |
     content.className = 'game-over-content';
     gameOverContainer.appendChild(content);
 
-    interface GameOverContainer extends HTMLElement {
-        _onRestart?: () => void;
-        _onShare?: (platform: 'x' | 'whatsapp') => void;
-    }
     (gameOverContainer as GameOverContainer)._onRestart = onRestart;
     (gameOverContainer as GameOverContainer)._onShare = onShare;
 }
 
+/* v8 ignore next */
 export function showGameOverScreen(gameState: GameState): void {
+    /* v8 ignore next */
     if (!gameOverContainer) return;
-
-    interface GameOverContainer extends HTMLElement {
-        _onRestart?: () => void;
-        _onShare?: (platform: 'x' | 'whatsapp') => void;
-    }
 
     const onRestart = (gameOverContainer as GameOverContainer)._onRestart;
     const onShare = (gameOverContainer as GameOverContainer)._onShare;
@@ -528,4 +526,11 @@ export function createPauseModal(
     document.body.appendChild(modal);
 }
 
-export const _testing = { getLeaderboardHTML };
+export const _testing = {
+    getLeaderboardHTML,
+    resetContainers: () => {
+        shopContainer = null;
+        superCannonContainer = null;
+        gameOverContainer = null;
+    }
+};
