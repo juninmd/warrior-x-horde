@@ -438,9 +438,11 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
     }
   }
 
-  // Checar colisão com Mystery Boxes
+  // Checar colisão com Mystery Boxes (agora só verifica se foi destruída)
   for (const box of entities.mysteryBoxes) {
-    if (checkMysteryBoxCollision(army, box, bounds)) {
+    // A condição de HP <= 0 é a nova forma de ativar.
+    // A colisão com o exército ainda pode ser uma forma de "coletar" a caixa.
+    if (!box.passed && (box.hp <= 0 || checkMysteryBoxCollision(army, box, bounds))) {
       applyMysteryBoxEffect(army, box, gameState, entities);
     }
   }
@@ -455,27 +457,6 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
       addParticle(coin.x, coin.y, 'spark', '#FFD700', 3);
     }
   }
-
-  // Checar tiros nas Mystery Boxes (para destruir)
-  entities.mysteryBoxes.forEach(box => {
-    if (!box.passed) {
-       entities.bullets.forEach(bullet => {
-         if (!bullet.isEnemy &&
-             bullet.x > box.x && bullet.x < box.x + box.width &&
-             bullet.y > box.y && bullet.y < box.y + box.height) {
-
-           box.hp -= bullet.damage;
-           bullet.y = -1000; // Remover bala
-
-           if (box.hp <= 0 && !box.passed) {
-             box.passed = true;
-             addExplosion(box.x + box.width/2, box.y + box.height/2, '#FFFFFF');
-             addFloatingText('DESTROYED!', box.x, box.y, '#FFFFFF');
-           }
-         }
-       });
-    }
-  });
 
   // Checar colisão com boss
   if (checkBossCollision(army, entities, bounds) && entities.boss) {
