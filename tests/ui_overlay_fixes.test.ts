@@ -24,8 +24,8 @@ describe('UI Overlay Fixes', () => {
     });
 
     it('should hide super cannon button when game is not started', () => {
-        // Setup UI first
-        setupSuperCannonUI(() => {}, 10000);
+        // Setup UI first to initialize module variables
+        setupSuperCannonUI(() => {});
 
         const gameState = {
             isStarted: false,
@@ -38,36 +38,12 @@ describe('UI Overlay Fixes', () => {
 
         updateSuperCannonUI(gameState);
 
-        const superBtnContainer = document.getElementById('superCannonContainer');
-        // Because setupSuperCannonUI creates a new div if not found or uses existing?
-        // Let's check implementation. setupSuperCannonUI creates a button inside the container.
-        // updateSuperCannonUI hides the container.
-
-        // We need to make sure the elements exist as updateSuperCannonUI expects
-        // It relies on module-level variables shopContainer, superCannonContainer
-        // which are set by setup functions.
-        // So calling setupSuperCannonUI is correct.
-
-        // However, since we are testing internal state of module variables we can't easily reset them
-        // without a reset function or reloading module.
-        // But since we are in JSDOM, let's hope the module state persists or we re-initialize.
-
-        // Wait, the module level variables in ui-overlay.ts might be an issue if tests run in same context.
-        // But Vitest usually isolates test files.
-
-        // Let's verify the display style.
-        // We need to inspect the element that updateSuperCannonUI touches.
-        // It touches 'superCannonContainer'.
-
-        // In the implementation:
-        // if (!superCannonContainer || !buttons['superCannon']) return;
-        // So we must have called setupSuperCannonUI.
-
-        expect(document.querySelector('.super-cannon-container')?.getAttribute('style')).toContain('display: none');
+        const superContainer = document.getElementById('superCannonContainer');
+        expect(superContainer?.style.display).toBe('none');
     });
 
     it('should hide super cannon button when game is over', () => {
-        setupSuperCannonUI(() => {}, 10000);
+        setupSuperCannonUI(() => {});
 
         const gameState = {
             isStarted: true,
@@ -80,11 +56,12 @@ describe('UI Overlay Fixes', () => {
 
         updateSuperCannonUI(gameState);
 
-        expect(document.querySelector('.super-cannon-container')?.getAttribute('style')).toContain('display: none');
+        const superContainer = document.getElementById('superCannonContainer');
+        expect(superContainer?.style.display).toBe('none');
     });
 
     it('should assign rank C for score between 500 and 999', () => {
-        // Setup Game Over UI
+        // Setup Game Over UI to initialize module variables
         setupGameOverUI(() => {}, () => {});
 
         const gameState = {
@@ -100,9 +77,11 @@ describe('UI Overlay Fixes', () => {
         showGameOverScreen(gameState);
 
         const content = document.querySelector('.game-over-content');
-        expect(content?.innerHTML).toContain('RANK');
-        // We can check if the color for Rank C (#2ECC71) is present
+        // Check for Rank C color (#2ECC71) in the innerHTML
+        // The implementation uses: rankColor = '#2ECC71'
         expect(content?.innerHTML).toContain('#2ECC71');
-        // Or check specifically for the rank text if possible, but it's inside span
+
+        // Also check that it rendered correctly
+        expect(content?.innerHTML).toContain('RANK');
     });
 });
