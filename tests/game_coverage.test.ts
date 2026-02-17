@@ -87,6 +87,7 @@ describe('Game Coverage', () => {
         gameState.superCannonActive = false;
         gameState.screenShakeTimer = 0;
 
+        _testing.resetLoop();
         entities = _testing.getEntities();
         if (entities) {
              entities.playerArmy.aliveCount = 10;
@@ -137,7 +138,8 @@ describe('Game Coverage', () => {
         gameState.isStarted = true;
         gameState.isGameOver = false;
 
-        _testing.gameLoop(16);
+        _testing.gameLoop(0); // Init
+        _testing.gameLoop(20); // Update
 
         expect(gameState.lowArmyTriggered).toBe(true);
         expect(renderer.addFloatingText).toHaveBeenCalledWith("⚠️ LOW ARMY! ⚠️", expect.any(Number), expect.any(Number), expect.any(String), expect.any(Number));
@@ -168,7 +170,8 @@ describe('Game Coverage', () => {
         gameState.isVictory = true;
         gameState.isGameOver = false;
 
-        _testing.gameLoop(16);
+        _testing.gameLoop(0); // Init
+        _testing.gameLoop(20); // Update
 
         expect(gameState.isGameOver).toBe(true);
         // Should not advance to next level automatically in loop (advances via restart)
@@ -246,16 +249,14 @@ describe('Game Coverage', () => {
         gameState.screenShakeActive = true;
 
         // Use large enough timestamps to ensure positive deltaTime
-        // If lastTime was 0 (from previous tests possibly resetting or not), calling with 16 works.
-        // But to be safe, we simulate a frame step.
-        _testing.gameLoop(5000); // Set lastTime
-        _testing.gameLoop(5016); // 16ms delta
+        _testing.gameLoop(0); // Init
+        _testing.gameLoop(20); // 20ms delta
 
         expect(gameState.screenShakeTimer).toBeLessThan(100);
 
         // When timer hits 0
         gameState.screenShakeTimer = 10;
-        _testing.gameLoop(5032); // 16ms delta -> timer < 0
+        _testing.gameLoop(50); // 30ms delta -> timer < 0
 
         expect(gameState.screenShakeActive).toBe(false);
     });

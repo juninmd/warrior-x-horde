@@ -132,8 +132,10 @@ describe('Game Loop Logic Coverage', () => {
         gameState.currentLevel = 1;
         gameState.isGameOver = false;
 
-        // Run loop
-        capturedLoop(Date.now());
+        // Run loop (init)
+        capturedLoop(1000);
+        // Run loop (update)
+        capturedLoop(1050);
 
         // Should advance level
         expect(gameState.currentLevel).toBe(2);
@@ -147,8 +149,10 @@ describe('Game Loop Logic Coverage', () => {
         gameState.currentLevel = 10;
         gameState.isGameOver = false;
 
-        // Run loop
-        capturedLoop(Date.now());
+        // Run loop (init)
+        capturedLoop(1000);
+        // Run loop (update)
+        capturedLoop(1050);
 
         // Should NOT advance, but trigger Game Over (Victory Screen)
         expect(gameState.currentLevel).toBe(10);
@@ -203,7 +207,8 @@ describe('Game Loop Logic Coverage', () => {
         gameState.highScore = 100;
         gameState.newRecordReached = false;
 
-        capturedLoop(Date.now());
+        capturedLoop(1000);
+        capturedLoop(1050);
 
         expect(gameState.newRecordReached).toBe(true);
         expect(audio.playSound).toHaveBeenCalledWith('up');

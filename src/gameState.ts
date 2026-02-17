@@ -9,6 +9,7 @@ export const gameState: GameState = {
   currentLevel: 1,
   score: 0,
   highScore: Number(localStorage.getItem('crowdHighScore')) || 0,
+  highScoreDistance: Number(localStorage.getItem('crowdHighScoreDist')) || 0,
   coins: Number(localStorage.getItem('crowdCoins')) || 0,
   gameSpeed: 0.5,
   baseGameSpeed: 0.5,
@@ -95,5 +96,8 @@ export function saveGameProgress(stateOverride?: GameState): void {
   localStorage.setItem('crowdCoins', state.coins.toString());
   if (state.highScore > 0) {
       localStorage.setItem('crowdHighScore', state.highScore.toString());
+  }
+  if (state.highScoreDistance > 0) {
+      localStorage.setItem('crowdHighScoreDist', state.highScoreDistance.toString());
   }
 }

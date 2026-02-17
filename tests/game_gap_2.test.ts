@@ -104,13 +104,15 @@ describe('Game Gap Coverage 2', () => {
     it('should update newRecordReached if score is higher', async () => {
         // Importing game.ts exposes `_testing.gameLoop`.
         const game = await import('../src/game');
+        game._testing.resetLoop();
         gameState.isStarted = true;
         gameState.isGameOver = false; // In-game check
         gameState.score = 200;
         gameState.highScore = 100;
 
-        // Run one frame
-        game._testing.gameLoop(100);
+        // Run frames to ensure update
+        game._testing.gameLoop(1000);
+        game._testing.gameLoop(1020);
 
         expect(gameState.newRecordReached).toBe(true);
     });
@@ -191,6 +193,7 @@ describe('Game Gap Coverage 2', () => {
 
     it('should decay visual timers and reset killstreak', async () => {
         const game = await import('../src/game');
+        game._testing.resetLoop();
         gameState.isStarted = true;
         gameState.isGameOver = false;
 
@@ -199,7 +202,8 @@ describe('Game Gap Coverage 2', () => {
         gameState.nukeTimer = 10;
         gameState.killStreakTimer = 1; // Low value to force reset
 
-        game._testing.gameLoop(100); // delta will be at least 16ms
+        game._testing.gameLoop(1000);
+        game._testing.gameLoop(1050); // Delta 50ms
 
         expect(gameState.damageFlash).toBeLessThan(1.0);
         expect(gameState.whiteFlash).toBeLessThan(1.0);
