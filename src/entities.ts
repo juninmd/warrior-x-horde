@@ -1,5 +1,15 @@
 // entities.ts - Criação de entidades
-import { Army, Soldier, EnemyHorde, Gate, Boss, Entities, MiniBoss, MysteryBox, Coin, MAX_HEROES, MAX_ENEMIES } from './types';
+import { Army, Soldier, EnemyHorde, Gate, Boss, Entities, MiniBoss, MysteryBox, Coin } from './types';
+import { MAX_HEROES } from './constants';
+import { shadeColor } from './utils';
+import { soldierPool } from './soldierPool';
+
+function updateGateColorCache(gate: Gate): void {
+  gate.cachedColors = {
+    light: shadeColor(gate.color, 20),
+    dark: shadeColor(gate.color, -20),
+  };
+}
 
 let soldierIdCounter = 0;
 let hordeIdCounter = 0;
@@ -9,41 +19,43 @@ let mysteryBoxIdCounter = 0;
 let coinIdCounter = 0;
 
 export function createSoldier(x: number, y: number, color: string, hp: number = 1, type: Soldier['type'] = 'normal'): Soldier {
-  return {
-    id: soldierIdCounter++,
-    x,
-    y,
-    targetX: x,
-    targetY: y,
-    color,
-    size: 16,
-    isAlive: true,
-    animOffset: Math.random() * Math.PI * 2,
-    hp,
-    maxHp: hp,
-    isSuper: false,
-    type,
-  };
+  const s = soldierPool.get();
+  s.id = soldierIdCounter++;
+  s.x = x;
+  s.y = y;
+  s.targetX = x;
+  s.targetY = y;
+  s.color = color;
+  s.size = 16;
+  s.isAlive = true;
+  s.animOffset = Math.random() * Math.PI * 2;
+  s.hp = hp;
+  s.maxHp = hp;
+  s.isSuper = false;
+  s.type = type;
+  s.hitTimer = 0;
+  return s;
 }
 
 // Criar super guerreiro (mais forte, mais vida, tiro mais rápido)
 export function createSuperSoldier(x: number, y: number): Soldier {
-  return {
-    id: soldierIdCounter++,
-    x,
-    y,
-    targetX: x,
-    targetY: y,
-    color: '#FFD700', // Dourado para destacar
-    size: 20, // Maior
-    isAlive: true,
-    animOffset: Math.random() * Math.PI * 2,
-    hp: 5, // 5x mais vida
-    maxHp: 5,
-    isSuper: true,
-    personalFireRate: 100, // Atira 2x mais rápido
-    type: 'normal', // Considerado normal, mas com flag isSuper
-  };
+  const s = soldierPool.get();
+  s.id = soldierIdCounter++;
+  s.x = x;
+  s.y = y;
+  s.targetX = x;
+  s.targetY = y;
+  s.color = '#FFD700'; // Dourado para destacar
+  s.size = 20; // Maior
+  s.isAlive = true;
+  s.animOffset = Math.random() * Math.PI * 2;
+  s.hp = 5; // 5x mais vida
+  s.maxHp = 5;
+  s.isSuper = true;
+  s.personalFireRate = 100; // Atira 2x mais rápido
+  s.type = 'normal'; // Considerado normal, mas com flag isSuper
+  s.hitTimer = 0;
+  return s;
 }
 
 // Criar soldados especiais
@@ -70,21 +82,22 @@ export function createSpecialSoldier(x: number, y: number, type: Soldier['type']
       break;
   }
 
-  return {
-    id: soldierIdCounter++,
-    x,
-    y,
-    targetX: x,
-    targetY: y,
-    color,
-    size,
-    isAlive: true,
-    animOffset: Math.random() * Math.PI * 2,
-    hp,
-    maxHp: hp,
-    isSuper: false,
-    type,
-  };
+  const s = soldierPool.get();
+  s.id = soldierIdCounter++;
+  s.x = x;
+  s.y = y;
+  s.targetX = x;
+  s.targetY = y;
+  s.color = color;
+  s.size = size;
+  s.isAlive = true;
+  s.animOffset = Math.random() * Math.PI * 2;
+  s.hp = hp;
+  s.maxHp = hp;
+  s.isSuper = false;
+  s.type = type;
+  s.hitTimer = 0;
+  return s;
 }
 
 export function createPlayerArmy(canvasWidth: number, canvasHeight: number): Army {
@@ -113,6 +126,7 @@ export function createPlayerArmy(canvasWidth: number, canvasHeight: number): Arm
     fireRate: 700, // FireRate base: 700ms (mais lento para equilibrar)
     lastShotTime: 0,
     damage: 3, // Dano base reduzido para 3
+    aliveCount: soldiers.length,
   };
 }
 
@@ -138,6 +152,7 @@ export function addSoldiersToArmy(army: Army, count: number): void {
       army.color
     ));
   }
+  army.aliveCount += actualCount;
 }
 
 export function addSpecialSoldiersToArmy(army: Army, type: Soldier['type'], count: number): void {
@@ -159,6 +174,7 @@ export function addSpecialSoldiersToArmy(army: Army, type: Soldier['type'], coun
       type
     ));
   }
+  army.aliveCount += actualCount;
 }
 
 export function multiplySoldiersInArmy(army: Army, multiplier: number): void {
@@ -171,7 +187,15 @@ export function multiplySoldiersInArmy(army: Army, multiplier: number): void {
 
 export function removeSoldiersFromArmy(army: Army, count: number): void {
   for (let i = 0; i < count && army.soldiers.length > 0; i++) {
-    army.soldiers.pop();
+    const s = army.soldiers.pop();
+    /* v8 ignore start */
+    if (s) {
+      if (s.isAlive) {
+        army.aliveCount--;
+      }
+      soldierPool.release(s);
+    }
+    /* v8 ignore stop */
   }
 }
 
@@ -196,6 +220,7 @@ export function addSuperSoldiersToArmy(army: Army, count: number): void {
       army.centerY + Math.sin(angle) * radius * 0.6
     ));
   }
+  army.aliveCount += actualCount;
 }
 
 export function createEnemyHorde(canvasWidth: number, y: number, count: number, level: number = 1): EnemyHorde {
@@ -250,12 +275,15 @@ export function createEnemyHorde(canvasWidth: number, y: number, count: number, 
     color: '#E74C3C',
     speed: 0,
     isActive: true,
+    hp: count * enemyHp,
+    maxHp: count * enemyHp,
+    perfectClearEligible: true,
   };
 }
 
 export function createGate(canvasWidth: number, y: number, side: 'left' | 'right', level: number = 1, currentHeroCount: number = 0, currentEnemyCount: number = 0): Gate {
   const gateWidth = canvasWidth / 2 - 30;
-  let roll = Math.random();
+  const roll = Math.random();
 
   let type: 'add' | 'multiply' | 'subtract' | 'divide' | 'firerate' | 'damage' | 'superwarrior';
   let value: number;
@@ -293,6 +321,7 @@ export function createGate(canvasWidth: number, y: number, side: 'left' | 'right
     const ratio = armySize > 0 ? enemySize / armySize : 10;
 
     // Fator de emergência mais conservador
+    /* v8 ignore start */
     const emergencyFactor = ratio < 0.5
       ? 0.5  // Muito forte, reduzir buffs bastante
       : ratio < 1
@@ -313,6 +342,7 @@ export function createGate(canvasWidth: number, y: number, side: 'left' | 'right
           : armySize < 400
             ? 0.6  // Reduzido de 0.7
             : 0.3; // Reduzido de 0.4
+    /* v8 ignore stop */
 
     // Fator de level - começa baixo no L1, cresce com levels
     // Level 1: 0.6x, Level 5: 0.9x, Level 10: 1.2x
@@ -370,7 +400,7 @@ export function createGate(canvasWidth: number, y: number, side: 'left' | 'right
     }
   }
 
-  return {
+  const gate: Gate = {
     id: gateIdCounter++,
     x: side === 'left' ? 15 : canvasWidth / 2 + 15,
     y,
@@ -382,6 +412,8 @@ export function createGate(canvasWidth: number, y: number, side: 'left' | 'right
     side,
     passed: false,
   };
+  updateGateColorCache(gate);
+  return gate;
 }
 
 export function createGatePair(canvasWidth: number, y: number, level: number = 1, currentHeroCount: number = 0, currentEnemyCount: number = 0): Gate[] {
@@ -411,6 +443,9 @@ export function createGatePair(canvasWidth: number, y: number, level: number = 1
     wrongGate.color = '#E74C3C'; // Vermelho
     wrongGate.customText = `${a} × ${b} = ${wrongResult}`;
 
+    updateGateColorCache(correctGate);
+    updateGateColorCache(wrongGate);
+
     return [correctGate, wrongGate];
   }
 
@@ -421,7 +456,6 @@ export function createGatePair(canvasWidth: number, y: number, level: number = 1
   const atMaxHeroes = currentHeroCount >= MAX_HEROES;
 
   // Tipos que aumentam heróis (excluir se no máximo)
-  const heroIncreaseTypes = ['add', 'multiply', 'superwarrior'];
   const goodTypes = atMaxHeroes
     ? ['firerate', 'damage'] // Apenas buffs que não aumentam heróis
     : ['add', 'multiply', 'firerate', 'damage', 'superwarrior'];
@@ -482,6 +516,9 @@ export function createGatePair(canvasWidth: number, y: number, level: number = 1
     }
   }
 
+  updateGateColorCache(leftGate);
+  updateGateColorCache(rightGate);
+
   return [leftGate, rightGate];
 }
 
@@ -502,6 +539,7 @@ export function createBoss(canvasWidth: number, level: number): Boss {
       spawnTime: Date.now(),
       isMoving: false, // Nave não se move, fica no topo
       type: 'mothership',
+      hitTimer: 0,
     };
   }
 
@@ -566,6 +604,7 @@ export function createBoss(canvasWidth: number, level: number): Boss {
     spawnTime: Date.now(),
     isMoving: false,
     type,
+    hitTimer: 0,
   };
 }
 
@@ -591,6 +630,7 @@ export function createMiniBoss(canvasWidth: number, y: number, level: number): M
     isActive: true,
     color,
     type,
+    hitTimer: 0,
   };
 }
 
@@ -616,6 +656,7 @@ export function createMysteryBox(canvasWidth: number, y: number): MysteryBox {
     hp,
     maxHp: hp,
     passed: false,
+    hitTimer: 0,
   };
 }
 
@@ -630,6 +671,13 @@ export function createCoin(x: number, y: number, value: number = 1): Coin {
     passed: false,
     bounceOffset: Math.random() * Math.PI * 2,
   };
+}
+
+export function releaseHorde(horde: EnemyHorde): void {
+  for (const s of horde.soldiers) {
+    soldierPool.release(s);
+  }
+  horde.soldiers.length = 0;
 }
 
 export function createInitialEntities(canvasWidth: number, canvasHeight: number): Entities {

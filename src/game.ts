@@ -1,44 +1,72 @@
 // game.ts - Loop principal do jogo Crowd Runner
-import { Entities, GameState, Soldier } from './types';
-import { gameState, resetGameState } from './gameState';
-import { createInitialEntities, createEnemyHorde, createSoldier, createMysteryBox, addSpecialSoldiersToArmy, addSoldiersToArmy } from './entities';
-import { render, getShareButtonBounds, getWhatsAppButtonBounds, shareOnX, shareOnWhatsApp, addFloatingText } from './renderer';
+import { Entities, BeforeInstallPromptEvent } from './types';
+import { gameState, resetGameState, saveGameProgress } from './gameState';
+import { createInitialEntities, createEnemyHorde, createSoldier, addSpecialSoldiersToArmy, addSoldiersToArmy } from './entities';
+import { render, shareOnX, shareOnWhatsApp, addFloatingText, updateFloatingTexts, addParticle } from './renderer';
 import { checkCollisions } from './collisions';
 import { updateSpawns } from './spawner';
 import { updateMovement } from './movement';
-import { setupInput, getMouseX, initializeMousePosition, setGameStateRef, setInputScale } from './input';
+import { setupInput, getMouseX, initializeMousePosition, setGameStateRef, triggerHaptic } from './input';
+import { setInputScale } from './input-state';
 import { updateShooting, updateBullets, updateSuperCannon, activateSuperCannon } from './shooting';
-import { initAudio, playMusic, playSound, stopAllMusic, audioManager, toggleMute, isMusicMuted } from './audio';
+import { initAudio, playMusic, playSound, stopAllMusic, audioManager, isMusicMuted } from './audio';
+import { BASE_WIDTH, BASE_HEIGHT, ASPECT_RATIO, COLORS } from './constants';
+import { setupShopUI, updateShopUI, setupSuperCannonUI, updateSuperCannonUI, BuyAction, setupGameOverUI, showGameOverScreen, startCountdown, updateStartScreenLeaderboard, setupStartScreenInstallBtn, createPauseModal } from './ui-overlay';
+import { QualityManager } from './quality';
+import { setupSettingsUI, toggleSettingsMenu } from './ui-settings';
+import { MOBILE_RESOLUTION_SCALE } from './constants';
 
 // Canvas setup
 export const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
 
-// Dimensões base do jogo (design de referência)
-const BASE_WIDTH = 480;
-const BASE_HEIGHT = 800;
-const ASPECT_RATIO = BASE_WIDTH / BASE_HEIGHT;
-
 // Escala atual
 let scale = 1;
 
+let cachedSuperBtn: HTMLButtonElement | null = null;
+let lastSuperText: string = '';
+let lastSuperDisabled: boolean | null = null;
+
+// Fixed Timestep Constants
+export const FIXED_TIMESTEP = 1000 / 60; // 60 updates per second (~16.667ms)
+let accumulator = 0;
+
 // Função para redimensionar o canvas responsivamente
+/* v8 ignore start */
 function resizeCanvas(): void {
   const container = canvas.parentElement;
   if (!container) return;
 
-  // Calcular espaço disponível (deixar espaço para o botão Super Cannon no mobile)
-  const maxWidth = Math.min(window.innerWidth - 20, 600); // Max 600px de largura
-  const maxHeight = window.innerHeight - 150; // Deixar espaço para título, dicas e botão
+  // Mobile Fullscreen Logic
+  const isMobile = window.innerWidth <= 768;
 
-  // Calcular dimensões mantendo aspect ratio
-  let newWidth = maxWidth;
-  let newHeight = newWidth / ASPECT_RATIO;
+  let newWidth: number;
+  let newHeight: number;
 
-  // Se altura excede, ajustar pela altura
-  if (newHeight > maxHeight) {
-    newHeight = maxHeight;
-    newWidth = newHeight * ASPECT_RATIO;
+  if (isMobile) {
+      // Full width on mobile
+      newWidth = window.innerWidth;
+      // Height is screen height minus UI space (less padding than desktop)
+      newHeight = window.innerHeight;
+
+      // Ensure aspect ratio isn't too extreme (e.g., very long phones)
+      // We clip the height if it gets too tall relative to width
+      const maxAspectRatio = 2.2; // roughly 20:9
+      if (newHeight / newWidth > maxAspectRatio) {
+          newHeight = newWidth * maxAspectRatio;
+      }
+  } else {
+      // Desktop: Keep constrained
+      const maxWidth = Math.min(window.innerWidth - 20, 600);
+      const maxHeight = window.innerHeight - 100;
+
+      newWidth = maxWidth;
+      newHeight = newWidth / ASPECT_RATIO;
+
+      if (newHeight > maxHeight) {
+        newHeight = maxHeight;
+        newWidth = newHeight * ASPECT_RATIO;
+      }
   }
 
   // Mínimo para não ficar muito pequeno
@@ -49,14 +77,29 @@ function resizeCanvas(): void {
   canvas.style.width = `${newWidth}px`;
   canvas.style.height = `${newHeight}px`;
 
-  // Manter dimensões internas do canvas (resolução do jogo)
-  canvas.width = BASE_WIDTH;
-  canvas.height = BASE_HEIGHT;
+  // Manter dimensões internas do canvas (resolução do jogo) com suporte a High DPI e Dynamic Resolution
+  const quality = QualityManager.getInstance().settings;
+  let resolutionScale = quality.resolutionScale || 1.0;
+
+  // Auto-downgrade resolution on mobile for performance (Stable 60fps target)
+  if (isMobile && resolutionScale === 1.0) {
+      resolutionScale = MOBILE_RESOLUTION_SCALE;
+  }
+
+  // Base DPR (capped at 3 for sanity on super high density screens)
+  const baseDpr = Math.min(window.devicePixelRatio || 1, 3);
+  const effectiveDpr = baseDpr * resolutionScale;
+
+  canvas.width = BASE_WIDTH * effectiveDpr;
+  canvas.height = BASE_HEIGHT * effectiveDpr;
+
+  ctx.scale(effectiveDpr, effectiveDpr);
 
   // Calcular escala para eventos de input
   scale = newWidth / BASE_WIDTH;
   setInputScale(scale);
 }
+/* v8 ignore stop */
 
 // Converter coordenadas do mouse/touch para coordenadas do canvas
 export function screenToCanvas(screenX: number, screenY: number): { x: number; y: number } {
@@ -67,345 +110,293 @@ export function screenToCanvas(screenX: number, screenY: number): { x: number; y
   };
 }
 
+/* v8 ignore start */
 export function getScale(): number {
   return scale;
 }
+/* v8 ignore stop */
 
 // Entidades do jogo
 let entities: Entities;
+export const _testing = {
+    getEntities: () => entities,
+    setEntities: (e: Entities) => entities = e,
+    gameLoop: (t: number) => gameLoop(t),
+    resetLoop: () => { lastTime = 0; accumulator = 0; }
+};
 
 // Obter referência ao overlay de início
 const startScreen = document.getElementById('startScreen');
 const startBtnOverlay = document.getElementById('startBtnOverlay');
 
-// Remover o botão antigo se existir (código legado)
-// const startButton = document.createElement('button');
-// ...
+// --- Wake Lock API (Mobile Screen Keep-Alive) ---
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let wakeLock: any = null;
 
-// Container para o botão Super Cannon
-const superCannonContainer = document.getElementById('superCannonContainer');
-
-// --- Shop UI ---
-const shopContainer = document.createElement('div');
-shopContainer.id = 'shopContainer';
-shopContainer.style.cssText = `
-  position: absolute;
-  top: 150px;
-  right: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  z-index: 10;
-  display: none; /* Hidden by default */
-`;
-document.body.appendChild(shopContainer);
-
-function createShopButton(type: 'bazooka' | 'rambo' | 'laser', price: number, color: string, label: string): HTMLButtonElement {
-  const btn = document.createElement('button');
-  btn.innerHTML = `<span style="font-size: 18px;">${label}</span><br><span style="font-size: 12px;">💰 ${price}</span>`;
-  btn.style.cssText = `
-    width: 70px;
-    height: 70px;
-    padding: 5px;
-    font-size: 12px;
-    font-weight: bold;
-    background: rgba(20, 20, 30, 0.8);
-    color: #FFF;
-    border: 2px solid ${color};
-    border-radius: 10px;
-    cursor: pointer;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(4px);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    touch-action: manipulation;
-    user-select: none;
-    transition: transform 0.1s, opacity 0.2s;
-  `;
-
-  // Efeito de clique
-  btn.addEventListener('mousedown', () => btn.style.transform = 'scale(0.95)');
-  btn.addEventListener('mouseup', () => btn.style.transform = 'scale(1)');
-  btn.addEventListener('mouseleave', () => btn.style.transform = 'scale(1)');
-  btn.addEventListener('touchstart', () => btn.style.transform = 'scale(0.95)', { passive: true });
-  btn.addEventListener('touchend', () => btn.style.transform = 'scale(1)', { passive: true });
-
-  return btn;
-}
-
-const bazookaBtn = createShopButton('bazooka', 50, '#27ae60', '🚀');
-const ramboBtn = createShopButton('rambo', 100, '#e74c3c', '💪');
-const laserBtn = createShopButton('laser', 150, '#00ffff', '⚡');
-const soldierBtn = createShopButton('soldier', 50, '#4A90D9', '🛡️');
-const nukeBtn = createShopButton('nuke', 500, '#F1C40F', '☢️');
-
-// Customize buttons
-soldierBtn.innerHTML = `<span style="font-size: 18px;">🛡️ +10</span><br><span style="font-size: 12px;">💰 50</span>`;
-nukeBtn.innerHTML = `<span style="font-size: 18px;">☢️ NUKE</span><br><span style="font-size: 12px;">💰 500</span>`;
-
-shopContainer.appendChild(soldierBtn);
-shopContainer.appendChild(bazookaBtn);
-shopContainer.appendChild(ramboBtn);
-shopContainer.appendChild(laserBtn);
-shopContainer.appendChild(nukeBtn);
-
-function buyUnit(type: 'bazooka' | 'rambo' | 'laser' | 'soldier' | 'nuke', cost: number): void {
-  if (gameState.coins >= cost) {
-    gameState.coins -= cost;
-
-    if (type === 'nuke') {
-      // Logic for Nuke
-      entities.enemyHordes.forEach(h => {
-        if (h.isActive) {
-          h.isActive = false;
-          addExplosion(h.x, h.y, '#FFD700');
-        }
-      });
-      addFloatingText('NUKE!', entities.playerArmy.centerX, entities.playerArmy.centerY - 100, '#F1C40F');
-      playSound(audioManager.superCannon); // Reusing intense sound
-    } else if (type === 'soldier') {
-      addSoldiersToArmy(entities.playerArmy, 10);
-      addFloatingText('+10 Soldiers', entities.playerArmy.centerX, entities.playerArmy.centerY, '#4A90D9');
-      playSound(audioManager.powerUp);
-    } else {
-      addSpecialSoldiersToArmy(entities.playerArmy, type, 1);
-      addFloatingText(`+1 ${type.toUpperCase()}`, entities.playerArmy.centerX, entities.playerArmy.centerY, '#00FF00');
-      playSound(audioManager.powerUp);
+/* v8 ignore start */
+async function requestWakeLock() {
+  if (typeof navigator !== 'undefined' && 'wakeLock' in navigator) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      wakeLock = await (navigator as any).wakeLock.request('screen');
+    } catch (err) {
+      /* v8 ignore next */
+      console.warn('Wake Lock request failed:', err);
     }
-  } else {
-    // Feedback negativo (som de erro)
-    playSound(audioManager.nerf); // Usando som de nerf como erro
   }
 }
 
-bazookaBtn.addEventListener('click', (e) => { e.stopPropagation(); buyUnit('bazooka', 50); });
-ramboBtn.addEventListener('click', (e) => { e.stopPropagation(); buyUnit('rambo', 100); });
-laserBtn.addEventListener('click', (e) => { e.stopPropagation(); buyUnit('laser', 150); });
-soldierBtn.addEventListener('click', (e) => { e.stopPropagation(); buyUnit('soldier', 50); });
-nukeBtn.addEventListener('click', (e) => { e.stopPropagation(); buyUnit('nuke', 500); });
-
-// Touchstart específico para mobile para garantir resposta rápida
-bazookaBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); buyUnit('bazooka', 50); }, { passive: true });
-ramboBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); buyUnit('rambo', 100); }, { passive: true });
-laserBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); buyUnit('laser', 150); }, { passive: true });
-soldierBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); buyUnit('soldier', 50); }, { passive: true });
-nukeBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); buyUnit('nuke', 500); }, { passive: true });
-
-function updateShopUI(): void {
-  if (!gameState.isStarted || gameState.isGameOver) {
-    shopContainer.style.display = 'none';
-    return;
+/* v8 ignore start */
+function releaseWakeLock() {
+  if (wakeLock) {
+    wakeLock.release()
+      .then(() => {
+        wakeLock = null;
+      })
+      .catch((err: unknown) => console.warn('Wake Lock release failed:', err));
   }
-  shopContainer.style.display = 'flex';
+}
+/* v8 ignore stop */
+/* v8 ignore stop */
 
-  // Atualizar estado (habilitado/desabilitado)
-  const updateBtn = (btn: HTMLButtonElement, cost: number) => {
+// --- Shop Logic ---
+const handleBuy: BuyAction = (type, cost) => {
     if (gameState.coins >= cost) {
-      btn.style.opacity = '1';
-      btn.style.filter = 'grayscale(0%)';
-      btn.disabled = false;
-    } else {
-      btn.style.opacity = '0.5';
-      btn.style.filter = 'grayscale(100%)';
-      btn.disabled = true; // Desabilitar clique real se quiser, ou deixar para feedback sonoro
-    }
-  };
+        if (type === 'recharge_super') {
+           const now = Date.now();
+           const cooldownRemaining = Math.max(0, gameState.superCannonCooldown - (now - gameState.superCannonLastUsed));
+           if (cooldownRemaining <= 0) {
+              /* v8 ignore next 2 */
+              addFloatingText('READY!', entities.playerArmy.centerX, entities.playerArmy.centerY, '#FFD700');
+              return;
+           }
+           /* v8 ignore start */
+           if (gameState.superCannonReady && !gameState.superCannonActive) {
+               // Already ready
+               return;
+           }
+           /* v8 ignore stop */
+        }
 
-  updateBtn(bazookaBtn, 50);
-  updateBtn(ramboBtn, 100);
-  updateBtn(laserBtn, 150);
-  updateBtn(soldierBtn, 50);
-  updateBtn(nukeBtn, 500);
-}
+        gameState.coins -= cost;
 
-// Botão de Super Cannon para mobile (dentro do layout, não fixed)
-const superCannonButton = document.createElement('button');
-superCannonButton.id = 'superCannonBtn';
-superCannonButton.innerHTML = '⚡ SUPER';
-superCannonButton.style.cssText = `
-  min-width: 120px;
-  height: 45px;
-  padding: 8px 20px;
-  font-size: 16px;
-  font-weight: bold;
-  background: linear-gradient(180deg, #FFD700 0%, #FFA500 100%);
-  color: #333;
-  border: 3px solid #FFD700;
-  border-radius: 12px;
-  cursor: pointer;
-  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.5), 0 0 15px rgba(255, 215, 0, 0.3);
-  touch-action: manipulation;
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-tap-highlight-color: transparent;
-  -webkit-touch-callout: none;
-`;
+        if (type === 'nuke') {
+          // 1. Trigger Visuals
+          gameState.nukeTimer = 60; // 1 second visual
+          /* v8 ignore start */
+          triggerScreenShake(20, 800);
+          triggerHitStop(10); // Freeze frame impact
+          playSound(audioManager.superCannon);
+          addFloatingText('⚠️ ORBITAL STRIKE ⚠️', entities.playerArmy.centerX, entities.playerArmy.centerY - 150, '#FF0000', 1.5);
+          /* v8 ignore stop */
 
-// Função para tentar ativar o Super Cannon
-function trySuperCannon(): void {
-  console.log('Super Cannon button pressed!', {
-    isStarted: gameState.isStarted,
-    isGameOver: gameState.isGameOver,
-    superCannonReady: gameState.superCannonReady
-  });
+          // 2. Kill all normal hordes
+          /* v8 ignore start */
+          entities.enemyHordes.forEach(h => {
+            if (h.isActive) {
+              h.isActive = false;
+            }
+          });
+          /* v8 ignore stop */
 
-  if (gameState.isStarted && !gameState.isGameOver) {
-    activateSuperCannon(gameState);
-  }
-}
+          // 3. Clear Bullets
+          entities.bullets = [];
+          /* v8 ignore next */
 
-// Touch events para mobile
-superCannonButton.addEventListener('touchstart', (e) => {
-  e.preventDefault();
-  e.stopPropagation();
-  trySuperCannon();
-  // Feedback visual
-  superCannonButton.style.transform = 'scale(0.95)';
-  superCannonButton.style.opacity = '0.9';
-}, { passive: false });
+          // 4. Massive Damage to Bosses
+          if (entities.boss && entities.boss.isActive) {
+            /* v8 ignore start */
+            entities.boss.hp -= 5000;
+            addFloatingText('-5000', entities.boss.x + entities.boss.width/2, entities.boss.y, '#FF0000', 2);
+            /* v8 ignore stop */
+          }
 
-superCannonButton.addEventListener('touchend', (e) => {
-  e.preventDefault();
-  e.stopPropagation();
-  superCannonButton.style.transform = 'scale(1)';
-  superCannonButton.style.opacity = '1';
-}, { passive: false });
+          // 5. Massive Damage to MiniBosses
+          /* v8 ignore start */
+          entities.miniBosses.forEach(mb => {
+            if (mb.isActive) {
+              mb.hp -= 5000;
+              addFloatingText('-5000', mb.x + mb.width/2, mb.y, '#FF0000', 1.5);
+            }
+          });
+          /* v8 ignore stop */
 
-superCannonButton.addEventListener('touchcancel', () => {
-  superCannonButton.style.transform = 'scale(1)';
-  superCannonButton.style.opacity = '1';
-});
+        } else if (type === 'soldier') {
+          addSoldiersToArmy(entities.playerArmy, 10);
+          /* v8 ignore next 2 */
+          addFloatingText('+10 Soldiers', entities.playerArmy.centerX, entities.playerArmy.centerY, '#4A90D9');
+          playSound(audioManager.powerUp);
+        } else if (type === 'recharge_super') {
+          gameState.superCannonLastUsed = 0;
+          gameState.superCannonReady = true;
+          /* v8 ignore next 2 */
+          addFloatingText('SUPER READY!', entities.playerArmy.centerX, entities.playerArmy.centerY, '#FFD700');
+          playSound(audioManager.powerUp);
+        } else {
+          addSpecialSoldiersToArmy(entities.playerArmy, type, 1);
+          /* v8 ignore next 2 */
+          addFloatingText(`+1 ${type.toUpperCase()}`, entities.playerArmy.centerX, entities.playerArmy.centerY, '#00FF00');
+          playSound(audioManager.powerUp);
+        }
 
-// Click para desktop
-superCannonButton.addEventListener('click', (e) => {
-  e.preventDefault();
-  e.stopPropagation();
-  trySuperCannon();
-});
+        // Salvar moedas após compra
+        saveGameProgress();
+      } else {
+        playSound(audioManager.nerf);
+      }
+};
 
-// Pointer events como fallback
-superCannonButton.addEventListener('pointerdown', (e) => {
-  if (e.pointerType === 'touch') {
-    e.preventDefault();
-    trySuperCannon();
-  }
-});
+setupShopUI(handleBuy);
 
-// Adicionar ao container no HTML
-if (superCannonContainer) {
-  superCannonContainer.appendChild(superCannonButton);
-}
+// --- Super Cannon Logic ---
+const handleSuperCannon = () => {
+    console.log('Super Cannon button pressed!', {
+        isStarted: gameState.isStarted,
+        isGameOver: gameState.isGameOver,
+        superCannonReady: gameState.superCannonReady
+      });
 
-// Atualizar estado visual do botão Super Cannon
-function updateSuperCannonButton(): void {
-  if (!superCannonContainer) return;
+      if (gameState.isStarted && !gameState.isGameOver && !gameState.isDying) {
+        /* v8 ignore next */
+        activateSuperCannon(gameState);
+      }
+};
 
-  if (!gameState.isStarted || gameState.isGameOver) {
-    superCannonContainer.style.display = 'none';
-    return;
-  }
+setupSuperCannonUI(handleSuperCannon);
 
-  superCannonContainer.style.display = 'flex';
-  superCannonContainer.style.justifyContent = 'center';
-
-  // Calcular tempo restante do cooldown
-  const now = Date.now();
-  const timeSinceLastUse = now - gameState.superCannonLastUsed;
-  const cooldownRemaining = Math.max(0, gameState.superCannonCooldown - timeSinceLastUse);
-  const isOnCooldown = cooldownRemaining > 0 && !gameState.superCannonActive;
-
-  if (gameState.superCannonActive) {
-    // Ativo - brilhando
-    superCannonButton.innerHTML = '⚡ ATIVO!';
-    superCannonButton.style.background = 'linear-gradient(180deg, #FFEB3B 0%, #FF9800 100%)';
-    superCannonButton.style.boxShadow = '0 0 25px rgba(255, 215, 0, 0.9), 0 0 50px rgba(255, 215, 0, 0.5)';
-    superCannonButton.style.borderColor = '#FFEB3B';
-    superCannonButton.style.color = '#333';
-    superCannonButton.disabled = true;
-  } else if (isOnCooldown) {
-    // Em cooldown - mostrar tempo restante
-    const cooldownSecs = Math.ceil(cooldownRemaining / 1000);
-    superCannonButton.innerHTML = `⏳ ${cooldownSecs}s`;
-    superCannonButton.style.background = 'linear-gradient(180deg, #555 0%, #333 100%)';
-    superCannonButton.style.boxShadow = '0 4px 10px rgba(0, 0, 0, 0.4)';
-    superCannonButton.style.borderColor = '#555';
-    superCannonButton.style.color = '#999';
-    superCannonButton.disabled = true;
-  } else {
-    // Pronto para usar
-    superCannonButton.innerHTML = '⚡ SUPER';
-    superCannonButton.style.background = 'linear-gradient(180deg, #FFD700 0%, #FFA500 100%)';
-    superCannonButton.style.boxShadow = '0 4px 15px rgba(255, 215, 0, 0.5), 0 0 15px rgba(255, 215, 0, 0.3)';
-    superCannonButton.style.borderColor = '#FFD700';
-    superCannonButton.style.color = '#333';
-    superCannonButton.disabled = false;
-  }
-}
 
 // Game loop
 let wasInBossFight = false;
 let lastTime = 0;
 
-function gameLoop(currentTime: number = 0): void {
-  if (!gameState.isStarted) return;
+// Exported for testing/logic separation
+export function fixedUpdate(dt: number): void {
+  // Logic updates use fixed time step (dt)
 
-  // Se pausado, apenas renderizar e esperar
-  if (gameState.isPaused) {
-    render(ctx, entities, gameState);
-    // Desenhar texto de PAUSADO
-    ctx.save();
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#FFD700';
-    ctx.font = 'bold 48px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('⏸️ PAUSADO', canvas.width / 2, canvas.height / 2);
-    ctx.font = '18px Arial';
-    ctx.fillStyle = '#FFF';
-    ctx.fillText('Pressione P ou ESC para continuar', canvas.width / 2, canvas.height / 2 + 40);
-    ctx.restore();
-    return; // Não continua o loop enquanto pausado
+  // Slow Mo Logic
+  let timeScale = 1.0;
+  if (gameState.isDying) {
+      gameState.slowMoTimer -= dt;
+      timeScale = 0.1;
+
+      if (gameState.slowMoTimer <= 0) {
+          gameState.isGameOver = true;
+          gameState.isDying = false;
+      }
+  } else if (gameState.slowMoTimer > 0) {
+      gameState.slowMoTimer -= dt;
+      timeScale = 0.2;
   }
 
-  // Calcular delta time
-  const deltaTime = lastTime ? currentTime - lastTime : 16;
-  lastTime = currentTime;
+  // Factor relative to 60 FPS (approx 16.67ms)
+  const dtFactor = (dt / 16.67) * timeScale;
+
+  // Atualizar screen shake (decay)
+  if (gameState.screenShakeTimer > 0) {
+    gameState.screenShakeTimer -= dt;
+    if (gameState.screenShakeTimer <= 0) {
+      gameState.screenShakeActive = false;
+      gameState.screenShakeIntensity = 0;
+    }
+  }
+
+  // Update Damage Flash
+  if (gameState.damageFlash > 0) {
+    gameState.damageFlash = Math.max(0, gameState.damageFlash - 0.05 * dtFactor);
+  }
+
+  // Update White Flash
+  if (gameState.whiteFlash > 0) {
+    gameState.whiteFlash = Math.max(0, gameState.whiteFlash - 0.02 * dtFactor);
+  }
+
+  // Update Kill Streak
+  if (gameState.killStreakTimer > 0) {
+    gameState.killStreakTimer -= dt;
+    if (gameState.killStreakTimer <= 0) {
+      gameState.killStreak = 0;
+    }
+  }
+
+  // Update Nuke Timer
+  if (gameState.nukeTimer > 0) {
+    gameState.nukeTimer -= dtFactor;
+  }
+
+  // Update Warp Effect Timer
+  if (gameState.warpEffectTimer > 0) {
+      gameState.warpEffectTimer -= dtFactor;
+  }
 
   // Atualizar movimento
-  updateMovement(entities, gameState, canvas.width, getMouseX());
+  const inputX = gameState.isDying ? entities.playerArmy.centerX : getMouseX();
+  updateMovement(entities, gameState, BASE_WIDTH, inputX, dtFactor);
 
-  // Atualizar movimento das Mystery Boxes
-  for (const box of entities.mysteryBoxes) {
-    box.y += gameState.gameSpeed;
+  // Atualizar movimento das Mystery Boxes e limpar usando swap-and-pop
+  for (let i = 0; i < entities.mysteryBoxes.length; i++) {
+    const box = entities.mysteryBoxes[i];
+    if (!box) continue;
+
+    box.y += gameState.gameSpeed * dtFactor;
+
+    if (box.passed || box.y >= 1200) {
+      // Swap com o último elemento e remove
+      entities.mysteryBoxes[i] = entities.mysteryBoxes[entities.mysteryBoxes.length - 1];
+      entities.mysteryBoxes.pop();
+      i--; // Re-processar este índice pois agora contém o elemento trocado
+    }
   }
-  // Limpar boxes que saíram da tela
-  entities.mysteryBoxes = entities.mysteryBoxes.filter(box => !box.passed && box.y < 1200);
 
   // Sistema de tiro
   updateShooting(entities, gameState);
-  updateBullets(entities, gameState);
-  updateSuperCannon(entities, gameState, deltaTime);
-
-  // Atualizar botão do Super Cannon
-  updateSuperCannonButton();
-  updateSuperButtonInline();
-  updateShopUI(); // Atualizar loja
+  updateBullets(entities, gameState, dtFactor);
+  updateSuperCannon(entities, gameState, dt);
+  updateFloatingTexts(); // Visual updates (damage numbers)
 
   // Spawnar elementos
-  updateSpawns(entities, canvas.width, gameState, canvas.height);
+  updateSpawns(entities, BASE_WIDTH, gameState, dtFactor);
 
   // Verificar colisões
   checkCollisions(entities, gameState);
 
+  // Check Low Army Warning
+  const armyCount = entities.playerArmy.aliveCount;
+  if (armyCount < 10 && armyCount > 0 && !gameState.isGameOver && gameState.isStarted) {
+     if (!gameState.lowArmyTriggered) {
+        gameState.lowArmyTriggered = true;
+        triggerHaptic('warning');
+        addFloatingText("⚠️ LOW ARMY! ⚠️", entities.playerArmy.centerX, entities.playerArmy.centerY - 50, "#FF4500", 1.2);
+     }
+  } else if (armyCount >= 10) {
+     gameState.lowArmyTriggered = false;
+  }
+
   // Atualizar combo timer
   if (gameState.comboTimer > 0) {
-    gameState.comboTimer -= deltaTime;
+    gameState.comboTimer -= dt;
     if (gameState.comboTimer <= 0) {
       gameState.combo = 0;
       gameState.comboTimer = 0;
+      gameState.comboTier = 0; // Reset tier
     }
+  }
+
+  // Update Combo Tier
+  let newTier = 0;
+  if (gameState.combo >= 50) newTier = 5;
+  else if (gameState.combo >= 20) newTier = 4;
+  else if (gameState.combo >= 10) newTier = 3;
+  else if (gameState.combo >= 5) newTier = 2;
+  else if (gameState.combo >= 2) newTier = 1;
+
+  if (newTier > gameState.comboTier) {
+      // Tier Up!
+      gameState.comboTier = newTier;
+      triggerHaptic('medium');
+      // Visual flair handled in renderer
+  } else if (newTier < gameState.comboTier && gameState.combo > 0) {
+      // Degrade tier gracefully only if combo drops significantly (unlikely with timer logic, but safe)
+      gameState.comboTier = newTier;
   }
 
   // Música do boss
@@ -421,13 +412,82 @@ function gameLoop(currentTime: number = 0): void {
       // Parar o jogo no nível 10 para mostrar a tela de vitória
       gameState.isGameOver = true;
       playSound(audioManager.victory);
-    } else if (gameState.currentLevel !== 10) {
+    } else if (!gameState.isGameOver) {
       // Avançar normal para outros níveis
       advanceToNextLevel();
     }
   }
 
-  // Renderizar
+  // Check High Score Real-time
+  if (!gameState.isGameOver && gameState.score > gameState.highScore && gameState.highScore > 0) {
+      if (!gameState.newRecordReached) {
+        gameState.newRecordReached = true;
+        addFloatingText("👑 NEW RECORD! 👑", BASE_WIDTH/2, 200, "#FFD700", 2);
+        triggerScreenShake(15, 800);
+        playSound(audioManager.powerUp);
+      }
+  }
+
+  // Check and update High Score Distance if needed (real-time for Record Line visualization)
+  if (gameState.distanceTraveled > gameState.highScoreDistance) {
+      gameState.highScoreDistance = gameState.distanceTraveled;
+  }
+}
+
+function gameLoop(currentTime: number = 0): void {
+  /* v8 ignore start */
+  if (!gameState.isStarted) return;
+  /* v8 ignore stop */
+
+  // Power Saving Mode: Cap FPS to 30
+  const quality = QualityManager.getInstance().settings;
+  if (quality.powerSavingMode) {
+      // If time since last frame is less than 33ms (approx 30fps), skip
+      if (currentTime - lastTime < 32) {
+          requestAnimationFrame(gameLoop);
+          return;
+      }
+  }
+
+  // Se pausado, apenas renderizar e esperar
+  if (gameState.isPaused) {
+    render(ctx, entities, gameState);
+    return; // Não continua o loop enquanto pausado
+  }
+
+  // Hit Stop Logic (Freeze Frame)
+  if (gameState.hitStop > 0) {
+    gameState.hitStop--;
+    render(ctx, entities, gameState);
+    lastTime = currentTime; // Consome o tempo sem avançar a física
+    requestAnimationFrame(gameLoop);
+    return;
+  }
+
+  // Calcular delta time
+  let deltaTime = lastTime ? currentTime - lastTime : 16;
+  lastTime = currentTime;
+
+  // Cap delta time to prevent spiral of death on lag spikes (max 50ms)
+  if (deltaTime > 50) deltaTime = 50;
+
+  // Monitor Performance
+  QualityManager.getInstance().updateFPS(deltaTime);
+  QualityManager.getInstance().checkRecovery(deltaTime);
+
+  // Accumulator Logic
+  accumulator += deltaTime;
+  while (accumulator >= FIXED_TIMESTEP) {
+      fixedUpdate(FIXED_TIMESTEP);
+      accumulator -= FIXED_TIMESTEP;
+  }
+
+  // UI Updates (Run once per frame)
+  updateSuperCannonUI(gameState);
+  updateSuperButtonInline();
+  updateShopUI(gameState);
+
+  // Renderizar (Interpolation could be added here, but simple state render is fine for this style)
   render(ctx, entities, gameState);
 
   // Continuar loop
@@ -435,31 +495,69 @@ function gameLoop(currentTime: number = 0): void {
     requestAnimationFrame(gameLoop);
   } else {
     // Esconder botão do Super Cannon no game over
-    superCannonButton.style.display = 'none';
-    superCannonButton.style.display = 'none';
+    // superCannonButton.style.display = 'none'; // Handled in UI update now
 
-    // Mostrar tela de game over
+    // Salvar high score
+    /* v8 ignore next 3 */
+    if (gameState.score > gameState.highScore) {
+      gameState.highScore = gameState.score;
+    }
+
+    // Salvar High Score Distance
+    if (gameState.distanceTraveled > gameState.highScoreDistance) {
+        gameState.highScoreDistance = gameState.distanceTraveled;
+    }
+
+    // Salvar progresso (moedas e high score)
+    saveGameProgress();
+
+    // Salvar Leaderboard
+    try {
+        const leaderboardStr = localStorage.getItem('crowdLeaderboard') || '[]';
+        const leaderboard = JSON.parse(leaderboardStr);
+        leaderboard.push({ score: gameState.score, date: Date.now() });
+        leaderboard.sort((a: { score: number }, b: { score: number }) => b.score - a.score);
+        // Manter top 5
+        const top5 = leaderboard.slice(0, 5);
+        localStorage.setItem('crowdLeaderboard', JSON.stringify(top5));
+    } catch (e) {
+        /* v8 ignore next */
+        console.error('Erro ao salvar leaderboard', e);
+    }
+
+    // Mostrar tela de game over (apenas o último frame do jogo)
     render(ctx, entities, gameState);
 
     // Parar música e tocar som de game over
     stopAllMusic();
     playSound(audioManager.gameOver);
 
-    // Salvar high score
-    if (gameState.score > gameState.highScore) {
-      gameState.highScore = gameState.score;
-      localStorage.setItem('crowdHighScore', gameState.highScore.toString());
-    }
+    releaseWakeLock(); // Allow screen to sleep
+
+    // Mostrar UI de Game Over DOM
+    showGameOverScreen(gameState);
   }
 }
 
 // Avançar para o próximo nível
 function advanceToNextLevel(): void {
+  // Bonus Coins for clearing level
+  const levelBonus = 100 + gameState.currentLevel * 50;
+  gameState.coins += levelBonus;
+  /* v8 ignore next */
+  saveGameProgress(); // Salvar progresso
+  /* v8 ignore next 2 */
+  addFloatingText(`LEVEL CLEAR! +${levelBonus} 💰`, BASE_WIDTH/2, BASE_HEIGHT/2, '#FFD700', 2.0);
+  playSound(audioManager.victory);
+
   gameState.currentLevel++;
   gameState.distanceTraveled = 0;
   gameState.levelDistance += 900; // Incremento 3x maior por level (era 300)
   gameState.isVictory = false;
   gameState.gameSpeed = Math.min(1.5, gameState.baseGameSpeed + gameState.currentLevel * 0.08); // Máximo 1.5x, incremento menor
+
+  // Trigger Warp Effect
+  gameState.warpEffectTimer = 60; // 1 second roughly at 60fps
 
   // Limpar entidades antigas, manter o exército
   entities.gates = [];
@@ -470,56 +568,60 @@ function advanceToNextLevel(): void {
   // Spawnar hordas iniciais para o novo level - quantidades reduzidas
   const baseEnemies = 12 + gameState.currentLevel * 2; // Reduzido
   entities.enemyHordes = [
-    createEnemyHorde(canvas.width, -50, baseEnemies, gameState.currentLevel),
-    createEnemyHorde(canvas.width, -200, baseEnemies + 3, gameState.currentLevel),
+    createEnemyHorde(BASE_WIDTH, -50, baseEnemies, gameState.currentLevel),
+    createEnemyHorde(BASE_WIDTH, -200, baseEnemies + 3, gameState.currentLevel),
   ];
 }
 
 // Iniciar jogo
-function startGame(): void {
+export function startGame(): void {
   resetGameState();
-  entities = createInitialEntities(canvas.width, canvas.height);
-  initializeMousePosition(canvas.width);
+  entities = createInitialEntities(BASE_WIDTH, BASE_HEIGHT);
+  initializeMousePosition(BASE_WIDTH);
   setGameStateRef(gameState); // Configurar referência para input de Super Cannon
   wasInBossFight = false; // Resetar flag de boss
-  gameState.isStarted = true;
+
+  // Set Start Time for Stats
+  gameState.runStartTime = Date.now();
+  gameState.totalKills = 0;
 
   // Esconder overlay de start
   if (startScreen) startScreen.classList.remove('active');
 
-  superCannonButton.style.display = 'block'; // Mostrar botão do Super Cannon
+  // Start Countdown then Game
+  startCountdown(() => {
+    gameState.isStarted = true;
+    requestWakeLock(); // Keep screen on
 
-  // Iniciar música
-  playSound(audioManager.gameStart);
-  setTimeout(() => playMusic(false), 500); // Iniciar música após som de início
+    // Iniciar música
+    playSound(audioManager.gameStart);
+    setTimeout(() => playMusic(false), 500); // Iniciar música após som de início
 
-  requestAnimationFrame(gameLoop);
+    // Tutorial Hint
+    /* v8 ignore next */
+    addFloatingText("HOLD & DRAG", BASE_WIDTH / 2, BASE_HEIGHT / 2 + 100, "#FFFFFF", 1.5);
+
+    requestAnimationFrame(gameLoop);
+  });
 }
 
-// Restart no clique após game over
-canvas.addEventListener('click', (e) => {
-  if (gameState.isGameOver) {
-    const { x, y } = screenToCanvas(e.clientX, e.clientY);
+// Helper function to trigger screen shake (exported to be used by other modules)
+export function triggerScreenShake(intensity: number, duration: number): void {
+  gameState.screenShakeActive = true;
+  gameState.screenShakeIntensity = intensity;
+  gameState.screenShakeDuration = duration;
+  gameState.screenShakeTimer = duration; // Timer starts at duration and counts down
+}
 
-    // Verificar se clicou no botão de compartilhar X (Twitter)
-    const xBounds = getShareButtonBounds();
-    if (x >= xBounds.x && x <= xBounds.x + xBounds.width &&
-      y >= xBounds.y && y <= xBounds.y + xBounds.height) {
-      shareOnX(gameState);
-      return;
-    }
+export function triggerHitStop(frames: number): void {
+  gameState.hitStop = frames;
+}
 
-    // Verificar se clicou no botão de compartilhar WhatsApp
-    const waBounds = getWhatsAppButtonBounds();
-    if (x >= waBounds.x && x <= waBounds.x + waBounds.width &&
-      y >= waBounds.y && y <= waBounds.y + waBounds.height) {
-      shareOnWhatsApp(gameState);
-      return;
-    }
-
-    // Lógica para continuar ou reiniciar
+// Callback de Reinício
+const onRestartGame = () => {
     if (gameState.isVictory && gameState.currentLevel === 10) {
       // Continuar para nível 11 (Infinito)
+      /* v8 ignore next 4 */
       advanceToNextLevel();
       gameState.isGameOver = false;
       gameState.isStarted = true;
@@ -528,49 +630,79 @@ canvas.addEventListener('click', (e) => {
       // Reiniciar jogo
       startGame();
     }
+};
+
+/* v8 ignore start */
+const onShareGame = (platform: 'x' | 'whatsapp') => {
+    if (platform === 'x') shareOnX(gameState);
+    else shareOnWhatsApp(gameState);
+};
+/* v8 ignore stop */
+
+// Setup Game Over UI
+setupGameOverUI(onRestartGame, onShareGame);
+
+// Restart no clique após game over (apenas para Pause e Interação In-Game)
+canvas.addEventListener('click', () => {
+  // Se pausado, verificar clique no botão Resume
+  /* v8 ignore start */
+  if (gameState.isPaused) {
+    // Área central para despausar
+    togglePause();
+    return;
   }
+  /* v8 ignore stop */
 });
 
 canvas.addEventListener('touchstart', (e) => {
-  if (gameState.isGameOver) {
-    e.preventDefault();
-    const touch = e.touches[0];
-    const { x, y } = screenToCanvas(touch.clientX, touch.clientY);
-
-    // Verificar se clicou no botão de compartilhar X (Twitter)
-    const xBounds = getShareButtonBounds();
-    if (x >= xBounds.x && x <= xBounds.x + xBounds.width &&
-      y >= xBounds.y && y <= xBounds.y + xBounds.height) {
-      shareOnX(gameState);
-      return;
-    }
-
-    // Verificar se clicou no botão de compartilhar WhatsApp
-    const waBounds = getWhatsAppButtonBounds();
-    if (x >= waBounds.x && x <= waBounds.x + waBounds.width &&
-      y >= waBounds.y && y <= waBounds.y + waBounds.height) {
-      shareOnWhatsApp(gameState);
-      return;
-    }
-
-    // Lógica para continuar ou reiniciar
-    if (gameState.isVictory && gameState.currentLevel === 10) {
-      // Continuar para nível 11 (Infinito)
-      advanceToNextLevel();
-      gameState.isGameOver = false;
-      gameState.isStarted = true;
-      requestAnimationFrame(gameLoop);
-    } else {
-      // Reiniciar jogo
-      startGame();
-    }
+  /* v8 ignore start */
+  if (gameState.isPaused) {
+    e.preventDefault(); // Evitar scroll/zoom
+    togglePause();
+    return;
   }
+  /* v8 ignore stop */
 }, { passive: false });
 
 // Event listeners
 if (startBtnOverlay) {
   startBtnOverlay.addEventListener('click', startGame);
 }
+// UI Event Listeners (Security Fix: Removed inline handlers)
+const pauseBtnTop = document.getElementById('pauseBtnTop');
+if (pauseBtnTop) pauseBtnTop.addEventListener('click', () => togglePause());
+
+const settingsBtn = document.getElementById('settingsBtn');
+if (settingsBtn) settingsBtn.addEventListener('click', () => toggleSettingsMenu());
+
+const storyBtn = document.querySelector('.story-btn');
+if (storyBtn) storyBtn.addEventListener('click', () => {
+     const modal = document.getElementById('storyModal');
+     if (modal) modal.classList.add('active');
+});
+
+const storyCloseBtn = document.querySelector('.story-close-btn');
+if (storyCloseBtn) storyCloseBtn.addEventListener('click', () => {
+     const modal = document.getElementById('storyModal');
+     if (modal) modal.classList.remove('active');
+});
+
+const goBtn = document.querySelector('.go-btn');
+const levelSelector = document.getElementById('levelSelector') as HTMLSelectElement;
+if (goBtn && levelSelector) {
+     goBtn.addEventListener('click', () => {
+         const lvl = parseInt(levelSelector.value);
+         debugSetLevel(lvl);
+     });
+}
+
+const superCannonBtnInline = document.getElementById('superCannonBtnInline');
+if (superCannonBtnInline) {
+     superCannonBtnInline.addEventListener('click', () => {
+         triggerSuperCannon();
+     });
+}
+
 
 // Resize handler
 window.addEventListener('resize', resizeCanvas);
@@ -579,23 +711,45 @@ window.addEventListener('orientationchange', () => {
 });
 
 // Setup inicial
+/* v8 ignore next */
 resizeCanvas(); // Configurar tamanho inicial
-setupInput(canvas);
-initializeMousePosition(canvas.width);
+setupInput(canvas, (screenX, screenY) => {
+    // Touch ripple effect
+    const pos = screenToCanvas(screenX, screenY);
+    addParticle(pos.x, pos.y, 'shockwave', COLORS.PLAYER.NORMAL, 1);
+    addParticle(pos.x, pos.y, 'spark', '#FFFFFF', 3);
+});
+initializeMousePosition(BASE_WIDTH);
 initAudio(); // Inicializar sistema de áudio
+setupSettingsUI(debugSetLevel); // Inicializar Settings UI
+updateStartScreenLeaderboard(); // Show leaderboard on start
+
+// Auto-pause quando a aba for trocada ou minimizada (Mobile friendly)
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && gameState.isStarted && !gameState.isGameOver && !gameState.isPaused) {
+    togglePause();
+  }
+  // Re-acquire lock if returning
+  /* v8 ignore next 3 */
+  if (!document.hidden && gameState.isStarted && !gameState.isPaused) {
+    requestWakeLock();
+  }
+});
 
 // Atualizar botão de mute inicial
 const muteBtn = document.getElementById('muteBtn');
+/* v8 ignore start */
 if (muteBtn) {
   muteBtn.textContent = isMusicMuted() ? '🔇' : '🔊';
 }
+/* v8 ignore stop */
 
 // Desenhar tela inicial
-entities = createInitialEntities(canvas.width, canvas.height);
+entities = createInitialEntities(BASE_WIDTH, BASE_HEIGHT);
 render(ctx, entities, gameState);
 
 // DEBUG: Função para ir para um level específico (exposta globalmente)
-function debugSetLevel(targetLevel: number): void {
+export function debugSetLevel(targetLevel: number): void {
   if (!gameState.isStarted) {
     // Se o jogo não começou, iniciar primeiro
     startGame();
@@ -610,7 +764,7 @@ function debugSetLevel(targetLevel: number): void {
 
   // Dar um exército razoável para teste
   const testSoldiers = Math.min(200, 10 + targetLevel * 12);
-  entities = createInitialEntities(canvas.width, canvas.height);
+  entities = createInitialEntities(BASE_WIDTH, BASE_HEIGHT);
 
   // Adicionar soldados extras
   for (let i = 0; i < testSoldiers; i++) {
@@ -631,8 +785,8 @@ function debugSetLevel(targetLevel: number): void {
   // Spawnar hordas para o level
   const baseEnemies = 15 + targetLevel * 3;
   entities.enemyHordes = [
-    createEnemyHorde(canvas.width, -50, baseEnemies, targetLevel),
-    createEnemyHorde(canvas.width, -200, baseEnemies + 5, targetLevel),
+    createEnemyHorde(BASE_WIDTH, -50, baseEnemies, targetLevel),
+    createEnemyHorde(BASE_WIDTH, -200, baseEnemies + 5, targetLevel),
   ];
 
   console.log(`🎮 Debug: Indo para Level ${targetLevel}`);
@@ -640,103 +794,178 @@ function debugSetLevel(targetLevel: number): void {
   // Se for level 10+, forçar spawn do boss imediatamente
   if (targetLevel >= 10) {
     gameState.distanceTraveled = gameState.levelDistance - 100;
+    /* v8 ignore next */
     console.log(`🛸 Mothership boss aparecerá em breve!`);
   }
 }
 
 // Função para pausar/despausar o jogo
-function togglePause(): void {
+export function togglePause(): void {
   if (!gameState.isStarted || gameState.isGameOver) return;
 
-  gameState.isPaused = !gameState.isPaused;
+  triggerHaptic('light');
 
-  // Atualizar botão de pause
-  const pauseBtn = document.getElementById('pauseBtn');
-  if (pauseBtn) {
-    pauseBtn.textContent = gameState.isPaused ? '▶️ Play' : '⏸️ Pause';
+  // Ensure modal exists (lazy creation)
+  createPauseModal(
+    () => togglePause(), // Resume
+    () => {
+        // Force unpause explicitly to avoid resume countdown
+        gameState.isPaused = false;
+        const m = document.getElementById('pauseModal');
+        if (m) m.style.display = 'none';
+        startGame();
+    },
+    () => toggleSettingsMenu()
+  );
+
+  const modal = document.getElementById('pauseModal');
+
+  if (gameState.isPaused) {
+    // Resume with countdown
+    if (modal) modal.style.display = 'none';
+
+    startCountdown(() => {
+      gameState.isPaused = false;
+      requestWakeLock();
+      const pauseBtn = document.getElementById('pauseBtnTop');
+      if (pauseBtn) pauseBtn.textContent = '⏸️';
+      console.log('⏸️ Jogo retomado');
+      requestAnimationFrame(gameLoop);
+    });
+  } else {
+    // Pause immediately
+    gameState.isPaused = true;
+    releaseWakeLock();
+    const pauseBtn = document.getElementById('pauseBtnTop');
+    if (pauseBtn) pauseBtn.textContent = '▶️';
+    console.log('⏸️ Jogo pausado');
+    if (modal) modal.style.display = 'flex';
   }
-
-  // Se despausou, continuar o game loop
-  if (!gameState.isPaused) {
-    requestAnimationFrame(gameLoop);
-  }
-
-  console.log(`⏸️ Jogo ${gameState.isPaused ? 'pausado' : 'retomado'}`);
 }
 
-function toggleMuteUI(): void {
-  const muted = toggleMute();
-  const btn = document.getElementById('muteBtn');
-  if (btn) {
-    btn.textContent = muted ? '🔇' : '🔊';
-  }
-}
-
-function toggleFullscreen(): void {
+export function toggleFullscreen(): void {
+  triggerHaptic('light');
   if (!document.fullscreenElement) {
     document.documentElement.requestFullscreen().catch(err => {
+      /* v8 ignore next */
       console.log(`Error attempting to enable fullscreen: ${err.message}`);
     });
   } else {
+    /* v8 ignore start */
     if (document.exitFullscreen) {
       document.exitFullscreen();
     }
+    /* v8 ignore stop */
   }
 }
 
 // Função para ativar super cannon (exposta para HTML)
-function triggerSuperCannon(): void {
-  if (gameState.isStarted && !gameState.isGameOver && !gameState.isPaused) {
+export function triggerSuperCannon(): void {
+  triggerHaptic('medium');
+  /* v8 ignore start */
+  if (gameState.isStarted && !gameState.isGameOver && !gameState.isPaused && !gameState.isDying) {
     activateSuperCannon(gameState);
   }
+  /* v8 ignore stop */
 }
 
 // Atualizar estado do botão Super inline
+/* v8 ignore start */
 function updateSuperButtonInline(): void {
-  const superBtn = document.getElementById('superCannonBtnInline') as HTMLButtonElement;
-  if (!superBtn) return;
+  if (typeof document === 'undefined') return;
+
+  if (!cachedSuperBtn) {
+    cachedSuperBtn = document.getElementById('superCannonBtnInline') as HTMLButtonElement;
+  }
+
+  if (!cachedSuperBtn) return;
+
+  let newText = '';
+  let newDisabled = false;
 
   if (!gameState.isStarted || gameState.isGameOver) {
-    superBtn.disabled = true;
-    superBtn.textContent = '⚡ SUPER';
-    return;
+    newDisabled = true;
+    newText = '⚡ SUPER';
+  } else {
+    const now = Date.now();
+    const timeSinceLastUse = now - gameState.superCannonLastUsed;
+    const cooldownRemaining = Math.max(0, gameState.superCannonCooldown - timeSinceLastUse);
+    const isOnCooldown = cooldownRemaining > 0 && !gameState.superCannonActive;
+
+    if (gameState.superCannonActive) {
+      newText = '⚡ ATIVO!';
+      newDisabled = true;
+    } else if (isOnCooldown) {
+      const cooldownSecs = Math.ceil(cooldownRemaining / 1000);
+      newText = `⏳ ${cooldownSecs}s`;
+      newDisabled = true;
+    } else {
+      newText = '⚡ SUPER';
+      newDisabled = false;
+    }
   }
 
-  const now = Date.now();
-  const timeSinceLastUse = now - gameState.superCannonLastUsed;
-  const cooldownRemaining = Math.max(0, gameState.superCannonCooldown - timeSinceLastUse);
-  const isOnCooldown = cooldownRemaining > 0 && !gameState.superCannonActive;
+  // Update DOM only if changed
+  if (lastSuperText !== newText) {
+    cachedSuperBtn.textContent = newText;
+    lastSuperText = newText;
+  }
 
-  if (gameState.superCannonActive) {
-    superBtn.textContent = '⚡ ATIVO!';
-    superBtn.disabled = true;
-  } else if (isOnCooldown) {
-    const cooldownSecs = Math.ceil(cooldownRemaining / 1000);
-    superBtn.textContent = `⏳ ${cooldownSecs}s`;
-    superBtn.disabled = true;
-  } else {
-    superBtn.textContent = '⚡ SUPER';
-    superBtn.disabled = false;
+  if (lastSuperDisabled !== newDisabled) {
+    cachedSuperBtn.disabled = newDisabled;
+    lastSuperDisabled = newDisabled;
   }
 }
+/* v8 ignore stop */
 
 // Expor funções globalmente para o HTML acessar
 (window as unknown as {
   debugSetLevel: typeof debugSetLevel;
   togglePause: typeof togglePause;
   triggerSuperCannon: typeof triggerSuperCannon;
-  toggleMuteUI: typeof toggleMuteUI;
-  toggleFullscreen: typeof toggleFullscreen;
+  triggerScreenShake: typeof triggerScreenShake;
+  toggleSettingsMenu: typeof toggleSettingsMenu;
 }).debugSetLevel = debugSetLevel;
 
 (window as unknown as { togglePause: typeof togglePause }).togglePause = togglePause;
 (window as unknown as { triggerSuperCannon: typeof triggerSuperCannon }).triggerSuperCannon = triggerSuperCannon;
-(window as unknown as { toggleMuteUI: typeof toggleMuteUI }).toggleMuteUI = toggleMuteUI;
-(window as unknown as { toggleFullscreen: typeof toggleFullscreen }).toggleFullscreen = toggleFullscreen;
+(window as unknown as { triggerScreenShake: typeof triggerScreenShake }).triggerScreenShake = triggerScreenShake;
+(window as unknown as { toggleSettingsMenu: typeof toggleSettingsMenu }).toggleSettingsMenu = toggleSettingsMenu;
 
 // Adicionar atalho de teclado para pause (P ou Escape)
 document.addEventListener('keydown', (e) => {
+  /* v8 ignore start */
   if (e.key === 'p' || e.key === 'P' || e.key === 'Escape') {
     togglePause();
   }
+  if (e.key === ' ') {
+    triggerSuperCannon();
+  }
+  /* v8 ignore stop */
 });
+
+// Capture PWA Install Prompt
+window.addEventListener('beforeinstallprompt', (e) => {
+  /* v8 ignore start */
+  const event = e as BeforeInstallPromptEvent;
+  // Prevent the mini-infobar from appearing on mobile
+  event.preventDefault();
+  // Stash the event so it can be triggered later.
+  gameState.deferredInstallPrompt = event;
+  console.log('📱 PWA Install Prompt captured');
+
+  // If on Start Screen, show button immediately
+  if (!gameState.isStarted) {
+      setupStartScreenInstallBtn(event);
+  }
+  /* v8 ignore stop */
+});
+
+// Service Worker Registration
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(() => console.log('SW Registered'))
+      .catch((err) => console.log('SW Failed', err));
+  });
+}

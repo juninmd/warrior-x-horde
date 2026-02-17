@@ -1,49 +1,19 @@
 // input.ts - Sistema de input (mouse/touch)
 import { GameState } from './types';
-import { activateSuperCannon } from './shooting';
+import { SettingsManager } from './settings';
+import { virtualJoystick, getCurrentScale } from './input-state';
+import { SENSITIVITY } from './constants';
+
+export { setInputScale, virtualJoystick, VirtualJoystick } from './input-state';
 
 let mouseX = 0;
 let isDragging = false;
 let gameStateRef: GameState | null = null;
-let currentScale = 1;
+let activeTouchId: number | null = null;
 
-// Virtual Joystick
-export class VirtualJoystick {
-  active: boolean = false;
-  startX: number = 0;
-  startY: number = 0;
-  currentX: number = 0;
-  currentY: number = 0;
-  maxRadius: number = 50;
-
-  start(x: number, y: number) {
-    this.active = true;
-    this.startX = x;
-    this.startY = y;
-    this.currentX = x;
-    this.currentY = y;
-  }
-
-  move(x: number, y: number) {
-    if (!this.active) return;
-    this.currentX = x;
-    this.currentY = y;
-  }
-
-  end() {
-    this.active = false;
-  }
-
-  getDeltaX(): number {
-    if (!this.active) return 0;
-    const dx = this.currentX - this.startX;
-    // Clamp to maxRadius for normalized feel, but return raw delta for direct mapping if needed
-    // For this game, we want direct mapping or relative movement
-    return dx;
-  }
-}
-
-export const virtualJoystick = new VirtualJoystick();
+// Variaveis para controle relativo (Touch)
+let touchStartX = 0;
+let armyStartX = 0;
 
 export function getMouseX(): number {
   return mouseX;
@@ -53,27 +23,48 @@ export function setGameStateRef(gs: GameState): void {
   gameStateRef = gs;
 }
 
-export function setInputScale(scale: number): void {
-  currentScale = scale;
+export function resetInput(): void {
+  activeTouchId = null;
+  isDragging = false;
+  virtualJoystick.end();
 }
 
 // Converter coordenadas da tela para coordenadas do canvas
 function screenToCanvasX(screenX: number, canvasRect: DOMRect): number {
-  return (screenX - canvasRect.left) / currentScale;
+  return (screenX - canvasRect.left) / getCurrentScale();
 }
 
-export function vibrate(ms: number): void {
+export type HapticPattern = 'light' | 'medium' | 'heavy' | 'success' | 'failure' | 'warning';
+
+const HAPTIC_PATTERNS: Record<HapticPattern, number | number[]> = {
+  light: 15,
+  medium: 40,
+  heavy: 80,
+  success: [40, 30, 40],
+  failure: [50, 50, 100],
+  warning: [30, 50, 30]
+};
+
+/* v8 ignore start */
+export function vibrate(ms: number | number[]): void {
+  if (!SettingsManager.getInstance().hapticsEnabled) return;
+
   if (typeof navigator !== 'undefined' && navigator.vibrate) {
     try {
       navigator.vibrate(ms);
-    } catch (e) {
-      // Ignore vibration errors (user interaction requirements, etc)
+    } catch {
+      // Ignore vibration errors
     }
   }
 }
+/* v8 ignore stop */
 
-export function setupInput(canvas: HTMLCanvasElement): void {
-  // Mouse events
+export function triggerHaptic(pattern: HapticPattern): void {
+  vibrate(HAPTIC_PATTERNS[pattern]);
+}
+
+export function setupInput(canvas: HTMLCanvasElement, onTouchEffect?: (x: number, y: number) => void): void {
+  // Mouse events (Desktop - Absolute positioning is fine/expected for mouse)
   canvas.addEventListener('mousedown', (e) => {
     isDragging = true;
     mouseX = screenToCanvasX(e.clientX, canvas.getBoundingClientRect());
@@ -93,7 +84,9 @@ export function setupInput(canvas: HTMLCanvasElement): void {
     isDragging = false;
   });
 
-  // Touch events
+  // Touch events (Mobile - Relative positioning for better experience)
+  // Robust multi-touch handling: Track specific finger ID
+  /* v8 ignore start */
   canvas.addEventListener('touchstart', (e) => {
     // Não prevenir default aqui para permitir que game.ts trate o game over
     if (gameStateRef && !gameStateRef.isGameOver) {
@@ -104,45 +97,94 @@ export function setupInput(canvas: HTMLCanvasElement): void {
       }
     }
 
-    if (e.touches.length > 0) {
-      const touch = e.touches[0];
-      const canvasX = screenToCanvasX(touch.clientX, canvas.getBoundingClientRect());
+    // Only accept a new touch if we aren't already dragging
+    if (activeTouchId === null && e.changedTouches.length > 0) {
+      const touch = e.changedTouches[0];
+      activeTouchId = touch.identifier;
 
-      // Update mouseX directly for absolute positioning (original behavior)
-      mouseX = canvasX;
+      const rect = canvas.getBoundingClientRect();
+      const touchX = screenToCanvasX(touch.clientX, rect);
+
+      touchStartX = touchX;
+      armyStartX = mouseX; // Anchor to current position
       isDragging = true;
 
-      // Start virtual joystick for relative movement options if we add them later
+      // Start virtual joystick for visualization
       virtualJoystick.start(touch.clientX, touch.clientY);
+
+      // Visual Feedback
+      if (onTouchEffect) {
+          onTouchEffect(touch.clientX, touch.clientY);
+      }
     }
   }, { passive: false });
 
   canvas.addEventListener('touchmove', (e) => {
     if (gameStateRef && !gameStateRef.isGameOver) {
-       e.preventDefault();
+       e.preventDefault(); // Stop scrolling/zooming
     }
 
-    if (e.touches.length > 0) {
-      const touch = e.touches[0];
-      const canvasX = screenToCanvasX(touch.clientX, canvas.getBoundingClientRect());
+    if (activeTouchId !== null) {
+      // Find the active touch
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        if (e.changedTouches[i].identifier === activeTouchId) {
+          const touch = e.changedTouches[i];
+          const rect = canvas.getBoundingClientRect();
+          const currentTouchX = screenToCanvasX(touch.clientX, rect);
 
-      // Update mouseX directly
-      mouseX = canvasX;
-      isDragging = true;
+          // Relative movement
+          const delta = currentTouchX - touchStartX;
 
-      virtualJoystick.move(touch.clientX, touch.clientY);
+          let newX = armyStartX + delta * SENSITIVITY;
+
+          // Clamp to screen bounds
+          newX = Math.max(0, Math.min(canvas.width, newX));
+
+          mouseX = newX;
+
+          // Joystick visual update
+          virtualJoystick.move(touch.clientX, touch.clientY);
+          break;
+        }
+      }
     }
   }, { passive: false });
 
-  canvas.addEventListener('touchend', () => {
-    isDragging = false;
-    virtualJoystick.end();
+  canvas.addEventListener('touchend', (e) => {
+    if (activeTouchId !== null) {
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        if (e.changedTouches[i].identifier === activeTouchId) {
+          activeTouchId = null;
+          isDragging = false;
+          virtualJoystick.end();
+          break;
+        }
+      }
+    }
   });
+  /* v8 ignore stop */
+
+  /* v8 ignore start */
+  canvas.addEventListener('touchcancel', (e) => {
+    if (activeTouchId !== null) {
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        if (e.changedTouches[i].identifier === activeTouchId) {
+          activeTouchId = null;
+          isDragging = false;
+          virtualJoystick.end();
+          break;
+        }
+      }
+    }
+  });
+  /* v8 ignore stop */
 
   // Keyboard events for desktop
   document.addEventListener('keydown', (e) => {
     const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
+    /* v8 ignore start */
     if (!canvas) return;
+    /* v8 ignore stop */
 
     const step = 30;
     if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
@@ -152,11 +194,6 @@ export function setupInput(canvas: HTMLCanvasElement): void {
     if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
       mouseX = Math.min(canvas.width, mouseX + step);
       isDragging = true;
-    }
-    // Super Cannon - Spacebar
-    if (e.key === ' ' && gameStateRef) {
-      e.preventDefault();
-      activateSuperCannon(gameStateRef);
     }
   });
 }

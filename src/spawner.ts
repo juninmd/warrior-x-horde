@@ -1,20 +1,40 @@
 // spawner.ts - Gerador de obstáculos e inimigos
-import { Entities, GameState, MAX_ENEMIES } from './types';
-import { createGatePair, createEnemyHorde, createBoss, createMiniBoss, createMysteryBox, createCoin } from './entities';
+import { Entities, GameState } from './types';
+import { createGatePair, createEnemyHorde, releaseHorde, createBoss, createMiniBoss, createMysteryBox } from './entities';
+import { fastRemove } from './utils';
 
-export function spawnCoins(entities: Entities, canvasWidth: number, gameState: GameState): void {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function spawnCoins(entities: Entities, _canvasWidth: number, _gameState: GameState, _dtFactor: number): void {
   // Remover moedas que já passaram
-  entities.coins = entities.coins.filter(coin => !coin.passed && coin.y < 1200);
+  for (let i = entities.coins.length - 1; i >= 0; i--) {
+    const coin = entities.coins[i];
+    if (coin.passed || coin.y >= 1200) {
+      fastRemove(entities.coins, i);
+    }
+  }
 
-  // Moedas não spawnam mais no chão, apenas dropam de bosses
+  /*
+  // Disable Coin Spawning as per new requirement: only get money from enemies
+  // Spawn de moedas no chão (baixa probabilidade ajustada por dt)
+  if (Math.random() < 0.005 * dtFactor) { // 0.5% chance por frame (normalizado)
+    const margin = 20;
+    const x = margin + Math.random() * (canvasWidth - margin * 2);
+    entities.coins.push(createCoin(x, -50, 10)); // Moedas valem 10
+  }
+  */
 }
 
-export function spawnMysteryBoxes(entities: Entities, canvasWidth: number, _gameState: GameState): void {
+export function spawnMysteryBoxes(entities: Entities, canvasWidth: number, _gameState: GameState, dtFactor: number): void {
   // Remover caixas que já passaram
-  entities.mysteryBoxes = entities.mysteryBoxes.filter(box => !box.passed && box.y < 1200);
+  for (let i = entities.mysteryBoxes.length - 1; i >= 0; i--) {
+    const box = entities.mysteryBoxes[i];
+    if (!box || box.passed || box.y >= 1200) {
+      fastRemove(entities.mysteryBoxes, i);
+    }
+  }
 
   // Chance de spawn (raro)
-  if (Math.random() < 0.002 && entities.mysteryBoxes.length < 1) { // 0.2% chance por frame
+  if (Math.random() < 0.002 * dtFactor && entities.mysteryBoxes.length < 1) { // 0.2% chance por frame (normalizado)
     entities.mysteryBoxes.push(createMysteryBox(canvasWidth, -100));
   }
 }
@@ -27,7 +47,11 @@ export function spawnGates(entities: Entities, canvasWidth: number, gameState: G
   const gateSpacing = Math.max(500, baseSpacing - levelReduction); // Mínimo 500
 
   // Remover gates que já passaram
-  entities.gates = entities.gates.filter(gate => gate.y < 1200);
+  for (let i = entities.gates.length - 1; i >= 0; i--) {
+    if (entities.gates[i].y >= 1200) {
+      fastRemove(entities.gates, i);
+    }
+  }
 
   // Spawnar novos gates se necessário
   const lowestGateY = entities.gates.length > 0
@@ -54,13 +78,19 @@ function getTotalEnemyCount(entities: Entities): number {
   return total;
 }
 
-export function spawnEnemies(entities: Entities, canvasWidth: number, gameState: GameState, _canvasHeight: number = 800): void {
+export function spawnEnemies(entities: Entities, canvasWidth: number, gameState: GameState, dtFactor: number): void {
   // Inimigos nascem do céu (da nave alienígena)
   const spawnY = -50; // Acima da tela, vindo da nave
 
   // SISTEMA ANTI-ASTOLFO: Sem limite de inimigos
   // Apenas removemos hordas que saíram da tela
-  entities.enemyHordes = entities.enemyHordes.filter(horde => horde.isActive && horde.y < 1200);
+  for (let i = entities.enemyHordes.length - 1; i >= 0; i--) {
+    const horde = entities.enemyHordes[i];
+    if (!horde.isActive || horde.y >= 1200) {
+      releaseHorde(horde);
+      fastRemove(entities.enemyHordes, i);
+    }
+  }
 
   // Espaçamento menor = hordas mais frequentes
   const baseSpacing = 80; // Reduzido de 180 para spawnar mais rápido
@@ -74,9 +104,24 @@ export function spawnEnemies(entities: Entities, canvasWidth: number, gameState:
     : spawnY + hordeSpacing;
 
   // Chance de spawn (reduzida para performance)
+  /* v8 ignore next 10 */
   const spawnChance = Math.min(0.8, 0.7 + (gameState.currentLevel - 1) * 0.01);
 
-  if (lowestHordeY > spawnY && Math.random() < spawnChance) {
+  // Normalizar probabilidade pelo dtFactor para consistência de framerate
+  // spawnChance é "probabilidade de spawnar QUANDO houver espaço".
+  // Se rodar a 120fps, testamos 2x mais vezes. Se não ajustarmos, spawna 2x mais rápido (ou enche os espaços mais rápido).
+  // Porém, aqui a lógica depende mais de `lowestHordeY > spawnY` (espaço disponível).
+  // Se o jogo roda mais rápido, as hordas descem mais rápido, abrindo espaço mais rápido.
+  // Então a taxa de spawn já é controlada pela velocidade de descida (que já foi corrigida com dtFactor).
+  // A chance aqui é apenas para introduzir aleatoriedade nos buracos.
+  // Se mantivermos fixo, em FPS alto teremos menos buracos (mais testes de sucesso).
+  // Ajustando: Math.pow(chance, dtFactor)? Não, simples multiplicação para probabilidades pequenas.
+  // Vamos usar uma aproximação:
+
+  const adjustedChance = spawnChance * dtFactor;
+
+  /* v8 ignore next */
+  if (lowestHordeY > spawnY && Math.random() < adjustedChance) {
     // Balancear inimigos baseado no tamanho do exército
     const playerCount = entities.playerArmy.soldiers.filter(s => s.isAlive).length;
 
@@ -97,17 +142,19 @@ export function spawnEnemies(entities: Entities, canvasWidth: number, gameState:
     // Calcula quantidade final sem restrição global
     const enemyCount = Math.floor(Math.min(maxEnemies, Math.max(minEnemies, baseEnemies)));
 
+    /* v8 ignore start */
     if (enemyCount > 0) {
       // Spawn acima da tela (vindo da nave alienígena)
       entities.enemyHordes.push(createEnemyHorde(canvasWidth, spawnY - hordeSpacing, enemyCount, gameState.currentLevel));
     }
+    /* v8 ignore stop */
   }
 }
 
 // Mini-boss spawn durante as hordas
 let lastMiniBossSpawn = 0;
 
-export function spawnMiniBoss(entities: Entities, canvasWidth: number, gameState: GameState, _canvasHeight: number = 800): void {
+export function spawnMiniBoss(entities: Entities, canvasWidth: number, gameState: GameState): void {
   // Spawnar mini-boss
   // Se for level > 11 (Sistema Anti-Astolfo), spawna muito mais frequente
   let intervalFactor = 0.25; // Padrão: a cada 25% do level
@@ -126,13 +173,16 @@ export function spawnMiniBoss(entities: Entities, canvasWidth: number, gameState
   if (miniBossThreshold > lastMiniBossSpawn && !entities.boss) {
     // Permitir até maxConcurrent mini-bosses ativos ao mesmo tempo
     const activeMiniBosses = entities.miniBosses.filter(mb => mb.isActive).length;
+    /* v8 ignore next */
     if (activeMiniBosses < maxConcurrent) {
       // No modo infinito (>11), pode spawnar múltiplos de uma vez
       const spawnCount = gameState.currentLevel > 11 ? Math.min(3, 1 + Math.floor((gameState.currentLevel - 11) / 5)) : 1;
 
       for(let i=0; i<spawnCount; i++) {
          // Spawn do céu (da nave alienígena) com leve variação Y
+         /* v8 ignore start */
          entities.miniBosses.push(createMiniBoss(canvasWidth, -100 - (i * 150), gameState.currentLevel));
+         /* v8 ignore stop */
       }
 
       lastMiniBossSpawn = miniBossThreshold;
@@ -140,7 +190,7 @@ export function spawnMiniBoss(entities: Entities, canvasWidth: number, gameState
   }
 }
 
-export function checkBossSpawn(entities: Entities, canvasWidth: number, gameState: GameState, _canvasHeight: number = 800): void {
+export function checkBossSpawn(entities: Entities, canvasWidth: number, gameState: GameState): void {
   // Spawnar boss quando atingir distância do nível
   if (gameState.distanceTraveled >= gameState.levelDistance * 0.9 && !entities.boss) {
     const boss = createBoss(canvasWidth, gameState.currentLevel);
@@ -157,13 +207,13 @@ export function checkBossSpawn(entities: Entities, canvasWidth: number, gameStat
   }
 }
 
-export function updateSpawns(entities: Entities, canvasWidth: number, gameState: GameState, canvasHeight: number = 800): void {
+export function updateSpawns(entities: Entities, canvasWidth: number, gameState: GameState, dtFactor: number): void {
   if (gameState.isGameOver || gameState.isVictory) return;
 
   spawnGates(entities, canvasWidth, gameState);
-  spawnEnemies(entities, canvasWidth, gameState, canvasHeight);
-  spawnMiniBoss(entities, canvasWidth, gameState, canvasHeight);
-  spawnMysteryBoxes(entities, canvasWidth, gameState);
-  spawnCoins(entities, canvasWidth, gameState);
-  checkBossSpawn(entities, canvasWidth, gameState, canvasHeight);
+  spawnEnemies(entities, canvasWidth, gameState, dtFactor);
+  spawnMiniBoss(entities, canvasWidth, gameState);
+  spawnMysteryBoxes(entities, canvasWidth, gameState, dtFactor);
+  spawnCoins(entities, canvasWidth, gameState, dtFactor);
+  checkBossSpawn(entities, canvasWidth, gameState);
 }

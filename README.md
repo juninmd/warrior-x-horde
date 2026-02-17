@@ -1,5 +1,7 @@
 # Warrior X Horder
 
+[![CI](https://github.com/juninmd/warrior-x-horde/actions/workflows/ci.yml/badge.svg)](https://github.com/juninmd/warrior-x-horde/actions/workflows/ci.yml)
+
 [Play the game here!](https://warrior-x-horde.netlify.app/)
 
 ## How to Play

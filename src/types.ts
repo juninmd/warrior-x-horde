@@ -9,7 +9,9 @@ export interface Particle {
   size: number;
   life: number;
   maxLife: number;
-  type: 'explosion' | 'trail' | 'spark' | 'star';
+  type: 'explosion' | 'trail' | 'spark' | 'star' | 'shockwave' | 'debris';
+  rotation?: number;
+  rotationSpeed?: number;
 }
 
 export interface GameState {
@@ -20,6 +22,7 @@ export interface GameState {
   currentLevel: number;
   score: number;
   highScore: number;
+  highScoreDistance: number;
   coins: number;
   gameSpeed: number;
   baseGameSpeed: number;
@@ -47,6 +50,31 @@ export interface GameState {
   // Boss Atmosphere
   bossActive: boolean;
   bossAtmosphereIntensity: number;
+  newRecordReached: boolean;
+  damageFlash: number;
+  lowArmyTriggered: boolean;
+  hitStop: number;
+  slowMoTimer: number;
+  isDying: boolean; // Slow motion death phase
+  nukeTimer: number;
+  // Killstreak System
+  killStreak: number;
+  killStreakTimer: number;
+  // Stats
+  totalKills: number;
+  runStartTime: number;
+  // Visuals
+  whiteFlash: number;
+  warpEffectTimer: number; // For level transitions
+  // PWA
+  deferredInstallPrompt: BeforeInstallPromptEvent | null;
+  // Combo Tier (visual state)
+  comboTier: number; // 0=None, 1=Double, 2=Multi, 3=Ultra, 4=Monster
+}
+
+export interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
 }
 
 export interface Soldier {
@@ -64,10 +92,12 @@ export interface Soldier {
   isSuper?: boolean; // Super guerreiro
   personalFireRate?: number; // Fire rate individual (para super guerreiros)
   type: 'normal' | 'bazooka' | 'rambo' | 'laser';
+  hitTimer?: number;
 }
 
 export interface Army {
   soldiers: Soldier[];
+  aliveCount: number;
   centerX: number;
   centerY: number;
   targetX: number;
@@ -90,6 +120,9 @@ export interface EnemyHorde {
   speed: number;
   isActive: boolean;
   isMini?: boolean; // Mini-boss horde
+  hp: number; // Shared HP for the horde
+  maxHp: number;
+  perfectClearEligible?: boolean;
 }
 
 export interface MiniBoss {
@@ -103,6 +136,7 @@ export interface MiniBoss {
   isActive: boolean;
   color: string;
   type: 'normal' | 'armored' | 'speed' | 'spiky';
+  hitTimer?: number;
 }
 
 export interface Gate {
@@ -117,6 +151,11 @@ export interface Gate {
   side: 'left' | 'right';
   passed: boolean;
   customText?: string;
+  cachedColors?: {
+    light: string;
+    dark: string;
+  };
+  cachedCanvas?: HTMLCanvasElement | OffscreenCanvas;
 }
 
 export interface Weapon {
@@ -140,6 +179,7 @@ export interface MysteryBox {
   hp: number;
   maxHp: number;
   passed: boolean;
+  hitTimer?: number;
 }
 
 export interface Coin {
@@ -177,6 +217,7 @@ export interface Boss {
   type: 'normal' | 'beast' | 'machine' | 'demon' | 'mothership' | 'slime' | 'eye' | 'spider' | 'skull' | 'ghost' | 'crystal'; // Tipo de boss
   vx?: number; // Velocidade horizontal (para mothership)
   vy?: number; // Velocidade vertical (para mothership)
+  hitTimer?: number;
 }
 
 export interface Entities {
@@ -191,10 +232,6 @@ export interface Entities {
   miniBosses: MiniBoss[];
 }
 
-// Limites de entidades para performance
-export const MAX_HEROES = 20000; // Aumentado para 20k
-export const MAX_ENEMIES = 20000;
-
 export interface FloatingText {
   text: string;
   x: number;
@@ -202,4 +239,8 @@ export interface FloatingText {
   color: string;
   alpha: number;
   scale: number;
+  vx: number;
+  vy: number;
+  gravity: number;
+  style?: 'normal' | 'critical' | 'gold';
 }

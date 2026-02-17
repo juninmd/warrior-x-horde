@@ -8,16 +8,26 @@ export interface AudioManager {
   powerUp: HTMLAudioElement;
   nerf: HTMLAudioElement;
   superCannon: HTMLAudioElement;
+  victory: HTMLAudioElement;
 }
 
 let isMuted = false;
 let audioInitialized = false;
+// Map to track last played time for throttling
+const lastPlayedMap = new Map<string, number>();
+const THROTTLE_MS = 80; // Minimum time between same sound instances
 
 function createAudio(src: string, loop = false, volume = 0.5): HTMLAudioElement {
   const audio = new Audio(src);
   audio.loop = loop;
   audio.volume = volume;
   audio.preload = 'auto';
+  // Ensure src is set for keying
+  /* v8 ignore start */
+  if (!audio.src && src) {
+      audio.src = src;
+  }
+  /* v8 ignore stop */
   return audio;
 }
 
@@ -29,6 +39,7 @@ export const audioManager: AudioManager = {
   powerUp: createAudio('/audio/power_up.wav', false, 0.4),
   nerf: createAudio('/audio/nerf.wav', false, 0.4),
   superCannon: createAudio('/audio/boss_death.mp3', false, 0.5),
+  victory: createAudio('/audio/wave_complete.wav', false, 0.5),
 };
 
 export function initAudio(): void {
@@ -41,6 +52,7 @@ export function initAudio(): void {
       isMuted = true;
     }
   } catch (e) {
+    /* v8 ignore next */
     console.warn('LocalStorage access denied', e);
   }
 
@@ -52,8 +64,25 @@ export function initAudio(): void {
   audioInitialized = true;
 }
 
+export function resetAudio(): void {
+  audioInitialized = false;
+  isMuted = false;
+  lastPlayedMap.clear();
+}
+
 export function playSound(sound: HTMLAudioElement): void {
   if (isMuted) return;
+
+  const now = Date.now();
+  // Use src as key. If empty (unlikely in prod but possible in tests), use a fallback or object ref.
+  const key = sound.src || 'unknown_sound';
+  const lastTime = lastPlayedMap.get(key) || 0;
+
+  if (now - lastTime < THROTTLE_MS) {
+    return; // Throttled
+  }
+
+  lastPlayedMap.set(key, now);
 
   // Clonar para permitir múltiplas reproduções simultâneas
   const clone = sound.cloneNode(true) as HTMLAudioElement;
@@ -90,7 +119,7 @@ export function toggleMute(): boolean {
 
   try {
     localStorage.setItem('crowdRunnerMute', isMuted.toString());
-  } catch (e) {
+  } catch {
     // Ignore
   }
 

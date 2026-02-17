@@ -1,62 +1,38 @@
 // collisions.ts - Sistema de colisões
-import { Entities, GameState, Army, EnemyHorde, Gate, MiniBoss, MysteryBox, Coin } from './types';
+import { Entities, GameState, Army, EnemyHorde, Gate, MiniBoss, MysteryBox, Soldier } from './types';
 import { addSoldiersToArmy, multiplySoldiersInArmy, removeSoldiersFromArmy, addSuperSoldiersToArmy, addSpecialSoldiersToArmy } from './entities';
 import { addFloatingText, addExplosion, addParticle } from './renderer';
 import { playSound, audioManager } from './audio';
-import { vibrate } from './input';
+import { triggerHaptic } from './input';
+import { triggerScreenShake, triggerHitStop } from './game';
+import { getArmyBounds, checkBounds, getEntityBounds, Rect } from './utils';
+import { COLORS } from './constants';
+import { soldierPool } from './soldierPool';
+import { saveGameProgress } from './gameState';
 
-function getArmyBounds(army: Army): { left: number; right: number; top: number; bottom: number } {
-  if (army.soldiers.length === 0) {
-    return { left: army.centerX, right: army.centerX, top: army.centerY, bottom: army.centerY };
-  }
-
-  let left = Infinity, right = -Infinity, top = Infinity, bottom = -Infinity;
-  for (const soldier of army.soldiers) {
-    if (soldier.isAlive) {
-      left = Math.min(left, soldier.x - soldier.size);
-      right = Math.max(right, soldier.x + soldier.size);
-      top = Math.min(top, soldier.y - soldier.size);
-      bottom = Math.max(bottom, soldier.y + soldier.size);
-    }
-  }
-  return { left, right, top, bottom };
+function getComboMultiplier(gameState: GameState): number {
+    // 10% bonus per combo count, capped at 300% (3.0x) for balance, or maybe uncapped?
+    // Let's go with 5% per combo to keep numbers sane but rewarding.
+    return 1 + (gameState.combo * 0.05);
 }
 
-// Nova função: determinar qual gate é ativado baseado no CENTRO do exército
-function getGateForArmyCenter(army: Army, gates: Gate[]): Gate | null {
-  const bounds = getArmyBounds(army);
-
-  // Encontrar gates na mesma linha (mesmo Y aproximado) que estão na posição do exército
-  for (const gate of gates) {
-    if (gate.passed) continue;
-
-    // Verificar se o exército está na altura do gate
-    if (bounds.bottom > gate.y && bounds.top < gate.y + gate.height) {
-      // Usar o CENTRO do exército para determinar qual gate
-      const gateCenter = gate.x + gate.width / 2;
-      const armyCenterX = army.centerX;
-
-      // Se o centro do exército está dentro do gate
-      if (armyCenterX >= gate.x && armyCenterX <= gate.x + gate.width) {
-        return gate;
+function cleanupDeadSoldiers(soldiers: Soldier[]): void {
+  let activeCount = 0;
+  for (let i = 0; i < soldiers.length; i++) {
+    const s = soldiers[i];
+    if (s.isAlive) {
+      if (i !== activeCount) {
+        soldiers[activeCount] = s;
       }
+      activeCount++;
+    } else {
+      soldierPool.release(s);
     }
   }
-  return null;
+  soldiers.length = activeCount;
 }
 
-function checkGateCollision(army: Army, gate: Gate, bounds: { left: number; right: number; top: number; bottom: number }): boolean {
-  // Usar o CENTRO do exército para determinar colisão
-  const armyCenterX = army.centerX;
-
-  return !gate.passed &&
-    armyCenterX >= gate.x &&
-    armyCenterX <= gate.x + gate.width &&
-    bounds.bottom > gate.y &&
-    bounds.top < gate.y + gate.height;
-}
-
-function applyGateEffect(army: Army, gate: Gate, gameState: GameState, entities: Entities): void {
+function applyGateEffect(army: Army, gate: Gate, gameState: GameState): void {
   const beforeCount = army.soldiers.length;
   let afterCount = beforeCount;
   let isPositive = true;
@@ -65,19 +41,19 @@ function applyGateEffect(army: Army, gate: Gate, gameState: GameState, entities:
     case 'add': {
       addSoldiersToArmy(army, gate.value);
       afterCount = army.soldiers.length;
-      addFloatingText(`+${gate.value}`, gate.x + gate.width / 2, gate.y, '#2ECC71');
+      addFloatingText(`+${gate.value}`, gate.x + gate.width / 2, gate.y, COLORS.UI.SUCCESS, 1.2);
       break;
     }
     case 'multiply': {
       multiplySoldiersInArmy(army, gate.value);
       afterCount = army.soldiers.length;
-      addFloatingText(`×${gate.value}`, gate.x + gate.width / 2, gate.y, '#3498DB');
+      addFloatingText(`×${gate.value}`, gate.x + gate.width / 2, gate.y, COLORS.UI.INFO, 1.3);
       break;
     }
     case 'subtract':
       removeSoldiersFromArmy(army, Math.min(gate.value, army.soldiers.length - 1));
       afterCount = army.soldiers.length;
-      addFloatingText(`-${gate.value}`, gate.x + gate.width / 2, gate.y, '#E74C3C');
+      addFloatingText(`-${gate.value}`, gate.x + gate.width / 2, gate.y, COLORS.UI.DANGER);
       isPositive = false;
       break;
     case 'divide': {
@@ -89,311 +65,273 @@ function applyGateEffect(army: Army, gate: Gate, gameState: GameState, entities:
       break;
     }
     case 'firerate': {
-      // Multiplica o fireRate pelo valor (0.92 = ~8% mais rápido por gate)
-      // Limite mínimo de 40ms para máxima cadência
       army.fireRate = Math.max(40, army.fireRate * gate.value);
-      addFloatingText(`🔥 Fire Rate UP!`, gate.x + gate.width / 2, gate.y, '#F39C12');
+      addFloatingText(`🔥 Fire Rate UP!`, gate.x + gate.width / 2, gate.y, '#F39C12', 1.2);
       break;
     }
     case 'damage': {
-      // Multiplica o dano pelo valor (2 = dobra o dano!)
       army.damage = (army.damage || 1) * gate.value;
-      addFloatingText(`⚔️ DMG x${gate.value}!`, gate.x + gate.width / 2, gate.y, '#E91E63');
+      addFloatingText(`⚔️ DMG x${gate.value}!`, gate.x + gate.width / 2, gate.y, COLORS.UI.ACCENT);
       break;
     }
     case 'superwarrior': {
-      // Adiciona super guerreiros (mais fortes, mais vida, tiro mais rápido)
       addSuperSoldiersToArmy(army, Math.floor(gate.value));
       afterCount = army.soldiers.length;
-      addFloatingText(`⭐ SUPER WARRIOR!`, gate.x + gate.width / 2, gate.y, '#FFD700');
+      addFloatingText(`⭐ SUPER WARRIOR!`, gate.x + gate.width / 2, gate.y, COLORS.UI.GOLD);
       break;
     }
   }
 
-  // Tocar som apropriado
   if (isPositive) {
     playSound(audioManager.powerUp);
-    vibrate(20);
+    triggerHaptic('light');
+    addParticle(gate.x + gate.width / 2, gate.y + gate.height / 2, 'shockwave', COLORS.UI.SUCCESS, 1);
   } else {
     playSound(audioManager.nerf);
-    vibrate(40);
+    triggerHaptic('warning');
+    addParticle(gate.x + gate.width / 2, gate.y + gate.height / 2, 'shockwave', COLORS.UI.DANGER, 1);
   }
 
-  gameState.score += Math.max(0, afterCount - beforeCount) * 10;
+  // Score for growing army
+  const gain = Math.max(0, afterCount - beforeCount);
+  if (gain > 0) {
+      const multiplier = getComboMultiplier(gameState);
+      const points = Math.floor(gain * 10 * multiplier);
+      gameState.score += points;
+      // Optional: Add floating text for score? Maybe too cluttered.
+  }
+
   gate.passed = true;
 }
 
-function checkHordeCollision(army: Army, horde: EnemyHorde, bounds: { left: number; right: number; top: number; bottom: number }): boolean {
-  const hordeTop = horde.y - horde.height / 2;
-  const hordeBottom = horde.y + horde.height / 2;
-
-  return horde.isActive &&
-    bounds.bottom > hordeTop &&
-    bounds.top < hordeBottom &&
-    bounds.right > horde.x - horde.width / 2 &&
-    bounds.left < horde.x + horde.width / 2;
-}
-
 function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): void {
-  const playerCount = army.soldiers.filter(s => s.isAlive).length;
+  const playerCount = army.aliveCount;
   const enemyCount = horde.soldiers.filter(s => s.isAlive).length;
 
-  if (playerCount <= 0 || enemyCount <= 0) {
-    if (enemyCount <= 0) {
-      horde.isActive = false;
+  // Battle Logic
+  const casualties = Math.min(1, playerCount, enemyCount); // Soldiers die 1 by 1 per frame interaction
 
-      // Aumentar combo quando derrotar uma horda
-      gameState.combo++;
-      gameState.comboTimer = 4000; // 4 segundos para manter o combo (era 2s)
-      if (gameState.combo > gameState.maxCombo) {
-        gameState.maxCombo = gameState.combo;
-      }
+  // Process Player Deaths
+  let playerKilled = 0;
+  for (let i = army.soldiers.length - 1; i >= 0; i--) {
+    if (playerKilled >= casualties) break;
+    if (!army.soldiers[i].isAlive) continue;
 
-      // Score com multiplicador de combo MELHORADO
-      // Combo agora vai até 20x e dá mais pontos
-      const comboMultiplier = Math.min(gameState.combo, 20);
-      const baseScore = 100 + gameState.currentLevel * 20; // Score base aumenta com level
-      const scoreGain = baseScore * comboMultiplier;
-      gameState.score += scoreGain;
-
-      // Efeito visual épico de vitória
-      addExplosion(horde.x, horde.y, '#FFD700');
-      addParticle(horde.x, horde.y, 'star', '#FFD700', 3);
-      vibrate(30);
-
-      // Mostrar combo a partir de 2x
-      if (gameState.combo >= 2) {
-        addFloatingText(`${gameState.combo}x COMBO! +${scoreGain}`, horde.x, horde.y - 30, getComboColor(gameState.combo));
-      } else {
-        addFloatingText(`+${scoreGain}`, horde.x, horde.y, '#FFD700');
-      }
-    }
-    return;
+    const soldier = army.soldiers[i];
+    addExplosion(soldier.x, soldier.y, COLORS.PLAYER.NORMAL);
+    addParticle(soldier.x, soldier.y, 'debris', soldier.color, 3);
+    addFloatingText("-1", soldier.x, soldier.y - 10, '#FF0000', 0.8);
+    horde.perfectClearEligible = false;
+    soldier.isAlive = false;
+    army.aliveCount--;
+    playerKilled++;
   }
 
-  // Batalha automática - remove soldados de ambos os lados
-  const casualties = Math.min(1, playerCount, enemyCount);
+  gameState.damageFlash = Math.min(0.8, gameState.damageFlash + (playerKilled * 0.05));
 
-  // Remove do jogador
-  for (let i = 0; i < casualties && army.soldiers.length > 0; i++) {
-    const idx = army.soldiers.findIndex(s => s.isAlive);
-    if (idx >= 0) {
-      const soldier = army.soldiers[idx];
-      addExplosion(soldier.x, soldier.y, '#4A90D9');
-      army.soldiers[idx].isAlive = false;
-    }
+  // Process Enemy Deaths
+  let enemyKilled = 0;
+  for (let i = horde.soldiers.length - 1; i >= 0; i--) {
+    if (enemyKilled >= casualties) break;
+    if (!horde.soldiers[i].isAlive) continue;
+
+    const soldier = horde.soldiers[i];
+    addExplosion(soldier.x, soldier.y, COLORS.ENEMY.BASE);
+    addParticle(soldier.x, soldier.y, 'debris', soldier.color, 3);
+    soldier.isAlive = false;
+    enemyKilled++;
   }
 
-  // Remove do inimigo
-  for (let i = 0; i < casualties && horde.soldiers.length > 0; i++) {
-    const idx = horde.soldiers.findIndex(s => s.isAlive);
-    if (idx >= 0) {
-      const soldier = horde.soldiers[idx];
-      addExplosion(soldier.x, soldier.y, '#E74C3C');
-      horde.soldiers[idx].isAlive = false;
-    }
+  // Update Stats & Score per Kill
+  if (enemyKilled > 0) {
+      gameState.totalKills += enemyKilled;
+
+      const multiplier = getComboMultiplier(gameState);
+      const pointsPerKill = 10;
+      gameState.score += Math.floor(pointsPerKill * enemyKilled * multiplier);
+
+      gameState.killStreak += enemyKilled;
+      gameState.killStreakTimer = 2500; // 2.5 seconds window
+
+      const k = gameState.killStreak;
+      // Killstreak Milestones
+      if (k === 5) addFloatingText("KILLING SPREE", horde.x, horde.y - 80, '#2ECC71', 1.3, 'critical');
+      else if (k === 10) addFloatingText("RAMPAGE!", horde.x, horde.y - 80, '#3498DB', 1.5, 'critical');
+      else if (k === 20) addFloatingText("DOMINATING!", horde.x, horde.y - 80, '#9B59B6', 1.8, 'critical');
+      else if (k === 50) addFloatingText("UNSTOPPABLE!", horde.x, horde.y - 80, '#E74C3C', 2.2, 'critical');
+      else if (k === 100) addFloatingText("GODLIKE!", horde.x, horde.y - 80, '#FFD700', 3.0, 'critical');
   }
 
-  // Limpar soldados mortos
-  army.soldiers = army.soldiers.filter(s => s.isAlive);
-  horde.soldiers = horde.soldiers.filter(s => s.isAlive);
+  cleanupDeadSoldiers(army.soldiers);
+  cleanupDeadSoldiers(horde.soldiers);
   horde.count = horde.soldiers.length;
 
+  // Horde Defeated Logic
   if (horde.soldiers.length <= 0) {
     horde.isActive = false;
-
-    // Combo e score
+    triggerHitStop(5); // Hit Stop on Horde Clear
     gameState.combo++;
-    gameState.comboTimer = 2000;
+    gameState.comboTimer = 2000 + (gameState.combo * 100); // Longer timer for higher combos? No, keep it tight but allow some scaling
+
     if (gameState.combo > gameState.maxCombo) {
       gameState.maxCombo = gameState.combo;
     }
 
-    const comboMultiplier = Math.min(gameState.combo, 10);
-    const scoreGain = 100 * comboMultiplier;
-    gameState.score += scoreGain;
+    // Bonus for clearing horde
+    const multiplier = getComboMultiplier(gameState);
+    const baseHordeScore = 100;
+    const hordeScore = Math.floor(baseHordeScore * multiplier);
+    gameState.score += hordeScore;
 
-    addExplosion(horde.x, horde.y, '#FFD700');
-    addParticle(horde.x, horde.y, 'star', '#FFD700', 8);
-    addFloatingText('VICTORY!', horde.x, horde.y, '#FFD700');
-    vibrate(30);
+    // Coins
+    gameState.coins += 100;
+
+    addExplosion(horde.x, horde.y, COLORS.UI.GOLD);
+    addParticle(horde.x, horde.y, 'star', COLORS.UI.GOLD, 8);
+    addFloatingText('VICTORY!', horde.x, horde.y, COLORS.UI.GOLD, 1.3);
+    addFloatingText('+$100', horde.x, horde.y - 20, COLORS.UI.GOLD, 1.2);
+
+    // Milestone messages
+    if (gameState.combo === 5) addFloatingText("GREAT!", horde.x, horde.y - 60, COLORS.UI.INFO, 1.5, 'critical');
+    else if (gameState.combo === 10) addFloatingText("EPIC!", horde.x, horde.y - 60, '#FF00FF', 1.8, 'critical');
+    else if (gameState.combo === 20) addFloatingText("LEGENDARY!", horde.x, horde.y - 60, COLORS.UI.GOLD, 2.0, 'critical');
+    else if (gameState.combo === 50) addFloatingText("UNSTOPPABLE!", horde.x, horde.y - 60, COLORS.EFFECTS.EXPLOSION, 2.5, 'critical');
+
+    if (gameState.combo >= 2) {
+       addFloatingText(`${gameState.combo}x COMBO!`, horde.x, horde.y - 40, COLORS.UI.GOLD, 1.3);
+    }
+
+    if (horde.perfectClearEligible) {
+      addFloatingText('PERFECT!', horde.x, horde.y - 60, '#00FFFF', 2.0, 'critical');
+      gameState.score += Math.floor(200 * multiplier);
+      triggerScreenShake(5, 200);
+      triggerHaptic('success');
+    } else {
+      triggerHaptic('medium');
+    }
+  } else if (army.aliveCount <= 0) {
+      // Player wiped out by this horde
+      // Handled in checkCollisions main loop
   }
 
-  // Screen shake
-  gameState.screenShakeActive = true;
-  gameState.screenShakeIntensity = 5;
-  gameState.screenShakeDuration = 100;
+  if (enemyKilled > 0 || playerKilled > 0) {
+     triggerScreenShake(2, 50);
+  }
 }
 
-function getComboColor(combo: number): string {
-  if (combo >= 10) return '#FF00FF';
-  if (combo >= 7) return '#FFD700';
-  if (combo >= 5) return '#FF6B6B';
-  if (combo >= 3) return '#F39C12';
-  return '#2ECC71';
-}
-
-// Verificar colisão com mini-boss
-function checkMiniBossCollision(army: Army, miniBoss: MiniBoss, bounds: { left: number; right: number; top: number; bottom: number }): boolean {
-  if (!miniBoss.isActive) return false;
-
-  return bounds.bottom > miniBoss.y &&
-    bounds.top < miniBoss.y + miniBoss.height &&
-    bounds.right > miniBoss.x &&
-    bounds.left < miniBoss.x + miniBoss.width;
-}
-
-// Processar batalha com mini-boss (igual hordas - troca de baixas)
 function processMiniBossBattle(army: Army, miniBoss: MiniBoss, gameState: GameState): void {
-  const playerCount = army.soldiers.filter(s => s.isAlive).length;
+  const playerCount = army.aliveCount;
 
   if (playerCount <= 0 || miniBoss.hp <= 0) {
     if (miniBoss.hp <= 0) {
       miniBoss.isActive = false;
-      gameState.score += 300;
+      const multiplier = getComboMultiplier(gameState);
+      gameState.score += Math.floor(300 * multiplier);
+
       addExplosion(miniBoss.x + miniBoss.width / 2, miniBoss.y + miniBoss.height / 2, '#FF4500');
       addParticle(miniBoss.x + miniBoss.width / 2, miniBoss.y + miniBoss.height / 2, 'star', '#FF4500', 8);
-      addFloatingText('MINI-BOSS DEFEATED!', miniBoss.x + miniBoss.width / 2, miniBoss.y, '#FF4500');
+      addFloatingText('MINI-BOSS DEFEATED!', miniBoss.x + miniBoss.width / 2, miniBoss.y, '#FF4500', 1.4);
     }
     return;
   }
 
-  // Mini-boss causa 1 baixa por frame no exército do jogador
+  // Casualties
   const casualties = 1;
+  let killed = 0;
 
-  // Remove do jogador
-  for (let i = 0; i < casualties && army.soldiers.length > 0; i++) {
-    const idx = army.soldiers.findIndex(s => s.isAlive);
-    if (idx >= 0) {
-      const soldier = army.soldiers[idx];
-      addExplosion(soldier.x, soldier.y, '#4A90D9');
-      army.soldiers[idx].isAlive = false;
-    }
+  for (let i = army.soldiers.length - 1; i >= 0; i--) {
+    if (killed >= casualties) break;
+    if (!army.soldiers[i].isAlive) continue;
+
+    const soldier = army.soldiers[i];
+    addExplosion(soldier.x, soldier.y, COLORS.PLAYER.NORMAL);
+    soldier.isAlive = false;
+    army.aliveCount--;
+    killed++;
   }
 
-  // Mini-boss recebe dano baseado nos soldados em contato
-  const damageToMiniBoss = Math.min(playerCount * 0.5, 5); // Máximo 5 de dano por frame
+  gameState.damageFlash = Math.min(0.8, gameState.damageFlash + (killed * 0.05));
+
+  const damageToMiniBoss = Math.min(playerCount * 0.5, 5);
   miniBoss.hp -= damageToMiniBoss;
 
-  // Limpar soldados mortos
-  army.soldiers = army.soldiers.filter(s => s.isAlive);
+  cleanupDeadSoldiers(army.soldiers);
 
   if (miniBoss.hp <= 0) {
     miniBoss.isActive = false;
-    gameState.score += 300;
-    // Reward coins
+    gameState.totalKills++; // Boss Kill
+    triggerHitStop(10); // Hit Stop on MiniBoss
+
+    const multiplier = getComboMultiplier(gameState);
+    gameState.score += Math.floor(500 * multiplier);
     gameState.coins += 50;
+
     addExplosion(miniBoss.x + miniBoss.width / 2, miniBoss.y + miniBoss.height / 2, '#FF4500');
     addParticle(miniBoss.x + miniBoss.width / 2, miniBoss.y + miniBoss.height / 2, 'star', '#FF4500', 10);
-    addFloatingText('MINI-BOSS DEFEATED!', miniBoss.x + miniBoss.width / 2, miniBoss.y, '#FF4500');
-    addFloatingText('+$50', miniBoss.x + miniBoss.width / 2, miniBoss.y - 30, '#FFD700');
-    vibrate(50);
+    addFloatingText('MINI-BOSS DEFEATED!', miniBoss.x + miniBoss.width / 2, miniBoss.y, '#FF4500', 1.4);
+    addFloatingText('+$50', miniBoss.x + miniBoss.width / 2, miniBoss.y - 30, COLORS.UI.GOLD, 1.5);
+    triggerHaptic('heavy');
   }
 
-  // Screen shake menor para mini-boss
-  gameState.screenShakeActive = true;
-  gameState.screenShakeIntensity = 3;
-  gameState.screenShakeDuration = 50;
-}
-
-function checkBossCollision(army: Army, entities: Entities, bounds: { left: number; right: number; top: number; bottom: number }): boolean {
-  if (!entities.boss || !entities.boss.isActive) return false;
-
-  const boss = entities.boss;
-
-  return bounds.bottom > boss.y &&
-    bounds.top < boss.y + boss.height &&
-    bounds.right > boss.x &&
-    bounds.left < boss.x + boss.width;
-}
-
-function checkCoinCollision(army: Army, coin: Coin, bounds: { left: number; right: number; top: number; bottom: number }): boolean {
-  if (coin.passed) return false;
-
-  // Simple bounding box check
-  return bounds.bottom > coin.y - coin.height/2 &&
-         bounds.top < coin.y + coin.height/2 &&
-         bounds.right > coin.x - coin.width/2 &&
-         bounds.left < coin.x + coin.width/2;
-}
-
-function checkMysteryBoxCollision(army: Army, box: MysteryBox, bounds: { left: number; right: number; top: number; bottom: number }): boolean {
-  if (box.passed) return false;
-
-  return bounds.bottom > box.y &&
-    bounds.top < box.y + box.height &&
-    bounds.right > box.x &&
-    bounds.left < box.x + box.width;
+  triggerScreenShake(3, 50);
 }
 
 function applyMysteryBoxEffect(army: Army, box: MysteryBox, gameState: GameState, entities: Entities): void {
   const effects = [
-    'reinforcements',
-    'nuke',
-    'double',
-    'invincible',
-    'bazooka',
-    'rambo',
-    'laser',
-    'divide',
-    'subtract',
-    'slow'
+    'reinforcements', 'nuke', 'double', 'invincible', 'bazooka', 'rambo', 'laser', 'divide', 'subtract', 'slow'
   ];
-
   const effect = effects[Math.floor(Math.random() * effects.length)];
   let isGood = true;
 
   switch (effect) {
-    // Efeitos Bons
     case 'reinforcements':
       addSoldiersToArmy(army, 30);
-      addFloatingText('REINFORCEMENTS!', box.x, box.y, '#2ECC71');
+      addFloatingText('REINFORCEMENTS!', box.x, box.y, COLORS.UI.SUCCESS, 1.2);
       break;
     case 'nuke':
-      // Matar todos os inimigos na tela
       entities.enemyHordes.forEach(h => {
         if (h.isActive && h.y > 0 && h.y < 800) {
           h.isActive = false;
-          addExplosion(h.x, h.y, '#FFD700');
+          addExplosion(h.x, h.y, COLORS.UI.GOLD);
         }
       });
-      addFloatingText('NUKE!', box.x, box.y, '#F1C40F');
+      addFloatingText('NUKE!', box.x, box.y, COLORS.UI.GOLD, 2.0);
+      triggerHitStop(20); // Big Hit Stop on Nuke
+      triggerScreenShake(10, 500);
       break;
     case 'double':
       multiplySoldiersInArmy(army, 2);
-      addFloatingText('DOUBLE TROUBLE!', box.x, box.y, '#9B59B6');
+      addFloatingText('DOUBLE TROUBLE!', box.x, box.y, '#9B59B6', 1.4);
       break;
     case 'invincible':
       addSuperSoldiersToArmy(army, 5);
-      addFloatingText('HERO SQUAD!', box.x, box.y, '#FFD700');
+      addFloatingText('HERO SQUAD!', box.x, box.y, COLORS.UI.GOLD, 1.3);
       break;
     case 'bazooka':
       addSpecialSoldiersToArmy(army, 'bazooka', 8);
-      addFloatingText('BAZOOKA SQUAD!', box.x, box.y, '#27ae60');
+      addFloatingText('BAZOOKA SQUAD!', box.x, box.y, COLORS.PLAYER.BAZOOKA, 1.3);
       break;
     case 'rambo':
       addSpecialSoldiersToArmy(army, 'rambo', 5);
-      addFloatingText('RAMBO SQUAD!', box.x, box.y, '#e74c3c');
+      addFloatingText('RAMBO SQUAD!', box.x, box.y, COLORS.PLAYER.RAMBO, 1.3);
       break;
     case 'laser':
       addSpecialSoldiersToArmy(army, 'laser', 6);
-      addFloatingText('LASER SQUAD!', box.x, box.y, '#00ffff');
+      addFloatingText('LASER SQUAD!', box.x, box.y, COLORS.PLAYER.LASER, 1.3);
       break;
-
-    // Efeitos Ruins (Nerfs)
     case 'divide':
       removeSoldiersFromArmy(army, Math.floor(army.soldiers.length * 0.5));
-      addFloatingText('DIVIDE & CONQUERED!', box.x, box.y, '#FF0000');
+      addFloatingText('DIVIDE & CONQUERED!', box.x, box.y, COLORS.UI.DANGER);
       isGood = false;
       break;
     case 'subtract':
       removeSoldiersFromArmy(army, 15);
-      addFloatingText('AMBUSH!', box.x, box.y, '#FF0000');
+      addFloatingText('AMBUSH!', box.x, box.y, COLORS.UI.DANGER);
       isGood = false;
       break;
     case 'slow':
-      army.fireRate = Math.min(1000, army.fireRate * 1.5); // Atira mais devagar
-      addFloatingText('JAMMED WEAPONS!', box.x, box.y, '#FF0000');
+      army.fireRate = Math.min(1000, army.fireRate * 1.5);
+      addFloatingText('JAMMED WEAPONS!', box.x, box.y, COLORS.UI.DANGER);
       isGood = false;
       break;
   }
@@ -401,19 +339,29 @@ function applyMysteryBoxEffect(army: Army, box: MysteryBox, gameState: GameState
   box.passed = true;
   playSound(isGood ? audioManager.powerUp : audioManager.nerf);
   addParticle(box.x + box.width/2, box.y + box.height/2, 'star', isGood ? '#FFFFFF' : '#FF0000', 10);
+  addParticle(box.x + box.width/2, box.y + box.height/2, 'shockwave', isGood ? '#FFFFFF' : '#FF0000', 1);
+
+  // Score for mystery box
+  if (isGood) {
+      const multiplier = getComboMultiplier(gameState);
+      gameState.score += Math.floor(50 * multiplier);
+  }
 }
 
 export function checkCollisions(entities: Entities, gameState: GameState): void {
   const army = entities.playerArmy;
-  // OTIMIZAÇÃO: Calcular bounds uma vez por frame
   const bounds = getArmyBounds(army);
+  const armyCenterX = army.centerX;
 
-  // Checar colisão com gates
+  // Check Gates
   for (const gate of entities.gates) {
-    if (checkGateCollision(army, gate, bounds)) {
-      applyGateEffect(army, gate, gameState, entities);
-
-      // Marcar o gate do outro lado como "passed" também (mesmo Y = mesmo par)
+    if (!gate.passed &&
+        armyCenterX >= gate.x &&
+        armyCenterX <= gate.x + gate.width &&
+        bounds.bottom > gate.y &&
+        bounds.top < gate.y + gate.height) {
+      applyGateEffect(army, gate, gameState);
+      // Pass sibling gate
       for (const otherGate of entities.gates) {
         if (otherGate.id !== gate.id && Math.abs(otherGate.y - gate.y) < 10) {
           otherGate.passed = true;
@@ -422,95 +370,146 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
     }
   }
 
-  // Checar colisão com hordas
+  // Check Hordes
   for (const horde of entities.enemyHordes) {
-    if (checkHordeCollision(army, horde, bounds)) {
-      gameState.isBattling = true;
-      processBattle(army, horde, gameState);
-    }
-  }
+    if (horde.isActive) {
+        const hordeBounds: Rect = {
+            left: horde.x - horde.width / 2,
+            right: horde.x + horde.width / 2,
+            top: horde.y - horde.height / 2,
+            bottom: horde.y + horde.height / 2
+        };
 
-  // Checar colisão com mini-bosses (batalha igual às hordas)
-  for (const miniBoss of entities.miniBosses) {
-    if (checkMiniBossCollision(army, miniBoss, bounds)) {
-      gameState.isBattling = true;
-      processMiniBossBattle(army, miniBoss, gameState);
-    }
-  }
-
-  // Checar colisão com Mystery Boxes (agora só verifica se foi destruída)
-  for (const box of entities.mysteryBoxes) {
-    // A condição de HP <= 0 é a nova forma de ativar.
-    // A colisão com o exército ainda pode ser uma forma de "coletar" a caixa.
-    if (!box.passed && (box.hp <= 0 || checkMysteryBoxCollision(army, box, bounds))) {
-      applyMysteryBoxEffect(army, box, gameState, entities);
-    }
-  }
-
-  // Checar colisão com Coins
-  for (const coin of entities.coins) {
-    if (checkCoinCollision(army, coin, bounds)) {
-      coin.passed = true;
-      gameState.coins += coin.value;
-      playSound(audioManager.powerUp); // Reusing powerUp sound for now
-      addFloatingText(`+$${coin.value}`, coin.x, coin.y, '#FFD700');
-      addParticle(coin.x, coin.y, 'spark', '#FFD700', 3);
-    }
-  }
-
-  // Checar colisão com boss
-  if (checkBossCollision(army, entities, bounds) && entities.boss) {
-    gameState.isBattling = true;
-
-    // Boss causa dano ao jogador ao contato (esmagamento)
-    if (entities.playerArmy.soldiers.length > 0) {
-        const casualties = 2; // Mata 2 por frame
-        for (let i = 0; i < casualties && army.soldiers.length > 0; i++) {
-            const idx = army.soldiers.findIndex(s => s.isAlive);
-            if (idx >= 0) {
-              const soldier = army.soldiers[idx];
-              addExplosion(soldier.x, soldier.y, '#4A90D9');
-              army.soldiers[idx].isAlive = false;
-            }
+        if (checkBounds(bounds, hordeBounds)) {
+            gameState.isBattling = true;
+            processBattle(army, horde, gameState);
         }
-        // Limpar soldados mortos
-        army.soldiers = army.soldiers.filter(s => s.isAlive);
-    }
-
-    // Dano ao boss baseado no número de soldados atirando (contato também dá dano?)
-    // O usuário disse "dar dano e receber ao encostar".
-    // Recebe dano por contato físico (tipo ataque suicida ou melee)
-    const contactDamage = 5;
-    entities.boss.hp -= contactDamage;
-
-    if (entities.boss.hp <= 0) {
-      entities.boss.isActive = false;
-      gameState.isVictory = true;
-      gameState.score += 1000;
-      // Reward coins
-      gameState.coins += 500;
-      addFloatingText('BOSS DEFEATED!', entities.boss.x + 50, entities.boss.y, '#FFD700');
-      addFloatingText('+$500', entities.boss.x + 50, entities.boss.y - 40, '#FFD700');
-      vibrate(100);
     }
   }
 
-  // Checar game over
-  if (army.soldiers.filter(s => s.isAlive).length <= 0) {
-    gameState.isGameOver = true;
-    vibrate(200);
+  // Check MiniBosses
+  for (const miniBoss of entities.miniBosses) {
+    if (miniBoss.isActive) {
+        const mbBounds = getEntityBounds(miniBoss.x, miniBoss.y, miniBoss.width, miniBoss.height);
+        if (checkBounds(bounds, mbBounds)) {
+             gameState.isBattling = true;
+             processMiniBossBattle(army, miniBoss, gameState);
+        }
+    }
+  }
+
+  // Check Mystery Boxes
+  for (const box of entities.mysteryBoxes) {
+    if (box && !box.passed) {
+        const boxBounds = getEntityBounds(box.x, box.y, box.width, box.height);
+        if (checkBounds(bounds, boxBounds)) {
+            applyMysteryBoxEffect(army, box, gameState, entities);
+        }
+    }
+  }
+
+  // Check Coins
+  for (const coin of entities.coins) {
+    if (!coin.passed) {
+        const coinBounds: Rect = {
+            left: coin.x - coin.width / 2,
+            right: coin.x + coin.width / 2,
+            top: coin.y - coin.height / 2,
+            bottom: coin.y + coin.height / 2
+        };
+        if (checkBounds(bounds, coinBounds)) {
+            coin.passed = true;
+            const multiplier = getComboMultiplier(gameState);
+            gameState.coins += Math.floor(coin.value * multiplier); // Multiplier applies to coins too? Why not!
+            gameState.score += Math.floor(coin.value * 2 * multiplier); // Score from coins
+
+            playSound(audioManager.powerUp);
+            addFloatingText(`+$${Math.floor(coin.value * multiplier)}`, coin.x, coin.y, COLORS.UI.GOLD);
+            addParticle(coin.x, coin.y, 'spark', COLORS.UI.GOLD, 3);
+        }
+    }
+  }
+
+  // Bullet vs Mystery Box interaction
+  entities.mysteryBoxes.forEach(box => {
+    if (box && !box.passed) {
+       entities.bullets.forEach(bullet => {
+         if (bullet.y < box.y || bullet.y > box.y + box.height) return;
+
+         if (!bullet.isEnemy &&
+             bullet.x > box.x && bullet.x < box.x + box.width) {
+
+           box.hp -= bullet.damage;
+           bullet.y = -1000;
+
+           if (box.hp <= 0 && !box.passed) {
+             box.passed = true;
+             addExplosion(box.x + box.width/2, box.y + box.height/2, '#FFFFFF');
+             addFloatingText('DESTROYED!', box.x, box.y, '#FFFFFF');
+           }
+         }
+       });
+    }
+  });
+
+  // Check Boss
+  if (entities.boss && entities.boss.isActive) {
+      const boss = entities.boss;
+      const bossBounds = getEntityBounds(boss.x, boss.y, boss.width, boss.height);
+
+      if (checkBounds(bounds, bossBounds)) {
+        gameState.isBattling = true;
+
+        if (entities.playerArmy.soldiers.length > 0) {
+            const casualties = 2;
+            let killed = 0;
+            for (let i = army.soldiers.length - 1; i >= 0; i--) {
+                if (killed >= casualties) break;
+                if (!army.soldiers[i].isAlive) continue;
+
+                const soldier = army.soldiers[i];
+                addExplosion(soldier.x, soldier.y, COLORS.PLAYER.NORMAL);
+                army.soldiers[i].isAlive = false;
+                army.aliveCount--;
+                killed++;
+            }
+            gameState.damageFlash = Math.min(0.8, gameState.damageFlash + (killed * 0.1));
+            cleanupDeadSoldiers(army.soldiers);
+        }
+
+        const contactDamage = 5;
+        boss.hp -= contactDamage;
+
+        if (boss.hp <= 0) {
+          boss.isActive = false;
+          gameState.totalKills++; // Boss Kill
+          gameState.whiteFlash = 1.0;
+          triggerHitStop(20); // Massive Hit Stop on Boss Kill
+          gameState.slowMoTimer = 2000; // 2 seconds of Slow Mo
+          gameState.isVictory = true;
+
+          const multiplier = getComboMultiplier(gameState);
+          gameState.score += Math.floor(1000 * multiplier);
+          gameState.coins += 500;
+
+          addFloatingText('BOSS DEFEATED!', boss.x + 50, boss.y, COLORS.UI.GOLD, 2.0);
+          addFloatingText('+$500', boss.x + 50, boss.y - 40, COLORS.UI.GOLD, 1.8);
+          triggerHaptic('heavy');
+        }
+      }
+  }
+
+  if (army.aliveCount <= 0 && !gameState.isGameOver && !gameState.isDying) {
+    gameState.isDying = true;
+    gameState.slowMoTimer = 2000; // 2 seconds of dramatic slow motion
+    triggerHaptic('failure');
+    triggerScreenShake(10, 2000); // Shake during death
+
+    // Update High Score immediately for safety
     if (gameState.score > gameState.highScore) {
       gameState.highScore = gameState.score;
-      localStorage.setItem('crowdHighScore', gameState.highScore.toString());
     }
+    saveGameProgress(gameState);
   }
 
-  // Atualizar screen shake
-  if (gameState.screenShakeActive) {
-    gameState.screenShakeTimer += 16;
-    if (gameState.screenShakeTimer >= gameState.screenShakeDuration) {
-      gameState.screenShakeActive = false;
-      gameState.screenShakeTimer = 0;
-    }
-  }
 }
