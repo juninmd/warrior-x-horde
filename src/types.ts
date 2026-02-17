@@ -22,6 +22,7 @@ export interface GameState {
   currentLevel: number;
   score: number;
   highScore: number;
+  highScoreDistance: number;
   coins: number;
   gameSpeed: number;
   baseGameSpeed: number;

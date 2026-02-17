@@ -27,6 +27,10 @@ let cachedSuperBtn: HTMLButtonElement | null = null;
 let lastSuperText: string = '';
 let lastSuperDisabled: boolean | null = null;
 
+// Fixed Timestep Constants
+export const FIXED_TIMESTEP = 1000 / 60; // 60 updates per second (~16.667ms)
+let accumulator = 0;
+
 // Função para redimensionar o canvas responsivamente
 /* v8 ignore start */
 function resizeCanvas(): void {
@@ -114,7 +118,12 @@ export function getScale(): number {
 
 // Entidades do jogo
 let entities: Entities;
-export const _testing = { getEntities: () => entities, setEntities: (e: Entities) => entities = e, gameLoop: (t: number) => gameLoop(t) };
+export const _testing = {
+    getEntities: () => entities,
+    setEntities: (e: Entities) => entities = e,
+    gameLoop: (t: number) => gameLoop(t),
+    resetLoop: () => { lastTime = 0; accumulator = 0; }
+};
 
 // Obter referência ao overlay de início
 const startScreen = document.getElementById('startScreen');
@@ -260,51 +269,14 @@ setupSuperCannonUI(handleSuperCannon);
 let wasInBossFight = false;
 let lastTime = 0;
 
-function gameLoop(currentTime: number = 0): void {
-  /* v8 ignore start */
-  if (!gameState.isStarted) return;
-  /* v8 ignore stop */
-
-  // Power Saving Mode: Cap FPS to 30
-  const quality = QualityManager.getInstance().settings;
-  if (quality.powerSavingMode) {
-      // If time since last frame is less than 33ms (approx 30fps), skip
-      if (currentTime - lastTime < 32) {
-          requestAnimationFrame(gameLoop);
-          return;
-      }
-  }
-
-  // Se pausado, apenas renderizar e esperar
-  if (gameState.isPaused) {
-    render(ctx, entities, gameState);
-    return; // Não continua o loop enquanto pausado
-  }
-
-  // Hit Stop Logic (Freeze Frame)
-  if (gameState.hitStop > 0) {
-    gameState.hitStop--;
-    render(ctx, entities, gameState);
-    lastTime = currentTime; // Consome o tempo sem avançar a física
-    requestAnimationFrame(gameLoop);
-    return;
-  }
-
-  // Calcular delta time
-  let deltaTime = lastTime ? currentTime - lastTime : 16;
-  lastTime = currentTime;
-
-  // Cap delta time to prevent physics explosions on lag spikes (max ~20fps floor)
-  deltaTime = Math.min(deltaTime, 50);
-
-  // Monitor Performance
-  QualityManager.getInstance().updateFPS(deltaTime);
-  QualityManager.getInstance().checkRecovery(deltaTime);
+// Exported for testing/logic separation
+export function fixedUpdate(dt: number): void {
+  // Logic updates use fixed time step (dt)
 
   // Slow Mo Logic
   let timeScale = 1.0;
   if (gameState.isDying) {
-      gameState.slowMoTimer -= deltaTime;
+      gameState.slowMoTimer -= dt;
       timeScale = 0.1;
 
       if (gameState.slowMoTimer <= 0) {
@@ -312,19 +284,16 @@ function gameLoop(currentTime: number = 0): void {
           gameState.isDying = false;
       }
   } else if (gameState.slowMoTimer > 0) {
-      // Use real deltaTime for timer
-      gameState.slowMoTimer -= deltaTime;
+      gameState.slowMoTimer -= dt;
       timeScale = 0.2;
   }
 
-  // Normalizar delta time (base 60 FPS)
-  // Se rodar a 60fps, dtFactor = 1.
-  // Se rodar a 120fps, dtFactor = 0.5 (move metade por frame, mas tem o dobro de frames = mesma velocidade)
-  const dtFactor = (deltaTime / 16.67) * timeScale;
+  // Factor relative to 60 FPS (approx 16.67ms)
+  const dtFactor = (dt / 16.67) * timeScale;
 
   // Atualizar screen shake (decay)
   if (gameState.screenShakeTimer > 0) {
-    gameState.screenShakeTimer -= deltaTime;
+    gameState.screenShakeTimer -= dt;
     if (gameState.screenShakeTimer <= 0) {
       gameState.screenShakeActive = false;
       gameState.screenShakeIntensity = 0;
@@ -332,35 +301,29 @@ function gameLoop(currentTime: number = 0): void {
   }
 
   // Update Damage Flash
-  /* v8 ignore next 3 */
   if (gameState.damageFlash > 0) {
     gameState.damageFlash = Math.max(0, gameState.damageFlash - 0.05 * dtFactor);
   }
 
   // Update White Flash
-  /* v8 ignore next 3 */
   if (gameState.whiteFlash > 0) {
     gameState.whiteFlash = Math.max(0, gameState.whiteFlash - 0.02 * dtFactor);
   }
 
   // Update Kill Streak
-  /* v8 ignore start */
   if (gameState.killStreakTimer > 0) {
-    gameState.killStreakTimer -= deltaTime;
+    gameState.killStreakTimer -= dt;
     if (gameState.killStreakTimer <= 0) {
       gameState.killStreak = 0;
     }
   }
-  /* v8 ignore stop */
 
   // Update Nuke Timer
-  /* v8 ignore next 3 */
   if (gameState.nukeTimer > 0) {
     gameState.nukeTimer -= dtFactor;
   }
 
   // Update Warp Effect Timer
-  /* v8 ignore next 3 */
   if (gameState.warpEffectTimer > 0) {
       gameState.warpEffectTimer -= dtFactor;
   }
@@ -378,7 +341,6 @@ function gameLoop(currentTime: number = 0): void {
 
     if (box.passed || box.y >= 1200) {
       // Swap com o último elemento e remove
-      /* v8 ignore next */
       entities.mysteryBoxes[i] = entities.mysteryBoxes[entities.mysteryBoxes.length - 1];
       entities.mysteryBoxes.pop();
       i--; // Re-processar este índice pois agora contém o elemento trocado
@@ -388,13 +350,8 @@ function gameLoop(currentTime: number = 0): void {
   // Sistema de tiro
   updateShooting(entities, gameState);
   updateBullets(entities, gameState, dtFactor);
-  updateSuperCannon(entities, gameState, deltaTime);
+  updateSuperCannon(entities, gameState, dt);
   updateFloatingTexts(); // Visual updates (damage numbers)
-
-  // UI Updates
-  updateSuperCannonUI(gameState);
-  updateSuperButtonInline();
-  updateShopUI(gameState);
 
   // Spawnar elementos
   updateSpawns(entities, BASE_WIDTH, gameState, dtFactor);
@@ -408,7 +365,6 @@ function gameLoop(currentTime: number = 0): void {
      if (!gameState.lowArmyTriggered) {
         gameState.lowArmyTriggered = true;
         triggerHaptic('warning');
-        /* v8 ignore next */
         addFloatingText("⚠️ LOW ARMY! ⚠️", entities.playerArmy.centerX, entities.playerArmy.centerY - 50, "#FF4500", 1.2);
      }
   } else if (armyCount >= 10) {
@@ -417,7 +373,7 @@ function gameLoop(currentTime: number = 0): void {
 
   // Atualizar combo timer
   if (gameState.comboTimer > 0) {
-    gameState.comboTimer -= deltaTime;
+    gameState.comboTimer -= dt;
     if (gameState.comboTimer <= 0) {
       gameState.combo = 0;
       gameState.comboTimer = 0;
@@ -455,30 +411,87 @@ function gameLoop(currentTime: number = 0): void {
     if (gameState.currentLevel === 10 && !gameState.isGameOver) {
       // Parar o jogo no nível 10 para mostrar a tela de vitória
       gameState.isGameOver = true;
-      /* v8 ignore next */
       playSound(audioManager.victory);
-    } else {
+    } else if (!gameState.isGameOver) {
       // Avançar normal para outros níveis
       advanceToNextLevel();
     }
   }
 
-  // Renderizar
+  // Check High Score Real-time
+  if (!gameState.isGameOver && gameState.score > gameState.highScore && gameState.highScore > 0) {
+      if (!gameState.newRecordReached) {
+        gameState.newRecordReached = true;
+        addFloatingText("👑 NEW RECORD! 👑", BASE_WIDTH/2, 200, "#FFD700", 2);
+        triggerScreenShake(15, 800);
+        playSound(audioManager.powerUp);
+      }
+  }
+
+  // Check and update High Score Distance if needed (real-time for Record Line visualization)
+  if (gameState.distanceTraveled > gameState.highScoreDistance) {
+      gameState.highScoreDistance = gameState.distanceTraveled;
+  }
+}
+
+function gameLoop(currentTime: number = 0): void {
+  /* v8 ignore start */
+  if (!gameState.isStarted) return;
+  /* v8 ignore stop */
+
+  // Power Saving Mode: Cap FPS to 30
+  const quality = QualityManager.getInstance().settings;
+  if (quality.powerSavingMode) {
+      // If time since last frame is less than 33ms (approx 30fps), skip
+      if (currentTime - lastTime < 32) {
+          requestAnimationFrame(gameLoop);
+          return;
+      }
+  }
+
+  // Se pausado, apenas renderizar e esperar
+  if (gameState.isPaused) {
+    render(ctx, entities, gameState);
+    return; // Não continua o loop enquanto pausado
+  }
+
+  // Hit Stop Logic (Freeze Frame)
+  if (gameState.hitStop > 0) {
+    gameState.hitStop--;
+    render(ctx, entities, gameState);
+    lastTime = currentTime; // Consome o tempo sem avançar a física
+    requestAnimationFrame(gameLoop);
+    return;
+  }
+
+  // Calcular delta time
+  let deltaTime = lastTime ? currentTime - lastTime : 16;
+  lastTime = currentTime;
+
+  // Cap delta time to prevent spiral of death on lag spikes (max 50ms)
+  if (deltaTime > 50) deltaTime = 50;
+
+  // Monitor Performance
+  QualityManager.getInstance().updateFPS(deltaTime);
+  QualityManager.getInstance().checkRecovery(deltaTime);
+
+  // Accumulator Logic
+  accumulator += deltaTime;
+  while (accumulator >= FIXED_TIMESTEP) {
+      fixedUpdate(FIXED_TIMESTEP);
+      accumulator -= FIXED_TIMESTEP;
+  }
+
+  // UI Updates (Run once per frame)
+  updateSuperCannonUI(gameState);
+  updateSuperButtonInline();
+  updateShopUI(gameState);
+
+  // Renderizar (Interpolation could be added here, but simple state render is fine for this style)
   render(ctx, entities, gameState);
 
   // Continuar loop
   if (!gameState.isGameOver) {
-    // Checar High Score em tempo real para feedback
-    if (gameState.score > gameState.highScore && gameState.highScore > 0) {
-      if (!gameState.newRecordReached) {
-        gameState.newRecordReached = true;
-        /* v8 ignore next 3 */
-        addFloatingText("👑 NEW RECORD! 👑", BASE_WIDTH/2, 200, "#FFD700", 2);
-        triggerScreenShake(15, 800);
-        playSound(audioManager.powerUp); // Use powerup sound as placeholder
-      }
-    }
-
     requestAnimationFrame(gameLoop);
   } else {
     // Esconder botão do Super Cannon no game over
@@ -488,6 +501,11 @@ function gameLoop(currentTime: number = 0): void {
     /* v8 ignore next 3 */
     if (gameState.score > gameState.highScore) {
       gameState.highScore = gameState.score;
+    }
+
+    // Salvar High Score Distance
+    if (gameState.distanceTraveled > gameState.highScoreDistance) {
+        gameState.highScoreDistance = gameState.distanceTraveled;
     }
 
     // Salvar progresso (moedas e high score)

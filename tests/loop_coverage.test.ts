@@ -89,13 +89,15 @@ describe('Game Loop Coverage', () => {
         });
 
         vi.spyOn(window, 'requestAnimationFrame').mockReturnValue(0);
+        _testing.resetLoop();
     });
 
     it('should trigger low army warning', () => {
         const entities = _testing.getEntities();
         entities.playerArmy.aliveCount = 5;
 
-        _testing.gameLoop(100);
+        _testing.gameLoop(1000);
+        _testing.gameLoop(1050);
 
         expect(mockGameState.lowArmyTriggered).toBe(true);
         expect(renderer.addFloatingText).toHaveBeenCalledWith(expect.stringContaining('LOW ARMY'), expect.any(Number), expect.any(Number), expect.any(String), expect.any(Number));

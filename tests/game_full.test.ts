@@ -154,8 +154,10 @@ describe('Game Loop - Full Coverage', () => {
         // Reset mocks to verify loop calls
         vi.clearAllMocks();
 
-        // Run loop
+        // Run loop (init)
         loopCallback(1000); // timestamp
+        // Run loop (trigger update)
+        loopCallback(1020);
 
         expect(movement.updateMovement).toHaveBeenCalled();
         expect(shooting.updateShooting).toHaveBeenCalled();

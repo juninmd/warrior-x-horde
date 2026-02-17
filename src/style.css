@@ -152,6 +152,20 @@
       }
     }
 
+    /* Mobile Polish */
+    @media (max-width: 768px) {
+      .game-controls {
+        display: none !important;
+      }
+      .game-subtitle {
+        display: none;
+      }
+      .game-title {
+        font-size: 20px;
+        margin-top: 10px;
+      }
+    }
+
     /* Story Modal */
     .story-modal {
       display: none;

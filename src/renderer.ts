@@ -628,7 +628,19 @@ export function updateFloatingTexts(): void {
     ft.vy += ft.gravity;
 
     ft.alpha -= 0.02;
-    ft.scale += 0.01; // Slower growth
+
+    // Pop animation: Scale up quickly then settle
+    // We use alpha (1.0 -> 0.0) as a proxy for time (0.0 -> 1.0)
+    const progress = 1 - ft.alpha;
+    if (progress < 0.2) {
+        // Pop up (0 to 0.2 duration)
+        // Scale goes from 0.5 to 1.5
+        ft.scale = 0.5 + (progress / 0.2) * 1.0;
+    } else {
+        // Settle/Fade (0.2 to 1.0 duration)
+        // Scale 1.5 -> 1.0
+        ft.scale = 1.5 - ((progress - 0.2) / 0.8) * 0.5;
+    }
 
     if (ft.alpha <= 0) {
       floatingTextPool.release(ft);
@@ -2120,6 +2132,37 @@ function drawComboBar(ctx: CanvasRenderingContext2D, gameState: GameState): void
   ctx.restore();
 }
 
+function drawRecordLine(ctx: CanvasRenderingContext2D, gameState: GameState, playerY: number): void {
+  if (gameState.highScoreDistance <= 0) return;
+
+  const distToRecord = gameState.highScoreDistance - gameState.distanceTraveled;
+
+  // Cull if too far (visible range approx -100 to 900)
+  if (distToRecord > 900 || distToRecord < -200) return;
+
+  const y = playerY - distToRecord;
+
+  ctx.save();
+  // Line
+  ctx.strokeStyle = '#FFD700';
+  ctx.lineWidth = 3;
+  ctx.setLineDash([15, 10]);
+  ctx.shadowColor = '#FFD700';
+  ctx.shadowBlur = 10;
+  ctx.beginPath();
+  ctx.moveTo(0, y);
+  ctx.lineTo(BASE_WIDTH, y);
+  ctx.stroke();
+
+  // Label
+  ctx.fillStyle = '#FFD700';
+  ctx.font = `bold 14px ${FONT_FAMILY}`;
+  ctx.textAlign = 'right';
+  ctx.shadowBlur = 0;
+  ctx.fillText(`👑 RECORD: ${Math.floor(gameState.highScore)}`, BASE_WIDTH - 20, y - 8);
+  ctx.restore();
+}
+
 function drawKillstreakOverlay(ctx: CanvasRenderingContext2D, width: number, height: number, killStreak: number): void {
   if (killStreak < 5) return;
 
@@ -2197,6 +2240,7 @@ export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameSt
   }
 
   drawRoad(ctx, gameState);
+  drawRecordLine(ctx, gameState, entities.playerArmy.centerY);
 
   const sortedGates = [...entities.gates].sort((a, b) => a.y - b.y);
   for (const gate of sortedGates) drawGate(ctx, gate);
