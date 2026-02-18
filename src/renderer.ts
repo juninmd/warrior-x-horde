@@ -545,6 +545,27 @@ function drawParticles(ctx: CanvasRenderingContext2D): void {
         continue;
     }
 
+    if (p.type === 'hitmarker') {
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.globalAlpha = p.life; // Fade out
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 2;
+        ctx.shadowColor = '#FF0000';
+        ctx.shadowBlur = 5;
+
+        const s = 6; // Size
+        ctx.beginPath();
+        // Diagonal cross
+        ctx.moveTo(-s, -s);
+        ctx.lineTo(s, s);
+        ctx.moveTo(s, -s);
+        ctx.lineTo(-s, s);
+        ctx.stroke();
+        ctx.restore();
+        continue;
+    }
+
     const key = `particle_${p.type}_${p.color}`;
     const cachedCanvas = spriteCache.images.get(key);
 

@@ -226,23 +226,27 @@ const handleBuy: BuyAction = (type, cost) => {
           /* v8 ignore next 2 */
           addFloatingText('+10 Soldiers', entities.playerArmy.centerX, entities.playerArmy.centerY, '#4A90D9');
           playSound(audioManager.powerUp);
+          triggerHaptic('success');
         } else if (type === 'recharge_super') {
           gameState.superCannonLastUsed = 0;
           gameState.superCannonReady = true;
           /* v8 ignore next 2 */
           addFloatingText('SUPER READY!', entities.playerArmy.centerX, entities.playerArmy.centerY, '#FFD700');
           playSound(audioManager.powerUp);
+          triggerHaptic('success');
         } else {
           addSpecialSoldiersToArmy(entities.playerArmy, type, 1);
           /* v8 ignore next 2 */
           addFloatingText(`+1 ${type.toUpperCase()}`, entities.playerArmy.centerX, entities.playerArmy.centerY, '#00FF00');
           playSound(audioManager.powerUp);
+          triggerHaptic('success');
         }
 
         // Salvar moedas após compra
         saveGameProgress();
       } else {
         playSound(audioManager.nerf);
+        triggerHaptic('warning');
       }
 };
 
@@ -412,6 +416,7 @@ export function fixedUpdate(dt: number): void {
       // Parar o jogo no nível 10 para mostrar a tela de vitória
       gameState.isGameOver = true;
       playSound(audioManager.victory);
+      triggerHaptic('success');
     } else if (!gameState.isGameOver) {
       // Avançar normal para outros níveis
       advanceToNextLevel();
@@ -531,6 +536,7 @@ function gameLoop(currentTime: number = 0): void {
     // Parar música e tocar som de game over
     stopAllMusic();
     playSound(audioManager.gameOver);
+    triggerHaptic('failure'); // Heavy vibration on loss
 
     releaseWakeLock(); // Allow screen to sleep
 
@@ -549,6 +555,7 @@ function advanceToNextLevel(): void {
   /* v8 ignore next 2 */
   addFloatingText(`LEVEL CLEAR! +${levelBonus} 💰`, BASE_WIDTH/2, BASE_HEIGHT/2, '#FFD700', 2.0);
   playSound(audioManager.victory);
+  triggerHaptic('success');
 
   gameState.currentLevel++;
   gameState.distanceTraveled = 0;

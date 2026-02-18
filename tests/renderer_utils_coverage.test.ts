@@ -32,6 +32,7 @@ describe('Renderer Utils Coverage', () => {
             rotate: vi.fn(),
             fillRect: vi.fn(),
             strokeRect: vi.fn(),
+            arc: vi.fn(), // Added arc
             globalAlpha: 0,
             strokeStyle: '',
             lineWidth: 0,
@@ -70,6 +71,7 @@ describe('Renderer Utils Coverage', () => {
             rotate: vi.fn(),
             fillRect: vi.fn(),
             strokeRect: vi.fn(),
+            arc: vi.fn(), // Added arc
             globalAlpha: 0
         } as unknown as CanvasRenderingContext2D;
 

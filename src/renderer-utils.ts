@@ -52,18 +52,6 @@ export function drawStar(ctx: CanvasRenderingContext2D, cx: number, cy: number, 
 
 // --- Input Visuals ---
 
-function drawHexagon(ctx: CanvasRenderingContext2D, x: number, y: number, radius: number): void {
-  ctx.beginPath();
-  for (let i = 0; i < 6; i++) {
-    const angle = (Math.PI / 3) * i;
-    const px = x + Math.cos(angle) * radius;
-    const py = y + Math.sin(angle) * radius;
-    if (i === 0) ctx.moveTo(px, py);
-    else ctx.lineTo(px, py);
-  }
-  ctx.closePath();
-}
-
 export function drawJoystick(ctx: CanvasRenderingContext2D): void {
   // Update Alpha for fade in/out
   if (virtualJoystick.active) {
@@ -74,7 +62,8 @@ export function drawJoystick(ctx: CanvasRenderingContext2D): void {
 
   if (virtualJoystick.alpha <= 0.01) return;
 
-  const { startX, startY, currentX, currentY, maxRadius, alpha } = virtualJoystick;
+  const { startX, startY, currentX, currentY, maxRadius } = virtualJoystick;
+  const alpha = virtualJoystick.alpha;
 
   ctx.save();
   ctx.globalAlpha = alpha;
@@ -94,21 +83,40 @@ export function drawJoystick(ctx: CanvasRenderingContext2D): void {
   }
 
   // Cyber Ring Animation (Pulse)
-  const pulse = Math.sin(Date.now() / 150) * 3;
+  const time = Date.now();
+  const pulse = Math.sin(time / 150) * 3;
+  const rotate = (time / 1000) % (Math.PI * 2);
 
-  // Outer Hexagon (Base)
+  // Outer Ring (Glowing Base)
+  ctx.beginPath();
+  ctx.arc(startX, startY, maxRadius + 5 + pulse, 0, Math.PI * 2);
   ctx.strokeStyle = `rgba(0, 255, 255, ${0.4 * alpha})`; // Cyan fade
   ctx.lineWidth = 2;
-  drawHexagon(ctx, startX, startY, maxRadius + 5 + pulse);
   ctx.stroke();
 
-  // Inner Hexagon (Filled Base)
-  ctx.fillStyle = 'rgba(0, 255, 255, 0.1)';
-  drawHexagon(ctx, startX, startY, maxRadius);
+  // Inner Ring (Static Base)
+  ctx.beginPath();
+  ctx.arc(startX, startY, maxRadius, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(0, 255, 255, 0.05)';
   ctx.fill();
-  ctx.strokeStyle = '#00FFFF';
+  ctx.strokeStyle = 'rgba(0, 255, 255, 0.3)';
   ctx.lineWidth = 1;
   ctx.stroke();
+
+  // Rotating Segments (Tech feel)
+  ctx.save();
+  ctx.translate(startX, startY);
+  ctx.rotate(rotate);
+  ctx.beginPath();
+  ctx.arc(0, 0, maxRadius - 5, 0, Math.PI / 2);
+  ctx.strokeStyle = 'rgba(0, 255, 255, 0.8)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(0, 0, maxRadius - 5, Math.PI, Math.PI * 1.5);
+  ctx.stroke();
+  ctx.restore();
 
   // Connection Line
   ctx.beginPath();
@@ -118,22 +126,22 @@ export function drawJoystick(ctx: CanvasRenderingContext2D): void {
   ctx.lineWidth = 2;
   ctx.setLineDash([5, 3]); // Tech-style dash
   ctx.stroke();
-  ctx.setLineDash([]);
+  ctx.setLineDash([]); // Reset dash
 
-  // Thumb Stick (Diamond Shape)
-  const knobSize = 15;
-  ctx.translate(stickX, stickY);
-  ctx.rotate(Math.PI / 4); // Rotate square to make diamond
-
+  // Thumb Stick (Glowing Circle)
+  ctx.beginPath();
+  ctx.arc(stickX, stickY, 15, 0, Math.PI * 2);
   ctx.shadowColor = '#00FFFF';
   ctx.shadowBlur = 15;
-
   ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(-knobSize/2, -knobSize/2, knobSize, knobSize);
+  ctx.fill();
 
+  // Ring around Thumb Stick
+  ctx.beginPath();
+  ctx.arc(stickX, stickY, 18, 0, Math.PI * 2);
   ctx.strokeStyle = '#00FFFF';
   ctx.lineWidth = 2;
-  ctx.strokeRect(-knobSize/2, -knobSize/2, knobSize, knobSize);
+  ctx.stroke();
 
   ctx.shadowBlur = 0;
   ctx.restore();
