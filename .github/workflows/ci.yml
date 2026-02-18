@@ -28,6 +28,9 @@ jobs:
     - name: Lint
       run: npm run lint
 
+    - name: Typecheck
+      run: npm run typecheck
+
     - name: Test with 100% Coverage Enforcement
       run: npm run coverage
 

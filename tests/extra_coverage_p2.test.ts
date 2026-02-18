@@ -134,7 +134,8 @@ describe('Extra Coverage Part 2', () => {
                  enemyHordes: [horde],
                  miniBosses: [],
                  boss: null,
-                 playerArmy: { soldiers: [] }
+                 playerArmy: { soldiers: [] },
+                 mysteryBoxes: []
              };
 
              shooting.updateBullets(entities, { score: 0, coins: 0 } as any, 1);
@@ -155,7 +156,8 @@ describe('Extra Coverage Part 2', () => {
                  enemyHordes: [],
                  miniBosses: [],
                  boss: boss,
-                 playerArmy: { soldiers: [] }
+                 playerArmy: { soldiers: [] },
+                 mysteryBoxes: []
              };
              const gs: any = { score: 0, isVictory: false };
 
