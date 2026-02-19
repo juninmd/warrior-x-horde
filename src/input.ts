@@ -37,12 +37,12 @@ function screenToCanvasX(screenX: number, canvasRect: DOMRect): number {
 export type HapticPattern = 'light' | 'medium' | 'heavy' | 'success' | 'failure' | 'warning';
 
 const HAPTIC_PATTERNS: Record<HapticPattern, number | number[]> = {
-  light: 10,       // Curto (tiro)
-  medium: 40,      // Médio (impacto)
-  heavy: 80,       // Pesado (dano)
-  success: [40, 30, 40], // Positivo (powerup)
-  failure: [50, 50, 100], // Negativo (game over/dano crítico)
-  warning: [30, 50, 30]   // Alerta
+  light: 10,       // Short (shot)
+  medium: 40,      // Medium (impact)
+  heavy: 80,       // Heavy (damage)
+  success: [40, 30, 40], // Positive (powerup)
+  failure: [50, 50, 100], // Negative (game over/critical damage)
+  warning: [30, 50, 30]   // Alert
 };
 
 // Throttling para evitar sobrecarga de vibração
