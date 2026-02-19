@@ -46,7 +46,7 @@ export function createSuperSoldier(x: number, y: number): Soldier {
   s.targetX = x;
   s.targetY = y;
   s.color = '#FFD700'; // Dourado para destacar
-  s.size = 20; // Maior
+  s.size = 22; // Ainda maior para visibilidade mobile
   s.isAlive = true;
   s.animOffset = Math.random() * Math.PI * 2;
   s.hp = 5; // 5x mais vida
@@ -685,8 +685,8 @@ export function createInitialEntities(canvasWidth: number, canvasHeight: number)
   const initialHordes = [];
 
   // Spawnar 3 hordas iniciais bem próximas para ação imediata
-  const hordePositions = [-20, -80, -140];
-  const enemyCounts = [10, 100, 20]; // Grupos pequenos iniciais
+  const hordePositions = [50, -50, -150]; // Começa JÁ na tela (50px) para ação instantânea
+  const enemyCounts = [15, 80, 25]; // Ajustado para fluxo melhor
 
   for (let i = 0; i < hordePositions.length; i++) {
     initialHordes.push(createEnemyHorde(canvasWidth, hordePositions[i], enemyCounts[i], 1));

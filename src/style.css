@@ -39,6 +39,7 @@
       max-height: 100dvh;
       padding: 5px;
       padding-bottom: env(safe-area-inset-bottom, 20px);
+      touch-action: none; /* Critical for mobile swipe gestures */
     }
 
     .game-title {
@@ -393,15 +394,16 @@
       background: linear-gradient(135deg, #4A90D9 0%, #2E5A8E 100%);
       border: none;
       border-radius: 50px;
-      padding: 20px;
+      padding: 24px 30px; /* Larger touch area */
       color: white;
-      font-size: 24px;
+      font-size: 26px; /* Larger text */
       font-weight: bold;
       cursor: pointer;
       box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
       transition: all 0.3s ease;
       margin-top: 30px;
-      width: 80%;
+      width: 85%;
+      min-height: 80px; /* Ensure easy click */
       animation: pulse-glow 2s infinite;
     }
 

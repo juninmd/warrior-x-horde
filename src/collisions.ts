@@ -84,11 +84,11 @@ function applyGateEffect(army: Army, gate: Gate, gameState: GameState): void {
 
   if (isPositive) {
     playSound(audioManager.powerUp);
-    triggerHaptic('light');
+    triggerHaptic('success');
     addParticle(gate.x + gate.width / 2, gate.y + gate.height / 2, 'shockwave', COLORS.UI.SUCCESS, 1);
   } else {
     playSound(audioManager.nerf);
-    triggerHaptic('warning');
+    triggerHaptic('failure');
     addParticle(gate.x + gate.width / 2, gate.y + gate.height / 2, 'shockwave', COLORS.UI.DANGER, 1);
   }
 
@@ -138,12 +138,14 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
     const soldier = horde.soldiers[i];
     addExplosion(soldier.x, soldier.y, COLORS.ENEMY.BASE);
     addParticle(soldier.x, soldier.y, 'debris', soldier.color, 3);
+    addParticle(soldier.x, soldier.y, 'hitmarker', '#FFFFFF', 1); // Hit marker visual
     soldier.isAlive = false;
     enemyKilled++;
   }
 
   // Update Stats & Score per Kill
   if (enemyKilled > 0) {
+      triggerHaptic('light'); // Satisfying tick for every kill (throttled)
       gameState.totalKills += enemyKilled;
 
       const multiplier = getComboMultiplier(gameState);
@@ -216,6 +218,10 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
 
   if (enemyKilled > 0 || playerKilled > 0) {
      triggerScreenShake(2, 50);
+  }
+
+  if (playerKilled > 0) {
+      triggerHaptic('medium'); // Feedback for taking damage
   }
 }
 

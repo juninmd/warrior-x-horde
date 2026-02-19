@@ -37,21 +37,25 @@ function screenToCanvasX(screenX: number, canvasRect: DOMRect): number {
 export type HapticPattern = 'light' | 'medium' | 'heavy' | 'success' | 'failure' | 'warning';
 
 const HAPTIC_PATTERNS: Record<HapticPattern, number | number[]> = {
-  light: 15,
-  medium: 40,
-  heavy: 80,
-  success: [40, 30, 40],
-  failure: [50, 50, 100],
-  warning: [30, 50, 30]
+  light: 10,       // Short (shot)
+  medium: 40,      // Medium (impact)
+  heavy: 80,       // Heavy (damage)
+  success: [40, 30, 40], // Positive (powerup)
+  failure: [50, 50, 100], // Negative (game over/critical damage)
+  warning: [30, 50, 30]   // Alert
 };
 
+// Throttling para evitar sobrecarga de vibração
+let lastHapticTime = 0;
+const HAPTIC_THROTTLE = 50; // ms
+
 /* v8 ignore start */
-export function vibrate(ms: number | number[]): void {
+export function vibrate(pattern: number | number[]): void {
   if (!SettingsManager.getInstance().hapticsEnabled) return;
 
   if (typeof navigator !== 'undefined' && navigator.vibrate) {
     try {
-      navigator.vibrate(ms);
+      navigator.vibrate(pattern);
     } catch {
       // Ignore vibration errors
     }
@@ -59,8 +63,17 @@ export function vibrate(ms: number | number[]): void {
 }
 /* v8 ignore stop */
 
-export function triggerHaptic(pattern: HapticPattern): void {
-  vibrate(HAPTIC_PATTERNS[pattern]);
+export function triggerHaptic(type: HapticPattern): void {
+  const now = Date.now();
+
+  // Throttle apenas para vibrações curtas/frequentes ('light')
+  if (type === 'light') {
+    if (now - lastHapticTime < HAPTIC_THROTTLE) return;
+  }
+
+  lastHapticTime = now;
+  const pattern = HAPTIC_PATTERNS[type];
+  vibrate(pattern);
 }
 
 export function setupInput(canvas: HTMLCanvasElement, onTouchEffect?: (x: number, y: number) => void): void {

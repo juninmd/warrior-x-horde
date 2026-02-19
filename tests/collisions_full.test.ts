@@ -141,7 +141,7 @@ describe('Collisions System', () => {
     expect(renderer.addFloatingText).toHaveBeenCalledWith('+5', expect.any(Number), expect.any(Number), COLORS.UI.SUCCESS, 1.2);
     expect(renderer.addParticle).toHaveBeenCalledWith(expect.any(Number), expect.any(Number), 'shockwave', COLORS.UI.SUCCESS, 1);
     expect(audio.playSound).toHaveBeenCalledWith(audio.audioManager.powerUp);
-    expect(input.triggerHaptic).toHaveBeenCalledWith('light');
+    expect(input.triggerHaptic).toHaveBeenCalledWith('success');
   });
 
   it('should handle MULTIPLY gate', () => {
