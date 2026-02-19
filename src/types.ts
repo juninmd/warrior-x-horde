@@ -14,6 +14,20 @@ export interface Particle {
   rotationSpeed?: number;
 }
 
+export interface TrailPoint {
+  x: number;
+  y: number;
+  width: number;
+  alpha: number;
+}
+
+export interface Trail {
+  points: TrailPoint[];
+  color: string;
+  width: number;
+  maxLength: number;
+}
+
 export interface GameState {
   isGameOver: boolean;
   isVictory: boolean;
@@ -63,6 +77,7 @@ export interface GameState {
   // Stats
   totalKills: number;
   runStartTime: number;
+  nearMissCount: number;
   // Visuals
   whiteFlash: number;
   warpEffectTimer: number; // For level transitions
@@ -106,6 +121,7 @@ export interface Army {
   fireRate: number;
   lastShotTime: number;
   damage: number;
+  trail: Trail;
 }
 
 export interface EnemyHorde {

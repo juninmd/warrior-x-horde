@@ -1,5 +1,7 @@
 export interface QualitySettings {
   enableShadows: boolean;
+  enablePostProcessing: boolean;
+  enableTrails: boolean;
   particleMultiplier: number; // 0.0 to 1.0
   simplifiedRendering: boolean; // Use simple shapes/colors if true
   maxRenderedSoldiers: number;
@@ -12,6 +14,8 @@ export class QualityManager {
 
   public settings: QualitySettings = {
     enableShadows: true,
+    enablePostProcessing: true,
+    enableTrails: true,
     particleMultiplier: 1.0,
     simplifiedRendering: false,
     maxRenderedSoldiers: 150,
@@ -57,6 +61,8 @@ export class QualityManager {
       this.lowQualityTriggered = false;
       // Reset to defaults (High-ish)
       this.settings.enableShadows = true;
+      this.settings.enablePostProcessing = true;
+      this.settings.enableTrails = true;
       this.settings.particleMultiplier = 1.0;
       this.settings.simplifiedRendering = false;
       this.settings.maxRenderedSoldiers = 150;
@@ -67,6 +73,8 @@ export class QualityManager {
       this.manualMode = true;
       this.lowQualityTriggered = false;
       this.settings.enableShadows = true;
+      this.settings.enablePostProcessing = true;
+      this.settings.enableTrails = true;
       this.settings.particleMultiplier = 1.0;
       this.settings.simplifiedRendering = false;
       this.settings.maxRenderedSoldiers = 250; // Extra high for manual high
@@ -132,6 +140,8 @@ export class QualityManager {
       this.fpsDropFrames = 0;
 
       this.settings.enableShadows = true;
+      this.settings.enablePostProcessing = true;
+      this.settings.enableTrails = true;
       this.settings.particleMultiplier = this.isMobile ? 0.8 : 1.0;
       this.settings.simplifiedRendering = false;
       this.settings.maxRenderedSoldiers = 150;
@@ -148,6 +158,8 @@ export class QualityManager {
     console.warn("⚠️ Performance degraded. Switching to Low Quality Mode.");
     this.lowQualityTriggered = true;
     this.settings.enableShadows = false;
+    this.settings.enablePostProcessing = false;
+    this.settings.enableTrails = false;
     this.settings.particleMultiplier = 0.3;
     this.settings.simplifiedRendering = true;
     this.settings.maxRenderedSoldiers = 60;

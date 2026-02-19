@@ -48,6 +48,7 @@ export const gameState: GameState = {
   killStreakTimer: 0,
   totalKills: 0,
   runStartTime: 0,
+  nearMissCount: 0,
   whiteFlash: 0,
     warpEffectTimer: 0,
     comboTier: 0,
@@ -86,6 +87,7 @@ export function resetGameState(): void {
   gameState.killStreak = 0;
   gameState.killStreakTimer = 0;
   gameState.totalKills = 0;
+  gameState.nearMissCount = 0;
   gameState.runStartTime = Date.now();
   gameState.whiteFlash = 0;
   // Do not reset deferredInstallPrompt as it persists across games

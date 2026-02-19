@@ -1,5 +1,5 @@
 // renderer.ts - Renderização do jogo estilo Crowd Runner
-import { Entities, GameState, FloatingText, Army, EnemyHorde, Gate, Bullet, Particle, MysteryBox, Soldier, MiniBoss } from './types';
+import { Entities, GameState, FloatingText, Army, EnemyHorde, Gate, Bullet, Particle, MysteryBox, Soldier, MiniBoss, Trail } from './types';
 import { ObjectPool } from './pool';
 import { shadeColor, getBiomeColors, fastRemove } from './utils';
 import { COLORS, MAX_PARTICLES, MAX_RENDERED_SOLDIERS, ThemeConfig, BASE_WIDTH, BASE_HEIGHT, FONT_FAMILY } from './constants';
@@ -1143,6 +1143,52 @@ function drawRoad(ctx: CanvasRenderingContext2D, gameState: GameState): void {
   drawDecorations(ctx, width, height, theme);
 }
 
+function drawTrail(ctx: CanvasRenderingContext2D, trail: Trail): void {
+  if (trail.points.length < 2) return;
+  if (!QualityManager.getInstance().settings.enableTrails) return;
+
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.shadowColor = trail.color;
+  ctx.shadowBlur = 10;
+  ctx.strokeStyle = trail.color;
+  ctx.lineWidth = trail.width * 0.5; // Average width
+  ctx.globalAlpha = 0.4;
+
+  ctx.beginPath();
+  ctx.moveTo(trail.points[0].x, trail.points[0].y);
+  for (let i = 1; i < trail.points.length; i++) {
+      ctx.lineTo(trail.points[i].x, trail.points[i].y);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawVignette(ctx: CanvasRenderingContext2D, width: number, height: number): void {
+    if (!QualityManager.getInstance().settings.enablePostProcessing) return;
+
+    const gradient = ctx.createRadialGradient(width/2, height/2, height * 0.4, width/2, height/2, height * 0.85);
+    gradient.addColorStop(0, 'rgba(0,0,0,0)');
+    gradient.addColorStop(1, 'rgba(0,0,0,0.6)');
+
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+}
+
+function drawScanlines(ctx: CanvasRenderingContext2D, width: number, height: number): void {
+    if (!QualityManager.getInstance().settings.enablePostProcessing) return;
+    if (QualityManager.getInstance().settings.resolutionScale < 1.0) return; // Skip on low res
+
+    ctx.save();
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+    // Simplified scanlines: just draw a few big lines instead of per-pixel to save perf
+    for (let y = 0; y < height; y += 8) {
+        ctx.fillRect(0, y, width, 2);
+    }
+    ctx.restore();
+}
+
 function drawSoldier3D(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, color: string, animOffset: number, time: number, type: Soldier['type'] = 'normal', isSuper: boolean = false, isFlash: boolean = false): void {
   // Attempt to use cached sprite
   const key = getSpriteKey(type, color, size, isSuper, isFlash);
@@ -2283,6 +2329,9 @@ export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameSt
   drawBullets(ctx, entities.bullets);
   updateParticles();
   drawParticles(ctx);
+  if (entities.playerArmy.trail) {
+    drawTrail(ctx, entities.playerArmy.trail);
+  }
   drawArmy(ctx, entities.playerArmy, time);
   drawSuperCannonBeam(ctx, entities.playerArmy.centerX, entities.playerArmy.centerY, gameState);
 
@@ -2314,6 +2363,9 @@ export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameSt
   if (gameState.warpEffectTimer > 0) {
       drawWarpEffect(ctx, width, height, gameState.warpEffectTimer);
   }
+
+  drawVignette(ctx, width, height);
+  drawScanlines(ctx, width, height);
 
   drawUI(ctx, gameState, entities.playerArmy.soldiers.filter(s => s.isAlive).length, entities.playerArmy.fireRate, entities.playerArmy.damage, entities.playerArmy);
 

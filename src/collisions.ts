@@ -361,8 +361,10 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
 
   // Check Gates
   for (const gate of entities.gates) {
-    if (!gate.passed &&
-        armyCenterX >= gate.x &&
+    if (gate.passed) continue;
+
+    // Collision Check
+    if (armyCenterX >= gate.x &&
         armyCenterX <= gate.x + gate.width &&
         bounds.bottom > gate.y &&
         bounds.top < gate.y + gate.height) {
@@ -373,6 +375,18 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
           otherGate.passed = true;
         }
       }
+      continue;
+    }
+
+    // Dodge Check (Passed Y without collision)
+    if (gate.y > bounds.bottom) {
+        gate.passed = true;
+        if (gate.type === 'subtract' || gate.type === 'divide') {
+             addFloatingText("DODGE!", gate.x + gate.width/2, gate.y - 50, "#00FFFF", 1.2);
+             gameState.score += 50;
+             gameState.nearMissCount++;
+             triggerHaptic('light');
+        }
     }
   }
 
