@@ -127,6 +127,12 @@ export function createPlayerArmy(canvasWidth: number, canvasHeight: number): Arm
     lastShotTime: 0,
     damage: 3, // Dano base reduzido para 3
     aliveCount: soldiers.length,
+    trail: {
+      points: [],
+      color: '#4A90D9', // Matches player color
+      width: 40,
+      maxLength: 20
+    }
   };
 }
 

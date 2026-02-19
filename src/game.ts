@@ -336,6 +336,19 @@ export function fixedUpdate(dt: number): void {
   const inputX = gameState.isDying ? entities.playerArmy.centerX : getMouseX();
   updateMovement(entities, gameState, BASE_WIDTH, inputX, dtFactor);
 
+  // Update Trail
+  if (entities.playerArmy.trail) {
+    entities.playerArmy.trail.points.push({
+        x: entities.playerArmy.centerX,
+        y: entities.playerArmy.centerY,
+        width: entities.playerArmy.trail.width,
+        alpha: 1
+    });
+    if (entities.playerArmy.trail.points.length > entities.playerArmy.trail.maxLength) {
+        entities.playerArmy.trail.points.shift();
+    }
+  }
+
   // Atualizar movimento das Mystery Boxes e limpar usando swap-and-pop
   for (let i = 0; i < entities.mysteryBoxes.length; i++) {
     const box = entities.mysteryBoxes[i];
