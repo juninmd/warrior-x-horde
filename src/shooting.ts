@@ -434,10 +434,12 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
                  soldier.x,
                  soldier.y - 20,
                  isCrit ? '#FF0000' : '#FFF',
-                 isCrit ? 1.5 : 1.0
+                 isCrit ? 1.5 : 1.0,
+                 isCrit ? 'critical' : 'normal'
              );
           }
 
+          addParticle(soldier.x, soldier.y, 'hitmarker', '#FFF');
           addExplosion(soldier.x, soldier.y, '#E74C3C');
 
           // Determine how many soldiers should be alive based on % of Horde HP left
@@ -517,6 +519,7 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
 
           // Visual Damage Number
           addFloatingText(Math.floor(bullet.damage).toString(), bullet.x, bullet.y - 20, '#FFF', 0.8);
+          addParticle(bullet.x, bullet.y, 'hitmarker', '#FFF');
 
           if (miniBoss.hp <= 0) {
             miniBoss.isActive = false;
@@ -575,8 +578,10 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
           bullet.x,
           bullet.y - 30,
           isCrit ? '#FFD700' : '#FFF',
-          isCrit ? 1.2 : 0.9
+          isCrit ? 1.2 : 0.9,
+          isCrit ? 'critical' : 'normal'
         );
+        addParticle(bullet.x, bullet.y, 'hitmarker', '#FFF');
 
         if (boss.hp <= 0) {
           boss.isActive = false;
