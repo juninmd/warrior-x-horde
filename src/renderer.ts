@@ -18,8 +18,11 @@ const spriteCache: SpriteCache = {
   initialized: false
 };
 
+const decorationCache: Map<string, HTMLCanvasElement | OffscreenCanvas> = new Map();
+
 export function _resetSpriteCache() {
   spriteCache.images.clear();
+  decorationCache.clear();
   spriteCache.initialized = false;
 }
 
@@ -548,20 +551,30 @@ function drawParticles(ctx: CanvasRenderingContext2D): void {
     if (p.type === 'hitmarker') {
         ctx.save();
         ctx.translate(p.x, p.y);
-        ctx.globalAlpha = p.life; // Fade out
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = 2;
-        ctx.shadowColor = '#FF0000';
-        ctx.shadowBlur = 5;
+        // Pop effect: scale starts at 0.5, goes to 1.2, then fades
+        const scale = 0.5 + (1 - p.life) * 2;
+        ctx.scale(scale, scale);
 
-        const s = 6; // Size
+        ctx.globalAlpha = p.life;
+
+        // Black outline for contrast
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+
+        const s = 5;
         ctx.beginPath();
-        // Diagonal cross
         ctx.moveTo(-s, -s);
         ctx.lineTo(s, s);
         ctx.moveTo(s, -s);
         ctx.lineTo(-s, s);
         ctx.stroke();
+
+        // White core
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
         ctx.restore();
         continue;
     }
@@ -653,14 +666,14 @@ export function updateFloatingTexts(): void {
     // Pop animation: Scale up quickly then settle
     // We use alpha (1.0 -> 0.0) as a proxy for time (0.0 -> 1.0)
     const progress = 1 - ft.alpha;
+    const popScale = ft.style === 'critical' ? 2.0 : 1.5; // Bigger pop for criticals
+
     if (progress < 0.2) {
         // Pop up (0 to 0.2 duration)
-        // Scale goes from 0.5 to 1.5
-        ft.scale = 0.5 + (progress / 0.2) * 1.0;
+        ft.scale = 0.5 + (progress / 0.2) * (popScale - 0.5);
     } else {
         // Settle/Fade (0.2 to 1.0 duration)
-        // Scale 1.5 -> 1.0
-        ft.scale = 1.5 - ((progress - 0.2) / 0.8) * 0.5;
+        ft.scale = popScale - ((progress - 0.2) / 0.8) * (popScale - 1.0);
     }
 
     if (ft.alpha <= 0) {
@@ -956,42 +969,106 @@ function drawDecorations(ctx: CanvasRenderingContext2D, width: number, height: n
   }
 }
 
-function drawDecorationItem(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, theme: ThemeConfig): void {
-    const color = theme.colors.tree;
-    switch (theme.decorationType) {
-        case 'cactus':
-            drawCactus(ctx, x, y, size, color);
-            break;
-        case 'snowman':
-            drawSnowman(ctx, x, y, size);
-            break;
-        case 'crystal':
-            drawCrystal(ctx, x, y, size, color);
-            break;
-        case 'candy_cane':
-            drawCandyCane(ctx, x, y, size);
-            break;
-        case 'pillar':
-            drawPillar(ctx, x, y, size, color);
-            break;
-        case 'rock':
-            drawRock(ctx, x, y, size, color);
-            break;
-        case 'bubble':
-            drawBubble(ctx, x, y, size);
-            break;
-        case 'mushroom':
-            drawMushroom(ctx, x, y, size, color);
-            break;
+export function renderDecorationSprite(type: string, color: string): HTMLCanvasElement | OffscreenCanvas | null {
+    const key = `dec_${type}_${color}`;
+    if (decorationCache.has(key)) return decorationCache.get(key)!;
+
+    const baseSize = 60; // Render at high res
+    const canvasSize = baseSize * 2.5; // Padding
+    const center = canvasSize / 2;
+
+    let canvas: HTMLCanvasElement | OffscreenCanvas;
+    let ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null;
+
+    /* v8 ignore start */
+    if (typeof OffscreenCanvas !== 'undefined') {
+        canvas = new OffscreenCanvas(canvasSize, canvasSize);
+        ctx = canvas.getContext('2d');
+    } else {
+        canvas = document.createElement('canvas');
+        canvas.width = canvasSize;
+        canvas.height = canvasSize;
+        ctx = canvas.getContext('2d');
+    }
+    /* v8 ignore stop */
+
+    if (!ctx) return null;
+
+    // Draw centered at (center, center + baseSize/2) roughly so bottom aligns
+    // The original draw functions draw relative to (x, y) where y is the bottom.
+    // So we draw at (center, center + baseSize) to simulate 'y' being the bottom anchor.
+    // Adjust Y to fit in canvas
+    const drawY = center + baseSize * 0.8;
+
+    switch (type) {
+        case 'cactus': drawCactus(ctx as CanvasRenderingContext2D, center, drawY, baseSize, color); break;
+        case 'snowman': drawSnowman(ctx as CanvasRenderingContext2D, center, drawY, baseSize); break;
+        case 'crystal': drawCrystal(ctx as CanvasRenderingContext2D, center, drawY, baseSize, color); break;
+        case 'candy_cane': drawCandyCane(ctx as CanvasRenderingContext2D, center, drawY, baseSize); break;
+        case 'pillar': drawPillar(ctx as CanvasRenderingContext2D, center, drawY, baseSize, color); break;
+        case 'rock': drawRock(ctx as CanvasRenderingContext2D, center, drawY, baseSize, color); break;
+        case 'bubble': drawBubble(ctx as CanvasRenderingContext2D, center, drawY, baseSize); break;
+        case 'mushroom': drawMushroom(ctx as CanvasRenderingContext2D, center, drawY, baseSize, color); break;
         case 'star':
-            drawStar(ctx, x, y, 5, size, size/2);
+            drawStar(ctx as CanvasRenderingContext2D, center, drawY, 5, baseSize, baseSize/2);
             ctx.fillStyle = '#FFF';
             ctx.fill();
             break;
         case 'tree':
         default:
-            drawTree(ctx, x, y, size, color);
+            drawTree(ctx as CanvasRenderingContext2D, center, drawY, baseSize, color);
             break;
+    }
+
+    decorationCache.set(key, canvas);
+    return canvas;
+}
+
+function drawDecorationItem(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, theme: ThemeConfig): void {
+    const color = theme.colors.tree;
+    const type = theme.decorationType || 'tree';
+
+    const cached = renderDecorationSprite(type, color);
+
+    if (cached) {
+        const baseSize = 60;
+        const scale = size / baseSize;
+        const canvasSize = cached.width; // Should be baseSize * 2.5
+
+        // The cached image was drawn with "anchor" at (center, center + baseSize * 0.8)
+        // We want to draw it so that anchor aligns with (x, y)
+        // Offset = center => canvasSize / 2
+        // Y Offset = center + baseSize * 0.8
+
+        const anchorX = canvasSize / 2;
+        const anchorY = canvasSize / 2 + baseSize * 0.8;
+
+        ctx.translate(x, y);
+        ctx.scale(scale, scale);
+        ctx.drawImage(cached, -anchorX, -anchorY);
+        ctx.scale(1/scale, 1/scale);
+        ctx.translate(-x, -y);
+    } else {
+        // Fallback
+        switch (type) {
+            case 'cactus': drawCactus(ctx, x, y, size, color); break;
+            case 'snowman': drawSnowman(ctx, x, y, size); break;
+            case 'crystal': drawCrystal(ctx, x, y, size, color); break;
+            case 'candy_cane': drawCandyCane(ctx, x, y, size); break;
+            case 'pillar': drawPillar(ctx, x, y, size, color); break;
+            case 'rock': drawRock(ctx, x, y, size, color); break;
+            case 'bubble': drawBubble(ctx, x, y, size); break;
+            case 'mushroom': drawMushroom(ctx, x, y, size, color); break;
+            case 'star':
+                drawStar(ctx, x, y, 5, size, size/2);
+                ctx.fillStyle = '#FFF';
+                ctx.fill();
+                break;
+            case 'tree':
+            default:
+                drawTree(ctx, x, y, size, color);
+                break;
+        }
     }
 }
 

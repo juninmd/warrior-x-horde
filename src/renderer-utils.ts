@@ -129,11 +129,13 @@ export function drawJoystick(ctx: CanvasRenderingContext2D): void {
   ctx.setLineDash([]); // Reset dash
 
   // Thumb Stick (Glowing Circle)
+  const isMaxed = distance >= maxRadius * 0.95;
+
   ctx.beginPath();
   ctx.arc(stickX, stickY, 15, 0, Math.PI * 2);
   ctx.shadowColor = '#00FFFF';
-  ctx.shadowBlur = 15;
-  ctx.fillStyle = '#FFFFFF';
+  ctx.shadowBlur = isMaxed ? 25 : 15;
+  ctx.fillStyle = isMaxed ? '#00FFFF' : '#FFFFFF';
   ctx.fill();
 
   // Ring around Thumb Stick
