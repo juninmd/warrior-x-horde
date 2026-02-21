@@ -1227,8 +1227,12 @@ function drawTrail(ctx: CanvasRenderingContext2D, trail: Trail): void {
   ctx.save();
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
-  ctx.shadowColor = trail.color;
-  ctx.shadowBlur = 10;
+
+  if (QualityManager.getInstance().settings.enableShadows) {
+    ctx.shadowColor = trail.color;
+    ctx.shadowBlur = 10;
+  }
+
   ctx.strokeStyle = trail.color;
   ctx.lineWidth = trail.width * 0.5; // Average width
   ctx.globalAlpha = 0.4;
@@ -1577,8 +1581,12 @@ function renderGateToCache(gate: Gate): void {
   ctx.fill();
 
   ctx.fillStyle = '#FFFFFF';
-  ctx.shadowColor = 'rgba(0,0,0,0.5)';
-  ctx.shadowBlur = 4;
+
+  if (QualityManager.getInstance().settings.enableShadows) {
+    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = 4;
+  }
+
   ctx.font = `900 36px ${FONT_FAMILY}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
@@ -1691,8 +1699,12 @@ function drawBossAtmosphere(ctx: CanvasRenderingContext2D, width: number, height
     ctx.fillStyle = `rgba(255, 0, 0, ${warningAlpha * intensity * 0.8})`;
     ctx.font = `bold 28px ${FONT_FAMILY}`;
     ctx.textAlign = 'center';
-    ctx.shadowColor = '#FF0000';
-    ctx.shadowBlur = 20;
+
+    if (QualityManager.getInstance().settings.enableShadows) {
+      ctx.shadowColor = '#FF0000';
+      ctx.shadowBlur = 20;
+    }
+
     ctx.fillText('⚠️ BOSS ⚠️', width / 2, 100);
     ctx.restore();
   }
@@ -1864,8 +1876,10 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
   ctx.translate(35, 85);
 
   // Glow
-  ctx.shadowColor = rankColor;
-  ctx.shadowBlur = 10;
+  if (QualityManager.getInstance().settings.enableShadows) {
+    ctx.shadowColor = rankColor;
+    ctx.shadowBlur = 10;
+  }
 
   // Circle bg
   ctx.fillStyle = 'rgba(0,0,0,0.6)';
@@ -1915,8 +1929,10 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
   ctx.fill();
 
   // Progress Glow
-  ctx.shadowColor = '#00C9FF';
-  ctx.shadowBlur = 10;
+  if (QualityManager.getInstance().settings.enableShadows) {
+    ctx.shadowColor = '#00C9FF';
+    ctx.shadowBlur = 10;
+  }
   ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
   ctx.beginPath();
   ctx.roundRect(progressX, progressY, progressWidth * progress, progressHeight / 2, 4);
@@ -1959,8 +1975,12 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
     ctx.translate(comboX + shake, comboY + shake);
     ctx.rotate(Math.sin(Date.now() * 0.01) * 0.1);
     ctx.scale(pulse, pulse);
-    ctx.shadowColor = getComboColor(gameState.combo);
-    ctx.shadowBlur = 20;
+
+    if (QualityManager.getInstance().settings.enableShadows) {
+      ctx.shadowColor = getComboColor(gameState.combo);
+      ctx.shadowBlur = 20;
+    }
+
     ctx.fillStyle = getComboColor(gameState.combo);
     ctx.font = `900 ${Math.min(48, 28 + gameState.combo)}px ${FONT_FAMILY}`; // Grow with combo
     ctx.textAlign = 'center';
@@ -2192,8 +2212,10 @@ function drawComboTier(ctx: CanvasRenderingContext2D, width: number, height: num
     ctx.scale(pulse, pulse);
 
     // Glow
-    ctx.shadowColor = color;
-    ctx.shadowBlur = 20;
+    if (QualityManager.getInstance().settings.enableShadows) {
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 20;
+    }
 
     // Main Text
     ctx.font = `900 42px ${FONT_FAMILY}`;
@@ -2229,8 +2251,11 @@ function drawComboBar(ctx: CanvasRenderingContext2D, gameState: GameState): void
   ctx.save();
 
   // Glow background
-  ctx.shadowColor = color;
-  ctx.shadowBlur = 10;
+  if (QualityManager.getInstance().settings.enableShadows) {
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 10;
+  }
+
   ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
   ctx.beginPath();
   ctx.roundRect(x, y, barWidth, barHeight, 6);
@@ -2291,8 +2316,12 @@ function drawRecordLine(ctx: CanvasRenderingContext2D, gameState: GameState, pla
   ctx.strokeStyle = '#FFD700';
   ctx.lineWidth = 3;
   ctx.setLineDash([15, 10]);
-  ctx.shadowColor = '#FFD700';
-  ctx.shadowBlur = 10;
+
+  if (QualityManager.getInstance().settings.enableShadows) {
+    ctx.shadowColor = '#FFD700';
+    ctx.shadowBlur = 10;
+  }
+
   ctx.beginPath();
   ctx.moveTo(0, y);
   ctx.lineTo(BASE_WIDTH, y);
@@ -2330,8 +2359,11 @@ function drawKillstreakOverlay(ctx: CanvasRenderingContext2D, width: number, hei
   ctx.save();
   ctx.translate(centerX, centerY);
   ctx.scale(scale * pulse, scale * pulse);
-  ctx.shadowColor = color;
-  ctx.shadowBlur = 20;
+
+  if (QualityManager.getInstance().settings.enableShadows) {
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 20;
+  }
 
   ctx.font = `900 36px ${FONT_FAMILY}`;
   ctx.textAlign = 'center';

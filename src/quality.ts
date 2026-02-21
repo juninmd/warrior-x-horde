@@ -38,6 +38,9 @@ export class QualityManager {
     if (this.isMobile) {
         // Default slightly lower for mobile to ensure 60fps start
         this.settings.particleMultiplier = 0.8;
+        this.settings.enableShadows = false;
+        this.settings.enablePostProcessing = false;
+        this.settings.resolutionScale = 0.85;
     }
   }
 
@@ -60,13 +63,13 @@ export class QualityManager {
       this.manualMode = false;
       this.lowQualityTriggered = false;
       // Reset to defaults (High-ish)
-      this.settings.enableShadows = true;
-      this.settings.enablePostProcessing = true;
+      this.settings.enableShadows = !this.isMobile;
+      this.settings.enablePostProcessing = !this.isMobile;
       this.settings.enableTrails = true;
-      this.settings.particleMultiplier = 1.0;
+      this.settings.particleMultiplier = this.isMobile ? 0.8 : 1.0;
       this.settings.simplifiedRendering = false;
       this.settings.maxRenderedSoldiers = 150;
-      this.settings.resolutionScale = 1.0;
+      this.settings.resolutionScale = this.isMobile ? 0.85 : 1.0;
       this.fpsDropFrames = 0;
       console.log("Quality set to AUTO");
     } else if (level === 'high') {
@@ -139,13 +142,13 @@ export class QualityManager {
       this.recoveryFrames = 0;
       this.fpsDropFrames = 0;
 
-      this.settings.enableShadows = true;
-      this.settings.enablePostProcessing = true;
+      this.settings.enableShadows = !this.isMobile;
+      this.settings.enablePostProcessing = !this.isMobile;
       this.settings.enableTrails = true;
       this.settings.particleMultiplier = this.isMobile ? 0.8 : 1.0;
       this.settings.simplifiedRendering = false;
       this.settings.maxRenderedSoldiers = 150;
-      this.settings.resolutionScale = 1.0;
+      this.settings.resolutionScale = this.isMobile ? 0.85 : 1.0;
 
       /* v8 ignore start */
       if (typeof window !== 'undefined') {
