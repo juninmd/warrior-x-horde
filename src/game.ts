@@ -685,8 +685,8 @@ canvas.addEventListener('touchstart', (e) => {
 }, { passive: false });
 
 // Event listeners
-if (startBtnOverlay) {
-  startBtnOverlay.addEventListener('click', startGame);
+if (startScreen) {
+  startScreen.addEventListener('click', startGame);
 }
 // UI Event Listeners (Security Fix: Removed inline handlers)
 const pauseBtnTop = document.getElementById('pauseBtnTop');

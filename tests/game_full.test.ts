@@ -133,11 +133,11 @@ describe('Game Loop - Full Coverage', () => {
 
     it('should start game on interaction', () => {
         // We need to call startGame logic.
-        // It's attached to startBtnOverlay click.
+        // It's attached to startScreen click (tap anywhere).
 
-        // Let's click the button
-        const startBtn = document.getElementById('startBtnOverlay');
-        startBtn?.dispatchEvent(new Event('click'));
+        // Let's click the screen
+        const startScreen = document.getElementById('startScreen');
+        startScreen?.dispatchEvent(new Event('click'));
 
         expect(gameState.isStarted).toBe(true);
         expect(audio.playSound).toHaveBeenCalledWith('start');

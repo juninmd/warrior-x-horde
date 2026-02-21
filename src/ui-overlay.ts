@@ -96,7 +96,8 @@ export function setupStartScreenInstallBtn(deferredPrompt: BeforeInstallPromptEv
     installBtn.style.fontSize = '16px';
     installBtn.style.boxShadow = '0 4px 10px rgba(0,0,0,0.3)';
 
-    installBtn.onclick = async () => {
+    installBtn.onclick = async (e) => {
+        e.stopPropagation();
         vibrate(20);
         deferredPrompt.prompt();
         const { outcome } = await deferredPrompt.userChoice;
@@ -285,8 +286,17 @@ export function setupGameOverUI(onRestart: () => void, onShare: (platform: 'x' |
     content.className = 'game-over-content';
     gameOverContainer.appendChild(content);
 
+    // Prevent clicks on content from triggering restart
+    content.addEventListener('click', (e) => e.stopPropagation());
+
     (gameOverContainer as GameOverContainer)._onRestart = onRestart;
     (gameOverContainer as GameOverContainer)._onShare = onShare;
+
+    // Tap background to restart
+    gameOverContainer.addEventListener('click', () => {
+        const btn = document.getElementById('goRestartBtn');
+        if (btn) btn.click();
+    });
 }
 
 /* v8 ignore next */
