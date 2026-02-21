@@ -52,8 +52,8 @@ This file serves as the "Living Memory" for Jules and other agents working on th
 ---
 
 ## 🛠️ Tooling & Commands
-- **Install:** `pnpm install`
-- **Dev:** `pnpm dev`
-- **Build:** `pnpm build`
-- **Lint:** `pnpm lint`
-- **Test:** `pnpm test` (or `pnpm vitest run --coverage`)
+- **Install:** `npm install`
+- **Dev:** `npm run dev`
+- **Build:** `npm run build`
+- **Lint:** `npm run lint`
+- **Test:** `npm test` (or `npm run coverage`)
