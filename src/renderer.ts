@@ -1797,10 +1797,17 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
       : '#FFD700';
 
   // Add Combo Multiplier Text to Score Badge if Combo > 1
-  let scoreText = `🏆 ${gameState.score}`;
+  const scoreText = `🏆 ${gameState.score}`;
   // Removed inline multiplier to show it distinctly above
 
-  const badges = [
+  interface Badge {
+      text: string;
+      color: string;
+      width: number;
+      id?: string;
+  }
+
+  const badges: Badge[] = [
       { text: scoreText, color: scoreColor, width: 0, id: 'score' },
       { text: `💰 ${gameState.coins}`, color: '#F1C40F', width: 0 },
       { text: `Lv.${gameState.currentLevel}`, color: '#4A90D9', width: 0 },
@@ -1824,7 +1831,7 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
       drawGlassBadge(ctx, currentX, bottomY - badgeHeight/2, b.width, badgeHeight, b.text, b.color, 14);
 
       // Draw Flashy Multiplier above Score
-      if ((b as any).id === 'score' && gameState.combo > 1) {
+      if (b.id === 'score' && gameState.combo > 1) {
           const mult = (1 + gameState.combo * 0.05).toFixed(2);
           ctx.save();
           const pulse = 1 + Math.sin(Date.now() * 0.01) * 0.1;
