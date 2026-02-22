@@ -204,10 +204,15 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
     }
 
     if (horde.perfectClearEligible) {
-      addFloatingText('PERFECT!', horde.x, horde.y - 60, '#00FFFF', 2.0, 'critical');
-      gameState.score += Math.floor(200 * multiplier);
-      triggerScreenShake(5, 200);
+      addFloatingText('PERFECT CLEAR!', horde.x, horde.y - 80, '#00FFFF', 2.5, 'critical');
+      gameState.score += Math.floor(500 * multiplier); // Increased bonus
+      triggerScreenShake(15, 400); // Stronger shake
       triggerHaptic('success');
+
+      // Bonus confetti
+      for(let k=0; k<5; k++) {
+          setTimeout(() => addParticle(horde.x, horde.y, 'star', '#00FFFF', 12), k * 50);
+      }
     } else {
       triggerHaptic('medium');
     }

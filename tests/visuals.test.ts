@@ -1,9 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render } from '../src/renderer';
+import { render, addFloatingText } from '../src/renderer';
+import * as renderer from '../src/renderer';
 import { checkCollisions } from '../src/collisions';
 import { QualityManager } from '../src/quality';
 import { Entities, GameState, Trail, Army } from '../src/types';
 import * as utils from '../src/utils';
+
+// Mock renderer functions to verify calls
+vi.mock('../src/renderer', async (importOriginal) => {
+    const actual = await importOriginal();
+    return {
+        ...actual,
+        addFloatingText: vi.fn(),
+        triggerScreenShake: vi.fn(), // If exported from renderer, but it's from game.ts usually
+    };
+});
 
 describe('Visual Effects', () => {
     let ctx: any;
@@ -166,5 +177,36 @@ describe('Visual Effects', () => {
 
         expect(gate.passed).toBe(true);
         expect(gameState.nearMissCount).toBe(1);
+    });
+
+    it('should trigger PERFECT CLEAR visual when horde is cleared flawlessly', () => {
+        const horde = {
+            isActive: true,
+            x: 100, y: 100, width: 50, height: 50,
+            soldiers: [], // Empty implies all dead
+            count: 0,
+            perfectClearEligible: true, // Key condition
+            hp: 0,
+            maxHp: 10
+        };
+        entities.enemyHordes = [horde as any];
+        entities.playerArmy.aliveCount = 10;
+        entities.playerArmy.soldiers = [{ isAlive: true, x: 100, y: 100, size: 10 } as any]; // Player exists
+
+        // Mock bounds to ensure collision check passes
+        vi.spyOn(utils, 'getArmyBounds').mockReturnValue({ left: 90, right: 110, top: 90, bottom: 110 });
+        vi.spyOn(utils, 'checkBounds').mockReturnValue(true);
+
+        checkCollisions(entities, gameState);
+
+        expect(renderer.addFloatingText).toHaveBeenCalledWith(
+            'PERFECT CLEAR!',
+            expect.any(Number),
+            expect.any(Number),
+            '#00FFFF',
+            2.5,
+            'critical'
+        );
+        expect(horde.isActive).toBe(false);
     });
 });
