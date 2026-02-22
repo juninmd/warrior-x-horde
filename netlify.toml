@@ -4,5 +4,4 @@
 
 [build.environment]
   NODE_VERSION = "20"
-  NPM_CONFIG_PRODUCTION = "false"
-  NODE_OPTIONS = "--max-old-space-size=4096"
+  CI = "false"
