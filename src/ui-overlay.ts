@@ -299,9 +299,7 @@ export function setupGameOverUI(onRestart: () => void, onShare: (platform: 'x' |
     });
 }
 
-/* v8 ignore next */
 export function showGameOverScreen(gameState: GameState): void {
-    /* v8 ignore next */
     if (!gameOverContainer) return;
 
     const onRestart = (gameOverContainer as GameOverContainer)._onRestart;

@@ -18,6 +18,8 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+  },
+  "dependencies": {
     "@types/node": "^25.3.0",
     "@typescript-eslint/eslint-plugin": "^8.37.0",
     "@typescript-eslint/parser": "^8.37.0",
@@ -28,9 +30,7 @@
     "jsdom": "^27.4.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.37.0",
+    "vite": "^6.3.3",
     "vitest": "^4.0.18"
-  },
-  "dependencies": {
-    "vite": "^6.3.3"
   }
 }
