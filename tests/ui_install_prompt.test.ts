@@ -61,6 +61,8 @@ describe('UI Overlay Interactions', () => {
     });
 
     it('should restart game when clicking background', () => {
+        vi.useFakeTimers();
+
         setupGameOverUI(onRestartMock, () => {});
         showGameOverScreen(mockGameState);
 
@@ -70,21 +72,7 @@ describe('UI Overlay Interactions', () => {
         // Trigger click on background
         container!.click();
 
-        // The background click triggers restart button click
-        // restart button has a timeout of 300ms before calling onRestart
-        // So we need to advance timers or wait.
-        // But wait, setupGameOverUI just adds the click listener to click the button.
-        // The button listener has the timeout.
-
-        // Let's use fake timers to handle the timeout
-        vi.useFakeTimers();
-
-        // Reset the mock because setupGameOverUI might have been called before
-        // But here we are in the test
-
-        // Re-trigger click
-        container!.click();
-
+        // Advance timer to trigger restart
         vi.advanceTimersByTime(300);
 
         expect(onRestartMock).toHaveBeenCalled();
@@ -97,7 +85,6 @@ describe('UI Overlay Interactions', () => {
          // Don't call showGameOverScreen, so content (and button) are missing
 
          const container = document.getElementById('gameOverContainer');
-         // We need container to exist, setupGameOverUI creates it.
 
          container!.click();
 
