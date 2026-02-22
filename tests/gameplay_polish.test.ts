@@ -100,7 +100,7 @@ describe('Gameplay Polish', () => {
 
         checkCollisions(entities, gameState);
 
-        expect(spy).toHaveBeenCalledWith('PERFECT!', expect.any(Number), expect.any(Number), '#00FFFF', 2.0, 'critical');
+        expect(spy).toHaveBeenCalledWith('PERFECT CLEAR!', expect.any(Number), expect.any(Number), '#00FFFF', 2.5, 'critical');
     });
 
     it('should NOT trigger PERFECT! if perfectClearEligible is false', () => {
