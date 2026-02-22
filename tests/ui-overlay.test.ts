@@ -215,14 +215,17 @@ describe('UI Overlay', () => {
             vi.spyOn(window.localStorage, 'getItem').mockReturnValue('[]');
             updateStartScreenLeaderboard();
             const lb = document.getElementById('startScreenLeaderboard');
-            expect(lb).toBeNull();
+            // Should auto-populate and display
+            expect(lb).not.toBeNull();
+            expect(lb?.innerHTML).toContain('Top Commanders');
         });
 
         it('should handle null localStorage', () => {
             vi.spyOn(window.localStorage, 'getItem').mockReturnValue(null);
             updateStartScreenLeaderboard();
             const lb = document.getElementById('startScreenLeaderboard');
-            expect(lb).toBeNull();
+            // Should auto-populate and display
+            expect(lb).not.toBeNull();
         });
 
         it('should handle populated leaderboard with full rank coverage', () => {
@@ -257,7 +260,8 @@ describe('UI Overlay', () => {
 
             expect(consoleSpy).toHaveBeenCalled();
             const lb = document.getElementById('startScreenLeaderboard');
-            expect(lb).toBeNull();
+            // Should gracefully fail to parse, then auto-populate
+            expect(lb).not.toBeNull();
         });
 
         it('should handle missing container safely', () => {
@@ -271,7 +275,12 @@ describe('UI Overlay', () => {
             vi.spyOn(window.localStorage, 'getItem').mockReturnValue('{}');
             updateStartScreenLeaderboard();
             const lb = document.getElementById('startScreenLeaderboard');
-            expect(lb).toBeNull();
+            // Not an array -> invalid -> fallback to defaults?
+            // Current implementation: JSON.parse -> check Array.isArray
+            // If not array, leaderboard = [].
+            // If leaderboard empty, init defaults.
+            // So it should show defaults.
+            expect(lb).not.toBeNull();
         });
         it('should sanitize HTML in leaderboard entries (direct test)', () => {
             const data = [

@@ -127,7 +127,7 @@ export const _testing = {
 
 // Obter referência ao overlay de início
 const startScreen = document.getElementById('startScreen');
-const startBtnOverlay = document.getElementById('startBtnOverlay');
+// startBtnOverlay is accessed dynamically or unused variable here removed
 
 // --- Wake Lock API (Mobile Screen Keep-Alive) ---
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

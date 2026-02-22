@@ -748,3 +748,42 @@
 .leaderboard-item.current {
   background: linear-gradient(90deg, rgba(255, 215, 0, 0.2), transparent);
 }
+
+/* --- Tutorial Hand Animation --- */
+.tutorial-hand {
+  margin: 15px auto;
+  text-align: center;
+  animation: fadeIn 1s ease-out;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.hand-icon {
+  font-size: 40px;
+  animation: swipe-hint 2s infinite ease-in-out;
+  filter: drop-shadow(0 4px 5px rgba(0,0,0,0.5));
+}
+
+.hand-text {
+  color: #DDD;
+  font-size: 14px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+  font-family: 'Rajdhani', sans-serif;
+  text-transform: uppercase;
+}
+
+@keyframes swipe-hint {
+  0% { transform: translateX(0) rotate(-10deg); }
+  30% { transform: translateX(-30px) rotate(-20deg); }
+  60% { transform: translateX(30px) rotate(10deg); }
+  100% { transform: translateX(0) rotate(-10deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

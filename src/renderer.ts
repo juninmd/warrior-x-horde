@@ -1797,14 +1797,18 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
       : '#FFD700';
 
   // Add Combo Multiplier Text to Score Badge if Combo > 1
-  let scoreText = `🏆 ${gameState.score}`;
-  if (gameState.combo > 1) {
-     const mult = (1 + gameState.combo * 0.05).toFixed(2);
-     scoreText += ` (x${mult})`;
+  const scoreText = `🏆 ${gameState.score}`;
+  // Removed inline multiplier to show it distinctly above
+
+  interface Badge {
+      text: string;
+      color: string;
+      width: number;
+      id?: string;
   }
 
-  const badges = [
-      { text: scoreText, color: scoreColor, width: 0 },
+  const badges: Badge[] = [
+      { text: scoreText, color: scoreColor, width: 0, id: 'score' },
       { text: `💰 ${gameState.coins}`, color: '#F1C40F', width: 0 },
       { text: `Lv.${gameState.currentLevel}`, color: '#4A90D9', width: 0 },
       { text: `🪖 ${armyCount}`, color: '#2ECC71', width: 0 }, // Show count, power is implied in Attack
@@ -1825,6 +1829,30 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
   // Draw
   for (const b of badges) {
       drawGlassBadge(ctx, currentX, bottomY - badgeHeight/2, b.width, badgeHeight, b.text, b.color, 14);
+
+      // Draw Flashy Multiplier above Score
+      if (b.id === 'score' && gameState.combo > 1) {
+          const mult = (1 + gameState.combo * 0.05).toFixed(2);
+          ctx.save();
+          const pulse = 1 + Math.sin(Date.now() * 0.01) * 0.1;
+          ctx.translate(currentX + b.width/2, bottomY - badgeHeight - 10);
+          ctx.scale(pulse, pulse);
+
+          if (QualityManager.getInstance().settings.enableShadows) {
+             ctx.shadowColor = '#FFD700';
+             ctx.shadowBlur = 10;
+          }
+
+          ctx.fillStyle = '#FFD700';
+          ctx.font = `900 18px ${FONT_FAMILY}`;
+          ctx.textAlign = 'center';
+          ctx.strokeStyle = '#000';
+          ctx.lineWidth = 3;
+          ctx.strokeText(`x${mult}`, 0, 0);
+          ctx.fillText(`x${mult}`, 0, 0);
+          ctx.restore();
+      }
+
       currentX += b.width + gap;
   }
 

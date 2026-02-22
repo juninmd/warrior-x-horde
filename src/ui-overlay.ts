@@ -21,7 +21,21 @@ function getLeaderboardHTML(currentScore: number = -1): string {
         leaderboard = [];
     }
 
-    if (leaderboard.length === 0) return '';
+    // Initialize fake leaderboard for new players
+    if (leaderboard.length === 0) {
+        leaderboard = [
+            { score: 8500, date: Date.now() }, // "CPU-Alpha" equivalent
+            { score: 5200, date: Date.now() },
+            { score: 3100, date: Date.now() },
+            { score: 1500, date: Date.now() },
+            { score: 800, date: Date.now() }
+        ];
+        try {
+            localStorage.setItem('crowdLeaderboard', JSON.stringify(leaderboard));
+        } catch (e) {
+            console.warn('Failed to save default leaderboard', e);
+        }
+    }
 
     const items = leaderboard.map((entry: { score: number }, index: number) => {
         let safeScore = Number(entry.score);
