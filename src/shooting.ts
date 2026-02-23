@@ -137,7 +137,28 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
   // Use cached aliveCount for performance
   if (army.aliveCount === 0) return;
 
-  for (const s of army.soldiers) {
+  // PERFORMANCE OPTIMIZATION: Processing Slice
+  // Only process a subset of soldiers per frame to keep FPS high with large armies.
+  // We process up to 200 soldiers per frame. With 1000 soldiers, each gets checked every 5 frames (80ms).
+  // This is plenty fast for a fire rate of ~500ms.
+  const PROCESS_BATCH_SIZE = 200;
+
+  // Use army.scanIndex (initialize if undefined/legacy)
+  if (army.scanIndex === undefined) {
+      army.scanIndex = 0;
+  }
+
+  let scanIndex = army.scanIndex;
+  const totalSoldiers = army.soldiers.length;
+
+  // If array shrank significantly, reset index
+  if (scanIndex >= totalSoldiers) scanIndex = 0;
+
+  const endIndex = Math.min(scanIndex + PROCESS_BATCH_SIZE, totalSoldiers);
+
+  // First Pass: Collect candidates from the slice
+  for (let i = scanIndex; i < endIndex; i++) {
+    const s = army.soldiers[i];
     if (!s.isAlive) continue;
 
     if (s.type === 'laser') { tempLasers.push(s); continue; }
@@ -147,9 +168,15 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
     tempNormals.push(s);
   }
 
-  // Mais soldados atiram baseado no tamanho do exército
-  // Aumentado para 30 para permitir que classes especiais tenham mais chance de atirar
-  const shootersCount = Math.min(Math.ceil(army.aliveCount / 5), 30);
+  // Update index for next frame
+  army.scanIndex = endIndex >= totalSoldiers ? 0 : endIndex;
+
+  // Calculate shooters cap based on the *slice* size, not total army size,
+  // to maintain consistent fire density per frame.
+  // 200 soldiers -> max 15 shooters per frame -> 900 shooters per second (lots!)
+  // We reduce the divisor to make it denser since we process fewer units.
+  const sliceAliveCount = tempLasers.length + tempBazookas.length + tempRambos.length + tempSupers.length + tempNormals.length;
+  const shootersCount = Math.min(Math.ceil(sliceAliveCount / 3), 15);
 
   let needed = shootersCount;
 
@@ -164,14 +191,12 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
 
     if (bucket.length <= needed) {
       // Se o bucket cabe inteiro, pegamos todos.
-      // A ordenação interna por Y não afeta quem é selecionado (pegamos todos),
-      // e a ordem de processamento de tiro não é crítica.
       for (const s of bucket) tempShooters.push(s);
       needed -= bucket.length;
     } else {
-      // Se o bucket é maior que o necessário, pegamos os 'needed' melhores (menor Y = mais à frente)
-      // Ordenamos apenas este bucket específico (muito mais rápido que ordenar tudo)
-      bucket.sort((a, b) => a.y - b.y);
+      // Se o bucket é maior que o necessário, pegamos aleatoriamente ou os primeiros da fatia
+      // Como a fatia já percorre o array sequencialmente (e o array é ~ordenado por spawn/Y),
+      // pegar os primeiros da fatia é justo.
       for (let i = 0; i < needed; i++) {
         tempShooters.push(bucket[i]);
       }

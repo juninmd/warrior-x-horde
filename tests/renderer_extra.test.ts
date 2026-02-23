@@ -79,6 +79,7 @@ describe('Renderer Extra Coverage', () => {
                 arc: vi.fn(),
                 ellipse: vi.fn(),
                 roundRect: vi.fn(),
+                strokeRect: vi.fn(),
                 fillText: vi.fn(),
                 strokeText: vi.fn(),
                 measureText: vi.fn(() => ({ width: 0 })),

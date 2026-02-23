@@ -83,6 +83,7 @@ describe('Mobile Optimization', () => {
      // Only check render function
      render(ctx, mockEntities, mockGameState);
 
+     // Shadows should be disabled on mobile
      expect(shadowBlurSet).toBe(false);
   });
 });

@@ -132,7 +132,8 @@ export function createPlayerArmy(canvasWidth: number, canvasHeight: number): Arm
       color: '#4A90D9', // Matches player color
       width: 40,
       maxLength: 20
-    }
+    },
+    scanIndex: 0
   };
 }
 

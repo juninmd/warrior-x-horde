@@ -52,6 +52,7 @@ export const gameState: GameState = {
   whiteFlash: 0,
     warpEffectTimer: 0,
     comboTier: 0,
+    currentRank: 'D',
   deferredInstallPrompt: null,
 };
 
@@ -76,6 +77,7 @@ export function resetGameState(): void {
   gameState.combo = 0;
   gameState.comboTimer = 0;
   gameState.maxCombo = 0;
+  gameState.currentRank = 'D';
   gameState.bossActive = false;
   gameState.bossAtmosphereIntensity = 0;
   gameState.newRecordReached = false;

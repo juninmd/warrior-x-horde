@@ -85,6 +85,7 @@ export interface GameState {
   deferredInstallPrompt: BeforeInstallPromptEvent | null;
   // Combo Tier (visual state)
   comboTier: number; // 0=None, 1=Double, 2=Multi, 3=Ultra, 4=Monster
+  currentRank: string; // 'S', 'A', 'B', 'C', 'D'
 }
 
 export interface BeforeInstallPromptEvent extends Event {
@@ -122,6 +123,7 @@ export interface Army {
   lastShotTime: number;
   damage: number;
   trail: Trail;
+  scanIndex?: number; // For optimized shooting logic
 }
 
 export interface EnemyHorde {
