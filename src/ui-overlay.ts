@@ -74,7 +74,6 @@ export function updateStartScreenLeaderboard(): void {
     if (lbContainer) lbContainer.remove();
 
     const lbHTML = getLeaderboardHTML();
-    if (!lbHTML) return;
 
     lbContainer = document.createElement('div');
     lbContainer.id = 'startScreenLeaderboard';
