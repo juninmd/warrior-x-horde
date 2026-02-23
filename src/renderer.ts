@@ -640,14 +640,19 @@ export function addFloatingText(text: string, x: number, y: number, color: strin
 
   // Physics "Pop" effect (Juicy!)
   if (style === 'critical') {
-      ft.vx = (Math.random() - 0.5) * 8; // Wider spread
-      ft.vy = -5 - Math.random() * 4;   // Higher jump
-      ft.scale *= 1.2;
+      ft.vx = (Math.random() - 0.5) * 10; // Even Wider spread
+      ft.vy = -8 - Math.random() * 4;     // Much Higher jump
+      ft.scale *= 1.5;                    // Bigger
+      ft.gravity = 0.4;                   // Heavier fall
+  } else if (style === 'gold') {
+      ft.vx = (Math.random() - 0.5) * 3;
+      ft.vy = -6 - Math.random() * 2;
+      ft.gravity = 0.3;
   } else {
-      ft.vx = (Math.random() - 0.5) * 4;
-      ft.vy = -3 - Math.random() * 3;
+      ft.vx = (Math.random() - 0.5) * 6;
+      ft.vy = -5 - Math.random() * 3;
+      ft.gravity = 0.25;
   }
-  ft.gravity = 0.2;
 
   floatingTexts.push(ft);
 }
@@ -661,19 +666,22 @@ export function updateFloatingTexts(): void {
     ft.y += ft.vy;
     ft.vy += ft.gravity;
 
-    ft.alpha -= 0.02;
+    // Drag
+    ft.vx *= 0.95;
+
+    ft.alpha -= 0.015; // Slower fade
 
     // Pop animation: Scale up quickly then settle
     // We use alpha (1.0 -> 0.0) as a proxy for time (0.0 -> 1.0)
     const progress = 1 - ft.alpha;
-    const popScale = ft.style === 'critical' ? 2.0 : 1.5; // Bigger pop for criticals
+    const popScale = ft.style === 'critical' ? 2.5 : 1.2; // Adjusted scales
 
-    if (progress < 0.2) {
-        // Pop up (0 to 0.2 duration)
-        ft.scale = 0.5 + (progress / 0.2) * (popScale - 0.5);
+    if (progress < 0.15) {
+        // Pop up (Fast expand)
+        ft.scale = 0.5 + (progress / 0.15) * (popScale - 0.5);
     } else {
-        // Settle/Fade (0.2 to 1.0 duration)
-        ft.scale = popScale - ((progress - 0.2) / 0.8) * (popScale - 1.0);
+        // Settle/Fade
+        ft.scale = popScale * (1 - (progress - 0.15) * 0.5); // Shrink slightly as it fades
     }
 
     if (ft.alpha <= 0) {
@@ -1244,6 +1252,29 @@ function drawTrail(ctx: CanvasRenderingContext2D, trail: Trail): void {
   }
   ctx.stroke();
   ctx.restore();
+}
+
+function drawFeverMode(ctx: CanvasRenderingContext2D, width: number, height: number, combo: number): void {
+    if (combo < 50) return;
+    if (QualityManager.getInstance().settings.simplifiedRendering) return;
+
+    const intensity = Math.min(1, (combo - 50) / 50); // Ramp up from 50 to 100
+    const pulse = (Math.sin(Date.now() * 0.01) + 1) * 0.5; // 0 to 1
+
+    ctx.save();
+
+    // Border Glow
+    const borderWidth = 20 + pulse * 10;
+    ctx.lineWidth = borderWidth;
+    const alpha = 0.3 + pulse * 0.2;
+    ctx.strokeStyle = `rgba(255, 215, 0, ${alpha * intensity})`; // Gold
+    ctx.strokeRect(0, 0, width, height);
+
+    // Subtle Tint
+    ctx.fillStyle = `rgba(255, 100, 0, ${0.1 * intensity})`;
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.restore();
 }
 
 function drawVignette(ctx: CanvasRenderingContext2D, width: number, height: number): void {
@@ -1900,38 +1931,54 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
   else if (rankScore >= 1000) { rank = 'B'; rankColor = '#3498DB'; }
   else if (rankScore >= 500) { rank = 'C'; rankColor = '#2ECC71'; }
 
+  // Check for Rank Up
+  if (rank !== gameState.currentRank) {
+      // Trigger Rank Up Effect
+      if (gameState.currentRank !== 'D' || rankScore > 0) { // Don't trigger on init
+          addFloatingText(`RANK ${rank}!`, width/2, height/2 - 100, rankColor, 2.0, 'critical');
+          // We could add sound here if we imported audioManager, but visual is fine for now
+      }
+      gameState.currentRank = rank;
+  }
+
   ctx.save();
   ctx.translate(35, 85);
+
+  // Pulse animation for high ranks
+  if (rank === 'S' || rank === 'A') {
+      const pulse = 1 + Math.sin(Date.now() * 0.005) * 0.1;
+      ctx.scale(pulse, pulse);
+  }
 
   // Glow
   if (QualityManager.getInstance().settings.enableShadows) {
     ctx.shadowColor = rankColor;
-    ctx.shadowBlur = 10;
+    ctx.shadowBlur = 15;
   }
 
   // Circle bg
   ctx.fillStyle = 'rgba(0,0,0,0.6)';
   ctx.beginPath();
-  ctx.arc(0, 0, 18, 0, Math.PI * 2);
+  ctx.arc(0, 0, 22, 0, Math.PI * 2); // Slightly larger
   ctx.fill();
 
   // Ring
   ctx.strokeStyle = rankColor;
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 3;
   ctx.stroke();
   ctx.shadowBlur = 0;
 
   // Rank Text
   ctx.fillStyle = rankColor;
-  ctx.font = `900 20px ${FONT_FAMILY}`;
+  ctx.font = `900 24px ${FONT_FAMILY}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(rank, 0, 1);
+  ctx.fillText(rank, 0, 2);
 
   // Label
   ctx.fillStyle = '#AAA';
-  ctx.font = `bold 8px ${FONT_FAMILY}`;
-  ctx.fillText('RANK', 0, 26);
+  ctx.font = `bold 10px ${FONT_FAMILY}`;
+  ctx.fillText('RANK', 0, 32);
   ctx.restore();
 
   // Progress Bar (Topo, mais visível)
@@ -2033,12 +2080,18 @@ function drawFloatingTexts(ctx: CanvasRenderingContext2D): void {
         ctx.strokeStyle = '#000';
         ctx.lineWidth = 3;
         ctx.strokeText(ft.text, ft.x, ft.y);
-        ctx.shadowColor = '#FF0000';
-        ctx.shadowBlur = 10;
+
+        if (QualityManager.getInstance().settings.enableShadows) {
+            ctx.shadowColor = '#FF0000';
+            ctx.shadowBlur = 10;
+        }
     } else {
         ctx.font = `bold ${Math.floor(32 * ft.scale)}px ${FONT_FAMILY}`;
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-        ctx.shadowBlur = 5;
+
+        if (QualityManager.getInstance().settings.enableShadows) {
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+            ctx.shadowBlur = 5;
+        }
     }
 
     ctx.textAlign = 'center';
@@ -2501,6 +2554,7 @@ export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameSt
       drawWarpEffect(ctx, width, height, gameState.warpEffectTimer);
   }
 
+  drawFeverMode(ctx, width, height, gameState.combo);
   drawVignette(ctx, width, height);
   drawScanlines(ctx, width, height);
 

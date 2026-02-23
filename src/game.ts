@@ -732,6 +732,7 @@ window.addEventListener('orientationchange', () => {
 
 // Setup inicial
 /* v8 ignore next */
+console.log(`Crowd Runner v1.1.0 - Build: ${new Date().toISOString()}`);
 resizeCanvas(); // Configurar tamanho inicial
 setupInput(canvas, (screenX, screenY) => {
     // Touch ripple effect

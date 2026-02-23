@@ -100,9 +100,25 @@ export function drawJoystick(ctx: CanvasRenderingContext2D): void {
   ctx.arc(startX, startY, maxRadius, 0, Math.PI * 2);
   ctx.fillStyle = 'rgba(0, 255, 255, 0.05)';
   ctx.fill();
-  ctx.strokeStyle = 'rgba(0, 255, 255, 0.3)';
-  ctx.lineWidth = 1;
+
+  const isMaxed = distance >= maxRadius * 0.95;
+
+  if (isMaxed) {
+      // Max Range Glow
+      ctx.strokeStyle = '#FF4500'; // Orange-Red when maxed
+      ctx.lineWidth = 3;
+      if (QualityManager.getInstance().settings.enableShadows) {
+        ctx.shadowColor = '#FF4500';
+        ctx.shadowBlur = 10;
+      }
+  } else {
+      ctx.strokeStyle = 'rgba(0, 255, 255, 0.3)';
+      ctx.lineWidth = 1;
+      ctx.shadowBlur = 0;
+  }
+
   ctx.stroke();
+  ctx.shadowBlur = 0; // Reset
 
   // Rotating Segments (Tech feel)
   ctx.save();
@@ -130,24 +146,22 @@ export function drawJoystick(ctx: CanvasRenderingContext2D): void {
   ctx.setLineDash([]); // Reset dash
 
   // Thumb Stick (Glowing Circle)
-  const isMaxed = distance >= maxRadius * 0.95;
-
   ctx.beginPath();
   ctx.arc(stickX, stickY, 15, 0, Math.PI * 2);
 
   if (QualityManager.getInstance().settings.enableShadows) {
-    ctx.shadowColor = '#00FFFF';
+    ctx.shadowColor = isMaxed ? '#FF4500' : '#00FFFF'; // Change color when maxed
     ctx.shadowBlur = isMaxed ? 25 : 15;
   }
 
-  ctx.fillStyle = isMaxed ? '#00FFFF' : '#FFFFFF';
+  ctx.fillStyle = isMaxed ? '#FFD700' : '#FFFFFF'; // Gold/White
   ctx.fill();
 
   // Ring around Thumb Stick
   ctx.beginPath();
   ctx.arc(stickX, stickY, 18, 0, Math.PI * 2);
-  ctx.strokeStyle = '#00FFFF';
-  ctx.lineWidth = 2;
+  ctx.strokeStyle = isMaxed ? '#FF4500' : '#00FFFF';
+  ctx.lineWidth = isMaxed ? 3 : 2;
   ctx.stroke();
 
   ctx.shadowBlur = 0;

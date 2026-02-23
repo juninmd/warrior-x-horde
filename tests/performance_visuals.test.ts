@@ -90,8 +90,8 @@ describe('Performance & Visuals', () => {
 
       drawJoystick(ctx);
 
-      // Should use cyan color
-      expect(ctx.fillStyle).toBe('#00FFFF');
+       // Should use Gold color for inner fill when maxed
+       expect(ctx.fillStyle).toBe('#FFD700');
 
       // Should have used 25 (high glow)
       expect(shadowBlurHistory).toContain(25);

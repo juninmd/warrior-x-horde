@@ -165,8 +165,8 @@ describe('Renderer', () => {
       expect(texts.length).toBe(1);
 
       // Run updates until it fades out
-      // Alpha starts at 1, decrements by 0.02. Needs ~51 updates.
-      for (let i = 0; i < 60; i++) {
+      // Alpha starts at 1, decrements by 0.015. Needs ~67 updates.
+      for (let i = 0; i < 80; i++) {
           updateFloatingTexts();
       }
 
