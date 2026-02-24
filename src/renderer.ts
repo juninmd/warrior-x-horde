@@ -464,14 +464,32 @@ export function addParticle(x: number, y: number, type: Particle['type'], color:
        p.rotationSpeed = (Math.random() - 0.5) * 0.4;
        p.size = 3 + Math.random() * 4;
        p.life = 0.8 + Math.random() * 0.4; // Live longer
+    } else if (type === 'confetti') {
+        speed = 2.0 + Math.random() * 4.0;
+        p.rotation = Math.random() * Math.PI * 2;
+        p.rotationSpeed = (Math.random() - 0.5) * 0.3;
+        p.size = 4 + Math.random() * 3;
+        p.life = 2.0;
+        // Random colors for confetti
+        const colors = ['#FFD700', '#FF4500', '#00FFFF', '#FF69B4', '#32CD32'];
+        p.color = colors[Math.floor(Math.random() * colors.length)];
     } else {
        p.size = type === 'shockwave' ? 20 : (type === 'explosion' ? 2 + Math.random() * 2.5 : 1.5 + Math.random() * 2);
        p.life = 1;
     }
 
-    p.vx = Math.cos(angle) * speed;
-    p.vy = Math.sin(angle) * speed - (type === 'star' ? 1.5 : 0);
-    p.color = color;
+    if (type === 'shockwave') {
+        p.vx = 0;
+        p.vy = 0;
+    } else {
+        p.vx = Math.cos(angle) * speed;
+        p.vy = Math.sin(angle) * speed - (type === 'star' ? 1.5 : 0);
+    }
+
+    if (type !== 'confetti') {
+        p.color = color;
+    }
+
     p.maxLife = p.life;
     p.type = type;
 
@@ -497,6 +515,12 @@ export function updateParticles(): void {
     if (p.type === 'shockwave') {
        p.size += 5; // Expand fast
        p.life -= 0.05;
+    } else if (p.type === 'confetti') {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.05; // Light gravity
+        if (p.rotationSpeed) p.rotation = (p.rotation || 0) + p.rotationSpeed;
+        p.life -= 0.01;
     } else {
        p.x += p.vx;
        p.y += p.vy;
@@ -532,6 +556,18 @@ function drawParticles(ctx: CanvasRenderingContext2D): void {
         ctx.fillStyle = p.color;
         const s = p.size;
         ctx.fillRect(-s/2, -s/2, s, s);
+        ctx.restore();
+        continue;
+    }
+
+    if (p.type === 'confetti') {
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation || 0);
+        ctx.globalAlpha = p.life;
+        ctx.fillStyle = p.color;
+        const s = p.size;
+        ctx.fillRect(-s/2, -s/2, s, s * 0.6);
         ctx.restore();
         continue;
     }
@@ -1277,6 +1313,15 @@ function drawFeverMode(ctx: CanvasRenderingContext2D, width: number, height: num
     ctx.restore();
 }
 
+function drawScreenPulse(ctx: CanvasRenderingContext2D, width: number, height: number): void {
+    const pulse = (Math.sin(Date.now() / 200) + 1) * 0.5;
+    ctx.save();
+    ctx.fillStyle = `rgba(255, 215, 0, ${pulse * 0.05})`;
+    ctx.globalCompositeOperation = 'screen';
+    ctx.fillRect(0, 0, width, height);
+    ctx.restore();
+}
+
 function drawVignette(ctx: CanvasRenderingContext2D, width: number, height: number): void {
     if (!QualityManager.getInstance().settings.enablePostProcessing) return;
 
@@ -1389,7 +1434,9 @@ export function prepareSoldiersToDraw(army: Army): Soldier[] {
   }
 
   // Sort in-place
-  tempSoldiersToDraw.sort((a, b) => a.y - b.y);
+  if (!QualityManager.getInstance().settings.simplifiedRendering) {
+      tempSoldiersToDraw.sort((a, b) => a.y - b.y);
+  }
 
   return tempSoldiersToDraw;
 }
@@ -1449,9 +1496,7 @@ function drawEnemyHorde(ctx: CanvasRenderingContext2D, horde: EnemyHorde, time: 
     }
   }
 
-  tempEnemySoldiers.sort((a, b) => a.y - b.y);
-
-  // Sampling if too many
+  // Sampling if too many (Optimization: Sample BEFORE sorting)
   if (tempEnemySoldiers.length > MAX_RENDERED_SOLDIERS) {
      const originalLength = tempEnemySoldiers.length;
      const step = originalLength / MAX_RENDERED_SOLDIERS;
@@ -1465,6 +1510,10 @@ function drawEnemyHorde(ctx: CanvasRenderingContext2D, horde: EnemyHorde, time: 
         writeIdx++;
      }
      tempEnemySoldiers.length = MAX_RENDERED_SOLDIERS;
+  }
+
+  if (!QualityManager.getInstance().settings.simplifiedRendering) {
+      tempEnemySoldiers.sort((a, b) => a.y - b.y);
   }
 
   const fadeStartY = 100;
@@ -2555,6 +2604,18 @@ export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameSt
   }
 
   drawFeverMode(ctx, width, height, gameState.combo);
+  if (gameState.combo > 50) {
+      drawScreenPulse(ctx, width, height);
+  }
+
+  // Confetti on New Record
+  if (gameState.newRecordReached && !gameState.isGameOver) {
+      // Spawn confetti burst occasionally
+      if (Math.random() < 0.3) {
+           addParticle(width/2 + (Math.random()-0.5)*width, height * 0.2, 'confetti', '#FFF', 2);
+      }
+  }
+
   drawVignette(ctx, width, height);
   drawScanlines(ctx, width, height);
 

@@ -349,12 +349,10 @@ export function fixedUpdate(dt: number): void {
     }
   }
 
-  // Atualizar movimento das Mystery Boxes e limpar usando swap-and-pop
+  // Limpar Mystery Boxes usando swap-and-pop (movimento tratado em movement.ts)
   for (let i = 0; i < entities.mysteryBoxes.length; i++) {
     const box = entities.mysteryBoxes[i];
     if (!box) continue;
-
-    box.y += gameState.gameSpeed * dtFactor;
 
     if (box.passed || box.y >= 1200) {
       // Swap com o último elemento e remove

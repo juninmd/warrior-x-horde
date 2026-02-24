@@ -86,4 +86,48 @@ describe('Performance and UX Enhancements', () => {
       // drawComboBar makes ~3 calls.
       expect(ctx.roundRect).toHaveBeenCalled();
   });
+
+  it('optimizes sorting for enemy hordes in simplified rendering mode', async () => {
+      const { QualityManager } = await import('../src/quality');
+      QualityManager.getInstance().settings.simplifiedRendering = true;
+
+      const sortSpy = vi.spyOn(Array.prototype, 'sort');
+
+      const horde = {
+          soldiers: [
+              { id: 1, isAlive: true, y: 100, type: 'normal', color: '#000', size: 10 },
+              { id: 2, isAlive: true, y: 50, type: 'normal', color: '#000', size: 10 }
+          ],
+          isActive: true
+      } as unknown as EnemyHorde;
+
+      const entities = {
+        playerArmy: { soldiers: [], aliveCount: 0, centerX: 0, centerY: 0 } as unknown as Army,
+        enemyHordes: [horde],
+        bullets: [],
+        mysteryBoxes: [],
+        coins: [],
+        gates: [], // Empty gates to avoid sort there
+        miniBosses: [],
+        boss: null
+      } as unknown as Entities;
+
+      const gameState = {
+          isStarted: true,
+          combo: 0,
+          currentLevel: 1, // Required for getBiomeColors
+          score: 0,
+          coins: 0,
+          distanceTraveled: 0,
+          levelDistance: 1000
+      } as unknown as GameState;
+
+      render(ctx, entities, gameState);
+
+      // Should be 1 call (gates sort) + 0 calls (horde sort skipped) = 1 call
+      expect(sortSpy).toHaveBeenCalledTimes(1);
+
+      // Reset quality
+      QualityManager.getInstance().settings.simplifiedRendering = false;
+  });
 });
