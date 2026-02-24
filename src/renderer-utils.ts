@@ -146,8 +146,11 @@ export function drawJoystick(ctx: CanvasRenderingContext2D): void {
   ctx.setLineDash([]); // Reset dash
 
   // Thumb Stick (Glowing Circle)
+  // Inner Stick Pulse
+  const innerPulse = Math.sin(time / 200) * 2;
+
   ctx.beginPath();
-  ctx.arc(stickX, stickY, 15, 0, Math.PI * 2);
+  ctx.arc(stickX, stickY, 15 + innerPulse, 0, Math.PI * 2);
 
   if (QualityManager.getInstance().settings.enableShadows) {
     ctx.shadowColor = isMaxed ? '#FF4500' : '#00FFFF'; // Change color when maxed
@@ -159,7 +162,7 @@ export function drawJoystick(ctx: CanvasRenderingContext2D): void {
 
   // Ring around Thumb Stick
   ctx.beginPath();
-  ctx.arc(stickX, stickY, 18, 0, Math.PI * 2);
+  ctx.arc(stickX, stickY, 18 + innerPulse, 0, Math.PI * 2);
   ctx.strokeStyle = isMaxed ? '#FF4500' : '#00FFFF';
   ctx.lineWidth = isMaxed ? 3 : 2;
   ctx.stroke();
