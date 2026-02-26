@@ -245,11 +245,13 @@ describe('UI Overlay', () => {
             expect(lb?.innerHTML).toContain('Top Commanders');
             expect(lb?.innerHTML).toContain('1,000');
 
-            // Verify Rank Colors
-            expect(lb?.innerHTML).toContain('#FFD700'); // Gold
-            expect(lb?.innerHTML).toContain('#C0C0C0'); // Silver
-            expect(lb?.innerHTML).toContain('#CD7F32'); // Bronze
-            expect(lb?.innerHTML).toContain('#AAA');    // Default
+            // Verify Rank Classes and Icons
+            expect(lb?.innerHTML).toContain('rank-1');
+            expect(lb?.innerHTML).toContain('🥇');
+            expect(lb?.innerHTML).toContain('rank-2');
+            expect(lb?.innerHTML).toContain('🥈');
+            expect(lb?.innerHTML).toContain('rank-3');
+            expect(lb?.innerHTML).toContain('🥉');
         });
 
         it('should handle corrupt localStorage data', () => {
@@ -295,7 +297,7 @@ describe('UI Overlay', () => {
             // Should contain the safe score (0 for malicious, 12345 for valid)
             expect(html).toContain('12,345');
             // Malicious score becomes NaN -> 0
-            expect(html).toContain('>0</span>');
+            expect(html).toContain('>0</div>');
             // Should NOT contain script tags
             expect(html).not.toContain('<script>');
         });
