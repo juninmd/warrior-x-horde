@@ -360,6 +360,9 @@ function applyMysteryBoxEffect(army: Army, box: MysteryBox, gameState: GameState
 }
 
 export function checkCollisions(entities: Entities, gameState: GameState): void {
+  // Optimization: Skip collision logic if game is over or dying
+  if (gameState.isGameOver || gameState.isDying) return;
+
   const army = entities.playerArmy;
   const bounds = getArmyBounds(army);
   const armyCenterX = army.centerX;

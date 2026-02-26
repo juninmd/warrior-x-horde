@@ -226,7 +226,7 @@ describe('Extra Coverage Part 2', () => {
 
              const container = document.getElementById('gameOverContainer');
              expect(container?.innerHTML).toContain('Top Commanders');
-             expect(container?.innerHTML).toContain('#1');
+             expect(container?.innerHTML).toContain('🥇');
              expect(container?.innerHTML).toContain('100');
 
              spy.mockRestore();

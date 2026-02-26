@@ -80,7 +80,7 @@ describe('Collisions Extra Coverage', () => {
     mockEntities = {
       playerArmy: {
         soldiers: [],
-        aliveCount: 0,
+        aliveCount: 10,
         centerX: 100,
         fireRate: 100,
         damage: 1,

@@ -44,14 +44,17 @@ function getLeaderboardHTML(currentScore: number = -1): string {
 
         const isCurrent = safeScore === currentScore;
         const currentClass = isCurrent ? 'current' : '';
-        const textColor = isCurrent ? '#FFF' : '#AAA';
-        const weight = isCurrent ? '800' : 'normal';
-        const rankColor = index === 0 ? '#FFD700' : (index === 1 ? '#C0C0C0' : (index === 2 ? '#CD7F32' : textColor));
+        const rankClass = index === 0 ? 'rank-1' : (index === 1 ? 'rank-2' : (index === 2 ? 'rank-3' : ''));
+
+        let rankIcon = `#${index + 1}`;
+        if (index === 0) rankIcon = '🥇';
+        if (index === 1) rankIcon = '🥈';
+        if (index === 2) rankIcon = '🥉';
 
         return `
-        <div class="leaderboard-item ${currentClass}">
-            <span style="color: ${rankColor}; font-weight: bold; font-size: 14px; width: 30px;">#${index + 1}</span>
-            <span style="color: ${textColor}; font-weight: ${weight}; font-size: 14px; font-family: monospace;">${safeScore.toLocaleString()}</span>
+        <div class="leaderboard-item ${currentClass} ${rankClass}">
+            <div class="rank-col">${rankIcon}</div>
+            <div class="score-col">${safeScore.toLocaleString()}</div>
         </div>
         `;
     }).join('');

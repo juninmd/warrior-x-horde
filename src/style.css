@@ -742,14 +742,44 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 6px 10px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.02);
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  transition: transform 0.2s;
+}
+
+.leaderboard-item:hover {
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .leaderboard-item.current {
-  background: linear-gradient(90deg, rgba(255, 215, 0, 0.2), transparent);
+  background: linear-gradient(90deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.05));
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  transform: scale(1.02);
 }
+
+.rank-col {
+  font-weight: 900;
+  font-size: 16px;
+  width: 40px;
+  color: #AAA;
+}
+
+.score-col {
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+  font-size: 16px;
+  color: #FFF;
+}
+
+/* Ranks */
+.leaderboard-item.rank-1 .rank-col { color: #FFD700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); font-size: 20px; }
+.leaderboard-item.rank-2 .rank-col { color: #C0C0C0; text-shadow: 0 0 10px rgba(192, 192, 192, 0.5); font-size: 18px; }
+.leaderboard-item.rank-3 .rank-col { color: #CD7F32; text-shadow: 0 0 10px rgba(205, 127, 50, 0.5); font-size: 18px; }
+
+.leaderboard-item.rank-1 .score-col { color: #FFD700; }
+.leaderboard-item.rank-2 .score-col { color: #EEE; }
+.leaderboard-item.rank-3 .score-col { color: #DDD; }
 
 /* --- Tutorial Hand Animation --- */
 .tutorial-hand {
