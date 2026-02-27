@@ -228,6 +228,7 @@
       font-weight: bold;
       margin-top: 15px;
       transition: transform 0.2s;
+      min-height: 48px; /* Mobile touch */
     }
 
     .story-close-btn:hover {
@@ -243,6 +244,7 @@
       cursor: pointer;
       font-size: 11px;
       transition: transform 0.2s;
+      min-height: 44px; /* Mobile touch */
     }
 
     .story-btn:hover {
@@ -267,6 +269,7 @@
       border-radius: 10px;
       font-size: 11px;
       cursor: pointer;
+      min-height: 44px; /* Mobile touch */
     }
 
     .game-controls button {
@@ -470,6 +473,7 @@
   transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   position: relative;
   overflow: hidden;
+  min-height: 72px;
 }
 
 .shop-btn:active {
@@ -514,9 +518,9 @@
 .super-cannon-btn {
   pointer-events: auto;
   min-width: 120px;
-  height: 45px;
+  height: 60px; /* Larger touch target */
   padding: 8px 20px;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: bold;
   background: linear-gradient(180deg, #FFD700 0%, #FFA500 100%);
   color: #333;
@@ -574,18 +578,23 @@
 }
 
 .pause-btn {
-  width: 200px;
-  padding: 15px;
-  margin: 10px;
-  font-size: 18px;
+  width: 240px;
+  padding: 18px;
+  margin: 12px;
+  font-size: 20px;
   font-weight: bold;
   color: #FFF;
   background: rgba(255, 255, 255, 0.1);
   border: 2px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
+  border-radius: 12px;
   cursor: pointer;
   backdrop-filter: blur(5px);
   transition: all 0.2s;
+  min-height: 60px; /* Touch friendly */
+}
+
+.pause-btn:active {
+  transform: scale(0.95);
 }
 
 .pause-btn:hover {
@@ -666,18 +675,19 @@
 
 .game-over-btn {
   width: 100%;
-  padding: 15px;
-  font-size: 20px;
+  padding: 18px;
+  font-size: 22px;
   font-weight: bold;
   color: #FFF;
   background: linear-gradient(180deg, #4A90D9 0%, #2980B9 100%);
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   cursor: pointer;
   margin-bottom: 15px;
   box-shadow: 0 4px 0 #1A5276;
   transition: transform 0.1s;
   animation: pulse-btn 2s infinite ease-in-out;
+  min-height: 60px;
 }
 
 .game-over-btn:active {
@@ -692,13 +702,14 @@
 
 .share-btn {
   flex: 1;
-  padding: 10px;
-  font-size: 14px;
+  padding: 12px;
+  font-size: 16px;
   font-weight: bold;
   color: #FFF;
   border: none;
   border-radius: 8px;
   cursor: pointer;
+  min-height: 50px;
 }
 
 .share-btn.x {
@@ -777,6 +788,10 @@
 .leaderboard-item.rank-2 .rank-col { color: #C0C0C0; text-shadow: 0 0 10px rgba(192, 192, 192, 0.5); font-size: 18px; }
 .leaderboard-item.rank-3 .rank-col { color: #CD7F32; text-shadow: 0 0 10px rgba(205, 127, 50, 0.5); font-size: 18px; }
 
+.leaderboard-item.rank-1 { border-left: 3px solid #FFD700; background: linear-gradient(90deg, rgba(255, 215, 0, 0.1), transparent); }
+.leaderboard-item.rank-2 { border-left: 3px solid #C0C0C0; background: linear-gradient(90deg, rgba(192, 192, 192, 0.1), transparent); }
+.leaderboard-item.rank-3 { border-left: 3px solid #CD7F32; background: linear-gradient(90deg, rgba(205, 127, 50, 0.1), transparent); }
+
 .leaderboard-item.rank-1 .score-col { color: #FFD700; }
 .leaderboard-item.rank-2 .score-col { color: #EEE; }
 .leaderboard-item.rank-3 .score-col { color: #DDD; }
@@ -818,4 +833,190 @@
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Settings UI --- */
+.settings-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.settings-modal.active {
+  display: flex;
+}
+
+.settings-content {
+  background: rgba(20, 20, 30, 0.95);
+  border: 2px solid #FFD700;
+  border-radius: 20px;
+  padding: 30px;
+  width: 320px;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+  text-align: center;
+  color: #FFF;
+  font-family: Arial, sans-serif;
+}
+
+.settings-title {
+  margin: 0 0 20px 0;
+  color: #FFD700;
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: 2px;
+}
+
+.settings-row {
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 10px;
+  border-radius: 10px;
+}
+
+.settings-label {
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.settings-toggle-btn {
+  padding: 12px 15px;
+  background: #444;
+  border: 1px solid #666;
+  border-radius: 8px;
+  color: #FFF;
+  cursor: pointer;
+  width: 110px;
+  font-weight: bold;
+  font-size: 14px;
+  transition: background 0.2s, border-color 0.2s, transform 0.1s;
+  min-height: 48px;
+}
+
+.settings-toggle-btn:active {
+  transform: scale(0.95);
+}
+
+.settings-toggle-btn.on {
+  background: #2ECC71;
+  border-color: #27AE60;
+  box-shadow: 0 0 10px rgba(46, 204, 113, 0.4);
+}
+
+.settings-toggle-btn.off {
+  background: #E74C3C;
+  border-color: #C0392B;
+}
+
+.settings-toggle-btn.auto {
+  background: #3498DB;
+  border-color: #2980B9;
+}
+
+.settings-debug-row {
+  margin-bottom: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.settings-debug-label {
+  font-weight: bold;
+  font-size: 14px;
+  color: #BBB;
+}
+
+.settings-debug-controls {
+  display: flex;
+  gap: 10px;
+}
+
+.settings-input {
+  width: 60px;
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #666;
+  background: #333;
+  color: #FFF;
+  text-align: center;
+  font-size: 14px;
+}
+
+.settings-go-btn {
+  padding: 8px 15px;
+  background: #9B59B6;
+  border: none;
+  border-radius: 4px;
+  color: #FFF;
+  cursor: pointer;
+  font-weight: bold;
+  min-height: 44px;
+}
+
+.settings-go-btn:active {
+  transform: scale(0.95);
+}
+
+.settings-close-btn {
+  width: 100%;
+  padding: 16px;
+  margin-top: 15px;
+  background: #FFD700;
+  color: #000;
+  border: none;
+  border-radius: 12px;
+  font-weight: 900;
+  cursor: pointer;
+  font-size: 18px;
+  transition: transform 0.1s;
+  box-shadow: 0 4px 0 #B8860B;
+  min-height: 56px;
+}
+
+.settings-close-btn:active {
+  transform: scale(0.98);
+  box-shadow: 0 2px 0 #B8860B;
+}
+
+/* --- Countdown Overlay --- */
+.countdown-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  font-size: 80px;
+  font-weight: 900;
+  color: #FFD700;
+  text-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  pointer-events: auto;
+}
+
+/* --- Install App Button (Start Screen) --- */
+.install-btn {
+  background: #FFD700 !important;
+  color: #333 !important;
+  margin-top: 15px !important;
+  font-size: 16px !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3) !important;
+  min-height: 54px !important;
 }

@@ -15,35 +15,16 @@ export const _testing = {
 function createSettingsModal(): void {
   settingsModal = document.createElement('div');
   settingsModal.id = 'settingsModal';
-  settingsModal.style.cssText = `
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(5px);
-    display: none;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-  `;
-  // Explicitly set display for JSDOM
+  settingsModal.className = 'settings-modal';
+  // Explicitly set display for JSDOM logic
   settingsModal.style.display = 'none';
 
   const content = document.createElement('div');
-  content.style.cssText = `
-    background: rgba(20, 20, 30, 0.95);
-    border: 2px solid #FFD700;
-    border-radius: 20px;
-    padding: 30px;
-    width: 300px;
-    box-shadow: 0 0 30px rgba(0,0,0,0.5);
-    text-align: center;
-    color: #FFF;
-    font-family: Arial, sans-serif;
-  `;
+  content.className = 'settings-content';
 
   const title = document.createElement('h2');
   title.innerText = 'SETTINGS';
-  title.style.cssText = 'margin: 0 0 20px 0; color: #FFD700; font-size: 24px; font-weight: 900;';
+  title.className = 'settings-title';
   content.appendChild(title);
 
   const sm = SettingsManager.getInstance();
@@ -51,37 +32,28 @@ function createSettingsModal(): void {
   // Helper for toggle buttons
   const createToggle = (label: string, id: string, initialValue: string, onClick: (btn: HTMLButtonElement) => void) => {
     const container = document.createElement('div');
-    container.style.cssText = 'margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;';
+    container.className = 'settings-row';
 
     const lbl = document.createElement('span');
     lbl.innerText = label;
-    lbl.style.fontWeight = 'bold';
+    lbl.className = 'settings-label';
 
     const btn = document.createElement('button');
     btn.id = id;
     btn.innerText = String(initialValue).toUpperCase();
-    btn.style.cssText = `
-        padding: 8px 15px;
-        background: #444;
-        border: 1px solid #666;
-        border-radius: 8px;
-        color: #FFF;
-        cursor: pointer;
-        width: 100px;
-        font-weight: bold;
-    `;
+    btn.className = 'settings-toggle-btn';
 
     const updateStyle = (val: string) => {
+        // Reset classes
+        btn.classList.remove('on', 'off', 'auto');
+
         if (val === 'ON') {
-             btn.style.background = '#2ECC71';
-             btn.style.borderColor = '#27AE60';
+             btn.classList.add('on');
         } else if (val === 'OFF') {
-             btn.style.background = '#E74C3C';
-             btn.style.borderColor = '#C0392B';
+             btn.classList.add('off');
         } else {
              // For Quality (Auto/High/Low)
-             btn.style.background = '#3498DB';
-             btn.style.borderColor = '#2980B9';
+             btn.classList.add('auto');
         }
     };
     updateStyle(initialValue);
@@ -148,27 +120,25 @@ function createSettingsModal(): void {
   // Debug Level Selector
   if (onLevelChangeCallback) {
       const debugContainer = document.createElement('div');
-      debugContainer.style.cssText = 'margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 8px;';
+      debugContainer.className = 'settings-debug-row';
 
       const lbl = document.createElement('span');
       lbl.innerText = '🔧 LEVEL';
-      lbl.style.fontWeight = 'bold';
-      lbl.style.fontSize = '14px';
+      lbl.className = 'settings-debug-label';
 
       const controls = document.createElement('div');
-      controls.style.display = 'flex';
-      controls.style.gap = '5px';
+      controls.className = 'settings-debug-controls';
 
       const input = document.createElement('input');
       input.type = 'number';
       input.min = '1';
       input.max = '50';
       input.value = String(gameState.currentLevel || 1);
-      input.style.cssText = 'width: 50px; padding: 5px; border-radius: 4px; border: 1px solid #666; background: #333; color: #FFF; text-align: center;';
+      input.className = 'settings-input';
 
       const goBtn = document.createElement('button');
       goBtn.innerText = 'GO';
-      goBtn.style.cssText = 'padding: 5px 10px; background: #9B59B6; border: none; border-radius: 4px; color: #FFF; cursor: pointer; font-weight: bold;';
+      goBtn.className = 'settings-go-btn';
       goBtn.onclick = () => {
           vibrate(20);
           const val = parseInt(input.value);
@@ -187,18 +157,7 @@ function createSettingsModal(): void {
   // Close Button
   const closeBtn = document.createElement('button');
   closeBtn.innerText = 'CLOSE';
-  closeBtn.style.cssText = `
-    width: 100%;
-    padding: 12px;
-    margin-top: 10px;
-    background: #FFD700;
-    color: #000;
-    border: none;
-    border-radius: 10px;
-    font-weight: 900;
-    cursor: pointer;
-    font-size: 16px;
-  `;
+  closeBtn.className = 'settings-close-btn'; // Ensure class is correct
   closeBtn.onclick = () => {
       vibrate(20);
       toggleSettingsMenu();
@@ -211,6 +170,7 @@ function createSettingsModal(): void {
 
 export function setupSettingsUI(onLevelChange?: (level: number) => void): void {
     if (onLevelChange) onLevelChangeCallback = onLevelChange;
+    // Always recreate if not exists
     if (!document.getElementById('settingsModal')) {
         createSettingsModal();
     }
@@ -223,16 +183,19 @@ export function toggleSettingsMenu(): void {
     if (!settingsModal) return;
     /* v8 ignore stop */
 
-    if (settingsModal.style.display === 'flex') {
+    if (settingsModal.classList.contains('active') || settingsModal.style.display === 'flex') {
+        settingsModal.classList.remove('active');
         settingsModal.style.display = 'none';
     } else {
+        settingsModal.classList.add('active');
         settingsModal.style.display = 'flex';
         // Sync button states if changed elsewhere (e.g. mute btn)
         const soundBtn = document.getElementById('soundBtn');
         if (soundBtn) {
            const label = isMusicMuted() ? 'OFF' : 'ON';
            soundBtn.innerText = label;
-           soundBtn.style.background = isMusicMuted() ? '#E74C3C' : '#2ECC71';
+           soundBtn.classList.remove('on', 'off');
+           soundBtn.classList.add(isMusicMuted() ? 'off' : 'on');
         }
     }
 }

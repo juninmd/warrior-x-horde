@@ -104,13 +104,8 @@ export function setupStartScreenInstallBtn(deferredPrompt: BeforeInstallPromptEv
     const installBtn = document.createElement('button');
     installBtn.id = 'startInstallBtn';
     installBtn.innerText = '📲 INSTALL APP';
-    // Keeping some inline styles for specific button tweaks not general enough for CSS
-    installBtn.className = 'start-btn';
-    installBtn.style.background = '#FFD700';
-    installBtn.style.color = '#333';
-    installBtn.style.marginTop = '15px';
-    installBtn.style.fontSize = '16px';
-    installBtn.style.boxShadow = '0 4px 10px rgba(0,0,0,0.3)';
+    // Keeping classes for consistent styling
+    installBtn.className = 'start-btn install-btn';
 
     installBtn.onclick = async (e) => {
         e.stopPropagation();
@@ -456,18 +451,7 @@ export function showGameOverScreen(gameState: GameState): void {
 
 export function startCountdown(onComplete: () => void): void {
     const el = document.createElement('div');
-    el.style.cssText = `
-        position: fixed;
-        top: 0; left: 0; width: 100%; height: 100%;
-        display: flex; justify-content: center; align-items: center;
-        background: rgba(0,0,0,0.5);
-        z-index: 9999;
-        font-size: 80px;
-        font-weight: 900;
-        color: #FFD700;
-        text-shadow: 0 0 20px rgba(0,0,0,0.5);
-        pointer-events: auto;
-    `;
+    el.className = 'countdown-overlay';
     document.body.appendChild(el);
 
     let count = 3;
