@@ -184,28 +184,29 @@ describe('UI Settings', () => {
 
       const btn = document.getElementById('soundBtn') as HTMLButtonElement;
       expect(btn.innerText).toBe('OFF');
-      // Verify color for OFF (red)
-      expect(btn.style.background).toBe('rgb(231, 76, 60)'); // #E74C3C
+      // Verify color for OFF (red) via class
+      expect(btn.classList.contains('off')).toBe(true);
 
       // Simulate unmuted
       modal.style.display = 'none';
+      modal.classList.remove('active');
       // @ts-ignore
       audio.isMusicMuted.mockReturnValue(false);
 
       toggleSettingsMenu(); // Open
 
       expect(btn.innerText).toBe('ON');
-      // Verify color for ON (green)
-      expect(btn.style.background).toBe('rgb(46, 204, 113)'); // #2ECC71
+      // Verify color for ON (green) via class
+      expect(btn.classList.contains('on')).toBe(true);
   });
 
   it('should set correct styles for quality button', () => {
       setupSettingsUI();
       const btn = document.getElementById('qualityBtn') as HTMLButtonElement;
 
-      // AUTO -> Blue
+      // AUTO -> Blue via class
       expect(btn.innerText).toBe('AUTO');
-      expect(btn.style.background).toBe('rgb(52, 152, 219)'); // #3498DB
+      expect(btn.classList.contains('auto')).toBe(true);
   });
 
   it('should handle toggleSettingsMenu when modal is not present (idempotent)', () => {
@@ -239,6 +240,6 @@ describe('UI Settings', () => {
       setupSettingsUI();
       const btn = document.getElementById('hapticsBtn') as HTMLButtonElement;
       expect(btn.innerText).toBe('OFF');
-      expect(btn.style.background).toBe('rgb(231, 76, 60)'); // #E74C3C
+      expect(btn.classList.contains('off')).toBe(true);
   });
 });
