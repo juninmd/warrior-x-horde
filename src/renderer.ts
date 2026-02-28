@@ -1300,14 +1300,14 @@ function drawFeverMode(ctx: CanvasRenderingContext2D, width: number, height: num
     ctx.save();
 
     // Border Glow
-    const borderWidth = 20 + pulse * 10;
+    const borderWidth = 10 + pulse * 5;
     ctx.lineWidth = borderWidth;
-    const alpha = 0.3 + pulse * 0.2;
+    const alpha = 0.15 + pulse * 0.1;
     ctx.strokeStyle = `rgba(255, 215, 0, ${alpha * intensity})`; // Gold
     ctx.strokeRect(0, 0, width, height);
 
     // Subtle Tint
-    ctx.fillStyle = `rgba(255, 100, 0, ${0.1 * intensity})`;
+    ctx.fillStyle = `rgba(255, 100, 0, ${0.05 * intensity})`;
     ctx.fillRect(0, 0, width, height);
 
     ctx.restore();
