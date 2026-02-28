@@ -379,7 +379,7 @@
     .game-logo {
       font-size: 48px;
       margin-bottom: 10px;
-      background: linear-gradient(180deg, #FFD700, #FFA500);
+      background: linear-gradient(180deg, #00C9FF, #92FE9D);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
@@ -390,19 +390,19 @@
 
     @keyframes logo-pulse {
       0%, 100% { transform: scale(1); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
-      50% { transform: scale(1.05); filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.6)); }
+      50% { transform: scale(1.05); filter: drop-shadow(0 0 15px rgba(0, 201, 255, 0.6)); }
     }
 
     .start-btn {
-      background: linear-gradient(135deg, #FFD700 0%, #FF8C00 100%);
+      background: linear-gradient(135deg, #00C9FF 0%, #92FE9D 100%);
       border: none;
       border-radius: 50px;
       padding: 24px 30px; /* Larger touch area */
-      color: #333;
+      color: #111;
       font-size: 26px; /* Larger text */
       font-weight: 900;
       cursor: pointer;
-      box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+      box-shadow: 0 0 20px rgba(0, 201, 255, 0.6);
       transition: all 0.3s ease;
       margin-top: 30px;
       width: 85%;
@@ -413,15 +413,15 @@
     }
 
     @keyframes pulse-glow {
-      0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4); }
-      70% { box-shadow: 0 0 0 20px rgba(255, 215, 0, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); }
+      0% { box-shadow: 0 0 0 0 rgba(0, 201, 255, 0.4); }
+      70% { box-shadow: 0 0 0 20px rgba(0, 201, 255, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(0, 201, 255, 0); }
     }
 
     .start-btn:hover {
       transform: translateY(-2px) scale(1.05);
-      box-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
-      background: linear-gradient(135deg, #FFEB3B 0%, #FFA500 100%);
+      box-shadow: 0 0 30px rgba(0, 201, 255, 0.8);
+      background: linear-gradient(135deg, #00B4E6 0%, #82E58D 100%);
     }
 
     .start-btn:active {
@@ -457,12 +457,12 @@
   font-weight: bold;
   background: linear-gradient(135deg, rgba(30, 30, 40, 0.95) 0%, rgba(20, 20, 30, 0.95) 100%);
   color: #FFF;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-bottom: 3px solid rgba(255, 255, 255, 0.2); /* Default fallback */
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 3px solid rgba(255, 255, 255, 0.1); /* Default fallback */
   border-radius: 12px;
   cursor: pointer;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4), inset 0 0 10px rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(12px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -522,12 +522,12 @@
   padding: 8px 20px;
   font-size: 18px;
   font-weight: bold;
-  background: linear-gradient(180deg, #FFD700 0%, #FFA500 100%);
-  color: #333;
-  border: 3px solid #FFD700;
+  background: linear-gradient(180deg, #00C9FF 0%, #0098FF 100%);
+  color: #FFF;
+  border: 3px solid #00C9FF;
   border-radius: 12px;
   cursor: pointer;
-  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.5), 0 0 15px rgba(255, 215, 0, 0.3);
+  box-shadow: 0 4px 15px rgba(0, 201, 255, 0.5), 0 0 15px rgba(0, 201, 255, 0.3);
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
@@ -541,9 +541,9 @@
 }
 
 .super-cannon-btn.active {
-  background: linear-gradient(180deg, #FFEB3B 0%, #FF9800 100%);
-  box-shadow: 0 0 25px rgba(255, 215, 0, 0.9), 0 0 50px rgba(255, 215, 0, 0.5);
-  border-color: #FFEB3B;
+  background: linear-gradient(180deg, #00E5FF 0%, #00B4E6 100%);
+  box-shadow: 0 0 25px rgba(0, 201, 255, 0.9), 0 0 50px rgba(0, 201, 255, 0.5);
+  border-color: #00E5FF;
   cursor: default;
 }
 
@@ -631,14 +631,14 @@
 }
 
 .game-over-content {
-  background: rgba(30, 30, 40, 0.9);
-  border: 2px solid #4A90D9;
+  background: rgba(15, 15, 25, 0.95);
+  border: 1px solid rgba(0, 201, 255, 0.5);
   border-radius: 20px;
   padding: 30px;
   width: 85%;
   max-width: 400px;
   text-align: center;
-  box-shadow: 0 0 30px rgba(74, 144, 217, 0.3);
+  box-shadow: 0 0 30px rgba(0, 201, 255, 0.3);
   transform: scale(0.9);
   transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }

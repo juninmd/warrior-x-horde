@@ -56,7 +56,7 @@ export function drawStar(ctx: CanvasRenderingContext2D, cx: number, cy: number, 
 export function drawJoystick(ctx: CanvasRenderingContext2D): void {
   // Update Alpha for fade in/out
   if (virtualJoystick.active) {
-    virtualJoystick.alpha = Math.min(0.8, virtualJoystick.alpha + 0.15); // Higher max alpha
+    virtualJoystick.alpha = Math.min(0.9, virtualJoystick.alpha + 0.3); // Higher max alpha
   } else {
     virtualJoystick.alpha = Math.max(0, virtualJoystick.alpha - 0.1);
   }

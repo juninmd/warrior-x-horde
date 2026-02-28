@@ -8,7 +8,7 @@ export class VirtualJoystick {
   currentX: number = 0;
   currentY: number = 0;
   maxRadius: number = 50;
-  deadZone: number = 5;
+  deadZone: number = 3;
 
   start(x: number, y: number) {
     this.active = true;
