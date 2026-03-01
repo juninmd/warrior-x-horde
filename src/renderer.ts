@@ -2030,8 +2030,77 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
   ctx.fillText('RANK', 0, 32);
   ctx.restore();
 
+  // Super Cannon Indicator (Below Score/Badges)
+  const scReady = gameState.superCannonReady;
+  const scActive = gameState.superCannonActive;
+  const now = Date.now();
+  const scElapsed = now - gameState.superCannonLastUsed;
+  const scRemaining = Math.max(0, gameState.superCannonCooldown - scElapsed);
+
+  ctx.save();
+  const scX = width - 80;
+  const scY = 30; // Closer to the top right
+  const scRadius = 15;
+
+  ctx.translate(scX, scY);
+
+  if (scActive) {
+      const p = 1 + Math.sin(now * 0.02) * 0.2;
+      ctx.scale(p, p);
+      ctx.fillStyle = '#FFD700';
+      if (QualityManager.getInstance().settings.enableShadows) {
+          ctx.shadowColor = '#FFD700';
+          ctx.shadowBlur = 15;
+      }
+      ctx.beginPath();
+      ctx.arc(0, 0, scRadius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = '#000';
+      ctx.font = `bold 10px ${FONT_FAMILY}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('⚡', 0, 1);
+  } else if (scReady || scRemaining <= 0) {
+      const p = 1 + Math.sin(now * 0.01) * 0.1;
+      ctx.scale(p, p);
+      ctx.fillStyle = '#00C9FF';
+      if (QualityManager.getInstance().settings.enableShadows) {
+          ctx.shadowColor = '#00C9FF';
+          ctx.shadowBlur = 10;
+      }
+      ctx.beginPath();
+      ctx.arc(0, 0, scRadius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = '#FFF';
+      ctx.font = `bold 10px ${FONT_FAMILY}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('RDY', 0, 1);
+  } else {
+      ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      ctx.beginPath();
+      ctx.arc(0, 0, scRadius, 0, Math.PI * 2);
+      ctx.fill();
+
+      const scProgress = Math.max(0, 1 - (scRemaining / gameState.superCannonCooldown));
+      ctx.fillStyle = '#555';
+      ctx.beginPath();
+      ctx.moveTo(0,0);
+      ctx.arc(0, 0, scRadius, -Math.PI/2, -Math.PI/2 + (Math.PI * 2 * scProgress));
+      ctx.fill();
+
+      ctx.strokeStyle = '#FFF';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0, 0, scRadius, 0, Math.PI * 2);
+      ctx.stroke();
+  }
+  ctx.restore();
+
   // Progress Bar (Topo, mais visível)
-  const progressWidth = width - 40;
+  const progressWidth = width - 120; // Reduced to make room for super cannon indicator
   const progressX = 20;
   const progressY = 10;
   const progressHeight = 8;
@@ -2336,15 +2405,19 @@ function drawComboTier(ctx: CanvasRenderingContext2D, width: number, height: num
 
     ctx.save();
 
-    // Pulse effect
-    const pulse = 1 + Math.sin(Date.now() * 0.01) * 0.1;
-    ctx.translate(centerX, centerY);
+    // Enhanced Pulse effect for more Juice
+    const pulseTime = Date.now() * 0.015;
+    const scaleBase = 1 + (tier * 0.05);
+    const pulse = scaleBase + Math.sin(pulseTime) * 0.15;
+    const shake = tier >= 4 ? (Math.random() - 0.5) * 5 : 0;
+
+    ctx.translate(centerX + shake, centerY + shake);
     ctx.scale(pulse, pulse);
 
     // Glow
     if (QualityManager.getInstance().settings.enableShadows) {
       ctx.shadowColor = color;
-      ctx.shadowBlur = 20;
+      ctx.shadowBlur = 25 + Math.sin(pulseTime) * 10;
     }
 
     // Main Text

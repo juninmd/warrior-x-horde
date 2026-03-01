@@ -366,8 +366,8 @@
       left: -50%;
       width: 200%;
       height: 200%;
-      background: radial-gradient(circle, rgba(255, 215, 0, 0.1) 0%, transparent 60%);
-      animation: rotate-bg 10s linear infinite;
+      background: radial-gradient(circle, rgba(0, 201, 255, 0.15) 0%, rgba(146, 254, 157, 0.05) 30%, transparent 70%);
+      animation: rotate-bg 15s linear infinite, pulse-bg 4s ease-in-out infinite alternate;
       z-index: -1;
     }
 
@@ -376,21 +376,27 @@
       100% { transform: rotate(360deg); }
     }
 
+    @keyframes pulse-bg {
+      0% { opacity: 0.6; transform: scale(0.95); }
+      100% { opacity: 1; transform: scale(1.05); }
+    }
+
     .game-logo {
-      font-size: 48px;
-      margin-bottom: 10px;
-      background: linear-gradient(180deg, #00C9FF, #92FE9D);
+      font-size: 56px; /* Slightly larger for impact */
+      margin-bottom: 15px;
+      background: linear-gradient(180deg, #00E5FF, #00FF88); /* Brighter neon colors */
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.8));
       animation: logo-pulse 3s infinite ease-in-out;
-      font-weight: 700;
-      letter-spacing: 1px;
+      font-weight: 900; /* Bolder */
+      letter-spacing: 2px;
+      text-transform: uppercase;
     }
 
     @keyframes logo-pulse {
-      0%, 100% { transform: scale(1); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
-      50% { transform: scale(1.05); filter: drop-shadow(0 0 15px rgba(0, 201, 255, 0.6)); }
+      0%, 100% { transform: scale(1); filter: drop-shadow(0 4px 6px rgba(0,0,0,0.8)); }
+      50% { transform: scale(1.08); filter: drop-shadow(0 0 25px rgba(0, 229, 255, 0.8)); }
     }
 
     .start-btn {
@@ -425,7 +431,8 @@
     }
 
     .start-btn:active {
-      transform: translateY(1px);
+      transform: translateY(1px) scale(0.95);
+      background: linear-gradient(135deg, #0098CC 0%, #68CC72 100%);
     }
 
     .game-canvas-wrapper {
@@ -559,8 +566,9 @@
 .pause-modal {
   position: fixed;
   top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(5px);
+  background: rgba(10, 10, 20, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   display: none;
   flex-direction: column;
   justify-content: center;
@@ -631,14 +639,16 @@
 }
 
 .game-over-content {
-  background: rgba(15, 15, 25, 0.95);
-  border: 1px solid rgba(0, 201, 255, 0.5);
+  background: rgba(20, 20, 35, 0.85);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(0, 201, 255, 0.4);
   border-radius: 20px;
   padding: 30px;
   width: 85%;
   max-width: 400px;
   text-align: center;
-  box-shadow: 0 0 30px rgba(0, 201, 255, 0.3);
+  box-shadow: 0 15px 40px rgba(0, 201, 255, 0.25);
   transform: scale(0.9);
   transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
@@ -691,8 +701,9 @@
 }
 
 .game-over-btn:active {
-  transform: scale(0.98);
+  transform: scale(0.94);
   box-shadow: 0 2px 0 #1A5276;
+  background: linear-gradient(180deg, #2980B9 0%, #1F618D 100%);
 }
 
 .share-btn-group {
