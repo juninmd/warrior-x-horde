@@ -452,6 +452,10 @@ export function fixedUpdate(dt: number): void {
 
 function gameLoop(currentTime: number = 0): void {
   /* v8 ignore start */
+  if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+    requestAnimationFrame(gameLoop);
+    return;
+  }
   if (!gameState.isStarted) return;
   /* v8 ignore stop */
 
