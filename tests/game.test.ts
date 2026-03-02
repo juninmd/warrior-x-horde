@@ -274,4 +274,27 @@ describe('Game', () => {
         // Difficult to verify exact value without controlling window size mock
         // But running the event handler covers the lines.
     });
+
+    it('should return early from gameLoop if document is hidden', async () => {
+        const gameModule = await import('../src/game');
+        const { _testing } = gameModule;
+        const rendererModule = await import('../src/renderer');
+
+        // Set visibility state to hidden
+        Object.defineProperty(document, 'visibilityState', { value: 'hidden', writable: true });
+
+        // Ensure requestAnimationFrame is mocked to just run once or track
+        const rafMock = vi.fn();
+        global.requestAnimationFrame = rafMock as any;
+
+        // Run game loop
+        _testing.gameLoop(100);
+
+        // Should call requestAnimationFrame to schedule next frame but NOT render
+        expect(rafMock).toHaveBeenCalled();
+        expect(rendererModule.render).not.toHaveBeenCalled();
+
+        // Reset visibility state
+        Object.defineProperty(document, 'visibilityState', { value: 'visible', writable: true });
+    });
 });
