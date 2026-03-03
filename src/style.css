@@ -13,8 +13,8 @@
 
     body {
       background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
-      min-height: 100vh;
-      min-height: 100dvh;
+      height: 100vh;
+      height: 100dvh;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -35,8 +35,6 @@
       width: 100%;
       height: 100%;
       max-width: 100vw;
-      max-height: 100vh;
-      max-height: 100dvh;
       padding: 5px;
       padding-bottom: env(safe-area-inset-bottom, 20px);
       touch-action: none; /* Critical for mobile swipe gestures */
@@ -232,7 +230,7 @@
       font-weight: bold;
       margin-top: 15px;
       transition: transform 0.2s;
-      min-height: 48px; /* Mobile touch */
+      min-height: 54px; /* Mobile touch */
     }
 
     .story-close-btn:hover {
@@ -248,7 +246,7 @@
       cursor: pointer;
       font-size: 11px;
       transition: transform 0.2s;
-      min-height: 44px; /* Mobile touch */
+      min-height: 54px; /* Mobile touch */
     }
 
     .story-btn:hover {
@@ -273,7 +271,7 @@
       border-radius: 10px;
       font-size: 11px;
       cursor: pointer;
-      min-height: 44px; /* Mobile touch */
+      min-height: 54px; /* Mobile touch */
     }
 
     .game-controls button {
@@ -286,7 +284,7 @@
       font-size: 12px;
       font-weight: bold;
       transition: transform 0.2s;
-      min-height: 44px; /* Mobile touch target */
+      min-height: 54px; /* Mobile touch target */
       backdrop-filter: blur(5px);
       box-shadow: 0 4px 6px rgba(0,0,0,0.2);
     }

@@ -27,12 +27,12 @@ describe('QualityManager Mobile Detection', () => {
         const qm = QualityManager.getInstance();
         expect(qm.settings.particleMultiplier).toBe(0.8);
         expect(qm.settings.enableShadows).toBe(false);
-        expect(qm.settings.resolutionScale).toBe(0.85);
+        expect(qm.settings.resolutionScale).toBe(0.75);
 
         // Test auto setQuality logic for mobile
         qm.setQuality('auto');
         expect(qm.settings.particleMultiplier).toBe(0.8);
-        expect(qm.settings.resolutionScale).toBe(0.85);
+        expect(qm.settings.resolutionScale).toBe(0.75);
         expect(qm.settings.enableShadows).toBe(false);
     });
 
