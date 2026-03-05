@@ -209,6 +209,9 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
       triggerScreenShake(15, 400); // Stronger shake
       triggerHaptic('success');
 
+      // Holy Light Beam
+      addParticle(horde.x, horde.y, 'holylight', '#FFFF00', 1);
+
       // Bonus confetti
       for(let k=0; k<5; k++) {
           setTimeout(() => addParticle(horde.x, horde.y, 'star', '#00FFFF', 12), k * 50);

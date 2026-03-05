@@ -473,12 +473,15 @@ export function addParticle(x: number, y: number, type: Particle['type'], color:
         // Random colors for confetti
         const colors = ['#FFD700', '#FF4500', '#00FFFF', '#FF69B4', '#32CD32'];
         p.color = colors[Math.floor(Math.random() * colors.length)];
+    } else if (type === 'holylight') {
+       p.size = 100;
+       p.life = 1.5;
     } else {
        p.size = type === 'shockwave' ? 20 : (type === 'explosion' ? 2 + Math.random() * 2.5 : 1.5 + Math.random() * 2);
        p.life = 1;
     }
 
-    if (type === 'shockwave') {
+    if (type === 'shockwave' || type === 'holylight') {
         p.vx = 0;
         p.vy = 0;
     } else {
@@ -556,6 +559,22 @@ function drawParticles(ctx: CanvasRenderingContext2D): void {
         ctx.fillStyle = p.color;
         const s = p.size;
         ctx.fillRect(-s/2, -s/2, s, s);
+        ctx.restore();
+        continue;
+    }
+
+    if (p.type === 'holylight') {
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        const alpha = Math.min(1, p.life * 2); // Fade out
+        const width = p.size * (1 + (1.5 - p.life)); // Expand slightly
+        const gradient = ctx.createLinearGradient(p.x - width/2, 0, p.x + width/2, 0);
+        gradient.addColorStop(0, `rgba(255, 255, 200, 0)`);
+        gradient.addColorStop(0.5, `rgba(255, 255, 200, ${alpha * 0.8})`);
+        gradient.addColorStop(1, `rgba(255, 255, 200, 0)`);
+
+        ctx.fillStyle = gradient;
+        ctx.fillRect(p.x - width/2, 0, width, BASE_HEIGHT);
         ctx.restore();
         continue;
     }

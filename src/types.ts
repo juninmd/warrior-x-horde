@@ -9,7 +9,7 @@ export interface Particle {
   size: number;
   life: number;
   maxLife: number;
-  type: 'explosion' | 'trail' | 'spark' | 'star' | 'shockwave' | 'debris' | 'hitmarker' | 'confetti';
+  type: 'explosion' | 'trail' | 'spark' | 'star' | 'shockwave' | 'debris' | 'hitmarker' | 'confetti' | 'holylight';
   rotation?: number;
   rotationSpeed?: number;
 }

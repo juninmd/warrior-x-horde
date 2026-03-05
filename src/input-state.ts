@@ -22,6 +22,17 @@ export class VirtualJoystick {
     if (!this.active) return;
     this.currentX = x;
     this.currentY = y;
+
+    // Dynamic Anchor logic
+    const dx = this.currentX - this.startX;
+    const dy = this.currentY - this.startY;
+    const distanceSq = dx * dx + dy * dy;
+
+    if (distanceSq > this.maxRadius * this.maxRadius) {
+      const distance = Math.sqrt(distanceSq);
+      this.startX = this.currentX - (dx / distance) * this.maxRadius;
+      this.startY = this.currentY - (dy / distance) * this.maxRadius;
+    }
   }
 
   end() {
