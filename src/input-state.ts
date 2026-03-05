@@ -26,12 +26,12 @@ export class VirtualJoystick {
     // Dynamic Anchor logic
     const dx = this.currentX - this.startX;
     const dy = this.currentY - this.startY;
-    const distance = Math.sqrt(dx * dx + dy * dy);
+    const distanceSq = dx * dx + dy * dy;
 
-    if (distance > this.maxRadius) {
-      const angle = Math.atan2(dy, dx);
-      this.startX = this.currentX - Math.cos(angle) * this.maxRadius;
-      this.startY = this.currentY - Math.sin(angle) * this.maxRadius;
+    if (distanceSq > this.maxRadius * this.maxRadius) {
+      const distance = Math.sqrt(distanceSq);
+      this.startX = this.currentX - (dx / distance) * this.maxRadius;
+      this.startY = this.currentY - (dy / distance) * this.maxRadius;
     }
   }
 
