@@ -202,9 +202,9 @@ describe('Input', () => {
 
         expect(vj.getDeltaX()).toBe(10); // 20 - 10 = 10
 
-        // Deadzone check
-        vj.move(12, 12);
-        expect(vj.getDeltaX()).toBe(0); // 12 - 10 = 2 < 5
+        // Deadzone check (deadZone is 2, so difference of 1 is less)
+        vj.move(11, 11);
+        expect(vj.getDeltaX()).toBe(0); // 11 - 10 = 1 < 2
 
         vj.end();
         expect(vj.active).toBe(false);

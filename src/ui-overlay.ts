@@ -51,8 +51,9 @@ function getLeaderboardHTML(currentScore: number = -1): string {
         if (index === 1) rankIcon = '🥈';
         if (index === 2) rankIcon = '🥉';
 
+        const delay = index * 0.1;
         return `
-        <div class="leaderboard-item ${currentClass} ${rankClass}">
+        <div class="leaderboard-item ${currentClass} ${rankClass}" style="animation-delay: ${delay}s;">
             <div class="rank-col">${rankIcon}</div>
             <div class="score-col">${safeScore.toLocaleString()}</div>
         </div>

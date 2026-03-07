@@ -170,6 +170,23 @@
       }
     }
 
+    @media (max-width: 320px) {
+      .start-btn {
+        font-size: 24px;
+        padding: 16px 20px;
+        min-height: 60px;
+      }
+      .leaderboard-item {
+        padding: 6px 10px;
+      }
+      .rank-col, .score-col {
+        font-size: 14px;
+      }
+      .leaderboard-item.rank-1 .rank-col { font-size: 16px; }
+      .leaderboard-item.rank-2 .rank-col { font-size: 15px; }
+      .leaderboard-item.rank-3 .rank-col { font-size: 15px; }
+    }
+
     /* Story Modal */
     .story-modal {
       display: none;
@@ -408,15 +425,15 @@
     }
 
     .start-btn {
-      background: linear-gradient(135deg, #00D2FF 0%, #3A7BD5 100%);
+      background: linear-gradient(135deg, #FF8C00 0%, #FF4500 100%);
       border: 2px solid rgba(255, 255, 255, 0.3);
       border-radius: 50px;
       padding: 24px 30px; /* Larger touch area */
       color: #FFF;
-      font-size: 28px; /* Larger text */
+      font-size: 32px; /* Larger text */
       font-weight: 900;
       cursor: pointer;
-      box-shadow: 0 8px 25px rgba(0, 210, 255, 0.7);
+      box-shadow: 0 8px 25px rgba(255, 69, 0, 0.7);
       transition: all 0.3s ease;
       margin-top: 30px;
       width: 90%;
@@ -424,24 +441,24 @@
       animation: pulse-glow 2s infinite;
       text-transform: uppercase;
       font-family: 'Rajdhani', sans-serif;
-      letter-spacing: 1px;
+      letter-spacing: 2px;
     }
 
     @keyframes pulse-glow {
-      0% { box-shadow: 0 0 0 0 rgba(0, 210, 255, 0.4); }
-      70% { box-shadow: 0 0 0 20px rgba(0, 210, 255, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(0, 210, 255, 0); }
+      0% { box-shadow: 0 0 0 0 rgba(255, 69, 0, 0.4); }
+      70% { box-shadow: 0 0 0 20px rgba(255, 69, 0, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(255, 69, 0, 0); }
     }
 
     .start-btn:hover {
       transform: translateY(-2px) scale(1.05);
-      box-shadow: 0 0 30px rgba(0, 210, 255, 0.8);
-      background: linear-gradient(135deg, #00C6FF 0%, #0072FF 100%);
+      box-shadow: 0 0 30px rgba(255, 69, 0, 0.8);
+      background: linear-gradient(135deg, #FFA500 0%, #FF6347 100%);
     }
 
     .start-btn:active {
       transform: translateY(1px) scale(0.95);
-      background: linear-gradient(135deg, #00A8FF 0%, #0055FF 100%);
+      background: linear-gradient(135deg, #FF7F50 0%, #FF0000 100%);
     }
 
     .game-canvas-wrapper {
@@ -773,10 +790,16 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 12px;
+      padding: 10px 14px;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.03);
-  transition: transform 0.2s;
+      transition: transform 0.2s, background 0.2s;
+      animation: slideInRight 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+    }
+
+    @keyframes slideInRight {
+      from { transform: translateX(30px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
 }
 
 .leaderboard-item:hover {
