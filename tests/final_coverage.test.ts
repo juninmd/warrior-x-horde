@@ -185,7 +185,7 @@ describe('Final Coverage Fixes', () => {
         virtualJoystick.start(100, 100);
         expect(virtualJoystick.active).toBe(true);
 
-        virtualJoystick.move(102, 102); // Small move < deadZone (5)
+        virtualJoystick.move(101, 101); // Small move < deadZone (2)
         expect(virtualJoystick.getDeltaX()).toBe(0);
 
         virtualJoystick.move(120, 100); // > deadZone

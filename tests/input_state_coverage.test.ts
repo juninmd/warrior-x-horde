@@ -24,7 +24,7 @@ describe('Input State Coverage', () => {
     // new startX = 100 - cos(PI/2)*50 = 100
     // new startY = 200 - sin(PI/2)*50 = 150
     expect(joystick.startX).toBe(100);
-    expect(joystick.startY).toBe(150);
+    expect(joystick.startY).toBe(160);
     expect(joystick.currentX).toBe(100);
     expect(joystick.currentY).toBe(200);
   });
@@ -46,9 +46,8 @@ describe('Input State Coverage', () => {
       // dy = 150 - 100 = 50
       // distance = sqrt(5000) = 70.7 > maxRadius(50)
       // angle = atan2(50, 50) = PI/4
-      // startX = 150 - cos(PI/4)*50 = 150 - 35.355 = 114.644...
-      // dx = 150 - 114.644 = 35.355...
-      expect(joystick.getDeltaX()).toBeCloseTo(35.355, 2);
+      // Expected logic with maxRadius 40:
+      expect(joystick.getDeltaX()).toBeCloseTo(28.284, 2);
 
       // We should use values that don't trigger dynamic anchor to get exactly 50
       const joystick2 = new VirtualJoystick();
@@ -56,7 +55,7 @@ describe('Input State Coverage', () => {
       joystick2.move(140, 100); // dx=40, dy=0. distance=40 <= 50.
       expect(joystick2.getDeltaX()).toBe(40);
 
-      joystick2.move(102, 100); // dx=2 < deadZone(3) -> returns 0
+      joystick2.move(101, 100); // dx=1 < deadZone(2) -> returns 0
       expect(joystick2.getDeltaX()).toBe(0);
 
       joystick2.end();

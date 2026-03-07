@@ -44,7 +44,7 @@ describe('QualityManager', () => {
     });
 
     const mobileQm = QualityManager.getInstance();
-    expect(mobileQm.settings.particleMultiplier).toBe(0.8);
+    expect(mobileQm.settings.particleMultiplier).toBe(0.6);
 
     // Cleanup
     Object.defineProperty(global, 'navigator', { value: originalNavigator, writable: true });
