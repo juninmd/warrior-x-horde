@@ -20,7 +20,7 @@ describe('Mobile Optimization', () => {
     const qm = QualityManager.getInstance();
     expect(qm.settings.enableShadows).toBe(false);
     expect(qm.settings.enablePostProcessing).toBe(false);
-    expect(qm.settings.resolutionScale).toBe(0.75);
+    expect(qm.settings.resolutionScale).toBe(0.65);
   });
 
   it('should enable shadows on desktop devices by default', () => {

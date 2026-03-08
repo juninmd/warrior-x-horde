@@ -40,7 +40,7 @@ export class QualityManager {
         this.settings.particleMultiplier = 0.6;
         this.settings.enableShadows = false;
         this.settings.enablePostProcessing = false;
-        this.settings.resolutionScale = 0.75;
+        this.settings.resolutionScale = 0.65;
         this.settings.maxRenderedSoldiers = 100;
     }
   }
@@ -70,7 +70,7 @@ export class QualityManager {
       this.settings.particleMultiplier = this.isMobile ? 0.6 : 1.0;
       this.settings.simplifiedRendering = false;
       this.settings.maxRenderedSoldiers = this.isMobile ? 100 : 150;
-      this.settings.resolutionScale = this.isMobile ? 0.75 : 1.0;
+      this.settings.resolutionScale = this.isMobile ? 0.65 : 1.0;
       this.fpsDropFrames = 0;
       console.log("Quality set to AUTO");
     } else if (level === 'high') {
@@ -149,7 +149,7 @@ export class QualityManager {
       this.settings.particleMultiplier = this.isMobile ? 0.6 : 1.0;
       this.settings.simplifiedRendering = false;
       this.settings.maxRenderedSoldiers = this.isMobile ? 100 : 150;
-      this.settings.resolutionScale = this.isMobile ? 0.75 : 1.0;
+      this.settings.resolutionScale = this.isMobile ? 0.65 : 1.0;
 
       /* v8 ignore start */
       if (typeof window !== 'undefined') {
