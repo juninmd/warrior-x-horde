@@ -52,6 +52,8 @@
       text-align: center;
       letter-spacing: 2px;
       text-transform: uppercase;
+      padding-left: 10px;
+      padding-right: 10px;
     }
 
     .game-subtitle {
@@ -425,7 +427,7 @@
     }
 
     .start-btn {
-      background: linear-gradient(135deg, #FF8C00 0%, #FF4500 100%);
+      background: linear-gradient(135deg, #00D2FF 0%, #3A7BD5 100%);
       border: 2px solid rgba(255, 255, 255, 0.3);
       border-radius: 50px;
       padding: 24px 30px; /* Larger touch area */
@@ -433,7 +435,7 @@
       font-size: 32px; /* Larger text */
       font-weight: 900;
       cursor: pointer;
-      box-shadow: 0 8px 25px rgba(255, 69, 0, 0.7);
+      box-shadow: 0 8px 25px rgba(0, 210, 255, 0.7);
       transition: all 0.3s ease;
       margin-top: 30px;
       width: 90%;
@@ -445,20 +447,20 @@
     }
 
     @keyframes pulse-glow {
-      0% { box-shadow: 0 0 0 0 rgba(255, 69, 0, 0.4); }
-      70% { box-shadow: 0 0 0 20px rgba(255, 69, 0, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(255, 69, 0, 0); }
+      0% { box-shadow: 0 0 0 0 rgba(0, 210, 255, 0.4); }
+      70% { box-shadow: 0 0 0 20px rgba(0, 210, 255, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(0, 210, 255, 0); }
     }
 
     .start-btn:hover {
       transform: translateY(-2px) scale(1.05);
-      box-shadow: 0 0 30px rgba(255, 69, 0, 0.8);
-      background: linear-gradient(135deg, #FFA500 0%, #FF6347 100%);
+      box-shadow: 0 0 30px rgba(0, 210, 255, 0.8);
+      background: linear-gradient(135deg, #3A7BD5 0%, #00D2FF 100%);
     }
 
     .start-btn:active {
       transform: translateY(1px) scale(0.95);
-      background: linear-gradient(135deg, #FF7F50 0%, #FF0000 100%);
+      background: linear-gradient(135deg, #2980B9 0%, #1F618D 100%);
     }
 
     .game-canvas-wrapper {
@@ -1056,10 +1058,11 @@
 
 /* --- Install App Button (Start Screen) --- */
 .install-btn {
-  background: #FFD700 !important;
-  color: #333 !important;
+  background: linear-gradient(135deg, #00D2FF 0%, #3A7BD5 100%) !important;
+  color: #FFF !important;
   margin-top: 15px !important;
   font-size: 16px !important;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3) !important;
   min-height: 54px !important;
+  border: 2px solid rgba(255, 255, 255, 0.3) !important;
 }
