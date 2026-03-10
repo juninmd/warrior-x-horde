@@ -48,7 +48,7 @@ export function createBullet(x: number, y: number, targetX: number, targetY: num
 }
 
 function findNearestTarget(shooter: Soldier, hordes: EnemyHorde[], boss: Boss | null, miniBosses: MiniBoss[]): { x: number; y: number } | null {
-  let nearestDist = Infinity;
+  let nearestDistSq = Infinity;
   let nearest: { x: number; y: number } | null = null;
 
   // OTIMIZAÇÃO: Checar distância da horda primeiro
@@ -64,10 +64,10 @@ function findNearestTarget(shooter: Soldier, hordes: EnemyHorde[], boss: Boss | 
 
     // Calcular distância para o CENTRO da horda
     const dx = horde.x - shooter.x;
-    const dist = Math.sqrt(dx * dx + dy * dy);
+    const distSq = dx * dx + dy * dy;
 
-    if (dist < nearestDist) {
-      nearestDist = dist;
+    if (distSq < nearestDistSq) {
+      nearestDistSq = distSq;
       // Alvejar ponto aleatório dentro da área da horda para espalhar os tiros
       // Isso simula mirar em soldados sem o custo de iterar por todos eles (O(1) vs O(N))
       const jitterX = (Math.random() - 0.5) * Math.min(horde.width, 150);
@@ -83,10 +83,10 @@ function findNearestTarget(shooter: Soldier, hordes: EnemyHorde[], boss: Boss | 
     if (!miniBoss.isActive) continue;
     const dx = miniBoss.x + miniBoss.width / 2 - shooter.x;
     const dy = miniBoss.y + miniBoss.height / 2 - shooter.y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
+    const distSq = dx * dx + dy * dy;
     /* v8 ignore start */
-    if (dist < nearestDist && miniBoss.y < shooter.y) {
-      nearestDist = dist;
+    if (distSq < nearestDistSq && miniBoss.y < shooter.y) {
+      nearestDistSq = distSq;
       nearest = { x: miniBoss.x + miniBoss.width / 2, y: miniBoss.y + miniBoss.height / 2 };
     }
     /* v8 ignore stop */
@@ -96,9 +96,9 @@ function findNearestTarget(shooter: Soldier, hordes: EnemyHorde[], boss: Boss | 
   if (boss && boss.isActive) {
     const dx = boss.x + boss.width / 2 - shooter.x;
     const dy = boss.y + boss.height / 2 - shooter.y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
+    const distSq = dx * dx + dy * dy;
     /* v8 ignore start */
-    if (dist < nearestDist && boss.y < shooter.y) {
+    if (distSq < nearestDistSq && boss.y < shooter.y) {
       nearest = { x: boss.x + boss.width / 2, y: boss.y + boss.height / 2 };
     }
     /* v8 ignore stop */
@@ -112,8 +112,9 @@ function checkBulletSoldierCollision(bullet: Bullet, soldier: Soldier): boolean 
   const bulletRadius = 5;
   const dx = bullet.x - soldier.x;
   const dy = bullet.y - soldier.y;
-  const dist = Math.sqrt(dx * dx + dy * dy);
-  return dist < (soldierRadius + bulletRadius);
+  const distSq = dx * dx + dy * dy;
+  const r = soldierRadius + bulletRadius;
+  return distSq < r * r;
 }
 
 export function updateShooting(entities: Entities, gameState: GameState): void {
