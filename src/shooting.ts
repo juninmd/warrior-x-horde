@@ -99,6 +99,7 @@ function findNearestTarget(shooter: Soldier, hordes: EnemyHorde[], boss: Boss | 
     const distSq = dx * dx + dy * dy;
     /* v8 ignore start */
     if (distSq < nearestDistSq && boss.y < shooter.y) {
+      nearestDistSq = distSq;
       nearest = { x: boss.x + boss.width / 2, y: boss.y + boss.height / 2 };
     }
     /* v8 ignore stop */
