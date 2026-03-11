@@ -60,7 +60,7 @@ export function spawnGates(entities: Entities, canvasWidth: number, gameState: G
 
   if (lowestGateY > spawnY) {
     // Passar contagem atual de heróis e inimigos para balancear gates
-    const currentHeroCount = entities.playerArmy.soldiers.filter(s => s.isAlive).length;
+    const currentHeroCount = entities.playerArmy.aliveCount;
     const currentEnemyCount = getTotalEnemyCount(entities);
     const newGates = createGatePair(canvasWidth, spawnY - gateSpacing, gameState.currentLevel, currentHeroCount, currentEnemyCount);
     entities.gates.push(...newGates);
@@ -72,7 +72,7 @@ function getTotalEnemyCount(entities: Entities): number {
   let total = 0;
   for (const horde of entities.enemyHordes) {
     if (horde.isActive) {
-      total += horde.soldiers.filter(s => s.isAlive).length;
+      total += horde.count;
     }
   }
   return total;
@@ -123,7 +123,7 @@ export function spawnEnemies(entities: Entities, canvasWidth: number, gameState:
   /* v8 ignore next */
   if (lowestHordeY > spawnY && Math.random() < adjustedChance) {
     // Balancear inimigos baseado no tamanho do exército
-    const playerCount = entities.playerArmy.soldiers.filter(s => s.isAlive).length;
+    const playerCount = entities.playerArmy.aliveCount;
 
     // Multiplicador REDUZIDO para performance
     const baseMultiplier = 0.2 + Math.random() * 0.3; // Reduzido de 0.3-0.8 para 0.2-0.5

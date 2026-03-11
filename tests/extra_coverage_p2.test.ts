@@ -170,7 +170,7 @@ describe('Extra Coverage Part 2', () => {
 
     describe('Spawner', () => {
          it('should spawn enemies when count > 0', () => {
-             const entities: any = { enemyHordes: [], playerArmy: { soldiers: [{isAlive:true}] } };
+             const entities: any = { enemyHordes: [], playerArmy: { aliveCount: 1, soldiers: [{isAlive:true}] } };
              const gs: any = { currentLevel: 1 };
 
              vi.spyOn(Math, 'random').mockReturnValue(0.001);
