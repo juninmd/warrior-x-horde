@@ -6,7 +6,7 @@ describe('QualityManager', () => {
   let qm: QualityManager;
 
   beforeEach(() => {
-    // Reset instance (singleton hack if needed, or just setQuality)
+    QualityManager.resetInstance();
     qm = QualityManager.getInstance();
     qm.setQuality('auto');
   });
@@ -32,9 +32,7 @@ describe('QualityManager', () => {
   });
 
   it('should detect mobile device and adjust settings', () => {
-    // Hack to reset singleton for this test
-    // @ts-ignore
-    QualityManager._instance = undefined;
+    QualityManager.resetInstance();
 
     // Mock User Agent
     const originalNavigator = global.navigator;
@@ -48,7 +46,6 @@ describe('QualityManager', () => {
 
     // Cleanup
     Object.defineProperty(global, 'navigator', { value: originalNavigator, writable: true });
-    // @ts-ignore
-    QualityManager._instance = undefined;
+    QualityManager.resetInstance();
   });
 });
