@@ -106,7 +106,13 @@ function applyGateEffect(army: Army, gate: Gate, gameState: GameState): void {
 
 function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): void {
   const playerCount = army.aliveCount;
-  const enemyCount = horde.soldiers.filter(s => s.isAlive).length;
+
+  let enemyCount = 0;
+  for (let i = 0; i < horde.soldiers.length; i++) {
+    if (horde.soldiers[i].isAlive) {
+      enemyCount++;
+    }
+  }
 
   // Battle Logic
   const casualties = Math.min(1, playerCount, enemyCount); // Soldiers die 1 by 1 per frame interaction
