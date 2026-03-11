@@ -14,8 +14,12 @@ const buttons: Record<string, HTMLButtonElement> = {};
 function getLeaderboardHTML(currentScore: number = -1): string {
     let leaderboard = [];
     try {
-        leaderboard = JSON.parse(localStorage.getItem('crowdLeaderboard') || '[]');
-        if (!Array.isArray(leaderboard)) leaderboard = [];
+        const parsed = JSON.parse(localStorage.getItem('crowdLeaderboard') || '[]');
+        if (!Array.isArray(parsed)) {
+            leaderboard = [];
+        } else {
+            leaderboard = parsed.filter((entry: any) => entry && typeof entry === 'object' && typeof entry.score === 'number');
+        }
     } catch (e) {
         console.error('Failed to load leaderboard', e);
         leaderboard = [];
