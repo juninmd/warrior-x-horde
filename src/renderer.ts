@@ -2711,7 +2711,7 @@ export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameSt
   drawVignette(ctx, width, height);
   drawScanlines(ctx, width, height);
 
-  drawUI(ctx, gameState, entities.playerArmy.soldiers.filter(s => s.isAlive).length, entities.playerArmy.fireRate, entities.playerArmy.damage, entities.playerArmy);
+  drawUI(ctx, gameState, entities.playerArmy.aliveCount, entities.playerArmy.fireRate, entities.playerArmy.damage, entities.playerArmy);
 
   if (gameState.comboTier > 0 && gameState.combo > 0) {
       drawComboTier(ctx, width, height, gameState.comboTier, gameState.combo);
