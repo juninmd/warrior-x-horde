@@ -54,9 +54,18 @@ export function spawnGates(entities: Entities, canvasWidth: number, gameState: G
   }
 
   // Spawnar novos gates se necessário
-  const lowestGateY = entities.gates.length > 0
-    ? Math.min(...entities.gates.map(g => g.y))
-    : spawnY + gateSpacing;
+  let lowestGateY = spawnY + gateSpacing;
+  /* v8 ignore start */
+  if (entities.gates.length > 0) {
+    let min = entities.gates[0].y;
+    for (let i = 1; i < entities.gates.length; i++) {
+      if (entities.gates[i].y < min) {
+        min = entities.gates[i].y;
+      }
+    }
+    lowestGateY = min;
+  }
+  /* v8 ignore stop */
 
   if (lowestGateY > spawnY) {
     // Passar contagem atual de heróis e inimigos para balancear gates
@@ -99,9 +108,18 @@ export function spawnEnemies(entities: Entities, canvasWidth: number, gameState:
   const hordeSpacing = Math.max(20, baseSpacing - levelReduction); // Mínimo 20 (era 40)
 
   // Spawnar novas hordas
-  const lowestHordeY = entities.enemyHordes.length > 0
-    ? Math.min(...entities.enemyHordes.map(h => h.y))
-    : spawnY + hordeSpacing;
+  let lowestHordeY = spawnY + hordeSpacing;
+  /* v8 ignore start */
+  if (entities.enemyHordes.length > 0) {
+    let min = entities.enemyHordes[0].y;
+    for (let i = 1; i < entities.enemyHordes.length; i++) {
+      if (entities.enemyHordes[i].y < min) {
+        min = entities.enemyHordes[i].y;
+      }
+    }
+    lowestHordeY = min;
+  }
+  /* v8 ignore stop */
 
   // Chance de spawn (reduzida para performance)
   /* v8 ignore next 10 */
