@@ -330,7 +330,7 @@ function applySuperCannonDamage(entities: Entities, gameState: GameState): void 
         // Efeito visual de desintegração
         addExplosion(soldier.x, soldier.y, '#FFD700');
         addParticle(soldier.x, soldier.y, 'spark', '#FFF', 3);
-        horde.soldiers.splice(i, 1);
+        fastRemove(horde.soldiers, i);
         gameState.score += 15;
       }
     }
@@ -513,7 +513,7 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
               for (let k = horde.soldiers.length - 1; k >= 0; k--) {
                   if (!horde.soldiers[k].isAlive) {
                       const s = horde.soldiers[k];
-                      horde.soldiers.splice(k, 1);
+                      fastRemove(horde.soldiers, k);
                       soldierPool.release(s);
                   }
               }
