@@ -37,7 +37,7 @@ describe('Spawner', () => {
             boss: null,
             mysteryBoxes: [],
             coins: [],
-            playerArmy: { soldiers: [{ isAlive: true }] }
+            playerArmy: { aliveCount: 1, soldiers: [{ isAlive: true }] }
         } as any;
 
         vi.clearAllMocks();
@@ -128,8 +128,8 @@ describe('Spawner', () => {
             // and maybe verify createGatePair arguments if possible, but createGatePair is mocked.
 
             entities.enemyHordes = [
-                { isActive: true, soldiers: [{ isAlive: true }, { isAlive: true }] } as any,
-                { isActive: false, soldiers: [{ isAlive: true }] } as any // Should be ignored
+                { isActive: true, count: 2, soldiers: [{ isAlive: true }, { isAlive: true }] } as any,
+                { isActive: false, count: 1, soldiers: [{ isAlive: true }] } as any // Should be ignored
             ];
 
             spawnGates(entities, 480, gameState);
@@ -150,6 +150,7 @@ describe('Spawner', () => {
 
     describe('Enemies', () => {
         it('should spawn enemies', () => {
+            entities.playerArmy.aliveCount = 1; // Explicitly set for new logic
             const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0.01); // High chance
             spawnEnemies(entities, 480, gameState, 1);
             expect(createEnemyHorde).toHaveBeenCalled();
