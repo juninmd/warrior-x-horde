@@ -23,4 +23,21 @@ describe('UI Overlay Error Handling', () => {
         // Verify that the error was caught and logged
         expect(consoleSpy).toHaveBeenCalledWith('Failed to save default leaderboard', expect.any(Error));
     });
+
+    it('should filter out invalid entries from localStorage array', () => {
+        const data = [
+            { score: 100 },
+            null,
+            "invalid string",
+            123,
+            { notscore: 50 }
+        ];
+        vi.spyOn(window.localStorage, 'getItem').mockReturnValue(JSON.stringify(data));
+
+        const html = _testing.getLeaderboardHTML();
+
+        // The invalid entries should be ignored
+        expect(html).toContain('100');
+        expect(html).not.toContain('NaN');
+    });
 });
