@@ -1,31 +1,28 @@
-# Warrior X Horder
+# 🚀 Warrior X Horder
 
-[Play the game here!](https://warrior-x-horde.netlify.app/)
+[![Status: Active](https://img.shields.io/badge/Status-Active-brightgreen.svg)]()
+[![Protocol: Antigravity](https://img.shields.io/badge/Protocol-Antigravity-orange.svg)]()
 
-## How to Play
+> A modern, high-performance project built with **Node.js / TypeScript**. Orchestrated under the Antigravity protocol.
 
-**Objective:** Survive endless waves of zombies and defeat the boss!
+## ✨ Features
 
-**Controls:**
-*   **Movement:** Use the **W, A, S, D** keys or the **Arrow Keys** to move your character Up, Left, Down, and Right.
-*   **Shooting:** Your character shoots automatically.
-*   **Super Cannon:** Click the "Super Cannon" button on the screen to activate a powerful ability. When active, you become invincible for 5 seconds and deal continuous damage to all enemies. This ability has a cooldown after use.
+- **High Performance**: Optimized for speed and low resource usage.
+- **Clean Architecture**: Built following strict Antigravity guidelines.
+- **Automated**: Integrated with modern CI/CD and verification scripts.
 
-**Barrels:**
-Throughout the game, various barrels will appear. Colliding with them will trigger different effects:
+## 🛠️ Tech Stack
 
-*   **Reinforcement Barrel:** Spawns an allied reinforcement to fight alongside you.
-*   **Buff Barrel:** Grants a random positive effect:
-    *   Increases your shield.
-    *   Increases your bullet damage.
-    *   Increases your fire rate (shoots faster).
-*   **Nerf Barrel:** Applies a random negative effect:
-    *   Decreases your bullet damage.
-    *   Decreases your fire rate (shoots slower).
-    *   Decreases your health (HP).
-*   **Health Barrel:** Restores 1 point of your health (HP).
+- **Primary Technology**: Node.js / TypeScript
+- **Architecture**: Modular and domain-driven.
 
-**Gameplay Tips:**
-*   Prioritize collecting beneficial barrels (Reinforcement, Buff, Health) while avoiding Nerf barrels.
-*   Use your Super Cannon strategically during tough waves or against the boss.
-*   Keep moving to avoid zombie hordes and collect power-ups.
+## 🛡️ Antigravity Protocol
+
+This project follows the **Antigravity** code standards:
+- **150-Line Limit**: Applied to all logic modules.
+- **Strict Typing**: Avoiding dynamic/any types.
+- **Clean Code**: DRY, KISS, and SOLID principles applied rigorously.
+
+---
+
+*"Simplicity is the ultimate sophistication."*
