@@ -1415,42 +1415,55 @@ export function prepareSoldiersToDraw(army: Army): Soldier[] {
   // Add a margin to avoid popping
   const cullMargin = 50;
 
+  let superCount = 0;
+  let normalCount = 0;
+
   for (const s of army.soldiers) {
     if (s.isAlive) {
       // Culling
       if (s.y < -cullMargin || s.y > BASE_HEIGHT + cullMargin) continue;
 
-      if (s.isSuper) tempSuperSoldiers.push(s);
-      else tempAliveNormalSoldiers.push(s);
+      if (s.isSuper) {
+          tempSuperSoldiers[superCount++] = s;
+      } else {
+          tempAliveNormalSoldiers[normalCount++] = s;
+      }
     }
   }
 
-  if (tempSuperSoldiers.length >= maxSoldiers) {
+  tempSuperSoldiers.length = superCount;
+  tempAliveNormalSoldiers.length = normalCount;
+
+  let drawCount = 0;
+
+  if (superCount >= maxSoldiers) {
     // If we have enough supers, just fill with supers up to limit
     for (let i = 0; i < maxSoldiers; i++) {
-      tempSoldiersToDraw.push(tempSuperSoldiers[i]);
+      tempSoldiersToDraw[drawCount++] = tempSuperSoldiers[i];
     }
   } else {
     // Add all supers
-    for (let i = 0; i < tempSuperSoldiers.length; i++) {
-      tempSoldiersToDraw.push(tempSuperSoldiers[i]);
+    for (let i = 0; i < superCount; i++) {
+      tempSoldiersToDraw[drawCount++] = tempSuperSoldiers[i];
     }
 
-    const remainingSlots = maxSoldiers - tempSoldiersToDraw.length;
+    const remainingSlots = maxSoldiers - drawCount;
 
-    if (tempAliveNormalSoldiers.length > remainingSlots) {
+    if (normalCount > remainingSlots) {
       // Sample normals
-      const step = tempAliveNormalSoldiers.length / remainingSlots;
+      const step = normalCount / remainingSlots;
       for (let i = 0; i < remainingSlots; i++) {
-        tempSoldiersToDraw.push(tempAliveNormalSoldiers[Math.floor(i * step)]);
+        tempSoldiersToDraw[drawCount++] = tempAliveNormalSoldiers[Math.floor(i * step)];
       }
     } else {
       // Add all normals
-      for (let i = 0; i < tempAliveNormalSoldiers.length; i++) {
-        tempSoldiersToDraw.push(tempAliveNormalSoldiers[i]);
+      for (let i = 0; i < normalCount; i++) {
+        tempSoldiersToDraw[drawCount++] = tempAliveNormalSoldiers[i];
       }
     }
   }
+
+  tempSoldiersToDraw.length = drawCount;
 
   // Sort in-place
   if (!QualityManager.getInstance().settings.simplifiedRendering) {

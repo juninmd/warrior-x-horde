@@ -31,6 +31,7 @@ vi.mock('../src/entities', async () => {
 vi.mock('../src/renderer', () => ({
     render: vi.fn(),
     addFloatingText: vi.fn(), updateFloatingTexts: vi.fn(),
+    addParticle: vi.fn(),
     shareOnX: vi.fn(),
     shareOnWhatsApp: vi.fn(),
 }));

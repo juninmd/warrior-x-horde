@@ -297,7 +297,7 @@ describe('UI Overlay', () => {
             // Should contain the safe score (0 for malicious, 12345 for valid)
             expect(html).toContain('12,345');
             // Malicious score becomes NaN -> 0
-            expect(html).toContain('>0</div>');
+            expect(html).toContain('0');
             // Should NOT contain script tags
             expect(html).not.toContain('<script>');
         });

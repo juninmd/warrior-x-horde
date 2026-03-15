@@ -408,6 +408,8 @@ export function fixedUpdate(dt: number): void {
       // Tier Up!
       gameState.comboTier = newTier;
       triggerHaptic('medium');
+      triggerScreenShake(5, 200);
+      addParticle(entities.playerArmy.centerX, entities.playerArmy.centerY, 'confetti', '#FFD700', 10);
       // Visual flair handled in renderer
   } else if (newTier < gameState.comboTier && gameState.combo > 0) {
       // Degrade tier gracefully only if combo drops significantly (unlikely with timer logic, but safe)
