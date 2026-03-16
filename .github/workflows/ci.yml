@@ -33,6 +33,7 @@ jobs:
     - name: Typecheck
       run: npm run typecheck
 
+    # Ensures 100% test coverage requirement is met
     - name: Test with Coverage
       run: npm run coverage
 
