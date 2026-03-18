@@ -101,7 +101,7 @@
 
     .icon-btn:hover {
       background: rgba(255, 255, 255, 0.1);
-      transform: scale(1.1);
+      transform: scale(1.15);
       color: #FFF;
     }
 
@@ -305,7 +305,7 @@
       font-weight: bold;
       transition: transform 0.2s;
       min-height: 54px; /* Mobile touch target */
-      backdrop-filter: blur(5px);
+      backdrop-filter: blur(20px);
       box-shadow: 0 4px 6px rgba(0,0,0,0.2);
     }
 
@@ -353,8 +353,8 @@
       width: 100%;
       height: 100%;
       background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(5px);
-      -webkit-backdrop-filter: blur(5px);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       display: none;
       flex-direction: column;
       justify-content: center;
@@ -367,7 +367,7 @@
     }
 
     .start-screen-content {
-      background: rgba(0, 0, 0, 0.6);
+      background: rgba(10, 10, 20, 0.85);
       border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 20px;
       padding: 30px 20px;
@@ -500,7 +500,7 @@
   border-radius: 15px;
   cursor: pointer;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(20px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -515,7 +515,8 @@
 }
 
 .shop-btn:active {
-  transform: scale(0.92);
+  transform: scale(0.95);
+  box-shadow: inset 0 10px 20px rgba(0, 0, 0, 0.8);
   box-shadow: inset 0 8px 15px rgba(0, 0, 0, 0.6);
 }
 
@@ -598,9 +599,9 @@
 .pause-modal {
   position: fixed;
   top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(10, 10, 20, 0.75);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(10, 10, 20, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   display: none;
   flex-direction: column;
   justify-content: center;
@@ -628,7 +629,7 @@
   border: 2px solid rgba(255, 255, 255, 0.2);
   border-radius: 12px;
   cursor: pointer;
-  backdrop-filter: blur(5px);
+  backdrop-filter: blur(20px);
   transition: all 0.2s;
   min-height: 60px; /* Touch friendly */
 }
@@ -664,7 +665,7 @@
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(5px);
+  backdrop-filter: blur(20px);
   z-index: 100;
   opacity: 0;
   transition: opacity 0.5s ease;
@@ -772,7 +773,7 @@
   padding: 12px;
   margin-bottom: max(20px, env(safe-area-inset-bottom) + 10px);
   width: 100%;
-  backdrop-filter: blur(5px);
+  backdrop-filter: blur(20px);
 }
 
 .leaderboard-title {
@@ -833,17 +834,17 @@
 }
 
 /* Ranks */
-.leaderboard-item.rank-1 .rank-col { color: #FFD700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); font-size: 20px; }
-.leaderboard-item.rank-2 .rank-col { color: #C0C0C0; text-shadow: 0 0 10px rgba(192, 192, 192, 0.5); font-size: 18px; }
-.leaderboard-item.rank-3 .rank-col { color: #CD7F32; text-shadow: 0 0 10px rgba(205, 127, 50, 0.5); font-size: 18px; }
+.leaderboard-item.rank-1 .rank-col { color: #FFD700; text-shadow: 0 0 15px rgba(255, 215, 0, 0.8); font-size: 20px; }
+.leaderboard-item.rank-2 .rank-col { color: #C0C0C0; text-shadow: 0 0 15px rgba(192, 192, 192, 0.8); font-size: 18px; }
+.leaderboard-item.rank-3 .rank-col { color: #CD7F32; text-shadow: 0 0 15px rgba(205, 127, 50, 0.8); font-size: 18px; }
 
-.leaderboard-item.rank-1 { border-left: 3px solid #FFD700; background: linear-gradient(90deg, rgba(255, 215, 0, 0.1), transparent); }
-.leaderboard-item.rank-2 { border-left: 3px solid #C0C0C0; background: linear-gradient(90deg, rgba(192, 192, 192, 0.1), transparent); }
-.leaderboard-item.rank-3 { border-left: 3px solid #CD7F32; background: linear-gradient(90deg, rgba(205, 127, 50, 0.1), transparent); }
+.leaderboard-item.rank-1 { border-left: 3px solid #FFD700; background: linear-gradient(90deg, rgba(255, 215, 0, 0.2), transparent); }
+.leaderboard-item.rank-2 { border-left: 3px solid #C0C0C0; background: linear-gradient(90deg, rgba(192, 192, 192, 0.2), transparent); }
+.leaderboard-item.rank-3 { border-left: 3px solid #CD7F32; background: linear-gradient(90deg, rgba(205, 127, 50, 0.2), transparent); }
 
-.leaderboard-item.rank-1 .score-col { color: #FFD700; }
-.leaderboard-item.rank-2 .score-col { color: #EEE; }
-.leaderboard-item.rank-3 .score-col { color: #DDD; }
+.leaderboard-item.rank-1 .score-col { color: #FFD700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.6); }
+.leaderboard-item.rank-2 .score-col { color: #FFF; text-shadow: 0 0 10px rgba(255, 255, 255, 0.6); }
+.leaderboard-item.rank-3 .score-col { color: #FFF; text-shadow: 0 0 10px rgba(255, 255, 255, 0.4); }
 
 /* --- Tutorial Hand Animation --- */
 .tutorial-hand {
@@ -891,9 +892,9 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
+  background: rgba(10, 10, 20, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   display: none;
   justify-content: center;
   align-items: center;

@@ -36,8 +36,8 @@ export class QualityManager {
        this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     }
     if (this.isMobile) {
-        // Default slightly lower for mobile to ensure 60fps start
-        this.settings.particleMultiplier = 0.6;
+        // Default slightly lower for mobile to ensure 60fps start, but keep particles visible enough
+        this.settings.particleMultiplier = 0.8;
         this.settings.enableShadows = false;
         this.settings.enablePostProcessing = false;
         this.settings.resolutionScale = 0.65;
@@ -67,7 +67,7 @@ export class QualityManager {
       this.settings.enableShadows = !this.isMobile;
       this.settings.enablePostProcessing = !this.isMobile;
       this.settings.enableTrails = true;
-      this.settings.particleMultiplier = this.isMobile ? 0.6 : 1.0;
+      this.settings.particleMultiplier = this.isMobile ? 0.8 : 1.0;
       this.settings.simplifiedRendering = false;
       this.settings.maxRenderedSoldiers = this.isMobile ? 100 : 150;
       this.settings.resolutionScale = this.isMobile ? 0.65 : 1.0;
@@ -146,7 +146,7 @@ export class QualityManager {
       this.settings.enableShadows = !this.isMobile;
       this.settings.enablePostProcessing = !this.isMobile;
       this.settings.enableTrails = true;
-      this.settings.particleMultiplier = this.isMobile ? 0.6 : 1.0;
+      this.settings.particleMultiplier = this.isMobile ? 0.8 : 1.0;
       this.settings.simplifiedRendering = false;
       this.settings.maxRenderedSoldiers = this.isMobile ? 100 : 150;
       this.settings.resolutionScale = this.isMobile ? 0.65 : 1.0;

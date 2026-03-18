@@ -26,12 +26,12 @@ import { virtualJoystick } from '../src/input-state';
 
 describe('Renderer Utils', () => {
     it('should get combo color', () => {
-        expect(getComboColor(2)).toBe(COLORS.UI.SUCCESS); // Green
-        expect(getComboColor(3)).toBe(COLORS.UI.INFO); // Blue
-        expect(getComboColor(5)).toBe(COLORS.EFFECTS.EXPLOSION); // Red
-        expect(getComboColor(7)).toBe(COLORS.UI.GOLD); // Gold
-        expect(getComboColor(10)).toBe('#FF00FF'); // Magenta
-        expect(getComboColor(15)).toBe(COLORS.PLAYER.LASER); // Cyan
+        expect(getComboColor(1)).toBe('#FFFFFF');
+        expect(getComboColor(2)).toBe('#00FF00'); // Lime Green
+        expect(getComboColor(5)).toBe('#FF4500'); // Orange-Red
+        expect(getComboColor(10)).toBe('#FFD700'); // Gold
+        expect(getComboColor(20)).toBe('#00FFFF'); // Cyan Neon
+        expect(getComboColor(50)).toBe('#FF00FF'); // Magenta Neon
     });
 
     it('should draw glass badge', () => {

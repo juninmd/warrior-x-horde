@@ -1314,19 +1314,19 @@ function drawFeverMode(ctx: CanvasRenderingContext2D, width: number, height: num
     if (QualityManager.getInstance().settings.simplifiedRendering) return;
 
     const intensity = Math.min(1, (combo - 50) / 50); // Ramp up from 50 to 100
-    const pulse = (Math.sin(Date.now() * 0.01) + 1) * 0.5; // 0 to 1
+    const pulse = (Math.sin(Date.now() * 0.015) + 1) * 0.8; // 0 to 1.6, faster and brighter pulse
 
     ctx.save();
 
     // Border Glow
-    const borderWidth = 10 + pulse * 5;
+    const borderWidth = 15 + pulse * 10;
     ctx.lineWidth = borderWidth;
-    const alpha = 0.15 + pulse * 0.1;
-    ctx.strokeStyle = `rgba(255, 215, 0, ${alpha * intensity})`; // Gold
+    const alpha = 0.25 + pulse * 0.2;
+    ctx.strokeStyle = `rgba(255, 0, 255, ${alpha * intensity})`; // Neon Magenta Glow
     ctx.strokeRect(0, 0, width, height);
 
     // Subtle Tint
-    ctx.fillStyle = `rgba(255, 100, 0, ${0.05 * intensity})`;
+    ctx.fillStyle = `rgba(255, 100, 0, ${0.1 * pulse * intensity})`; // Stronger Orange Tint pulsing
     ctx.fillRect(0, 0, width, height);
 
     ctx.restore();
