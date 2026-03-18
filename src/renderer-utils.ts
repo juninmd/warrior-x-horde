@@ -174,10 +174,10 @@ export function drawJoystick(ctx: CanvasRenderingContext2D): void {
 // --- Game Specific Helpers ---
 
 export function getComboColor(combo: number): string {
-  if (combo >= 15) return COLORS.PLAYER.LASER; // Cyan (Legendary)
-  if (combo >= 10) return '#FF00FF'; // Magenta (Epic)
-  if (combo >= 7) return COLORS.UI.GOLD;  // Gold
-  if (combo >= 5) return COLORS.EFFECTS.EXPLOSION;  // Red
-  if (combo >= 3) return COLORS.UI.INFO;  // Orangeish/Info
-  return COLORS.UI.SUCCESS; // Green
+  if (combo >= 50) return '#FF00FF'; // Magenta Neon
+  if (combo >= 20) return '#00FFFF'; // Cyan Neon
+  if (combo >= 10) return '#FFD700'; // Gold
+  if (combo >= 5) return '#FF4500';  // Orange-Red
+  if (combo >= 2) return '#00FF00';  // Lime Green
+  return '#FFFFFF'; // White (Default)
 }

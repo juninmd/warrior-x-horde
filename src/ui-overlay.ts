@@ -350,64 +350,136 @@ export function showGameOverScreen(gameState: GameState): void {
     const leaderboardHTML = getLeaderboardHTML(gameState.score);
     const timeStr = new Date(Date.now() - gameState.runStartTime).toISOString().substr(14, 5);
 
-    content.innerHTML = `
-        <h1 class="game-over-title" style="color: ${titleColor};">${title}</h1>
-        ${isVictory ? '<p style="color: #00FF88; font-weight: bold; font-size: 18px; margin-bottom: 20px;">🛸 MOTHERSHIP DESTROYED!</p>' : ''}
+    content.innerHTML = '';
 
-        <div style="margin-bottom: 20px;">
-            <div style="
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                width: 60px;
-                height: 60px;
-                border-radius: 50%;
-                background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
-                border: 2px solid ${rankColor};
-                box-shadow: 0 0 15px ${rankColor};
-                animation: rank-stamp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.3s backwards;
-            ">
-                <span style="font-size: 32px; font-weight: 900; color: ${rankColor}; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">${rank}</span>
-            </div>
-            <div style="color: ${rankColor}; font-size: 12px; font-weight: bold; margin-top: 5px; letter-spacing: 1px; animation: fadeIn 0.5s 0.8s backwards;">RANK</div>
-        </div>
+    if (gameState.score > gameState.highScore) {
+        const recordBanner = document.createElement('div');
+        recordBanner.textContent = '👑 NEW HIGH SCORE! 👑';
+        recordBanner.style.color = '#FFD700';
+        recordBanner.style.fontWeight = '900';
+        recordBanner.style.fontSize = '20px';
+        recordBanner.style.marginBottom = '10px';
+        recordBanner.style.textShadow = '0 0 10px rgba(255, 215, 0, 0.8)';
+        recordBanner.style.animation = 'pulse-glow 1s infinite alternate';
+        content.appendChild(recordBanner);
+    }
 
-        <div class="game-over-stats">
-            <div class="stat-row">
-                <span class="stat-label">Score</span>
-                <span id="finalScoreDisplay" class="stat-value">0</span>
-            </div>
-            <div class="stat-row">
-                <span class="stat-label">High Score</span>
-                <span class="stat-value" style="color: #FFD700;">${gameState.highScore}</span>
-            </div>
-            <div class="stat-row">
-                <span class="stat-label">Max Combo</span>
-                <span class="stat-value" style="color: #FF00FF;">${gameState.maxCombo}x</span>
-            </div>
-            <div class="stat-row">
-                <span class="stat-label">Kills</span>
-                <span class="stat-value" style="color: #E74C3C;">${gameState.totalKills}</span>
-            </div>
-            <div class="stat-row">
-                <span class="stat-label">Time</span>
-                <span class="stat-value" style="color: #3498DB;">${timeStr}</span>
-            </div>
-        </div>
+    const titleEl = document.createElement('h1');
+    titleEl.className = 'game-over-title';
+    titleEl.style.color = titleColor;
+    titleEl.textContent = title;
+    content.appendChild(titleEl);
 
-        ${leaderboardHTML}
+    if (isVictory) {
+        const victoryText = document.createElement('p');
+        victoryText.style.color = '#00FF88';
+        victoryText.style.fontWeight = 'bold';
+        victoryText.style.fontSize = '18px';
+        victoryText.style.marginBottom = '20px';
+        victoryText.textContent = '🛸 MOTHERSHIP DESTROYED!';
+        content.appendChild(victoryText);
+    }
 
-        ${gameState.deferredInstallPrompt ? `
-        <button id="goInstallBtn" class="game-over-btn" style="background: #FFD700; color: #333; box-shadow: 0 4px 0 #DAA520;">📲 INSTALL APP</button>
-        ` : ''}
+    const rankContainer = document.createElement('div');
+    rankContainer.style.marginBottom = '20px';
 
-        <button id="goRestartBtn" class="game-over-btn">${isVictory ? 'CONTINUE LEVEL 11 ➡️' : '🔄 TRY AGAIN'}</button>
+    const rankBadge = document.createElement('div');
+    rankBadge.style.display = 'inline-flex';
+    rankBadge.style.alignItems = 'center';
+    rankBadge.style.justifyContent = 'center';
+    rankBadge.style.width = '60px';
+    rankBadge.style.height = '60px';
+    rankBadge.style.borderRadius = '50%';
+    rankBadge.style.background = 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05))';
+    rankBadge.style.border = `2px solid ${rankColor}`;
+    rankBadge.style.boxShadow = `0 0 15px ${rankColor}`;
+    rankBadge.style.animation = 'rank-stamp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.3s backwards';
 
-        <div class="share-btn-group">
-            <button id="goShareX" class="share-btn x">𝕏 SHARE</button>
-            <button id="goShareWa" class="share-btn wa">WHATSAPP</button>
-        </div>
-    `;
+    const rankSpan = document.createElement('span');
+    rankSpan.style.fontSize = '32px';
+    rankSpan.style.fontWeight = '900';
+    rankSpan.style.color = rankColor;
+    rankSpan.style.textShadow = '0 2px 4px rgba(0,0,0,0.5)';
+    rankSpan.textContent = rank;
+    rankBadge.appendChild(rankSpan);
+
+    const rankLabel = document.createElement('div');
+    rankLabel.style.color = rankColor;
+    rankLabel.style.fontSize = '12px';
+    rankLabel.style.fontWeight = 'bold';
+    rankLabel.style.marginTop = '5px';
+    rankLabel.style.letterSpacing = '1px';
+    rankLabel.style.animation = 'fadeIn 0.5s 0.8s backwards';
+    rankLabel.textContent = 'RANK';
+
+    rankContainer.appendChild(rankBadge);
+    rankContainer.appendChild(rankLabel);
+    content.appendChild(rankContainer);
+
+    const statsContainer = document.createElement('div');
+    statsContainer.className = 'game-over-stats';
+
+    const createStatRow = (label: string, value: string, valueColor: string, id?: string) => {
+        const row = document.createElement('div');
+        row.className = 'stat-row';
+        const labelEl = document.createElement('span');
+        labelEl.className = 'stat-label';
+        labelEl.textContent = label;
+        const valueEl = document.createElement('span');
+        valueEl.className = 'stat-value';
+        valueEl.style.color = valueColor;
+        valueEl.textContent = value;
+        if (id) valueEl.id = id;
+        row.appendChild(labelEl);
+        row.appendChild(valueEl);
+        return row;
+    };
+
+    statsContainer.appendChild(createStatRow('Score', '0', '#FFF', 'finalScoreDisplay'));
+    statsContainer.appendChild(createStatRow('High Score', gameState.highScore.toString(), '#FFD700'));
+    statsContainer.appendChild(createStatRow('Max Combo', `${gameState.maxCombo}x`, '#FF00FF'));
+    statsContainer.appendChild(createStatRow('Kills', gameState.totalKills.toString(), '#E74C3C'));
+    statsContainer.appendChild(createStatRow('Time', timeStr, '#3498DB'));
+
+    content.appendChild(statsContainer);
+
+    const leaderboardDiv = document.createElement('div');
+    leaderboardDiv.innerHTML = leaderboardHTML;
+    content.appendChild(leaderboardDiv);
+
+    if (gameState.deferredInstallPrompt) {
+        const installBtn = document.createElement('button');
+        installBtn.id = 'goInstallBtn';
+        installBtn.className = 'game-over-btn';
+        installBtn.style.background = '#FFD700';
+        installBtn.style.color = '#333';
+        installBtn.style.boxShadow = '0 4px 0 #DAA520';
+        installBtn.textContent = '📲 INSTALL APP';
+        content.appendChild(installBtn);
+    }
+
+    const restartBtnHtml = document.createElement('button');
+    restartBtnHtml.id = 'goRestartBtn';
+    restartBtnHtml.className = 'game-over-btn';
+    restartBtnHtml.textContent = isVictory ? 'CONTINUE LEVEL 11 ➡️' : '🔄 TRY AGAIN';
+    content.appendChild(restartBtnHtml);
+
+    const shareGroup = document.createElement('div');
+    shareGroup.className = 'share-btn-group';
+
+    const shareX = document.createElement('button');
+    shareX.id = 'goShareX';
+    shareX.className = 'share-btn x';
+    shareX.textContent = '𝕏 SHARE';
+
+    const shareWa = document.createElement('button');
+    shareWa.id = 'goShareWa';
+    shareWa.className = 'share-btn wa';
+    shareWa.textContent = '📱 WHATSAPP';
+
+    shareGroup.appendChild(shareX);
+    shareGroup.appendChild(shareWa);
+    content.appendChild(shareGroup);
 
     const restartBtn = document.getElementById('goRestartBtn');
     restartBtn?.addEventListener('click', () => {

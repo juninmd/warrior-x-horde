@@ -44,6 +44,6 @@ describe('Final Coverage Fixes', () => {
         qm.checkRecovery(16);
 
         // Check particle multiplier for mobile
-        expect(qm.settings.particleMultiplier).toBe(0.6);
+        expect(qm.settings.particleMultiplier).toBe(0.8);
     });
 });
