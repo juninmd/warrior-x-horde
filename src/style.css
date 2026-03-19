@@ -305,7 +305,7 @@
       font-weight: bold;
       transition: transform 0.2s;
       min-height: 54px; /* Mobile touch target */
-      backdrop-filter: blur(20px);
+      backdrop-filter: blur(12px);
       box-shadow: 0 4px 6px rgba(0,0,0,0.2);
     }
 
@@ -353,8 +353,8 @@
       width: 100%;
       height: 100%;
       background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       display: none;
       flex-direction: column;
       justify-content: center;
@@ -427,7 +427,7 @@
     }
 
     .start-btn {
-      background: linear-gradient(135deg, #00C9FF 0%, #92FE9D 100%);
+      background: linear-gradient(135deg, #00D2FF 0%, #3A7BD5 100%);
       border: 3px solid rgba(255, 255, 255, 0.5);
       border-radius: 50px;
       padding: 24px 30px; /* Larger touch area */
@@ -435,7 +435,7 @@
       font-size: 32px; /* Larger text */
       font-weight: 900;
       cursor: pointer;
-      box-shadow: 0 10px 30px rgba(0, 201, 255, 0.6), inset 0 -4px 0 rgba(0,0,0,0.2);
+      box-shadow: 0 10px 30px rgba(58, 123, 213, 0.6), inset 0 -4px 0 rgba(0,0,0,0.2);
       transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       margin-top: 30px;
       width: 90%;
@@ -448,20 +448,20 @@
     }
 
     @keyframes pulse-glow {
-      0% { box-shadow: 0 0 0 0 rgba(146, 254, 157, 0.6), inset 0 -4px 0 rgba(0,0,0,0.2); }
-      70% { box-shadow: 0 0 0 25px rgba(146, 254, 157, 0), inset 0 -4px 0 rgba(0,0,0,0.2); }
-      100% { box-shadow: 0 0 0 0 rgba(146, 254, 157, 0), inset 0 -4px 0 rgba(0,0,0,0.2); }
+      0% { box-shadow: 0 0 0 0 rgba(58, 123, 213, 0.6), inset 0 -4px 0 rgba(0,0,0,0.2); }
+      70% { box-shadow: 0 0 0 25px rgba(58, 123, 213, 0), inset 0 -4px 0 rgba(0,0,0,0.2); }
+      100% { box-shadow: 0 0 0 0 rgba(58, 123, 213, 0), inset 0 -4px 0 rgba(0,0,0,0.2); }
     }
 
     .start-btn:hover {
       transform: translateY(-4px) scale(1.05);
-      box-shadow: 0 15px 40px rgba(0, 201, 255, 0.8), inset 0 -4px 0 rgba(0,0,0,0.2);
-      background: linear-gradient(135deg, #92FE9D 0%, #00C9FF 100%);
+      box-shadow: 0 15px 40px rgba(0, 210, 255, 0.8), inset 0 -4px 0 rgba(0,0,0,0.2);
+      background: linear-gradient(135deg, #3A7BD5 0%, #00D2FF 100%);
     }
 
     .start-btn:active {
       transform: translateY(4px) scale(0.95);
-      background: linear-gradient(135deg, #1ABC9C 0%, #16A085 100%);
+      background: linear-gradient(135deg, #00B4DB 0%, #0083B0 100%);
       box-shadow: inset 0 6px 15px rgba(0, 0, 0, 0.6);
       border-color: rgba(255, 255, 255, 0.2);
     }
@@ -500,7 +500,7 @@
   border-radius: 15px;
   cursor: pointer;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(12px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -600,8 +600,8 @@
   position: fixed;
   top: 0; left: 0; width: 100%; height: 100%;
   background: rgba(10, 10, 20, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   display: none;
   flex-direction: column;
   justify-content: center;
@@ -629,7 +629,7 @@
   border: 2px solid rgba(255, 255, 255, 0.2);
   border-radius: 12px;
   cursor: pointer;
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(12px);
   transition: all 0.2s;
   min-height: 60px; /* Touch friendly */
 }
@@ -665,7 +665,7 @@
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(12px);
   z-index: 100;
   opacity: 0;
   transition: opacity 0.5s ease;
@@ -673,8 +673,8 @@
 
 .game-over-content {
   background: rgba(20, 20, 35, 0.85);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(0, 201, 255, 0.4);
   border-radius: 20px;
   padding: 30px;
@@ -773,7 +773,7 @@
   padding: 12px;
   margin-bottom: max(20px, env(safe-area-inset-bottom) + 10px);
   width: 100%;
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(12px);
 }
 
 .leaderboard-title {
@@ -893,8 +893,8 @@
   width: 100%;
   height: 100%;
   background: rgba(10, 10, 20, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   display: none;
   justify-content: center;
   align-items: center;
