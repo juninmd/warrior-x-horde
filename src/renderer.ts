@@ -552,7 +552,7 @@ function drawParticles(ctx: CanvasRenderingContext2D): void {
         ctx.save();
         ctx.translate(p.x, p.y);
         // Pop effect: scale starts at 0.5, goes to 1.2, then fades
-        const scale = 0.5 + (1 - p.life) * 2;
+        const scale = 0.5 + (1 - p.life) * 0.7;
         ctx.scale(scale, scale);
 
         ctx.globalAlpha = p.life;
