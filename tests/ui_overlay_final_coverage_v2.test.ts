@@ -183,7 +183,7 @@ describe('UI Overlay Final Coverage', () => {
         if (frameCallback) frameCallback(1750);
         if (frameCallback) frameCallback(3000);
 
-        expect(scoreDisplay?.innerHTML).toBe('1,500');
+        expect(scoreDisplay?.innerHTML).toBe('1.500');
     });
 
     it('should handle shop button pointerdown', () => {

@@ -1368,7 +1368,12 @@ function drawScanlines(ctx: CanvasRenderingContext2D, width: number, height: num
 function drawSoldier3D(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, color: string, animOffset: number, time: number, type: Soldier['type'] = 'normal', isSuper: boolean = false, isFlash: boolean = false): void {
   // Attempt to use cached sprite
   const key = getSpriteKey(type, color, size, isSuper, isFlash);
-  const cachedCanvas = spriteCache.images.get(key);
+  let cachedCanvas = spriteCache.images.get(key);
+  
+  if (!cachedCanvas) {
+    renderSoldierToCache(type, color, size, isSuper, isFlash);
+    cachedCanvas = spriteCache.images.get(key);
+  }
 
   const bounce = Math.sin(time * 0.008 + animOffset) * 3;
   const scale = Math.max(0.5, 1 - (800 - y) / 1500);
@@ -1496,9 +1501,6 @@ function drawArmy(ctx: CanvasRenderingContext2D, army: Army, time: number): void
   const soldiersToDraw = prepareSoldiersToDraw(army);
 
   for (const soldier of soldiersToDraw) {
-    if (soldier.hitTimer && soldier.hitTimer > 0) {
-      soldier.hitTimer--;
-    }
     const isFlash = (soldier.hitTimer || 0) > 0;
 
     if (soldier.isSuper) {
@@ -1559,9 +1561,6 @@ function drawEnemyHorde(ctx: CanvasRenderingContext2D, horde: EnemyHorde, time: 
   ctx.globalAlpha = hordeAlpha;
 
   for (const soldier of tempEnemySoldiers) {
-    if (soldier.hitTimer && soldier.hitTimer > 0) {
-      soldier.hitTimer--;
-    }
     const isFlash = (soldier.hitTimer || 0) > 0;
     drawSoldier3D(ctx, soldier.x, soldier.y, soldier.size, soldier.color, soldier.animOffset, time, soldier.type, false, isFlash);
   }

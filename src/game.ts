@@ -314,6 +314,24 @@ export function fixedUpdate(dt: number): void {
     gameState.whiteFlash = Math.max(0, gameState.whiteFlash - 0.02 * dtFactor);
   }
 
+  // Update Entity Hit Timers
+  entities.playerArmy?.soldiers?.forEach(s => {
+      if (s.hitTimer !== undefined && s.hitTimer > 0) s.hitTimer -= dtFactor;
+  });
+  entities.enemyHordes?.forEach(h => {
+      if (h.isActive) {
+          h.soldiers?.forEach(s => {
+              if (s.hitTimer !== undefined && s.hitTimer > 0) s.hitTimer -= dtFactor;
+          });
+      }
+  });
+  entities.miniBosses?.forEach(mb => {
+      if (mb.isActive && mb.hitTimer !== undefined && mb.hitTimer > 0) mb.hitTimer -= dtFactor;
+  });
+  if (entities.boss && entities.boss.isActive && entities.boss.hitTimer !== undefined && entities.boss.hitTimer > 0) {
+      entities.boss.hitTimer -= dtFactor;
+  }
+
   // Update Kill Streak
   if (gameState.killStreakTimer > 0) {
     gameState.killStreakTimer -= dt;

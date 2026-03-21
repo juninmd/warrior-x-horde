@@ -243,7 +243,7 @@ describe('UI Overlay', () => {
             const lb = document.getElementById('startScreenLeaderboard');
             expect(lb).not.toBeNull();
             expect(lb?.innerHTML).toContain('Top Commanders');
-            expect(lb?.innerHTML).toContain('1,000');
+            expect(lb?.innerHTML).toContain('1.000');
 
             // Verify Rank Classes and Icons
             expect(lb?.innerHTML).toContain('rank-1');
@@ -295,7 +295,7 @@ describe('UI Overlay', () => {
             const html = _testing.getLeaderboardHTML();
 
             // Should contain the safe score (0 for malicious, 12345 for valid)
-            expect(html).toContain('12,345');
+            expect(html).toContain('12.345');
             // Malicious score becomes NaN -> 0
             expect(html).toContain('0');
             // Should NOT contain script tags

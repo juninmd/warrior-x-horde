@@ -147,7 +147,7 @@ describe('UI Overlay Final Coverage', () => {
              // Advance to end
              if(frameCallback) (frameCallback as any)(start + 2000);
 
-             expect(scoreEl?.innerHTML).toBe('1,000');
+             expect(scoreEl?.innerHTML).toBe('1.000');
         });
     });
 });
