@@ -27,7 +27,14 @@ canvas.getContext = vi.fn().mockReturnValue({
   lineTo: vi.fn(),
   stroke: vi.fn(),
   arc: vi.fn(),
+  ellipse: vi.fn(),
   fill: vi.fn(),
+  closePath: vi.fn(),
+  setLineDash: vi.fn(),
+  translate: vi.fn(),
+  rotate: vi.fn(),
+  fillRect: vi.fn(),
+  strokeRect: vi.fn(),
   createRadialGradient: vi.fn().mockReturnValue({ addColorStop: vi.fn() }),
   createLinearGradient: vi.fn().mockReturnValue({ addColorStop: vi.fn() }),
   roundRect: vi.fn(),
@@ -77,7 +84,7 @@ describe('Extra Coverage Part 2', () => {
         it('should break bucket sort loop if needed satisfied', () => {
              const army: Army = {
                 soldiers: Array(20).fill(null).map((_, i) => ({
-                    id: i, x: 100, y: 100, type: 'laser', isAlive: true, y: 100 + i // Sorted by Y
+                    id: i, x: 100, type: 'laser', isAlive: true, y: 100 + i // Sorted by Y
                 } as any)),
                 aliveCount: 20,
                 centerX: 100, centerY: 100,
@@ -127,7 +134,8 @@ describe('Extra Coverage Part 2', () => {
                  enemyHordes: [horde],
                  miniBosses: [],
                  boss: null,
-                 playerArmy: { soldiers: [] }
+                 playerArmy: { soldiers: [] },
+                 mysteryBoxes: []
              };
 
              shooting.updateBullets(entities, { score: 0, coins: 0 } as any, 1);
@@ -148,7 +156,8 @@ describe('Extra Coverage Part 2', () => {
                  enemyHordes: [],
                  miniBosses: [],
                  boss: boss,
-                 playerArmy: { soldiers: [] }
+                 playerArmy: { soldiers: [] },
+                 mysteryBoxes: []
              };
              const gs: any = { score: 0, isVictory: false };
 
@@ -161,7 +170,7 @@ describe('Extra Coverage Part 2', () => {
 
     describe('Spawner', () => {
          it('should spawn enemies when count > 0', () => {
-             const entities: any = { enemyHordes: [], playerArmy: { soldiers: [{isAlive:true}] } };
+             const entities: any = { enemyHordes: [], playerArmy: { aliveCount: 1, soldiers: [{isAlive:true}] } };
              const gs: any = { currentLevel: 1 };
 
              vi.spyOn(Math, 'random').mockReturnValue(0.001);
@@ -212,12 +221,12 @@ describe('Extra Coverage Part 2', () => {
              const onRestart = vi.fn();
              uiOverlay.setupGameOverUI(onRestart, vi.fn());
 
-             const gs: any = { score: 100, highScore: 100, maxCombo: 10, isVictory: false, currentLevel: 1 };
+             const gs: any = { score: 100, highScore: 100, maxCombo: 10, isVictory: false, currentLevel: 1, totalKills: 0, runStartTime: Date.now() };
              uiOverlay.showGameOverScreen(gs);
 
              const container = document.getElementById('gameOverContainer');
              expect(container?.innerHTML).toContain('Top Commanders');
-             expect(container?.innerHTML).toContain('#1');
+             expect(container?.innerHTML).toContain('🥇');
              expect(container?.innerHTML).toContain('100');
 
              spy.mockRestore();

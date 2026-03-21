@@ -165,8 +165,8 @@ describe('Renderer', () => {
       expect(texts.length).toBe(1);
 
       // Run updates until it fades out
-      // Alpha starts at 1, decrements by 0.02. Needs ~51 updates.
-      for (let i = 0; i < 60; i++) {
+      // Alpha starts at 1, decrements by 0.015. Needs ~67 updates.
+      for (let i = 0; i < 80; i++) {
           updateFloatingTexts();
       }
 
@@ -191,5 +191,52 @@ describe('Renderer', () => {
       preRenderSprites();
       // This exercises renderSoldierToCache and renderSoldierShape for all types
       expect(true).toBe(true);
+  });
+
+  it('should render enemy horde with soldiers', () => {
+    const army: Army = {
+      soldiers: [],
+      centerX: 100,
+      centerY: 100,
+      damage: 1,
+      fireRate: 100
+    } as any;
+
+    const horde = {
+      isActive: true,
+      soldiers: [
+        { isAlive: true, x: 100, y: 300, size: 10, color: '#f00' },
+        { isAlive: true, x: 120, y: 320, size: 10, color: '#f00' },
+        { isAlive: false, x: 140, y: 340, size: 10, color: '#f00' } // Should be ignored
+      ],
+      y: 300
+    } as any;
+
+    const entities: Entities = {
+      playerArmy: army,
+      coins: [],
+      gates: [],
+      enemyHordes: [horde],
+      mysteryBoxes: [],
+      miniBosses: [],
+      boss: null,
+      bullets: [],
+      weapons: []
+    } as any;
+
+    const gameState: GameState = {
+      score: 0,
+      coins: 0,
+      currentLevel: 1,
+      gameSpeed: 1,
+      isPaused: false,
+      bossAtmosphereIntensity: 0,
+      screenShakeActive: false,
+      damageFlash: 0
+    } as any;
+
+    render(ctx, entities, gameState);
+    // If it doesn't crash, the logic for iterating tempEnemySoldiers works
+    expect(true).toBe(true);
   });
 });

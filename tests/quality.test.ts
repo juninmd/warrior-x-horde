@@ -1,76 +1,51 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+
+import { describe, it, expect, beforeEach } from 'vitest';
 import { QualityManager } from '../src/quality';
 
 describe('QualityManager', () => {
-    let qualityManager: QualityManager;
+  let qm: QualityManager;
 
-    beforeEach(() => {
-        // Reset singleton for testing if possible, or just get instance
-        // Since it's a singleton, we might need to reset its internal state
-        qualityManager = QualityManager.getInstance();
-        // Reset state
-        qualityManager['lowQualityTriggered'] = false;
-        qualityManager['fpsDropFrames'] = 0;
-        qualityManager.settings.enableShadows = true;
-        qualityManager.settings.particleMultiplier = 1.0;
-        qualityManager.settings.simplifiedRendering = false;
-        qualityManager.settings.maxRenderedSoldiers = 150;
+  beforeEach(() => {
+    QualityManager.resetInstance();
+    qm = QualityManager.getInstance();
+    qm.setQuality('auto');
+  });
+
+  it('should handle "high" quality setting', () => {
+    qm.setQuality('high');
+    expect(qm.settings.enableShadows).toBe(true);
+    expect(qm.settings.particleMultiplier).toBe(1.0);
+    expect(qm.settings.maxRenderedSoldiers).toBe(250);
+  });
+
+  it('should handle "low" quality setting', () => {
+    qm.setQuality('low');
+    expect(qm.settings.enableShadows).toBe(false);
+    expect(qm.settings.particleMultiplier).toBe(0.3);
+  });
+
+  it('should handle "auto" quality setting', () => {
+    qm.setQuality('low'); // First change it
+    qm.setQuality('auto');
+    expect(qm.settings.enableShadows).toBe(true);
+    expect(qm.settings.particleMultiplier).toBe(1.0);
+  });
+
+  it('should detect mobile device and adjust settings', () => {
+    QualityManager.resetInstance();
+
+    // Mock User Agent
+    const originalNavigator = global.navigator;
+    Object.defineProperty(global, 'navigator', {
+        value: { userAgent: 'iPhone' },
+        writable: true
     });
 
-    it('should be a singleton', () => {
-        const instance1 = QualityManager.getInstance();
-        const instance2 = QualityManager.getInstance();
-        expect(instance1).toBe(instance2);
-    });
+    const mobileQm = QualityManager.getInstance();
+    expect(mobileQm.settings.particleMultiplier).toBe(0.8);
 
-    it('should have default settings', () => {
-        expect(qualityManager.settings.enableShadows).toBe(true);
-        expect(qualityManager.settings.particleMultiplier).toBe(1.0);
-        expect(qualityManager.settings.simplifiedRendering).toBe(false);
-        expect(qualityManager.settings.maxRenderedSoldiers).toBe(150);
-    });
-
-    it('should ignore very long frames (pause)', () => {
-        qualityManager.updateFPS(200); // > 100ms
-        expect(qualityManager['fpsDropFrames']).toBe(0);
-    });
-
-    it('should increment drop frames on low FPS', () => {
-        // 40ms = 25 FPS (< 45)
-        qualityManager.updateFPS(40);
-        expect(qualityManager['fpsDropFrames']).toBe(1);
-    });
-
-    it('should decrement drop frames on high FPS', () => {
-        qualityManager['fpsDropFrames'] = 10;
-        // 16ms = 62.5 FPS (> 45)
-        qualityManager.updateFPS(16);
-        expect(qualityManager['fpsDropFrames']).toBe(9);
-    });
-
-    it('should trigger low quality after sustained low FPS', () => {
-        const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
-        // Trigger 121 bad frames
-        for (let i = 0; i <= 120; i++) {
-             qualityManager.updateFPS(40); // 25 FPS
-        }
-
-        expect(qualityManager['lowQualityTriggered']).toBe(true);
-        expect(qualityManager.settings.enableShadows).toBe(false);
-        expect(qualityManager.settings.particleMultiplier).toBe(0.3);
-        expect(qualityManager.settings.simplifiedRendering).toBe(true);
-        expect(qualityManager.settings.maxRenderedSoldiers).toBe(60);
-        expect(consoleSpy).toHaveBeenCalledWith("⚠️ Performance degraded. Switching to Low Quality Mode.");
-
-        consoleSpy.mockRestore();
-    });
-
-    it('should not update if already low quality', () => {
-         qualityManager['lowQualityTriggered'] = true;
-         qualityManager['fpsDropFrames'] = 0;
-
-         qualityManager.updateFPS(40);
-         expect(qualityManager['fpsDropFrames']).toBe(0);
-    });
+    // Cleanup
+    Object.defineProperty(global, 'navigator', { value: originalNavigator, writable: true });
+    QualityManager.resetInstance();
+  });
 });

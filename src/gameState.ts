@@ -9,6 +9,7 @@ export const gameState: GameState = {
   currentLevel: 1,
   score: 0,
   highScore: Number(localStorage.getItem('crowdHighScore')) || 0,
+  highScoreDistance: Number(localStorage.getItem('crowdHighScoreDist')) || 0,
   coins: Number(localStorage.getItem('crowdCoins')) || 0,
   gameSpeed: 0.5,
   baseGameSpeed: 0.5,
@@ -41,7 +42,18 @@ export const gameState: GameState = {
   lowArmyTriggered: false,
   hitStop: 0,
   slowMoTimer: 0,
+  isDying: false,
   nukeTimer: 0,
+  killStreak: 0,
+  killStreakTimer: 0,
+  totalKills: 0,
+  runStartTime: 0,
+  nearMissCount: 0,
+  whiteFlash: 0,
+    warpEffectTimer: 0,
+    comboTier: 0,
+    currentRank: 'D',
+  deferredInstallPrompt: null,
 };
 
 export function resetGameState(): void {
@@ -65,18 +77,31 @@ export function resetGameState(): void {
   gameState.combo = 0;
   gameState.comboTimer = 0;
   gameState.maxCombo = 0;
+  gameState.currentRank = 'D';
   gameState.bossActive = false;
   gameState.bossAtmosphereIntensity = 0;
   gameState.newRecordReached = false;
   gameState.damageFlash = 0;
   gameState.lowArmyTriggered = false;
   gameState.slowMoTimer = 0;
+  gameState.isDying = false;
   gameState.nukeTimer = 0;
+  gameState.killStreak = 0;
+  gameState.killStreakTimer = 0;
+  gameState.totalKills = 0;
+  gameState.nearMissCount = 0;
+  gameState.runStartTime = Date.now();
+  gameState.whiteFlash = 0;
+  // Do not reset deferredInstallPrompt as it persists across games
 }
 
-export function saveGameProgress(): void {
-  localStorage.setItem('crowdCoins', gameState.coins.toString());
-  if (gameState.highScore > 0) {
-      localStorage.setItem('crowdHighScore', gameState.highScore.toString());
+export function saveGameProgress(stateOverride?: GameState): void {
+  const state = stateOverride || gameState;
+  localStorage.setItem('crowdCoins', state.coins.toString());
+  if (state.highScore > 0) {
+      localStorage.setItem('crowdHighScore', state.highScore.toString());
+  }
+  if (state.highScoreDistance > 0) {
+      localStorage.setItem('crowdHighScoreDist', state.highScoreDistance.toString());
   }
 }

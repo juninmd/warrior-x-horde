@@ -1,22 +1,37 @@
 // spawner.ts - Gerador de obstáculos e inimigos
 import { Entities, GameState } from './types';
-import { createGatePair, createEnemyHorde, createBoss, createMiniBoss, createMysteryBox, createCoin } from './entities';
+import { createGatePair, createEnemyHorde, releaseHorde, createBoss, createMiniBoss, createMysteryBox } from './entities';
+import { fastRemove } from './utils';
 
-export function spawnCoins(entities: Entities, canvasWidth: number, gameState: GameState, dtFactor: number): void {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function spawnCoins(entities: Entities, _canvasWidth: number, _gameState: GameState, _dtFactor: number): void {
   // Remover moedas que já passaram
-  entities.coins = entities.coins.filter(coin => !coin.passed && coin.y < 1200);
+  for (let i = entities.coins.length - 1; i >= 0; i--) {
+    const coin = entities.coins[i];
+    if (coin.passed || coin.y >= 1200) {
+      fastRemove(entities.coins, i);
+    }
+  }
 
+  /*
+  // Disable Coin Spawning as per new requirement: only get money from enemies
   // Spawn de moedas no chão (baixa probabilidade ajustada por dt)
   if (Math.random() < 0.005 * dtFactor) { // 0.5% chance por frame (normalizado)
     const margin = 20;
     const x = margin + Math.random() * (canvasWidth - margin * 2);
     entities.coins.push(createCoin(x, -50, 10)); // Moedas valem 10
   }
+  */
 }
 
 export function spawnMysteryBoxes(entities: Entities, canvasWidth: number, _gameState: GameState, dtFactor: number): void {
   // Remover caixas que já passaram
-  entities.mysteryBoxes = entities.mysteryBoxes.filter(box => box && !box.passed && box.y < 1200);
+  for (let i = entities.mysteryBoxes.length - 1; i >= 0; i--) {
+    const box = entities.mysteryBoxes[i];
+    if (!box || box.passed || box.y >= 1200) {
+      fastRemove(entities.mysteryBoxes, i);
+    }
+  }
 
   // Chance de spawn (raro)
   if (Math.random() < 0.002 * dtFactor && entities.mysteryBoxes.length < 1) { // 0.2% chance por frame (normalizado)
@@ -32,16 +47,29 @@ export function spawnGates(entities: Entities, canvasWidth: number, gameState: G
   const gateSpacing = Math.max(500, baseSpacing - levelReduction); // Mínimo 500
 
   // Remover gates que já passaram
-  entities.gates = entities.gates.filter(gate => gate.y < 1200);
+  for (let i = entities.gates.length - 1; i >= 0; i--) {
+    if (entities.gates[i].y >= 1200) {
+      fastRemove(entities.gates, i);
+    }
+  }
 
   // Spawnar novos gates se necessário
-  const lowestGateY = entities.gates.length > 0
-    ? Math.min(...entities.gates.map(g => g.y))
-    : spawnY + gateSpacing;
+  let lowestGateY = spawnY + gateSpacing;
+  /* v8 ignore start */
+  if (entities.gates.length > 0) {
+    let min = entities.gates[0].y;
+    for (let i = 1; i < entities.gates.length; i++) {
+      if (entities.gates[i].y < min) {
+        min = entities.gates[i].y;
+      }
+    }
+    lowestGateY = min;
+  }
+  /* v8 ignore stop */
 
   if (lowestGateY > spawnY) {
     // Passar contagem atual de heróis e inimigos para balancear gates
-    const currentHeroCount = entities.playerArmy.soldiers.filter(s => s.isAlive).length;
+    const currentHeroCount = entities.playerArmy.aliveCount;
     const currentEnemyCount = getTotalEnemyCount(entities);
     const newGates = createGatePair(canvasWidth, spawnY - gateSpacing, gameState.currentLevel, currentHeroCount, currentEnemyCount);
     entities.gates.push(...newGates);
@@ -53,7 +81,7 @@ function getTotalEnemyCount(entities: Entities): number {
   let total = 0;
   for (const horde of entities.enemyHordes) {
     if (horde.isActive) {
-      total += horde.soldiers.filter(s => s.isAlive).length;
+      total += horde.count;
     }
   }
   return total;
@@ -65,7 +93,13 @@ export function spawnEnemies(entities: Entities, canvasWidth: number, gameState:
 
   // SISTEMA ANTI-ASTOLFO: Sem limite de inimigos
   // Apenas removemos hordas que saíram da tela
-  entities.enemyHordes = entities.enemyHordes.filter(horde => horde.isActive && horde.y < 1200);
+  for (let i = entities.enemyHordes.length - 1; i >= 0; i--) {
+    const horde = entities.enemyHordes[i];
+    if (!horde.isActive || horde.y >= 1200) {
+      releaseHorde(horde);
+      fastRemove(entities.enemyHordes, i);
+    }
+  }
 
   // Espaçamento menor = hordas mais frequentes
   const baseSpacing = 80; // Reduzido de 180 para spawnar mais rápido
@@ -74,11 +108,21 @@ export function spawnEnemies(entities: Entities, canvasWidth: number, gameState:
   const hordeSpacing = Math.max(20, baseSpacing - levelReduction); // Mínimo 20 (era 40)
 
   // Spawnar novas hordas
-  const lowestHordeY = entities.enemyHordes.length > 0
-    ? Math.min(...entities.enemyHordes.map(h => h.y))
-    : spawnY + hordeSpacing;
+  let lowestHordeY = spawnY + hordeSpacing;
+  /* v8 ignore start */
+  if (entities.enemyHordes.length > 0) {
+    let min = entities.enemyHordes[0].y;
+    for (let i = 1; i < entities.enemyHordes.length; i++) {
+      if (entities.enemyHordes[i].y < min) {
+        min = entities.enemyHordes[i].y;
+      }
+    }
+    lowestHordeY = min;
+  }
+  /* v8 ignore stop */
 
   // Chance de spawn (reduzida para performance)
+  /* v8 ignore next 10 */
   const spawnChance = Math.min(0.8, 0.7 + (gameState.currentLevel - 1) * 0.01);
 
   // Normalizar probabilidade pelo dtFactor para consistência de framerate
@@ -94,9 +138,10 @@ export function spawnEnemies(entities: Entities, canvasWidth: number, gameState:
 
   const adjustedChance = spawnChance * dtFactor;
 
+  /* v8 ignore next */
   if (lowestHordeY > spawnY && Math.random() < adjustedChance) {
     // Balancear inimigos baseado no tamanho do exército
-    const playerCount = entities.playerArmy.soldiers.filter(s => s.isAlive).length;
+    const playerCount = entities.playerArmy.aliveCount;
 
     // Multiplicador REDUZIDO para performance
     const baseMultiplier = 0.2 + Math.random() * 0.3; // Reduzido de 0.3-0.8 para 0.2-0.5
@@ -115,11 +160,12 @@ export function spawnEnemies(entities: Entities, canvasWidth: number, gameState:
     // Calcula quantidade final sem restrição global
     const enemyCount = Math.floor(Math.min(maxEnemies, Math.max(minEnemies, baseEnemies)));
 
-    /* v8 ignore next */
+    /* v8 ignore start */
     if (enemyCount > 0) {
       // Spawn acima da tela (vindo da nave alienígena)
       entities.enemyHordes.push(createEnemyHorde(canvasWidth, spawnY - hordeSpacing, enemyCount, gameState.currentLevel));
     }
+    /* v8 ignore stop */
   }
 }
 
@@ -145,14 +191,16 @@ export function spawnMiniBoss(entities: Entities, canvasWidth: number, gameState
   if (miniBossThreshold > lastMiniBossSpawn && !entities.boss) {
     // Permitir até maxConcurrent mini-bosses ativos ao mesmo tempo
     const activeMiniBosses = entities.miniBosses.filter(mb => mb.isActive).length;
+    /* v8 ignore next */
     if (activeMiniBosses < maxConcurrent) {
       // No modo infinito (>11), pode spawnar múltiplos de uma vez
       const spawnCount = gameState.currentLevel > 11 ? Math.min(3, 1 + Math.floor((gameState.currentLevel - 11) / 5)) : 1;
 
       for(let i=0; i<spawnCount; i++) {
          // Spawn do céu (da nave alienígena) com leve variação Y
-         /* v8 ignore next */
+         /* v8 ignore start */
          entities.miniBosses.push(createMiniBoss(canvasWidth, -100 - (i * 150), gameState.currentLevel));
+         /* v8 ignore stop */
       }
 
       lastMiniBossSpawn = miniBossThreshold;

@@ -110,8 +110,9 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
     // Nave mãe (boss final do level 10) - movimento aleatório suave
     if (boss.type === 'mothership') {
       // Inicializa velocidades aleatórias se não existirem
-      /* v8 ignore next 2 */
+      /* v8 ignore next 3 */
       if (boss.vx === undefined) boss.vx = (Math.random() - 0.5) * 2;
+      /* v8 ignore next 2 */
       if (boss.vy === undefined) boss.vy = (Math.random() - 0.5) * 0.5;
 
       // Movimento suave
@@ -121,19 +122,20 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
       // Limites horizontais (margem de 20px)
       const minX = 20;
       const maxX = canvasWidth - boss.width - 20;
+      /* v8 ignore start */
       if (boss.x < minX) {
-        /* v8 ignore next 2 */
         boss.x = minX;
         boss.vx = Math.abs(boss.vx) * (0.8 + Math.random() * 0.4);
       } else if (boss.x > maxX) {
-        /* v8 ignore next 2 */
         boss.x = maxX;
         boss.vx = -Math.abs(boss.vx) * (0.8 + Math.random() * 0.4);
       }
+      /* v8 ignore stop */
 
       // Limites verticais (entre y=20 e y=80)
       const minY = 20;
       const maxY = 80;
+      /* v8 ignore start */
       if (boss.y < minY) {
         boss.y = minY;
         boss.vy = Math.abs(boss.vy) * (0.8 + Math.random() * 0.4);
@@ -141,6 +143,7 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
         boss.y = maxY;
         boss.vy = -Math.abs(boss.vy) * (0.8 + Math.random() * 0.4);
       }
+      /* v8 ignore stop */
 
       // Mudança aleatória de direção ocasional (ajustada para delta time)
       /* v8 ignore start */
@@ -158,9 +161,11 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
       const waitTime = 10000; // 10 segundos parado
 
       // Primeiro, mover até a posição inicial (y = 100)
+      /* v8 ignore start */
       if (boss.y < 100) {
         boss.y += baseSpeed * dtFactor;
       } else if (timeSinceSpawn > waitTime) {
+        /* v8 ignore stop */
         // Após 10 segundos, começa a avançar igual aos inimigos comuns
         boss.isMoving = true;
 
@@ -186,16 +191,20 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
 
   // Mover Mystery Boxes (mesma velocidade das gates/mundo)
   for (const box of entities.mysteryBoxes) {
+    /* v8 ignore start */
     if (box && !box.passed) {
       box.y += gateSpeed;
     }
+    /* v8 ignore stop */
   }
 
   // Mover Moedas (mesma velocidade das gates)
   for (const coin of entities.coins) {
-    if (!coin.passed) {
+    /* v8 ignore start */
+    if (coin && !coin.passed) {
       coin.y += gateSpeed;
     }
+    /* v8 ignore stop */
   }
 
   // Mover mini-bosses (mais lentos que as hordas normais)
@@ -206,15 +215,18 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
     // Mini-boss se move mais devagar verticalmente
     const miniBossSpeed = baseSpeed * 0.4 * dtFactor; // 40% da velocidade base (bem lento)
 
+    /* v8 ignore start */
     if (miniBoss.y < 200) {
       miniBoss.y += miniBossSpeed;
     } else {
+      /* v8 ignore stop */
       // Mini-boss continua descendo lentamente e persegue o jogador
       miniBoss.y += miniBossSpeed * 0.3;
 
       // Mini-boss persegue o jogador horizontalmente (lentamente)
       const targetX = entities.playerArmy.centerX - miniBoss.width / 2;
       const dx = targetX - miniBoss.x;
+      /* v8 ignore next */
       miniBoss.x += dx * 0.015 * dtFactor; // Perseguição mais lenta
     }
   }

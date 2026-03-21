@@ -6,10 +6,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "pnpm lint && vite build",
+    "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "start": "vite preview",
-    "lint": "eslint src --ext .ts",
+    "lint": "eslint src",
     "typecheck": "tsc --noEmit",
     "test": "vitest",
     "coverage": "vitest run --coverage"
@@ -18,20 +18,18 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@types/node": "^22.15.2",
+    "@types/node": "^25.3.0",
     "@typescript-eslint/eslint-plugin": "^8.37.0",
     "@typescript-eslint/parser": "^8.37.0",
-    "@vitest/coverage-v8": "^4.0.17",
+    "@vitest/coverage-v8": "^4.0.18",
     "cpx": "^1.5.0",
     "eslint": "^9.31.0",
     "globals": "^16.3.0",
     "jsdom": "^27.4.0",
-    "typescript": "^5.8.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3",
     "typescript-eslint": "^8.37.0",
-    "vitest": "^4.0.17"
-  },
-  "dependencies": {
-    "vite": "^6.3.3"
-  },
-  "packageManager": "pnpm@8.14.3+sha1.872b21adeaae4e71acd5c551ba848d927d6aa446"
+    "vite": "^6.3.3",
+    "vitest": "^4.0.18"
+  }
 }

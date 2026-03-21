@@ -28,6 +28,7 @@ vi.mock('../src/input', () => ({
     setGameStateRef: vi.fn(),
     setInputScale: vi.fn(),
     vibrate: vi.fn(),
+    triggerHaptic: vi.fn(),
 }));
 
 vi.mock('../src/audio', () => ({
@@ -76,6 +77,7 @@ vi.mock('../src/ui-overlay', () => ({
     }),
     showGameOverScreen: vi.fn(),
     startCountdown: vi.fn((cb) => cb()),
+    updateStartScreenLeaderboard: vi.fn(), createPauseModal: vi.fn(),
 }));
 
 // Mock window functions exposed by game.ts
@@ -131,11 +133,11 @@ describe('Game Loop - Full Coverage', () => {
 
     it('should start game on interaction', () => {
         // We need to call startGame logic.
-        // It's attached to startBtnOverlay click.
+        // It's attached to startScreen click (tap anywhere).
 
-        // Let's click the button
-        const startBtn = document.getElementById('startBtnOverlay');
-        startBtn?.dispatchEvent(new Event('click'));
+        // Let's click the screen
+        const startScreen = document.getElementById('startScreen');
+        startScreen?.dispatchEvent(new Event('click'));
 
         expect(gameState.isStarted).toBe(true);
         expect(audio.playSound).toHaveBeenCalledWith('start');
@@ -152,8 +154,10 @@ describe('Game Loop - Full Coverage', () => {
         // Reset mocks to verify loop calls
         vi.clearAllMocks();
 
-        // Run loop
+        // Run loop (init)
         loopCallback(1000); // timestamp
+        // Run loop (trigger update)
+        loopCallback(1020);
 
         expect(movement.updateMovement).toHaveBeenCalled();
         expect(shooting.updateShooting).toHaveBeenCalled();
@@ -171,7 +175,7 @@ describe('Game Loop - Full Coverage', () => {
         // Pause
         (window as any).togglePause();
         expect(gameState.isPaused).toBe(true);
-        expect(input.vibrate).toHaveBeenCalled();
+        expect(input.triggerHaptic).toHaveBeenCalled();
 
         // Reset mocks
         vi.clearAllMocks();
@@ -193,10 +197,7 @@ describe('Game Loop - Full Coverage', () => {
         expect(gameState.isPaused).toBe(true);
     });
 
-    it('should handle toggle mute', () => {
-        (window as any).toggleMuteUI();
-        expect(audio.toggleMute).toHaveBeenCalled();
-    });
+    // Removed toggleMuteUI test as button was moved to settings
 
     it('should handle super cannon trigger', () => {
         gameState.isStarted = true;

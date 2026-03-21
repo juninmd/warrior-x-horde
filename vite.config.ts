@@ -1,6 +1,9 @@
-/// <reference types="vitest" />
 import { defineConfig } from 'vite';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export default defineConfig({
   root: '.',
@@ -22,7 +25,7 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
       include: ['src/**/*.ts'],
-      exclude: ['src/types.ts', 'src/vite-env.d.ts', 'src/renderer-boss.ts'], // Exclude types files and visual-only modules
+      exclude: ['src/types.ts', 'src/vite-env.d.ts'], // Exclude type definitions
       thresholds: {
         lines: 100,
         functions: 100,

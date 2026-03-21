@@ -9,7 +9,23 @@ export interface Particle {
   size: number;
   life: number;
   maxLife: number;
-  type: 'explosion' | 'trail' | 'spark' | 'star';
+  type: 'explosion' | 'trail' | 'spark' | 'star' | 'shockwave' | 'debris' | 'hitmarker' | 'confetti' | 'holylight';
+  rotation?: number;
+  rotationSpeed?: number;
+}
+
+export interface TrailPoint {
+  x: number;
+  y: number;
+  width: number;
+  alpha: number;
+}
+
+export interface Trail {
+  points: TrailPoint[];
+  color: string;
+  width: number;
+  maxLength: number;
 }
 
 export interface GameState {
@@ -20,6 +36,7 @@ export interface GameState {
   currentLevel: number;
   score: number;
   highScore: number;
+  highScoreDistance: number;
   coins: number;
   gameSpeed: number;
   baseGameSpeed: number;
@@ -52,7 +69,28 @@ export interface GameState {
   lowArmyTriggered: boolean;
   hitStop: number;
   slowMoTimer: number;
+  isDying: boolean; // Slow motion death phase
   nukeTimer: number;
+  // Killstreak System
+  killStreak: number;
+  killStreakTimer: number;
+  // Stats
+  totalKills: number;
+  runStartTime: number;
+  nearMissCount: number;
+  // Visuals
+  whiteFlash: number;
+  warpEffectTimer: number; // For level transitions
+  // PWA
+  deferredInstallPrompt: BeforeInstallPromptEvent | null;
+  // Combo Tier (visual state)
+  comboTier: number; // 0=None, 1=Double, 2=Multi, 3=Ultra, 4=Monster
+  currentRank: string; // 'S', 'A', 'B', 'C', 'D'
+}
+
+export interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
 }
 
 export interface Soldier {
@@ -84,6 +122,8 @@ export interface Army {
   fireRate: number;
   lastShotTime: number;
   damage: number;
+  trail: Trail;
+  scanIndex?: number; // For optimized shooting logic
 }
 
 export interface EnemyHorde {
@@ -100,6 +140,7 @@ export interface EnemyHorde {
   isMini?: boolean; // Mini-boss horde
   hp: number; // Shared HP for the horde
   maxHp: number;
+  perfectClearEligible?: boolean;
 }
 
 export interface MiniBoss {
@@ -132,6 +173,7 @@ export interface Gate {
     light: string;
     dark: string;
   };
+  cachedCanvas?: HTMLCanvasElement | OffscreenCanvas;
 }
 
 export interface Weapon {
@@ -218,4 +260,5 @@ export interface FloatingText {
   vx: number;
   vy: number;
   gravity: number;
+  style?: 'normal' | 'critical' | 'gold';
 }

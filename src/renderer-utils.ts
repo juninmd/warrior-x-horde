@@ -1,6 +1,7 @@
 // renderer-utils.ts - Shared rendering helpers
-import { COLORS } from './constants';
-import { virtualJoystick } from './input';
+import { COLORS, FONT_FAMILY } from './constants';
+import { virtualJoystick } from './input-state';
+import { QualityManager } from './quality';
 
 // --- UI Drawing Helpers ---
 
@@ -10,7 +11,6 @@ export function drawGlassBadge(ctx: CanvasRenderingContext2D, x: number, y: numb
   ctx.fillStyle = 'rgba(10, 10, 20, 0.7)';
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
   ctx.lineWidth = 1;
-  // ctx.backdropFilter = 'blur(4px)'; // Not widely supported in Canvas yet
 
   ctx.beginPath();
   ctx.roundRect(x, y, w, h, 12);
@@ -25,7 +25,7 @@ export function drawGlassBadge(ctx: CanvasRenderingContext2D, x: number, y: numb
 
   // Texto
   ctx.fillStyle = '#FFF';
-  ctx.font = `bold ${fontSize}px "Segoe UI", Arial`;
+  ctx.font = `bold ${fontSize}px ${FONT_FAMILY}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(text, x + w / 2, y + h / 2 - 2);
@@ -56,34 +56,19 @@ export function drawStar(ctx: CanvasRenderingContext2D, cx: number, cy: number, 
 export function drawJoystick(ctx: CanvasRenderingContext2D): void {
   // Update Alpha for fade in/out
   if (virtualJoystick.active) {
-    virtualJoystick.alpha = Math.min(1, virtualJoystick.alpha + 0.15);
+    virtualJoystick.alpha = Math.min(0.9, virtualJoystick.alpha + 0.3); // Higher max alpha
   } else {
     virtualJoystick.alpha = Math.max(0, virtualJoystick.alpha - 0.1);
   }
 
   if (virtualJoystick.alpha <= 0.01) return;
 
-  const { startX, startY, currentX, currentY, maxRadius, alpha } = virtualJoystick;
+  const { startX, startY, currentX, currentY, maxRadius } = virtualJoystick;
+  const alpha = virtualJoystick.alpha;
 
   ctx.save();
   ctx.globalAlpha = alpha;
 
-  // Base (Outer Ring)
-  ctx.beginPath();
-  ctx.arc(startX, startY, maxRadius, 0, Math.PI * 2);
-
-  // Gradient fill for base
-  const baseGrad = ctx.createRadialGradient(startX, startY, maxRadius * 0.2, startX, startY, maxRadius);
-  baseGrad.addColorStop(0, 'rgba(255, 255, 255, 0.0)');
-  baseGrad.addColorStop(1, 'rgba(255, 255, 255, 0.15)');
-  ctx.fillStyle = baseGrad;
-
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-  ctx.lineWidth = 2;
-  ctx.fill();
-  ctx.stroke();
-
-  // Stick Position Calculation
   const dx = currentX - startX;
   const dy = currentY - startY;
   const distance = Math.sqrt(dx * dx + dy * dy);
@@ -91,47 +76,108 @@ export function drawJoystick(ctx: CanvasRenderingContext2D): void {
   let stickX = currentX;
   let stickY = currentY;
 
+  // Clamp stick
   if (distance > maxRadius) {
     const angle = Math.atan2(dy, dx);
     stickX = startX + Math.cos(angle) * maxRadius;
     stickY = startY + Math.sin(angle) * maxRadius;
   }
 
-  // Stick (Knob)
+  // Cyber Ring Animation (Pulse)
+  const time = Date.now();
+  const pulse = Math.sin(time / 150) * 3;
+  const rotate = (time / 1000) % (Math.PI * 2);
+
+  // Outer Ring (Glowing Base)
   ctx.beginPath();
-  ctx.arc(stickX, stickY, 25, 0, Math.PI * 2);
+  ctx.arc(startX, startY, maxRadius + 5 + pulse, 0, Math.PI * 2);
+  ctx.strokeStyle = `rgba(0, 255, 255, ${0.4 * alpha})`; // Cyan fade
+  ctx.lineWidth = 2;
+  ctx.stroke();
 
-  // Knob Gradient
-  const knobGrad = ctx.createRadialGradient(stickX - 5, stickY - 5, 0, stickX, stickY, 25);
-  knobGrad.addColorStop(0, '#FFFFFF');
-  knobGrad.addColorStop(1, '#B0BEC5');
-  ctx.fillStyle = knobGrad;
-
-  // Knob Shadow
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-  ctx.shadowBlur = 10;
-  ctx.shadowOffsetY = 4;
-
+  // Inner Ring (Static Base)
+  ctx.beginPath();
+  ctx.arc(startX, startY, maxRadius, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(0, 255, 255, 0.05)';
   ctx.fill();
 
-  // Inner detail of Knob
+  const isMaxed = distance >= maxRadius * 0.95;
+
+  if (isMaxed) {
+      // Max Range Glow
+      ctx.strokeStyle = '#FF4500'; // Orange-Red when maxed
+      ctx.lineWidth = 3;
+      if (QualityManager.getInstance().settings.enableShadows) {
+        ctx.shadowColor = '#FF4500';
+        ctx.shadowBlur = 10;
+      }
+  } else {
+      ctx.strokeStyle = 'rgba(0, 255, 255, 0.3)';
+      ctx.lineWidth = 1;
+      ctx.shadowBlur = 0;
+  }
+
+  ctx.stroke();
+  ctx.shadowBlur = 0; // Reset
+
+  // Rotating Segments (Tech feel)
+  ctx.save();
+  ctx.translate(startX, startY);
+  ctx.rotate(rotate);
+  ctx.beginPath();
+  ctx.arc(0, 0, maxRadius - 5, 0, Math.PI / 2);
+  ctx.strokeStyle = 'rgba(0, 255, 255, 0.8)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(0, 0, maxRadius - 5, Math.PI, Math.PI * 1.5);
+  ctx.stroke();
+  ctx.restore();
+
+  // Connection Line
+  ctx.beginPath();
+  ctx.moveTo(startX, startY);
+  ctx.lineTo(stickX, stickY);
+  ctx.strokeStyle = 'rgba(0, 255, 255, 0.6)';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([5, 3]); // Tech-style dash
+  ctx.stroke();
+  ctx.setLineDash([]); // Reset dash
+
+  // Thumb Stick (Glowing Circle)
+  // Inner Stick Pulse
+  const innerPulse = Math.sin(time / 200) * 2;
+
+  ctx.beginPath();
+  ctx.arc(stickX, stickY, 15 + innerPulse, 0, Math.PI * 2);
+
+  if (QualityManager.getInstance().settings.enableShadows) {
+    ctx.shadowColor = isMaxed ? '#FF4500' : '#00FFFF'; // Change color when maxed
+    ctx.shadowBlur = isMaxed ? 25 : 15;
+  }
+
+  ctx.fillStyle = isMaxed ? '#FFD700' : '#FFFFFF'; // Gold/White
+  ctx.fill();
+
+  // Ring around Thumb Stick
+  ctx.beginPath();
+  ctx.arc(stickX, stickY, 18 + innerPulse, 0, Math.PI * 2);
+  ctx.strokeStyle = isMaxed ? '#FF4500' : '#00FFFF';
+  ctx.lineWidth = isMaxed ? 3 : 2;
+  ctx.stroke();
+
   ctx.shadowBlur = 0;
-  ctx.shadowOffsetY = 0;
-  ctx.beginPath();
-  ctx.arc(stickX, stickY, 12, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-  ctx.fill();
-
   ctx.restore();
 }
 
 // --- Game Specific Helpers ---
 
 export function getComboColor(combo: number): string {
-  if (combo >= 15) return COLORS.PLAYER.LASER; // Cyan (Legendary)
-  if (combo >= 10) return '#FF00FF'; // Magenta (Epic)
-  if (combo >= 7) return COLORS.UI.GOLD;  // Gold
-  if (combo >= 5) return COLORS.EFFECTS.EXPLOSION;  // Red
-  if (combo >= 3) return COLORS.UI.INFO;  // Orangeish/Info
-  return COLORS.UI.SUCCESS; // Green
+  if (combo >= 50) return '#FF00FF'; // Magenta Neon
+  if (combo >= 20) return '#00FFFF'; // Cyan Neon
+  if (combo >= 10) return '#FFD700'; // Gold
+  if (combo >= 5) return '#FF4500';  // Orange-Red
+  if (combo >= 2) return '#00FF00';  // Lime Green
+  return '#FFFFFF'; // White (Default)
 }

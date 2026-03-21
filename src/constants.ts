@@ -7,8 +7,13 @@ export const ASPECT_RATIO = BASE_WIDTH / BASE_HEIGHT;
 
 export const MAX_HEROES = 20000;
 export const MAX_ENEMIES = 20000;
-export const MAX_PARTICLES = 300; // Increased for more juice
-export const MAX_RENDERED_SOLDIERS = 150; // Increased for better visual density
+export const MAX_PARTICLES = 400; // Increased for more juice
+export const MAX_RENDERED_SOLDIERS = 200; // Increased for better visual density
+
+export const FONT_FAMILY = '"Rajdhani", "Segoe UI", Roboto, system-ui, sans-serif';
+
+export const SENSITIVITY = 2.2; // Increased sensitivity for better mobile response
+export const MOBILE_RESOLUTION_SCALE = 0.85;
 
 // --- Colors ---
 export const COLORS = {

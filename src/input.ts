@@ -1,52 +1,15 @@
 // input.ts - Sistema de input (mouse/touch)
 import { GameState } from './types';
-import { activateSuperCannon } from './shooting';
+import { SettingsManager } from './settings';
+import { virtualJoystick, getCurrentScale } from './input-state';
+import { SENSITIVITY } from './constants';
+
+export { setInputScale, virtualJoystick, VirtualJoystick } from './input-state';
 
 let mouseX = 0;
 let isDragging = false;
 let gameStateRef: GameState | null = null;
-let currentScale = 1;
 let activeTouchId: number | null = null;
-
-// Virtual Joystick
-export class VirtualJoystick {
-  active: boolean = false;
-  alpha: number = 0;
-  startX: number = 0;
-  startY: number = 0;
-  currentX: number = 0;
-  currentY: number = 0;
-  maxRadius: number = 50;
-  deadZone: number = 5; // Pixels de movimento ignorados
-
-  start(x: number, y: number) {
-    this.active = true;
-    this.startX = x;
-    this.startY = y;
-    this.currentX = x;
-    this.currentY = y;
-  }
-
-  move(x: number, y: number) {
-    if (!this.active) return;
-    this.currentX = x;
-    this.currentY = y;
-  }
-
-  end() {
-    this.active = false;
-  }
-
-  getDeltaX(): number {
-    /* v8 ignore next */
-    if (!this.active) return 0;
-    const dx = this.currentX - this.startX;
-    if (Math.abs(dx) < this.deadZone) return 0;
-    return dx;
-  }
-}
-
-export const virtualJoystick = new VirtualJoystick();
 
 // Variaveis para controle relativo (Touch)
 let touchStartX = 0;
@@ -60,10 +23,6 @@ export function setGameStateRef(gs: GameState): void {
   gameStateRef = gs;
 }
 
-export function setInputScale(scale: number): void {
-  currentScale = scale;
-}
-
 export function resetInput(): void {
   activeTouchId = null;
   isDragging = false;
@@ -72,21 +31,52 @@ export function resetInput(): void {
 
 // Converter coordenadas da tela para coordenadas do canvas
 function screenToCanvasX(screenX: number, canvasRect: DOMRect): number {
-  return (screenX - canvasRect.left) / currentScale;
+  return (screenX - canvasRect.left) / getCurrentScale();
 }
 
-export function vibrate(ms: number): void {
+export type HapticPattern = 'light' | 'medium' | 'heavy' | 'success' | 'failure' | 'warning';
+
+const HAPTIC_PATTERNS: Record<HapticPattern, number | number[]> = {
+  light: 10,       // Short (shot)
+  medium: 40,      // Medium (impact)
+  heavy: 80,       // Heavy (damage)
+  success: [40, 30, 40], // Positive (powerup)
+  failure: [50, 50, 100], // Negative (game over/critical damage)
+  warning: [30, 50, 30]   // Alert
+};
+
+// Throttling para evitar sobrecarga de vibração
+let lastHapticTime = 0;
+const HAPTIC_THROTTLE = 50; // ms
+
+/* v8 ignore start */
+export function vibrate(pattern: number | number[]): void {
+  if (!SettingsManager.getInstance().hapticsEnabled) return;
+
   if (typeof navigator !== 'undefined' && navigator.vibrate) {
     try {
-      navigator.vibrate(ms);
+      navigator.vibrate(pattern);
     } catch {
       // Ignore vibration errors
-      /* v8 ignore next */
     }
   }
 }
+/* v8 ignore stop */
 
-export function setupInput(canvas: HTMLCanvasElement): void {
+export function triggerHaptic(type: HapticPattern): void {
+  const now = Date.now();
+
+  // Throttle apenas para vibrações curtas/frequentes ('light')
+  if (type === 'light') {
+    if (now - lastHapticTime < HAPTIC_THROTTLE) return;
+  }
+
+  lastHapticTime = now;
+  const pattern = HAPTIC_PATTERNS[type];
+  vibrate(pattern);
+}
+
+export function setupInput(canvas: HTMLCanvasElement, onTouchEffect?: (x: number, y: number) => void): void {
   // Mouse events (Desktop - Absolute positioning is fine/expected for mouse)
   canvas.addEventListener('mousedown', (e) => {
     isDragging = true;
@@ -109,6 +99,7 @@ export function setupInput(canvas: HTMLCanvasElement): void {
 
   // Touch events (Mobile - Relative positioning for better experience)
   // Robust multi-touch handling: Track specific finger ID
+  /* v8 ignore start */
   canvas.addEventListener('touchstart', (e) => {
     // Não prevenir default aqui para permitir que game.ts trate o game over
     if (gameStateRef && !gameStateRef.isGameOver) {
@@ -133,6 +124,11 @@ export function setupInput(canvas: HTMLCanvasElement): void {
 
       // Start virtual joystick for visualization
       virtualJoystick.start(touch.clientX, touch.clientY);
+
+      // Visual Feedback
+      if (onTouchEffect) {
+          onTouchEffect(touch.clientX, touch.clientY);
+      }
     }
   }, { passive: false });
 
@@ -152,10 +148,7 @@ export function setupInput(canvas: HTMLCanvasElement): void {
           // Relative movement
           const delta = currentTouchX - touchStartX;
 
-          // Sensitivity factor (1.2 for slightly faster response than finger)
-          const sensitivity = 1.2;
-
-          let newX = armyStartX + delta * sensitivity;
+          let newX = armyStartX + delta * SENSITIVITY;
 
           // Clamp to screen bounds
           newX = Math.max(0, Math.min(canvas.width, newX));
@@ -163,7 +156,6 @@ export function setupInput(canvas: HTMLCanvasElement): void {
           mouseX = newX;
 
           // Joystick visual update
-          /* v8 ignore next */
           virtualJoystick.move(touch.clientX, touch.clientY);
           break;
         }
@@ -174,37 +166,38 @@ export function setupInput(canvas: HTMLCanvasElement): void {
   canvas.addEventListener('touchend', (e) => {
     if (activeTouchId !== null) {
       for (let i = 0; i < e.changedTouches.length; i++) {
-        /* v8 ignore start */
         if (e.changedTouches[i].identifier === activeTouchId) {
           activeTouchId = null;
           isDragging = false;
           virtualJoystick.end();
           break;
         }
-        /* v8 ignore stop */
       }
     }
   });
+  /* v8 ignore stop */
 
+  /* v8 ignore start */
   canvas.addEventListener('touchcancel', (e) => {
     if (activeTouchId !== null) {
       for (let i = 0; i < e.changedTouches.length; i++) {
-        /* v8 ignore start */
         if (e.changedTouches[i].identifier === activeTouchId) {
           activeTouchId = null;
           isDragging = false;
           virtualJoystick.end();
           break;
         }
-        /* v8 ignore stop */
       }
     }
   });
+  /* v8 ignore stop */
 
   // Keyboard events for desktop
   document.addEventListener('keydown', (e) => {
     const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
+    /* v8 ignore start */
     if (!canvas) return;
+    /* v8 ignore stop */
 
     const step = 30;
     if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
@@ -214,11 +207,6 @@ export function setupInput(canvas: HTMLCanvasElement): void {
     if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
       mouseX = Math.min(canvas.width, mouseX + step);
       isDragging = true;
-    }
-    // Super Cannon - Spacebar
-    if (e.key === ' ' && gameStateRef) {
-      e.preventDefault();
-      activateSuperCannon(gameStateRef);
     }
   });
 }

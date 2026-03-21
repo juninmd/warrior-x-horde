@@ -4,14 +4,14 @@ vi.mock('../src/input', () => ({
     vibrate: vi.fn(),
 }));
 
-import { setupShopUI, updateShopUI, setupSuperCannonUI, updateSuperCannonUI, setupGameOverUI, showGameOverScreen } from '../src/ui-overlay';
+import { setupShopUI, updateShopUI, setupSuperCannonUI, updateSuperCannonUI, setupGameOverUI, showGameOverScreen, updateStartScreenLeaderboard, startCountdown, _testing } from '../src/ui-overlay';
 import { GameState } from '../src/types';
 
 describe('UI Overlay', () => {
     let gameState: GameState;
 
     beforeEach(() => {
-        document.body.innerHTML = '<div id="shopContainer"></div><div id="superCannonContainer"></div><div id="gameOverContainer"></div>';
+        document.body.innerHTML = '<div id="shopContainer"></div><div id="superCannonContainer"></div><div id="gameOverContainer"></div><div class="start-screen-content"><button class="start-btn">START</button></div>';
         gameState = {
             coins: 1000,
             isStarted: true,
@@ -23,7 +23,9 @@ describe('UI Overlay', () => {
             score: 100,
             highScore: 200,
             maxCombo: 5,
-            currentLevel: 1
+            currentLevel: 1,
+            totalKills: 50,
+            runStartTime: Date.now() - 10000 // 10 seconds ago
         } as any;
         vi.clearAllMocks();
     });
@@ -46,6 +48,12 @@ describe('UI Overlay', () => {
             btn?.click();
             expect(onBuy).toHaveBeenCalled();
         });
+        it('should setup shop UI when container does not exist', () => {
+            document.getElementById('shopContainer')?.remove();
+            setupShopUI(vi.fn());
+            expect(document.getElementById('shopContainer')).toBeDefined();
+        });
+
 
         it('should update shop UI (enable/disable buttons)', () => {
             setupShopUI(vi.fn());
@@ -68,6 +76,17 @@ describe('UI Overlay', () => {
             updateShopUI(gameState);
             const container = document.getElementById('shopContainer');
             expect(container?.style.display).toBe('none');
+        });
+
+        it('should handle pointer effects on buttons', () => {
+            setupShopUI(vi.fn());
+            const btn = document.getElementById('shopContainer')!.children[0] as HTMLButtonElement;
+
+            // Just verify listeners exist or don't crash
+            // The transform is now handled by CSS or internal listeners that might be empty
+            const event = new Event('pointerdown');
+            btn.dispatchEvent(event);
+            // No assertion needed for side effects if handled by CSS mostly now
         });
     });
 
@@ -118,6 +137,41 @@ describe('UI Overlay', () => {
             // But wait, setup creates it. show makes it visible.
         });
 
+        it('should handle start countdown', () => {
+            vi.useFakeTimers();
+            const onComplete = vi.fn();
+
+            // Mock Element.animate if not available in JSDOM environment or to control it
+            window.HTMLElement.prototype.animate = vi.fn().mockReturnValue({
+                finished: Promise.resolve(),
+                cancel: vi.fn(),
+                addEventListener: vi.fn(),
+            });
+
+            startCountdown(onComplete);
+
+            // Check DOM
+            let el = document.body.lastElementChild as HTMLElement;
+            expect(el.innerText).toBe('3');
+
+            // Advance timers
+            vi.advanceTimersByTime(800);
+            expect(el.innerText).toBe('2');
+
+            vi.advanceTimersByTime(800);
+            expect(el.innerText).toBe('1');
+
+            vi.advanceTimersByTime(800);
+            expect(el.innerText).toBe('GO!');
+
+            vi.advanceTimersByTime(500);
+            // Should be removed
+            expect(document.body.contains(el)).toBe(false);
+            expect(onComplete).toHaveBeenCalled();
+
+            vi.useRealTimers();
+        });
+
         it('should show game over screen', () => {
             const onRestart = vi.fn();
             const onShare = vi.fn();
@@ -153,6 +207,126 @@ describe('UI Overlay', () => {
 
             const container = document.getElementById('gameOverContainer');
             expect(container?.innerHTML).toContain('VITÓRIA');
+        });
+    });
+
+    describe('Leaderboard UI', () => {
+        it('should handle empty leaderboard', () => {
+            vi.spyOn(window.localStorage, 'getItem').mockReturnValue('[]');
+            updateStartScreenLeaderboard();
+            const lb = document.getElementById('startScreenLeaderboard');
+            // Should auto-populate and display
+            expect(lb).not.toBeNull();
+            expect(lb?.innerHTML).toContain('Top Commanders');
+        });
+
+        it('should handle null localStorage', () => {
+            vi.spyOn(window.localStorage, 'getItem').mockReturnValue(null);
+            updateStartScreenLeaderboard();
+            const lb = document.getElementById('startScreenLeaderboard');
+            // Should auto-populate and display
+            expect(lb).not.toBeNull();
+        });
+
+        it('should handle populated leaderboard with full rank coverage', () => {
+            // Entries for 1st, 2nd, 3rd, and 4th place to cover all rank color branches
+            const data = [
+                { score: 1000, date: Date.now() },
+                { score: 900, date: Date.now() },
+                { score: 800, date: Date.now() },
+                { score: 700, date: Date.now() }
+            ];
+            vi.spyOn(window.localStorage, 'getItem').mockReturnValue(JSON.stringify(data));
+
+            updateStartScreenLeaderboard();
+
+            const lb = document.getElementById('startScreenLeaderboard');
+            expect(lb).not.toBeNull();
+            expect(lb?.innerHTML).toContain('Top Commanders');
+            expect(lb?.innerHTML).toContain('1,000');
+
+            // Verify Rank Classes and Icons
+            expect(lb?.innerHTML).toContain('rank-1');
+            expect(lb?.innerHTML).toContain('🥇');
+            expect(lb?.innerHTML).toContain('rank-2');
+            expect(lb?.innerHTML).toContain('🥈');
+            expect(lb?.innerHTML).toContain('rank-3');
+            expect(lb?.innerHTML).toContain('🥉');
+        });
+
+        it('should handle corrupt localStorage data', () => {
+            vi.spyOn(window.localStorage, 'getItem').mockReturnValue('{invalid');
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+            updateStartScreenLeaderboard();
+
+            expect(consoleSpy).toHaveBeenCalled();
+            const lb = document.getElementById('startScreenLeaderboard');
+            // Should gracefully fail to parse, then auto-populate
+            expect(lb).not.toBeNull();
+        });
+
+        it('should handle missing container safely', () => {
+            document.body.innerHTML = ''; // Clear DOM
+            updateStartScreenLeaderboard();
+            // Should just return
+        });
+
+
+        it('should handle valid JSON that is not an array', () => {
+            vi.spyOn(window.localStorage, 'getItem').mockReturnValue('{}');
+            updateStartScreenLeaderboard();
+            const lb = document.getElementById('startScreenLeaderboard');
+            // Not an array -> invalid -> fallback to defaults?
+            // Current implementation: JSON.parse -> check Array.isArray
+            // If not array, leaderboard = [].
+            // If leaderboard empty, init defaults.
+            // So it should show defaults.
+            expect(lb).not.toBeNull();
+        });
+        it('should sanitize HTML in leaderboard entries (direct test)', () => {
+            const data = [
+                { score: '<script>alert(1)</script>' }, // Malicious
+                { score: 12345 }
+            ];
+            vi.spyOn(window.localStorage, 'getItem').mockReturnValue(JSON.stringify(data));
+
+            // Call internal function directly
+            const html = _testing.getLeaderboardHTML();
+
+            // Should contain the safe score (0 for malicious, 12345 for valid)
+            expect(html).toContain('12,345');
+            // Malicious score becomes NaN -> 0
+            expect(html).toContain('0');
+            // Should NOT contain script tags
+            expect(html).not.toContain('<script>');
+        });
+        it('should highlight current player score', () => {
+            const data = [{ score: 1000 }];
+            vi.spyOn(window.localStorage, 'getItem').mockReturnValue(JSON.stringify(data));
+
+            // Call with matching score
+            const html = _testing.getLeaderboardHTML(1000);
+
+            // Check for new class based structure
+            expect(html).toContain('leaderboard-item current');
+        });
+
+
+        it('should remove existing leaderboard container to avoid duplicates', () => {
+            const data = [{ score: 1000 }];
+            vi.spyOn(window.localStorage, 'getItem').mockReturnValue(JSON.stringify(data));
+
+            // Call first time
+            updateStartScreenLeaderboard();
+            const lb1 = document.getElementById('startScreenLeaderboard');
+            expect(lb1).not.toBeNull();
+
+            // Call second time - should replace
+            updateStartScreenLeaderboard();
+            const lb2 = document.getElementById('startScreenLeaderboard');
+            expect(lb2).not.toBeNull();
+            expect(lb2).not.toBe(lb1); // Should be a new element
         });
     });
 });

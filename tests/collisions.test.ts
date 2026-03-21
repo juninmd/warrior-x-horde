@@ -15,6 +15,7 @@ vi.mock('../src/renderer', () => ({
 
 vi.mock('../src/input', () => ({
     vibrate: vi.fn(),
+    triggerHaptic: vi.fn(),
 }));
 
 vi.mock('../src/audio', () => ({
@@ -57,7 +58,9 @@ describe('Collisions', () => {
             damageFlash: 0,
             isBattling: false,
             currentLevel: 1,
-            highScore: 0
+            highScore: 0,
+            isGameOver: false,
+            isDying: false
         } as any;
 
         entities = {
@@ -318,16 +321,17 @@ describe('Collisions', () => {
     });
 
     describe('Game Over', () => {
-        it('should trigger game over if army dead', () => {
+        it('should trigger game over (dying phase) if army dead', () => {
             army.soldiers[0].isAlive = false;
             army.aliveCount = 0;
 
             checkCollisions(entities, gameState);
 
-            expect(gameState.isGameOver).toBe(true);
+            expect(gameState.isDying).toBe(true);
+            expect(gameState.isGameOver).toBe(false); // Deferred
         });
 
-        it('should update highscore', () => {
+        it('should update highscore immediately on death', () => {
             army.soldiers[0].isAlive = false;
             army.aliveCount = 0;
             gameState.score = 100;

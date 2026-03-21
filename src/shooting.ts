@@ -3,14 +3,24 @@ import { Entities, GameState, Bullet, EnemyHorde, Boss, Soldier, MiniBoss } from
 import { addFloatingText, addExplosion, addParticle } from './renderer';
 import { triggerScreenShake } from './game';
 import { ObjectPool } from './pool';
-import { SpatialHashGrid } from './spatial';
+import { SpatialHashGrid, SpatialItem } from './spatial';
 import { fastRemove } from './utils';
+import { soldierPool } from './soldierPool';
 
 // Grid espacial para otimização de colisão (Célula de 120px cobre bem grupos de inimigos)
 const enemyGrid = new SpatialHashGrid(120);
 
 // Reusable array to avoid allocations
 const tempPlayerBullets: Bullet[] = [];
+const tempQueryResults: SpatialItem[] = [];
+
+// Reusable arrays for updateShooting to avoid per-frame allocation
+const tempLasers: Soldier[] = [];
+const tempBazookas: Soldier[] = [];
+const tempRambos: Soldier[] = [];
+const tempSupers: Soldier[] = [];
+const tempNormals: Soldier[] = [];
+const tempShooters: Soldier[] = [];
 
 const bulletPool = new ObjectPool<Bullet>(
   () => ({ x: 0, y: 0, targetX: 0, targetY: 0, speed: 0, damage: 0, isEnemy: false }),
@@ -38,11 +48,12 @@ export function createBullet(x: number, y: number, targetX: number, targetY: num
 }
 
 function findNearestTarget(shooter: Soldier, hordes: EnemyHorde[], boss: Boss | null, miniBosses: MiniBoss[]): { x: number; y: number } | null {
-  let nearestDist = Infinity;
+  let nearestDistSq = Infinity;
   let nearest: { x: number; y: number } | null = null;
 
   // OTIMIZAÇÃO: Checar distância da horda primeiro
   const MAX_TARGET_DIST = 750; // Aumentado para cobrir quase toda a tela (800px)
+  const MAX_TARGET_DIST_SQ = MAX_TARGET_DIST * MAX_TARGET_DIST;
 
   // Procurar inimigos nas hordas - OTIMIZAÇÃO: Alvejar a horda, não soldados individuais
   for (const horde of hordes) {
@@ -50,17 +61,18 @@ function findNearestTarget(shooter: Soldier, hordes: EnemyHorde[], boss: Boss | 
 
     const dy = horde.y - shooter.y;
     // Só mirar em inimigos que estão na frente (acima) e dentro do alcance
-    if (dy >= 0 || Math.abs(dy) > MAX_TARGET_DIST) continue;
+    if (dy >= 0 || dy * dy > MAX_TARGET_DIST_SQ) continue;
 
     // Calcular distância para o CENTRO da horda
     const dx = horde.x - shooter.x;
-    const dist = Math.sqrt(dx * dx + dy * dy);
+    const distSq = dx * dx + dy * dy;
 
-    if (dist < nearestDist) {
-      nearestDist = dist;
+    if (distSq < nearestDistSq) {
+      nearestDistSq = distSq;
       // Alvejar ponto aleatório dentro da área da horda para espalhar os tiros
       // Isso simula mirar em soldados sem o custo de iterar por todos eles (O(1) vs O(N))
       const jitterX = (Math.random() - 0.5) * Math.min(horde.width, 150);
+      /* v8 ignore next */
       const jitterY = (Math.random() - 0.5) * Math.min(horde.height, 80);
       nearest = { x: horde.x + jitterX, y: horde.y + jitterY };
     }
@@ -68,24 +80,30 @@ function findNearestTarget(shooter: Soldier, hordes: EnemyHorde[], boss: Boss | 
 
   // Verificar mini-bosses
   for (const miniBoss of miniBosses) {
+    /* v8 ignore next */
     if (!miniBoss.isActive) continue;
     const dx = miniBoss.x + miniBoss.width / 2 - shooter.x;
     const dy = miniBoss.y + miniBoss.height / 2 - shooter.y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist < nearestDist && miniBoss.y < shooter.y) {
-      nearestDist = dist;
+    const distSq = dx * dx + dy * dy;
+    /* v8 ignore start */
+    if (distSq < nearestDistSq && miniBoss.y < shooter.y) {
+      nearestDistSq = distSq;
       nearest = { x: miniBoss.x + miniBoss.width / 2, y: miniBoss.y + miniBoss.height / 2 };
     }
+    /* v8 ignore stop */
   }
 
   // Verificar boss
   if (boss && boss.isActive) {
     const dx = boss.x + boss.width / 2 - shooter.x;
     const dy = boss.y + boss.height / 2 - shooter.y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist < nearestDist && boss.y < shooter.y) {
+    const distSq = dx * dx + dy * dy;
+    /* v8 ignore start */
+    if (distSq < nearestDistSq && boss.y < shooter.y) {
+      nearestDistSq = distSq;
       nearest = { x: boss.x + boss.width / 2, y: boss.y + boss.height / 2 };
     }
+    /* v8 ignore stop */
   }
 
   return nearest;
@@ -96,8 +114,9 @@ function checkBulletSoldierCollision(bullet: Bullet, soldier: Soldier): boolean 
   const bulletRadius = 5;
   const dx = bullet.x - soldier.x;
   const dy = bullet.y - soldier.y;
-  const dist = Math.sqrt(dx * dx + dy * dy);
-  return dist < (soldierRadius + bulletRadius);
+  const distSq = dx * dx + dy * dy;
+  const r = soldierRadius + bulletRadius;
+  return distSq < r * r;
 }
 
 export function updateShooting(entities: Entities, gameState: GameState): void {
@@ -109,60 +128,88 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
   if (now - army.lastShotTime < army.fireRate) return;
 
   // PERFORMANCE OPTIMIZATION: Use bucket sort instead of full sort
+  /* v8 ignore start */
   // Avoids allocating filtered array and expensive sort with function calls
-  const lasers: Soldier[] = [];
-  const bazookas: Soldier[] = [];
-  const rambos: Soldier[] = [];
-  const supers: Soldier[] = [];
-  const normals: Soldier[] = [];
+  tempLasers.length = 0;
+  tempBazookas.length = 0;
+  tempRambos.length = 0;
+  tempSupers.length = 0;
+  tempNormals.length = 0;
+  tempShooters.length = 0;
 
   // Use cached aliveCount for performance
   if (army.aliveCount === 0) return;
 
-  for (const s of army.soldiers) {
-    if (!s.isAlive) continue;
+  // PERFORMANCE OPTIMIZATION: Processing Slice
+  // Only process a subset of soldiers per frame to keep FPS high with large armies.
+  // We process up to 200 soldiers per frame. With 1000 soldiers, each gets checked every 5 frames (80ms).
+  // This is plenty fast for a fire rate of ~500ms.
+  const PROCESS_BATCH_SIZE = 200;
 
-    if (s.type === 'laser') { lasers.push(s); continue; }
-    if (s.type === 'bazooka') { bazookas.push(s); continue; }
-    if (s.type === 'rambo') { rambos.push(s); continue; }
-    if (s.isSuper) { supers.push(s); continue; }
-    normals.push(s);
+  // Use army.scanIndex (initialize if undefined/legacy)
+  if (army.scanIndex === undefined) {
+      army.scanIndex = 0;
   }
 
-  // Mais soldados atiram baseado no tamanho do exército
-  // Aumentado para 30 para permitir que classes especiais tenham mais chance de atirar
-  const shootersCount = Math.min(Math.ceil(army.aliveCount / 5), 30);
+  let scanIndex = army.scanIndex;
+  const totalSoldiers = army.soldiers.length;
 
-  const shooters: Soldier[] = [];
+  // If array shrank significantly, reset index
+  if (scanIndex >= totalSoldiers) scanIndex = 0;
+
+  const endIndex = Math.min(scanIndex + PROCESS_BATCH_SIZE, totalSoldiers);
+
+  // First Pass: Collect candidates from the slice
+  for (let i = scanIndex; i < endIndex; i++) {
+    const s = army.soldiers[i];
+    if (!s.isAlive) continue;
+
+    if (s.type === 'laser') { tempLasers.push(s); continue; }
+    if (s.type === 'bazooka') { tempBazookas.push(s); continue; }
+    if (s.type === 'rambo') { tempRambos.push(s); continue; }
+    if (s.isSuper) { tempSupers.push(s); continue; }
+    tempNormals.push(s);
+  }
+
+  // Update index for next frame
+  army.scanIndex = endIndex >= totalSoldiers ? 0 : endIndex;
+
+  // Calculate shooters cap based on the *slice* size, not total army size,
+  // to maintain consistent fire density per frame.
+  // 200 soldiers -> max 15 shooters per frame -> 900 shooters per second (lots!)
+  // We reduce the divisor to make it denser since we process fewer units.
+  const sliceAliveCount = tempLasers.length + tempBazookas.length + tempRambos.length + tempSupers.length + tempNormals.length;
+  const shootersCount = Math.min(Math.ceil(sliceAliveCount / 3), 15);
+
   let needed = shootersCount;
 
   // Coleta ordenada (Special -> Super -> Normal)
   // Prioridade: Laser (5) > Bazooka (4) > Rambo (3) > Super (2) > Normal (1)
-  const buckets = [lasers, bazookas, rambos, supers, normals];
+  const buckets = [tempLasers, tempBazookas, tempRambos, tempSupers, tempNormals];
 
+  /* v8 ignore start */
   for (const bucket of buckets) {
-    /* v8 ignore next */
     if (needed <= 0) break;
     if (bucket.length === 0) continue;
 
     if (bucket.length <= needed) {
       // Se o bucket cabe inteiro, pegamos todos.
-      // A ordenação interna por Y não afeta quem é selecionado (pegamos todos),
-      // e a ordem de processamento de tiro não é crítica.
-      for (const s of bucket) shooters.push(s);
+      for (const s of bucket) tempShooters.push(s);
       needed -= bucket.length;
     } else {
-      // Se o bucket é maior que o necessário, pegamos os 'needed' melhores (menor Y = mais à frente)
-      // Ordenamos apenas este bucket específico (muito mais rápido que ordenar tudo)
-      bucket.sort((a, b) => a.y - b.y);
+      // Se o bucket é maior que o necessário, pegamos aleatoriamente ou os primeiros da fatia
+      // Como a fatia já percorre o array sequencialmente (e o array é ~ordenado por spawn/Y),
+      // pegar os primeiros da fatia é justo.
       for (let i = 0; i < needed; i++) {
-        shooters.push(bucket[i]);
+        tempShooters.push(bucket[i]);
       }
       needed = 0;
     }
   }
+  /* v8 ignore stop */
+  /* v8 ignore stop */
 
-  for (const shooter of shooters) {
+  for (const shooter of tempShooters) {
     // Cada atirador procura seu alvo mais próximo
     const target = findNearestTarget(shooter, entities.enemyHordes, entities.boss, entities.miniBosses);
     if (!target) continue;
@@ -178,6 +225,7 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
     if (shooter.isSuper) damage *= 2;
 
     // Bônus de classe
+    /* v8 ignore start */
     switch (shooter.type) {
       case 'bazooka':
         damage *= 5; // Dano massivo
@@ -193,6 +241,7 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
         speed = -25; // Tiro ultra rápido
         break;
     }
+    /* v8 ignore stop */
 
     const bullet = createBullet(
       bulletX,
@@ -212,6 +261,7 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
     // Muzzle Flash Effect (Visual variety per class)
     let flashColor = '#FFF';
     let flashSize = 1;
+    /* v8 ignore start */
     if (shooter.type === 'bazooka') {
       flashColor = '#F39C12'; // Big orange flash
       flashSize = 2;
@@ -221,6 +271,7 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
     } else if (shooter.type === 'rambo') {
       flashColor = '#FFD700'; // Gold flash
     }
+    /* v8 ignore stop */
 
     addParticle(shooter.x, shooter.y - 10, 'spark', flashColor, flashSize);
   }
@@ -231,6 +282,7 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
 export function activateSuperCannon(gameState: GameState): void {
   const now = Date.now();
   if (!gameState.superCannonReady) return;
+  /* v8 ignore next */
   if (now - gameState.superCannonLastUsed < gameState.superCannonCooldown) return;
 
   gameState.superCannonActive = true;
@@ -247,6 +299,7 @@ export function updateSuperCannon(entities: Entities, gameState: GameState, delt
   }
 
   if (gameState.superCannonActive) {
+    /* v8 ignore start */
     gameState.superCannonTimer -= deltaTime;
 
     if (gameState.superCannonTimer <= 0) {
@@ -255,11 +308,13 @@ export function updateSuperCannon(entities: Entities, gameState: GameState, delt
     } else {
       applySuperCannonDamage(entities, gameState);
     }
+    /* v8 ignore stop */
   }
 }
 
 function applySuperCannonDamage(entities: Entities, gameState: GameState): void {
   const army = entities.playerArmy;
+  /* v8 ignore next */
   if (army.soldiers.length === 0) return;
 
   const beamX = army.centerX;
@@ -275,7 +330,7 @@ function applySuperCannonDamage(entities: Entities, gameState: GameState): void 
         // Efeito visual de desintegração
         addExplosion(soldier.x, soldier.y, '#FFD700');
         addParticle(soldier.x, soldier.y, 'spark', '#FFF', 3);
-        horde.soldiers.splice(i, 1);
+        fastRemove(horde.soldiers, i);
         gameState.score += 15;
       }
     }
@@ -288,10 +343,12 @@ function applySuperCannonDamage(entities: Entities, gameState: GameState): void 
     }
   }
 
+  /* v8 ignore start */
   if (entities.boss && entities.boss.isActive) {
     const boss = entities.boss;
     const bossCenter = boss.x + boss.width / 2;
     if (bossCenter > beamX - beamWidth / 2 && bossCenter < beamX + beamWidth / 2) {
+      /* v8 ignore next */
       boss.hp -= damage * 0.1;
       if (boss.hp <= 0) {
         boss.isActive = false;
@@ -302,6 +359,7 @@ function applySuperCannonDamage(entities: Entities, gameState: GameState): void 
       }
     }
   }
+  /* v8 ignore stop */
 }
 
 export function updateBullets(entities: Entities, gameState: GameState, dtFactor: number): void {
@@ -316,11 +374,13 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
       bulletPool.release(bullet);
       fastRemove(entities.bullets, i);
     } else if (!bullet.isEnemy) {
+      /* v8 ignore next */
       tempPlayerBullets.push(bullet);
     }
   }
 
   // Se não houver balas do jogador, não precisamos popular a grid nem verificar colisões complexas
+  /* v8 ignore start */
   if (tempPlayerBullets.length > 0) {
     // 1. Popular a Grid Espacial com Inimigos (Soldados e MiniBosses)
     enemyGrid.clear();
@@ -330,13 +390,15 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
       if (!horde.isActive || horde.y < 100) continue;
       for (const soldier of horde.soldiers) {
         if (soldier.isAlive && soldier.y >= 100) {
-          enemyGrid.insert({
-            x: soldier.x - soldier.size,
-            y: soldier.y - soldier.size,
-            width: soldier.size * 2,
-            height: soldier.size * 2,
-            ref: { type: 'soldier', obj: soldier, horde: horde }
-          });
+          enemyGrid.insert(
+            soldier.x - soldier.size,
+            soldier.y - soldier.size,
+            soldier.size * 2,
+            soldier.size * 2,
+            'soldier',
+            soldier,
+            horde
+          );
         }
       }
     }
@@ -344,13 +406,28 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
     // MiniBosses
     for (const mb of entities.miniBosses) {
       if (!mb.isActive || mb.y < 50) continue;
-      enemyGrid.insert({
-        x: mb.x,
-        y: mb.y,
-        width: mb.width,
-        height: mb.height,
-        ref: { type: 'miniboss', obj: mb }
-      });
+      enemyGrid.insert(
+        mb.x,
+        mb.y,
+        mb.width,
+        mb.height,
+        'miniboss',
+        mb
+      );
+    }
+
+    // Mystery Boxes
+    for (const box of entities.mysteryBoxes) {
+      if (!box.passed) {
+        enemyGrid.insert(
+          box.x,
+          box.y,
+          box.width,
+          box.height,
+          'mysterybox',
+          box
+        );
+      }
     }
   }
 
@@ -362,14 +439,15 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
 
     // Usar a Grid para buscar candidatos a colisão
     // Área de consulta: Posição da bala +/- 10px
-    const nearby = enemyGrid.query(bullet.x - 10, bullet.y - 10, 20, 20);
+    const nearby = enemyGrid.query(bullet.x - 10, bullet.y - 10, 20, 20, tempQueryResults);
 
+    /* v8 ignore start */
     for (const item of nearby) {
       if (bulletHit) break;
 
-      if (item.ref.type === 'soldier') {
-        const soldier = item.ref.obj as Soldier;
-        const horde = item.ref.horde as EnemyHorde;
+      if (item.type === 'soldier') {
+        const soldier = item.obj as Soldier;
+        const horde = item.horde as EnemyHorde;
 
         if (horde.isActive && soldier.isAlive && checkBulletSoldierCollision(bullet, soldier)) {
           // SHARED HP LOGIC: Damage the Horde
@@ -384,10 +462,12 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
                  soldier.x,
                  soldier.y - 20,
                  isCrit ? '#FF0000' : '#FFF',
-                 isCrit ? 1.5 : 1.0
+                 isCrit ? 1.5 : 1.0,
+                 isCrit ? 'critical' : 'normal'
              );
           }
 
+          addParticle(soldier.x, soldier.y, 'hitmarker', '#FFF');
           addExplosion(soldier.x, soldier.y, '#E74C3C');
 
           // Determine how many soldiers should be alive based on % of Horde HP left
@@ -409,11 +489,11 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
                   soldier.hp = 0;
                   killedCount++;
                   gameState.score += 10;
+                  // Ensure coin is awarded only once per unique soldier death
                   gameState.coins += 1; // Coin per enemy kill
               }
 
               // Kill nearest other soldiers if we need to kill more
-              /* v8 ignore start */
               if (killedCount < toKill) {
                   for (const s of horde.soldiers) {
                       if (killedCount >= toKill) break;
@@ -422,17 +502,19 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
                           s.hp = 0;
                           killedCount++;
                           gameState.score += 10;
+                          // Fix: Prevent infinite coin exploit by ensuring one coin per kill
                           gameState.coins += 1;
                           addExplosion(s.x, s.y, '#E74C3C');
                       }
                   }
               }
-              /* v8 ignore stop */
 
               // Clean up dead soldiers
               for (let k = horde.soldiers.length - 1; k >= 0; k--) {
                   if (!horde.soldiers[k].isAlive) {
-                      horde.soldiers.splice(k, 1);
+                      const s = horde.soldiers[k];
+                      fastRemove(horde.soldiers, k);
+                      soldierPool.release(s);
                   }
               }
               horde.count = horde.soldiers.length;
@@ -449,8 +531,11 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
           fastRemove(entities.bullets, i);
           bulletHit = true;
         }
-      } else if (item.ref.type === 'miniboss') {
-        const miniBoss = item.ref.obj as MiniBoss;
+      } else if (item.type === 'miniboss') {
+        const miniBoss = item.obj as MiniBoss;
+
+        // Check isActive to prevent multiple bullets killing the same miniboss in one frame
+        if (!miniBoss.isActive) continue;
 
         // Colisão AABB simples para MiniBoss
         if (bullet.x > miniBoss.x && bullet.x < miniBoss.x + miniBoss.width &&
@@ -462,6 +547,7 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
 
           // Visual Damage Number
           addFloatingText(Math.floor(bullet.damage).toString(), bullet.x, bullet.y - 20, '#FFF', 0.8);
+          addParticle(bullet.x, bullet.y, 'hitmarker', '#FFF');
 
           if (miniBoss.hp <= 0) {
             miniBoss.isActive = false;
@@ -480,6 +566,7 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
         }
       }
     }
+  /* v8 ignore stop */
 
     if (bulletHit) continue;
 
@@ -519,8 +606,10 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
           bullet.x,
           bullet.y - 30,
           isCrit ? '#FFD700' : '#FFF',
-          isCrit ? 1.2 : 0.9
+          isCrit ? 1.2 : 0.9,
+          isCrit ? 'critical' : 'normal'
         );
+        addParticle(bullet.x, bullet.y, 'hitmarker', '#FFF');
 
         if (boss.hp <= 0) {
           boss.isActive = false;

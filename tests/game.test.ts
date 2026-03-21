@@ -84,6 +84,7 @@ vi.mock('../src/input', () => ({
     setGameStateRef: vi.fn(),
     initializeMousePosition: vi.fn(),
     vibrate: vi.fn(),
+    triggerHaptic: vi.fn(),
     getMouseX: vi.fn().mockReturnValue(240),
 }));
 
@@ -95,6 +96,7 @@ vi.mock('../src/ui-overlay', () => ({
     setupGameOverUI: vi.fn(),
     showGameOverScreen: vi.fn(),
     startCountdown: vi.fn((cb) => cb()),
+  updateStartScreenLeaderboard: vi.fn(), createPauseModal: vi.fn(),
 }));
 
 vi.mock('../src/shooting', () => ({
@@ -147,14 +149,6 @@ describe('Game', () => {
 
         expect(gameState.isStarted).toBe(true);
         expect(audioModule.playSound).toHaveBeenCalledWith('gameStart');
-    });
-
-    it('should toggle mute UI', async () => {
-        const gameModule = await import('../src/game');
-        const { toggleMuteUI } = gameModule;
-
-        toggleMuteUI();
-        expect(audioModule.toggleMute).toHaveBeenCalled();
     });
 
     it('should set level (debug)', async () => {
@@ -279,5 +273,28 @@ describe('Game', () => {
         // Should update scale.
         // Difficult to verify exact value without controlling window size mock
         // But running the event handler covers the lines.
+    });
+
+    it('should return early from gameLoop if document is hidden', async () => {
+        const gameModule = await import('../src/game');
+        const { _testing } = gameModule;
+        const rendererModule = await import('../src/renderer');
+
+        // Set visibility state to hidden
+        Object.defineProperty(document, 'visibilityState', { value: 'hidden', writable: true });
+
+        // Ensure requestAnimationFrame is mocked to just run once or track
+        const rafMock = vi.fn();
+        global.requestAnimationFrame = rafMock as any;
+
+        // Run game loop
+        _testing.gameLoop(100);
+
+        // Should call requestAnimationFrame to schedule next frame but NOT render
+        expect(rafMock).toHaveBeenCalled();
+        expect(rendererModule.render).not.toHaveBeenCalled();
+
+        // Reset visibility state
+        Object.defineProperty(document, 'visibilityState', { value: 'visible', writable: true });
     });
 });

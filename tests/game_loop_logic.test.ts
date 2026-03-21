@@ -31,6 +31,7 @@ vi.mock('../src/entities', async () => {
 vi.mock('../src/renderer', () => ({
     render: vi.fn(),
     addFloatingText: vi.fn(), updateFloatingTexts: vi.fn(),
+    addParticle: vi.fn(),
     shareOnX: vi.fn(),
     shareOnWhatsApp: vi.fn(),
 }));
@@ -42,6 +43,7 @@ vi.mock('../src/input', () => ({
     setGameStateRef: vi.fn(),
     setInputScale: vi.fn(),
     vibrate: vi.fn(),
+    triggerHaptic: vi.fn(),
 }));
 
 vi.mock('../src/audio', () => ({
@@ -81,6 +83,7 @@ vi.mock('../src/ui-overlay', () => ({
     setupGameOverUI: vi.fn(),
     showGameOverScreen: vi.fn(),
     startCountdown: vi.fn((cb) => cb()),
+  updateStartScreenLeaderboard: vi.fn(), createPauseModal: vi.fn(),
 }));
 
 describe('Game Loop Logic Coverage', () => {
@@ -130,8 +133,10 @@ describe('Game Loop Logic Coverage', () => {
         gameState.currentLevel = 1;
         gameState.isGameOver = false;
 
-        // Run loop
-        capturedLoop(Date.now());
+        // Run loop (init)
+        capturedLoop(1000);
+        // Run loop (update)
+        capturedLoop(1050);
 
         // Should advance level
         expect(gameState.currentLevel).toBe(2);
@@ -145,8 +150,10 @@ describe('Game Loop Logic Coverage', () => {
         gameState.currentLevel = 10;
         gameState.isGameOver = false;
 
-        // Run loop
-        capturedLoop(Date.now());
+        // Run loop (init)
+        capturedLoop(1000);
+        // Run loop (update)
+        capturedLoop(1050);
 
         // Should NOT advance, but trigger Game Over (Victory Screen)
         expect(gameState.currentLevel).toBe(10);
@@ -201,7 +208,8 @@ describe('Game Loop Logic Coverage', () => {
         gameState.highScore = 100;
         gameState.newRecordReached = false;
 
-        capturedLoop(Date.now());
+        capturedLoop(1000);
+        capturedLoop(1050);
 
         expect(gameState.newRecordReached).toBe(true);
         expect(audio.playSound).toHaveBeenCalledWith('up');

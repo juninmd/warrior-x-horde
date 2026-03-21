@@ -272,7 +272,7 @@ describe('Collisions Coverage', () => {
         checkCollisions(entities, gameState);
 
         expect(entities.playerArmy.aliveCount).toBe(0);
-        expect(gameState.isGameOver).toBe(true);
+        expect(gameState.isDying).toBe(true);
     });
   });
 

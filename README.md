@@ -1,7 +1,8 @@
 # 🚀 Warrior X Horder
 
-[![Status: Active](https://img.shields.io/badge/Status-Active-brightgreen.svg)]()
-[![Protocol: Antigravity](https://img.shields.io/badge/Protocol-Antigravity-orange.svg)]()
+[![CI](https://github.com/juninmd/warrior-x-horde/actions/workflows/ci.yml/badge.svg)](https://github.com/juninmd/warrior-x-horde/actions/workflows/ci.yml)
+
+[Play the game here!](https://warrior-x-horde.netlify.app/)
 
 > A modern, high-performance project built with **Node.js / TypeScript**. Orchestrated under the Antigravity protocol.
 
@@ -16,13 +17,7 @@
 - **Primary Technology**: Node.js / TypeScript
 - **Architecture**: Modular and domain-driven.
 
-## 🛡️ Antigravity Protocol
-
-This project follows the **Antigravity** code standards:
-- **150-Line Limit**: Applied to all logic modules.
-- **Strict Typing**: Avoiding dynamic/any types.
-- **Clean Code**: DRY, KISS, and SOLID principles applied rigorously.
-
----
-
-*"Simplicity is the ultimate sophistication."*
+**Gameplay Tips:**
+*   Prioritize collecting beneficial barrels (Reinforcement, Buff, Health) while avoiding Nerf barrels.
+*   Use your Super Cannon strategically during tough waves or against the boss.
+*   Keep moving to avoid zombie hordes and collect power-ups.

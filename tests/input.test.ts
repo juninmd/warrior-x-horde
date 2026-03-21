@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { setupInput, VirtualJoystick, getMouseX, setGameStateRef, virtualJoystick, setInputScale, vibrate, initializeMousePosition, resetInput } from '../src/input';
+import { setupInput, VirtualJoystick, getMouseX, setGameStateRef, virtualJoystick, setInputScale, vibrate, initializeMousePosition, resetInput, triggerHaptic } from '../src/input';
 import { GameState } from '../src/types';
 
 // Mock dependencies
@@ -202,9 +202,9 @@ describe('Input', () => {
 
         expect(vj.getDeltaX()).toBe(10); // 20 - 10 = 10
 
-        // Deadzone check
-        vj.move(12, 12);
-        expect(vj.getDeltaX()).toBe(0); // 12 - 10 = 2 < 5
+        // Deadzone check (deadZone is 2, so difference of 1 is less)
+        vj.move(11, 11);
+        expect(vj.getDeltaX()).toBe(0); // 11 - 10 = 1 < 2
 
         vj.end();
         expect(vj.active).toBe(false);
@@ -234,21 +234,16 @@ describe('Input', () => {
 
         const keyD = new KeyboardEvent('keydown', { key: 'd' });
         document.dispatchEvent(keyD);
-
-        // Space for Super Cannon
-        setGameStateRef({ isGameOver: false } as any);
-        const keySpace = new KeyboardEvent('keydown', { key: ' ' });
-        const preventDefaultSpy = vi.spyOn(keySpace, 'preventDefault');
-
-        document.dispatchEvent(keySpace);
-
-        expect(preventDefaultSpy).toHaveBeenCalled();
-        expect(activateSuperCannon).toHaveBeenCalled();
     });
 
     it('should vibrate', () => {
         // Use existing mock
         vibrate(100);
         expect(navigator.vibrate).toHaveBeenCalledWith(100);
+    });
+
+    it('should trigger haptic pattern', () => {
+        triggerHaptic('success');
+        expect(navigator.vibrate).toHaveBeenCalledWith([40, 30, 40]);
     });
 });

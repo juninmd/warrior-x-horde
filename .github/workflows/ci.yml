@@ -5,33 +5,51 @@ on:
     branches: [ "main", "master" ]
   pull_request:
     branches: [ "main", "master" ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
     - uses: actions/checkout@v4
-
-    - name: Install pnpm
-      uses: pnpm/action-setup@v3
-      with:
-        version: 8
 
     - name: Use Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '20.x'
-        cache: 'pnpm'
+        cache: 'npm'
 
     - name: Install dependencies
-      run: pnpm install
+      run: npm ci
 
     - name: Lint
-      run: pnpm lint
+      run: npm run lint
+
+    - name: Typecheck
+      run: npm run typecheck
+
+    # Ensures 100% test coverage requirement is met
+    - name: Test with Coverage
+      run: npm run coverage
+
+    - name: Upload Coverage Report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: coverage-report
+        path: coverage/
 
     - name: Build
-      run: pnpm build
+      run: npm run build
 
-    - name: Test with Coverage
-      run: pnpm vitest run --coverage --coverage.thresholds.lines=100 --coverage.thresholds.functions=100 --coverage.thresholds.branches=100 --coverage.thresholds.statements=100
+    - name: Upload Build Artifacts
+      if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+      uses: actions/upload-artifact@v4
+      with:
+        name: dist
+        path: dist/

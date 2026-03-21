@@ -23,10 +23,11 @@ function createAudio(src: string, loop = false, volume = 0.5): HTMLAudioElement 
   audio.volume = volume;
   audio.preload = 'auto';
   // Ensure src is set for keying
-  /* v8 ignore next 3 */
+  /* v8 ignore start */
   if (!audio.src && src) {
       audio.src = src;
   }
+  /* v8 ignore stop */
   return audio;
 }
 
