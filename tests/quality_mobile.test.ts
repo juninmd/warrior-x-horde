@@ -25,14 +25,14 @@ describe('QualityManager Mobile Detection', () => {
         });
 
         const qm = QualityManager.getInstance();
-        expect(qm.settings.particleMultiplier).toBe(0.8);
+        expect(qm.settings.particleMultiplier).toBe(0.6);
         expect(qm.settings.enableShadows).toBe(false);
         expect(qm.settings.resolutionScale).toBe(0.65);
 
         // Test auto setQuality logic for mobile
         qm.setQuality('auto');
         expect(qm.settings.resolutionScale).toBe(0.65);
-        expect(qm.settings.particleMultiplier).toBe(0.8);
+        expect(qm.settings.particleMultiplier).toBe(0.6);
         expect(qm.settings.enableShadows).toBe(false);
     });
 
