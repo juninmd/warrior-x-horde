@@ -61,7 +61,7 @@ function getLeaderboardHTML(currentScore: number = -1): string {
 
         const delay = index * 0.1;
         /* v8 ignore start */
-        const scoreDisplay = safeScore === 0 ? '0' : safeScore.toLocaleString();
+        const scoreDisplay = safeScore === 0 ? '0' : safeScore.toLocaleString('pt-BR');
         /* v8 ignore stop */
         return `
         <div class="leaderboard-item ${currentClass} ${rankClass}" style="animation-delay: ${delay}s;">
@@ -524,7 +524,7 @@ export function showGameOverScreen(gameState: GameState): void {
             const progress = Math.min((timestamp - startTimestamp) / duration, 1);
             const ease = 1 - Math.pow(1 - progress, 3);
             const value = Math.floor(ease * (end - start) + start);
-            scoreDisplay.innerHTML = value.toLocaleString();
+            scoreDisplay.innerHTML = value.toLocaleString('pt-BR');
             if (progress < 1) {
                 window.requestAnimationFrame(step);
             }

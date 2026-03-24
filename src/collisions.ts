@@ -309,12 +309,13 @@ function applyMysteryBoxEffect(army: Army, box: MysteryBox, gameState: GameState
       addFloatingText('REINFORCEMENTS!', box.x, box.y, COLORS.UI.SUCCESS, 1.2);
       break;
     case 'nuke':
-      entities.enemyHordes.forEach(h => {
+      for (let i = 0; i < entities.enemyHordes.length; i++) {
+        const h = entities.enemyHordes[i];
         if (h.isActive && h.y > 0 && h.y < 800) {
           h.isActive = false;
           addExplosion(h.x, h.y, COLORS.UI.GOLD);
         }
-      });
+      }
       addFloatingText('NUKE!', box.x, box.y, COLORS.UI.GOLD, 2.0);
       triggerHitStop(20); // Big Hit Stop on Nuke
       triggerScreenShake(10, 500);
@@ -468,10 +469,12 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
   }
 
   // Bullet vs Mystery Box interaction
-  entities.mysteryBoxes.forEach(box => {
+  for (let i = 0; i < entities.mysteryBoxes.length; i++) {
+    const box = entities.mysteryBoxes[i];
     if (box && !box.passed) {
-       entities.bullets.forEach(bullet => {
-         if (bullet.y < box.y || bullet.y > box.y + box.height) return;
+       for (let j = 0; j < entities.bullets.length; j++) {
+         const bullet = entities.bullets[j];
+         if (bullet.y < box.y || bullet.y > box.y + box.height) continue;
 
          if (!bullet.isEnemy &&
              bullet.x > box.x && bullet.x < box.x + box.width) {
@@ -485,9 +488,9 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
              addFloatingText('DESTROYED!', box.x, box.y, '#FFFFFF');
            }
          }
-       });
+       }
     }
-  });
+  }
 
   // Check Boss
   if (entities.boss && entities.boss.isActive) {
