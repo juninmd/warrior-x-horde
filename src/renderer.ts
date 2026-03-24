@@ -1565,7 +1565,7 @@ function drawEnemyHorde(ctx: CanvasRenderingContext2D, horde: EnemyHorde, time: 
     drawSoldier3D(ctx, soldier.x, soldier.y, soldier.size, soldier.color, soldier.animOffset, time, soldier.type, false, isFlash);
   }
 
-  const count = horde.soldiers.filter(s => s.isAlive).length;
+  const count = horde.count;
   if (count > 0 && hordeAlpha > 0.5) {
       drawGlassBadge(ctx, horde.x - 25, horde.y - 60, 50, 30, count.toString(), '#E74C3C');
   }
