@@ -292,28 +292,29 @@ describe('UI Overlay', () => {
             vi.spyOn(window.localStorage, 'getItem').mockReturnValue(JSON.stringify(data));
 
             // Call internal function directly
-            const html = _testing.getLeaderboardHTML();
+            const el = _testing.getLeaderboardElement();
 
             // Should contain the safe score (0 for malicious, 12345 for valid)
-            expect(html).toContain('12.345');
-            // Malicious score becomes NaN -> 0
-            expect(html).toContain('0');
-            // Should NOT contain script tags
-            expect(html).not.toContain('<script>');
+            expect(el.textContent).toContain('12.345');
+            // Malicious score is skipped because it's not a number type in the filter
+            // The filter ignores non-number scores now in getLeaderboardElement: `typeof (entry as any).score === 'number'`
+            // It falls back to default empty logic if not initialized (actually it just renders the valid one).
+            // Let's assert it doesn't contain the script
+            expect(el.innerHTML).not.toContain('<script>');
         });
         it('should highlight current player score', () => {
             const data = [{ score: 1000 }];
             vi.spyOn(window.localStorage, 'getItem').mockReturnValue(JSON.stringify(data));
 
             // Call with matching score
-            const html = _testing.getLeaderboardHTML(1000);
+            const el = _testing.getLeaderboardElement(1000);
 
             // Check for new class based structure
-            expect(html).toContain('leaderboard-item current');
+            expect(el.innerHTML).toContain('leaderboard-item current');
         });
 
 
-        it('should remove existing leaderboard container to avoid duplicates', () => {
+        it('should replace children in existing leaderboard container to avoid duplicates', () => {
             const data = [{ score: 1000 }];
             vi.spyOn(window.localStorage, 'getItem').mockReturnValue(JSON.stringify(data));
 
@@ -321,12 +322,13 @@ describe('UI Overlay', () => {
             updateStartScreenLeaderboard();
             const lb1 = document.getElementById('startScreenLeaderboard');
             expect(lb1).not.toBeNull();
+            const originalChildCount = lb1!.children.length;
 
-            // Call second time - should replace
+            // Call second time - should replace children, not the container
             updateStartScreenLeaderboard();
             const lb2 = document.getElementById('startScreenLeaderboard');
-            expect(lb2).not.toBeNull();
-            expect(lb2).not.toBe(lb1); // Should be a new element
+            expect(lb2).toBe(lb1); // Should be the same element
+            expect(lb2!.children.length).toBe(originalChildCount); // Still has 1 child (the leaderboard box)
         });
     });
 });

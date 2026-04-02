@@ -16,24 +16,38 @@ export function updateArmyPosition(army: Army, targetX: number, canvasWidth: num
 }
 
 export function updateSoldierFormation(army: Army, dtFactor: number): void {
-  const aliveSoldiers = army.soldiers.filter(s => s.isAlive);
-  const count = aliveSoldiers.length;
-
+  let count = 0;
+  for (let i = 0; i < army.soldiers.length; i++) {
+      if (army.soldiers[i].isAlive) count++;
+  }
   if (count === 0) return;
 
   // Formação em círculos concêntricos compactos
-  let soldierIndex = 0;
+  let processedCount = 0;
+  let arrayIndex = 0;
   let ring = 0;
   const baseRadius = 10;
   const ringSpacing = 4; // Muito mais compacto para manter formato circular
+  const maxLen = army.soldiers.length;
 
-  while (soldierIndex < count) {
+  while (processedCount < count) {
     const ringRadius = baseRadius + ring * ringSpacing;
     // Primeiro anel tem 1, depois 6, 12, 18... soldados por anel
-    const soldiersInRing = ring === 0 ? 1 : Math.min(ring * 6, count - soldierIndex);
+    const soldiersInRing = ring === 0 ? 1 : Math.min(ring * 6, count - processedCount);
 
-    for (let i = 0; i < soldiersInRing && soldierIndex < count; i++) {
-      const soldier = aliveSoldiers[soldierIndex];
+    for (let i = 0; i < soldiersInRing && processedCount < count; i++) {
+      let soldier = null;
+      while (arrayIndex < maxLen) {
+        if (army.soldiers[arrayIndex].isAlive) {
+          soldier = army.soldiers[arrayIndex];
+          arrayIndex++;
+          break;
+        }
+        arrayIndex++;
+      }
+
+      if (!soldier) break;
+
       // Offset por anel para efeito espiral
       const angleOffset = ring * 0.5;
       const angle = ring === 0 ? 0 : (i / soldiersInRing) * Math.PI * 2 + angleOffset;
@@ -45,7 +59,7 @@ export function updateSoldierFormation(army: Army, dtFactor: number): void {
       soldier.x += (soldier.targetX - soldier.x) * 0.15 * dtFactor;
       soldier.y += (soldier.targetY - soldier.y) * 0.15 * dtFactor;
 
-      soldierIndex++;
+      processedCount++;
     }
     ring++;
   }
@@ -231,8 +245,17 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
     }
   }
 
-  // Remover mini-bosses inativos
-  entities.miniBosses = entities.miniBosses.filter(mb => mb.isActive && mb.y < 1000);
+  // Remover mini-bosses inativos ou fora da tela
+  for (let i = entities.miniBosses.length - 1; i >= 0; i--) {
+      const mb = entities.miniBosses[i];
+      if (!mb.isActive || mb.y >= 1000) {
+          // Fast remove
+          const last = entities.miniBosses.pop();
+          if (last && i < entities.miniBosses.length) {
+              entities.miniBosses[i] = last;
+          }
+      }
+  }
 
   // Mover bullets
   // REMOVIDO: A movimentação de bullets foi movida para updateBullets em shooting.ts
@@ -246,24 +269,38 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
 }
 
 // Atualizar formação circular da horda inimiga
-function updateHordeFormation(horde: { x: number; y: number; soldiers: { x: number; y: number; targetX: number; targetY: number; isAlive: boolean }[]; isActive: boolean }, speed: number, dtFactor: number): void {
-  const aliveSoldiers = horde.soldiers.filter(s => s.isAlive);
-  const count = aliveSoldiers.length;
-
+function updateHordeFormation(horde: { count?: number; x: number; y: number; soldiers: { x: number; y: number; targetX: number; targetY: number; isAlive: boolean }[]; isActive: boolean }, speed: number, dtFactor: number): void {
+  let count = 0;
+  for (let i = 0; i < horde.soldiers.length; i++) {
+      if (horde.soldiers[i].isAlive) count++;
+  }
   if (count === 0) return;
 
   // Formação em círculos concêntricos
-  let soldierIndex = 0;
+  let processedCount = 0;
+  let arrayIndex = 0;
   let ring = 0;
   const baseRadius = 20;
   const ringSpacing = 18;
+  const maxLen = horde.soldiers.length;
 
-  while (soldierIndex < count) {
+  while (processedCount < count) {
     const ringRadius = ring === 0 ? 0 : baseRadius + (ring - 1) * ringSpacing;
-    const soldiersInRing = ring === 0 ? 1 : Math.min(Math.floor(ring * 6), count - soldierIndex);
+    const soldiersInRing = ring === 0 ? 1 : Math.min(Math.floor(ring * 6), count - processedCount);
 
-    for (let i = 0; i < soldiersInRing && soldierIndex < count; i++) {
-      const soldier = aliveSoldiers[soldierIndex];
+    for (let i = 0; i < soldiersInRing && processedCount < count; i++) {
+      let soldier = null;
+      while (arrayIndex < maxLen) {
+        if (horde.soldiers[arrayIndex].isAlive) {
+          soldier = horde.soldiers[arrayIndex];
+          arrayIndex++;
+          break;
+        }
+        arrayIndex++;
+      }
+
+      if (!soldier) break;
+
       const angle = ring === 0 ? 0 : (i / soldiersInRing) * Math.PI * 2;
 
       soldier.targetX = horde.x + Math.cos(angle) * ringRadius;
@@ -273,7 +310,7 @@ function updateHordeFormation(horde: { x: number; y: number; soldiers: { x: numb
       soldier.x += (soldier.targetX - soldier.x) * 0.1 * dtFactor;
       soldier.y += (soldier.targetY - soldier.y) * 0.1 * dtFactor + speed;
 
-      soldierIndex++;
+      processedCount++;
     }
     ring++;
   }
