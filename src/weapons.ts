@@ -67,7 +67,15 @@ export function drawWeapon(ctx: CanvasRenderingContext2D, weapon: Weapon): void 
 
 export function spawnWeapons(entities: Entities, canvasWidth: number): void {
   // Remover armas que já passaram
-  entities.weapons = entities.weapons.filter(w => !w.passed && w.y < 1000);
+  for (let i = entities.weapons.length - 1; i >= 0; i--) {
+      const w = entities.weapons[i];
+      if (w.passed || w.y >= 1000) {
+          const last = entities.weapons.pop();
+          if (last && i < entities.weapons.length) {
+              entities.weapons[i] = last;
+          }
+      }
+  }
 
   // Spawnar novas armas ocasionalmente
   if (Math.random() < 0.01 && entities.weapons.length < 2) {

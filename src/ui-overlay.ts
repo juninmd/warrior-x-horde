@@ -11,14 +11,14 @@ let gameOverContainer: HTMLElement | null = null;
 // Buttons
 const buttons: Record<string, HTMLButtonElement> = {};
 
-function getLeaderboardHTML(currentScore: number = -1): string {
+function getLeaderboardElement(currentScore: number = -1): HTMLElement {
     let leaderboard = [];
     try {
         const parsed = JSON.parse(localStorage.getItem('crowdLeaderboard') || '[]');
         if (!Array.isArray(parsed)) {
             leaderboard = [];
         } else {
-            leaderboard = parsed.filter((entry: any) => entry && typeof entry === 'object' && typeof entry.score === 'number');
+            leaderboard = parsed.filter((entry: unknown) => entry && typeof entry === 'object' && typeof (entry as any).score === 'number');
         }
     } catch (e) {
         console.error('Failed to load leaderboard', e);
@@ -41,44 +41,56 @@ function getLeaderboardHTML(currentScore: number = -1): string {
         }
     }
 
-    const items = leaderboard.map((entry: { score: number }, index: number) => {
+    const box = document.createElement('div');
+    box.className = 'leaderboard-box';
+
+    const title = document.createElement('h3');
+    title.className = 'leaderboard-title';
+    title.textContent = 'Top Commanders';
+    box.appendChild(title);
+
+    const list = document.createElement('div');
+    list.className = 'leaderboard-list';
+    box.appendChild(list);
+
+    leaderboard.forEach((entry: { score: number }, index: number) => {
         let safeScore = Number(entry.score);
         /* v8 ignore start */
         if (isNaN(safeScore) || !isFinite(safeScore)) safeScore = 0;
         /* v8 ignore stop */
         safeScore = Math.floor(safeScore);
 
-        // Explicitly set safeScore to 0 if it's 0 to pass tests easily without string conversions later
-        // Tests check for ">0</div>" or "0</div>", so making sure we render '0' exactly as expected.
         const isCurrent = safeScore === currentScore;
-        const currentClass = isCurrent ? 'current' : '';
-        const rankClass = index === 0 ? 'rank-1' : (index === 1 ? 'rank-2' : (index === 2 ? 'rank-3' : ''));
+
+        const item = document.createElement('div');
+        item.className = 'leaderboard-item';
+        if (isCurrent) item.classList.add('current');
+        if (index === 0) item.classList.add('rank-1');
+        if (index === 1) item.classList.add('rank-2');
+        if (index === 2) item.classList.add('rank-3');
+        item.style.animationDelay = `${index * 0.1}s`;
 
         let rankIcon = `#${index + 1}`;
         if (index === 0) rankIcon = '🥇';
         if (index === 1) rankIcon = '🥈';
         if (index === 2) rankIcon = '🥉';
 
-        const delay = index * 0.1;
-        /* v8 ignore start */
-        const scoreDisplay = safeScore === 0 ? '0' : safeScore.toLocaleString('pt-BR');
-        /* v8 ignore stop */
-        return `
-        <div class="leaderboard-item ${currentClass} ${rankClass}" style="animation-delay: ${delay}s;">
-            <div class="rank-col">${rankIcon}</div>
-            <div class="score-col">${scoreDisplay}</div>
-        </div>
-        `;
-    }).join('');
+        const rankCol = document.createElement('div');
+        rankCol.className = 'rank-col';
+        rankCol.textContent = rankIcon;
 
-    return `
-    <div class="leaderboard-box">
-        <h3 class="leaderboard-title">Top Commanders</h3>
-        <div class="leaderboard-list">
-            ${items}
-        </div>
-    </div>
-    `;
+        const scoreCol = document.createElement('div');
+        scoreCol.className = 'score-col';
+        /* v8 ignore start */
+        scoreCol.textContent = safeScore === 0 ? '0' : safeScore.toLocaleString('pt-BR');
+        /* v8 ignore stop */
+
+        item.appendChild(rankCol);
+        item.appendChild(scoreCol);
+        list.appendChild(item);
+    });
+
+    return box;
 }
 
 export function updateStartScreenLeaderboard(): void {
@@ -86,20 +98,19 @@ export function updateStartScreenLeaderboard(): void {
     if (!startScreenContent) return;
 
     let lbContainer = document.getElementById('startScreenLeaderboard');
-    if (lbContainer) lbContainer.remove();
+    if (!lbContainer) {
+        lbContainer = document.createElement('div');
+        lbContainer.id = 'startScreenLeaderboard';
 
-    const lbHTML = getLeaderboardHTML();
-
-    lbContainer = document.createElement('div');
-    lbContainer.id = 'startScreenLeaderboard';
-    lbContainer.innerHTML = lbHTML;
-
-    const btn = startScreenContent.querySelector('.start-btn');
-    if (btn) {
-        startScreenContent.insertBefore(lbContainer, btn);
-    } else {
-        startScreenContent.appendChild(lbContainer);
+        const btn = startScreenContent.querySelector('.start-btn');
+        if (btn) {
+            startScreenContent.insertBefore(lbContainer, btn);
+        } else {
+            startScreenContent.appendChild(lbContainer);
+        }
     }
+
+    lbContainer.replaceChildren(getLeaderboardElement());
 
     const logo = startScreenContent.querySelector('.game-logo');
     if (logo) {
@@ -347,10 +358,10 @@ export function showGameOverScreen(gameState: GameState): void {
     content.style.borderColor = titleColor;
     content.style.boxShadow = `0 0 30px ${isVictory ? 'rgba(46, 204, 113, 0.3)' : 'rgba(231, 76, 60, 0.3)'}`;
 
-    const leaderboardHTML = getLeaderboardHTML(gameState.score);
+    const leaderboardEl = getLeaderboardElement(gameState.score);
     const timeStr = new Date(Date.now() - gameState.runStartTime).toISOString().substr(14, 5);
 
-    content.innerHTML = '';
+    content.replaceChildren();
 
     if (gameState.score > gameState.highScore) {
         const recordBanner = document.createElement('div');
@@ -443,9 +454,7 @@ export function showGameOverScreen(gameState: GameState): void {
 
     content.appendChild(statsContainer);
 
-    const leaderboardDiv = document.createElement('div');
-    leaderboardDiv.innerHTML = leaderboardHTML;
-    content.appendChild(leaderboardDiv);
+    content.appendChild(leaderboardEl);
 
     if (gameState.deferredInstallPrompt) {
         const installBtn = document.createElement('button');
@@ -619,7 +628,7 @@ export function createPauseModal(
 }
 
 export const _testing = {
-    getLeaderboardHTML,
+    getLeaderboardElement,
     resetContainers: () => {
         shopContainer = null;
         superCannonContainer = null;

@@ -476,7 +476,7 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
           const safeAvgHp = avgHp > 0 ? avgHp : 1;
 
           const targetAliveCount = Math.max(0, Math.ceil(horde.hp / safeAvgHp));
-          const currentAlive = horde.soldiers.filter(s => s.isAlive).length;
+          const currentAlive = horde.count;
 
           if (currentAlive > targetAliveCount) {
               // Kill the difference

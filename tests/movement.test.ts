@@ -55,6 +55,7 @@ describe('Movement', () => {
             const s1 = { x: 100, y: 700, targetX: 100, targetY: 700, isAlive: true, size: 10 };
             const s2 = { x: 100, y: 700, targetX: 100, targetY: 700, isAlive: true, size: 10 };
             entities.playerArmy.soldiers = [s1, s2] as any;
+            entities.playerArmy.aliveCount = 2;
             entities.playerArmy.centerX = 100;
             entities.playerArmy.centerY = 700;
 
