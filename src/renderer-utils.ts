@@ -1,5 +1,5 @@
 // renderer-utils.ts - Shared rendering helpers
-import { COLORS, FONT_FAMILY } from './constants';
+import { FONT_FAMILY } from './constants';
 import { virtualJoystick } from './input-state';
 import { QualityManager } from './quality';
 
