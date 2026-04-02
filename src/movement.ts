@@ -16,10 +16,7 @@ export function updateArmyPosition(army: Army, targetX: number, canvasWidth: num
 }
 
 export function updateSoldierFormation(army: Army, dtFactor: number): void {
-  let count = 0;
-  for (let i = 0; i < army.soldiers.length; i++) {
-      if (army.soldiers[i].isAlive) count++;
-  }
+  const count = army.aliveCount;
   if (count === 0) return;
 
   // Formação em círculos concêntricos compactos
@@ -251,8 +248,8 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
       if (!mb.isActive || mb.y >= 1000) {
           // Fast remove
           const last = entities.miniBosses.pop();
-          if (last && i < entities.miniBosses.length) {
-              entities.miniBosses[i] = last;
+          if (i < entities.miniBosses.length) {
+            entities.miniBosses[i] = last!;
           }
       }
   }
@@ -270,10 +267,7 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
 
 // Atualizar formação circular da horda inimiga
 function updateHordeFormation(horde: { count?: number; x: number; y: number; soldiers: { x: number; y: number; targetX: number; targetY: number; isAlive: boolean }[]; isActive: boolean }, speed: number, dtFactor: number): void {
-  let count = 0;
-  for (let i = 0; i < horde.soldiers.length; i++) {
-      if (horde.soldiers[i].isAlive) count++;
-  }
+  const count = horde.count || 0;
   if (count === 0) return;
 
   // Formação em círculos concêntricos
