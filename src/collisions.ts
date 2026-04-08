@@ -469,26 +469,38 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
   }
 
   // Bullet vs Mystery Box interaction
+  let hasActiveBox = false;
   for (let i = 0; i < entities.mysteryBoxes.length; i++) {
     const box = entities.mysteryBoxes[i];
     if (box && !box.passed) {
-       for (let j = 0; j < entities.bullets.length; j++) {
-         const bullet = entities.bullets[j];
-         if (bullet.y < box.y || bullet.y > box.y + box.height) continue;
+      hasActiveBox = true;
+      break;
+    }
+  }
 
-         if (!bullet.isEnemy &&
-             bullet.x > box.x && bullet.x < box.x + box.width) {
+  if (hasActiveBox) {
+    for (let j = 0; j < entities.bullets.length; j++) {
+      const bullet = entities.bullets[j];
+      if (bullet.isEnemy) continue;
 
-           box.hp -= bullet.damage;
-           bullet.y = -1000;
+      for (let i = 0; i < entities.mysteryBoxes.length; i++) {
+        const box = entities.mysteryBoxes[i];
+        if (!box || box.passed) continue;
 
-           if (box.hp <= 0 && !box.passed) {
-             box.passed = true;
-             addExplosion(box.x + box.width/2, box.y + box.height/2, '#FFFFFF');
-             addFloatingText('DESTROYED!', box.x, box.y, '#FFFFFF');
-           }
-         }
-       }
+        if (bullet.y >= box.y && bullet.y <= box.y + box.height &&
+            bullet.x > box.x && bullet.x < box.x + box.width) {
+
+          box.hp -= bullet.damage;
+          bullet.y = -1000;
+
+          if (box.hp <= 0 && !box.passed) {
+            box.passed = true;
+            addExplosion(box.x + box.width/2, box.y + box.height/2, '#FFFFFF');
+            addFloatingText('DESTROYED!', box.x, box.y, '#FFFFFF');
+          }
+          break; // Bullet is destroyed, no need to check other boxes
+        }
+      }
     }
   }
 
