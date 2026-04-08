@@ -323,7 +323,9 @@ export function fixedUpdate(dt: number): void {
               entity.hitTimer -= dtFactor;
           } else {
               // Fast remove when timer expires or becomes undefined
-              activeHits[i] = activeHits[activeHits.length - 1];
+              if (i !== activeHits.length - 1) {
+                  activeHits[i] = activeHits[activeHits.length - 1];
+              }
               activeHits.pop();
           }
       }
@@ -335,7 +337,9 @@ export function fixedUpdate(dt: number): void {
   if (pSoldiers) {
       for (let i = 0; i < pSoldiers.length; i++) {
           const s = pSoldiers[i];
-          if (s.hitTimer !== undefined && s.hitTimer > 0) s.hitTimer -= dtFactor;
+          if (s.hitTimer !== undefined && s.hitTimer > 0) {
+              s.hitTimer -= dtFactor;
+          }
       }
   }
 
