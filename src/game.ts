@@ -554,7 +554,10 @@ function gameLoop(currentTime: number = 0): void {
     // Salvar Leaderboard
     try {
         const leaderboardStr = localStorage.getItem('crowdLeaderboard') || '[]';
-        const leaderboard = JSON.parse(leaderboardStr);
+        let leaderboard = JSON.parse(leaderboardStr);
+        if (!Array.isArray(leaderboard)) {
+            leaderboard = [];
+        }
         leaderboard.push({ score: gameState.score, date: Date.now() });
         leaderboard.sort((a: { score: number }, b: { score: number }) => b.score - a.score);
         // Manter top 5
