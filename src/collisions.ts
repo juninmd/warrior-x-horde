@@ -481,7 +481,7 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
   if (hasActiveBox) {
     for (let j = 0; j < entities.bullets.length; j++) {
       const bullet = entities.bullets[j];
-      if (bullet.isEnemy) continue;
+      if (bullet.isEnemy || bullet.y < -500) continue;
 
       for (let i = 0; i < entities.mysteryBoxes.length; i++) {
         const box = entities.mysteryBoxes[i];
