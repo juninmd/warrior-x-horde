@@ -557,6 +557,9 @@ function gameLoop(currentTime: number = 0): void {
         let leaderboard = JSON.parse(leaderboardStr);
         if (!Array.isArray(leaderboard)) {
             leaderboard = [];
+        } else {
+            // Sanitize existing entries to prevent crashes during sort
+            leaderboard = leaderboard.filter((entry: any) => entry && typeof entry === 'object' && typeof entry.score === 'number');
         }
         leaderboard.push({ score: gameState.score, date: Date.now() });
         leaderboard.sort((a: { score: number }, b: { score: number }) => b.score - a.score);
