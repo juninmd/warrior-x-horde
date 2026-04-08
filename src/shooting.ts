@@ -452,6 +452,10 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
         if (horde.isActive && soldier.isAlive && checkBulletSoldierCollision(bullet, soldier)) {
           // SHARED HP LOGIC: Damage the Horde
           horde.hp -= bullet.damage;
+
+          if (!soldier.hitTimer || soldier.hitTimer <= 0) {
+              gameState.activeHitEntities?.push(soldier);
+          }
           soldier.hitTimer = 5;
 
           // Critical Hit Text
@@ -542,6 +546,9 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
             bullet.y > miniBoss.y && bullet.y < miniBoss.y + miniBoss.height) {
 
           miniBoss.hp -= bullet.damage;
+          if (!miniBoss.hitTimer || miniBoss.hitTimer <= 0) {
+              gameState.activeHitEntities?.push(miniBoss);
+          }
           miniBoss.hitTimer = 5;
           addExplosion(bullet.x, bullet.y, '#FF4500');
 
@@ -592,6 +599,9 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
 
       if (hitBoss) {
         boss.hp -= bullet.damage;
+        if (!boss.hitTimer || boss.hitTimer <= 0) {
+            gameState.activeHitEntities?.push(boss);
+        }
         boss.hitTimer = 5;
         bulletPool.release(bullet);
         fastRemove(entities.bullets, i);

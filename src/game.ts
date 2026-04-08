@@ -314,22 +314,33 @@ export function fixedUpdate(dt: number): void {
     gameState.whiteFlash = Math.max(0, gameState.whiteFlash - 0.02 * dtFactor);
   }
 
-  // Update Entity Hit Timers
-  entities.playerArmy?.soldiers?.forEach(s => {
-      if (s.hitTimer !== undefined && s.hitTimer > 0) s.hitTimer -= dtFactor;
-  });
-  entities.enemyHordes?.forEach(h => {
-      if (h.isActive) {
-          h.soldiers?.forEach(s => {
-              if (s.hitTimer !== undefined && s.hitTimer > 0) s.hitTimer -= dtFactor;
-          });
+  // Update Entity Hit Timers using O(K) tracking for enemies/bosses
+  const activeHits = gameState.activeHitEntities;
+  if (activeHits) {
+      for (let i = activeHits.length - 1; i >= 0; i--) {
+          const entity = activeHits[i];
+          if (entity.hitTimer !== undefined && entity.hitTimer > 0) {
+              entity.hitTimer -= dtFactor;
+          } else {
+              // Fast remove when timer expires or becomes undefined
+              if (i !== activeHits.length - 1) {
+                  activeHits[i] = activeHits[activeHits.length - 1];
+              }
+              activeHits.pop();
+          }
       }
-  });
-  entities.miniBosses?.forEach(mb => {
-      if (mb.isActive && mb.hitTimer !== undefined && mb.hitTimer > 0) mb.hitTimer -= dtFactor;
-  });
-  if (entities.boss && entities.boss.isActive && entities.boss.hitTimer !== undefined && entities.boss.hitTimer > 0) {
-      entities.boss.hitTimer -= dtFactor;
+  }
+
+  // Update Player Army hit timers using fast O(N) loop
+  // (Ensures any explicitly/implicitly set timers on player soldiers decrement)
+  const pSoldiers = entities.playerArmy?.soldiers;
+  if (pSoldiers) {
+      for (let i = 0; i < pSoldiers.length; i++) {
+          const s = pSoldiers[i];
+          if (s.hitTimer !== undefined && s.hitTimer > 0) {
+              s.hitTimer -= dtFactor;
+          }
+      }
   }
 
   // Update Kill Streak

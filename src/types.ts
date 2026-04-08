@@ -31,6 +31,7 @@ export interface Trail {
 export interface GameState {
   isGameOver: boolean;
   isVictory: boolean;
+  activeHitEntities: (Soldier | MiniBoss | Boss)[];
   isStarted: boolean;
   isPaused: boolean;
   currentLevel: number;

@@ -54,6 +54,7 @@ export const gameState: GameState = {
     comboTier: 0,
     currentRank: 'D',
   deferredInstallPrompt: null,
+  activeHitEntities: [],
 };
 
 export function resetGameState(): void {
@@ -92,6 +93,7 @@ export function resetGameState(): void {
   gameState.nearMissCount = 0;
   gameState.runStartTime = Date.now();
   gameState.whiteFlash = 0;
+  gameState.activeHitEntities = [];
   // Do not reset deferredInstallPrompt as it persists across games
 }
 
