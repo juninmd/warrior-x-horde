@@ -192,11 +192,12 @@ const handleBuy: BuyAction = (type, cost) => {
 
           // 2. Kill all normal hordes
           /* v8 ignore start */
-          entities.enemyHordes.forEach(h => {
+          for (let i = 0; i < entities.enemyHordes.length; i++) {
+            const h = entities.enemyHordes[i];
             if (h.isActive) {
               h.isActive = false;
             }
-          });
+          }
           /* v8 ignore stop */
 
           // 3. Clear Bullets
@@ -213,12 +214,13 @@ const handleBuy: BuyAction = (type, cost) => {
 
           // 5. Massive Damage to MiniBosses
           /* v8 ignore start */
-          entities.miniBosses.forEach(mb => {
+          for (let i = 0; i < entities.miniBosses.length; i++) {
+            const mb = entities.miniBosses[i];
             if (mb.isActive) {
               mb.hp -= 5000;
               addFloatingText('-5000', mb.x + mb.width/2, mb.y, '#FF0000', 1.5);
             }
-          });
+          }
           /* v8 ignore stop */
 
         } else if (type === 'soldier') {
