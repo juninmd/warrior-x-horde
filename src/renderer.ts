@@ -3,7 +3,7 @@ import { Entities, GameState, FloatingText, Army, EnemyHorde, Gate, Bullet, Part
 import { ObjectPool } from './pool';
 import { shadeColor, getBiomeColors, fastRemove } from './utils';
 import { COLORS, MAX_PARTICLES, MAX_RENDERED_SOLDIERS, ThemeConfig, BASE_WIDTH, BASE_HEIGHT, FONT_FAMILY } from './constants';
-import { drawGlassBadge, drawStar, drawJoystick, getComboColor } from './renderer-utils';
+import { safeAddColorStop, drawGlassBadge, drawStar, drawJoystick, getComboColor } from './renderer-utils';
 import { drawBoss } from './renderer-boss';
 import { QualityManager } from './quality';
 
@@ -151,8 +151,8 @@ function renderBulletToCache(isEnemy: boolean) {
   const colorCore = isEnemy ? '#E74C3C' : '#FFF';
 
   const gradient = ctx.createRadialGradient(center, center, 0, center, center, size);
-  gradient.addColorStop(0, colorMain);
-  gradient.addColorStop(1, 'rgba(255, 215, 0, 0)');
+  safeAddColorStop(gradient, 0, colorMain);
+  safeAddColorStop(gradient, 1, 'rgba(255, 215, 0, 0)');
   ctx.fillStyle = gradient;
   ctx.beginPath();
   ctx.arc(center, center, size, 0, Math.PI * 2);
@@ -225,8 +225,8 @@ function renderSoldierShape(ctx: CanvasRenderingContext2D | OffscreenCanvasRende
   let bodyFill: string | CanvasGradient = color;
   if (!isFlash && !quality.simplifiedRendering) {
       const bodyGradient = ctx.createRadialGradient(x - actualSize * 0.2, y - actualSize * 0.2, 0, x, y, actualSize);
-      bodyGradient.addColorStop(0, color);
-      bodyGradient.addColorStop(1, shadeColor(color, -30));
+      safeAddColorStop(bodyGradient, 0, color);
+      safeAddColorStop(bodyGradient, 1, shadeColor(color, -30));
       bodyFill = bodyGradient;
   }
 
@@ -291,11 +291,11 @@ function renderSoldierShape(ctx: CanvasRenderingContext2D | OffscreenCanvasRende
   } else {
     const headGradient = ctx.createRadialGradient(x - actualSize * 0.1, y - actualSize * 0.6, 0, x, y - actualSize * 0.5, actualSize * 0.4);
     if (isPlayer) {
-        headGradient.addColorStop(0, '#FFE4C4');
-        headGradient.addColorStop(1, '#DEB887');
+        safeAddColorStop(headGradient, 0, '#FFE4C4');
+        safeAddColorStop(headGradient, 1, '#DEB887');
     } else {
-        headGradient.addColorStop(0, '#90EE90');
-        headGradient.addColorStop(1, '#2E8B57');
+        safeAddColorStop(headGradient, 0, '#90EE90');
+        safeAddColorStop(headGradient, 1, '#2E8B57');
     }
     headFill = headGradient;
   }
@@ -569,9 +569,9 @@ function drawParticles(ctx: CanvasRenderingContext2D): void {
         const alpha = Math.min(1, p.life * 2); // Fade out
         const width = p.size * (1 + (1.5 - p.life)); // Expand slightly
         const gradient = ctx.createLinearGradient(p.x - width/2, 0, p.x + width/2, 0);
-        gradient.addColorStop(0, `rgba(255, 255, 200, 0)`);
-        gradient.addColorStop(0.5, `rgba(255, 255, 200, ${alpha * 0.8})`);
-        gradient.addColorStop(1, `rgba(255, 255, 200, 0)`);
+        safeAddColorStop(gradient, 0, `rgba(255, 255, 200, 0)`);
+        safeAddColorStop(gradient, 0.5, `rgba(255, 255, 200, ${alpha * 0.8})`);
+        safeAddColorStop(gradient, 1, `rgba(255, 255, 200, 0)`);
 
         ctx.fillStyle = gradient;
         ctx.fillRect(p.x - width/2, 0, width, BASE_HEIGHT);
@@ -753,8 +753,8 @@ const HORIZON_RATIO = 0.22;
 function drawSky(ctx: CanvasRenderingContext2D, width: number, height: number, theme: ThemeConfig): void {
   const horizonY = height * HORIZON_RATIO;
   const skyGradient = ctx.createLinearGradient(0, 0, 0, horizonY);
-  skyGradient.addColorStop(0, theme.colors.sky[0]);
-  skyGradient.addColorStop(1, theme.colors.sky[1]);
+  safeAddColorStop(skyGradient, 0, theme.colors.sky[0]);
+  safeAddColorStop(skyGradient, 1, theme.colors.sky[1]);
   ctx.fillStyle = skyGradient;
   ctx.fillRect(0, 0, width, horizonY + 10);
 }
@@ -767,10 +767,10 @@ function drawCelestialBody(ctx: CanvasRenderingContext2D, width: number, height:
 
   if (theme.celestial.type === 'sun') {
     const sunGlow = ctx.createRadialGradient(x, y, 0, x, y, 60);
-    sunGlow.addColorStop(0, theme.celestial.color);
-    sunGlow.addColorStop(0.2, shadeColor(theme.celestial.color, 20));
-    sunGlow.addColorStop(0.5, 'rgba(255, 255, 255, 0.2)');
-    sunGlow.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    safeAddColorStop(sunGlow, 0, theme.celestial.color);
+    safeAddColorStop(sunGlow, 0.2, shadeColor(theme.celestial.color, 20));
+    safeAddColorStop(sunGlow, 0.5, 'rgba(255, 255, 255, 0.2)');
+    safeAddColorStop(sunGlow, 1, 'rgba(255, 255, 255, 0)');
     ctx.fillStyle = sunGlow;
     ctx.beginPath();
     ctx.arc(x, y, 60, 0, Math.PI * 2);
@@ -838,8 +838,8 @@ function drawGround(ctx: CanvasRenderingContext2D, width: number, height: number
   const horizonY = height * HORIZON_RATIO;
 
   const groundGradient = ctx.createLinearGradient(0, horizonY, 0, height);
-  groundGradient.addColorStop(0, theme.colors.ground[0]);
-  groundGradient.addColorStop(1, theme.colors.ground[1]);
+  safeAddColorStop(groundGradient, 0, theme.colors.ground[0]);
+  safeAddColorStop(groundGradient, 1, theme.colors.ground[1]);
   ctx.fillStyle = groundGradient;
   ctx.fillRect(0, horizonY, width, height - horizonY);
 
@@ -918,8 +918,8 @@ function drawRoadSurface(ctx: CanvasRenderingContext2D, width: number, height: n
 
   // Road Asphalt
   const roadGradient = ctx.createLinearGradient(0, roadStartY, 0, height);
-  roadGradient.addColorStop(0, theme.colors.road[0]);
-  roadGradient.addColorStop(1, theme.colors.road[1]);
+  safeAddColorStop(roadGradient, 0, theme.colors.road[0]);
+  safeAddColorStop(roadGradient, 1, theme.colors.road[1]);
 
   ctx.fillStyle = roadGradient;
   ctx.beginPath();
@@ -1345,8 +1345,8 @@ function drawVignette(ctx: CanvasRenderingContext2D, width: number, height: numb
     if (!QualityManager.getInstance().settings.enablePostProcessing) return;
 
     const gradient = ctx.createRadialGradient(width/2, height/2, height * 0.4, width/2, height/2, height * 0.85);
-    gradient.addColorStop(0, 'rgba(0,0,0,0)');
-    gradient.addColorStop(1, 'rgba(0,0,0,0.6)');
+    safeAddColorStop(gradient, 0, 'rgba(0,0,0,0)');
+    safeAddColorStop(gradient, 1, 'rgba(0,0,0,0.6)');
 
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
@@ -1655,8 +1655,9 @@ function renderGateToCache(gate: Gate): void {
       const glowY = y + height / 2;
       const glowRadius = width * 0.8;
       const glow = ctx.createRadialGradient(glowX, glowY, 0, glowX, glowY, glowRadius);
-      glow.addColorStop(0, `${gate.color}66`); // 40% opacity
-      glow.addColorStop(1, `${gate.color}00`); // 0% opacity
+      const glowColor = gate.color.startsWith('#') ? gate.color : '#FFFFFF';
+      safeAddColorStop(glow, 0, `${glowColor}66`); // 40% opacity
+      safeAddColorStop(glow, 1, `${glowColor}00`); // 0% opacity
 
       ctx.fillStyle = glow;
       ctx.fillRect(x - 20, y - 20, width + 40, height + 40);

@@ -3,6 +3,24 @@ import { COLORS, FONT_FAMILY } from './constants';
 import { virtualJoystick } from './input-state';
 import { QualityManager } from './quality';
 
+// --- Utility Helpers ---
+
+/**
+ * Adiciona um color stop de forma segura, evitando DOMException por cores inválidas.
+ */
+export function safeAddColorStop(gradient: CanvasGradient, offset: number, color: string | undefined): void {
+  try {
+    if (!color || color === 'undefined' || color.includes('NaN')) {
+      gradient.addColorStop(offset, 'rgba(0,0,0,0)');
+      return;
+    }
+    gradient.addColorStop(offset, color);
+  } catch (e) {
+    console.warn(`[Canvas] Invalid color stop: ${color}`, e);
+    gradient.addColorStop(offset, 'rgba(0,0,0,0)');
+  }
+}
+
 // --- UI Drawing Helpers ---
 
 export function drawGlassBadge(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, text: string, accentColor: string, fontSize: number = 14): void {

@@ -1,5 +1,6 @@
 // renderer-boss.ts - Boss specific rendering logic
 import { Boss } from './types';
+import { safeAddColorStop } from './renderer-utils';
 
 // Boss final - Nave Mãe Alienígena (Scarier version)
 export function drawMothershipBoss(ctx: CanvasRenderingContext2D, boss: Boss, time: number): void {
@@ -15,9 +16,9 @@ export function drawMothershipBoss(ctx: CanvasRenderingContext2D, boss: Boss, ti
   // Aura de Tensão (Dark Void)
   const voidRadius = 250 + Math.sin(time * 0.003) * 20;
   const voidGlow = ctx.createRadialGradient(x, shipY, 50, x, shipY, voidRadius);
-  voidGlow.addColorStop(0, 'rgba(0, 0, 0, 0.8)');
-  voidGlow.addColorStop(0.5, 'rgba(20, 0, 40, 0.4)');
-  voidGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  safeAddColorStop(voidGlow, 0, 'rgba(0, 0, 0, 0.8)');
+  safeAddColorStop(voidGlow, 0.5, 'rgba(20, 0, 40, 0.4)');
+  safeAddColorStop(voidGlow, 1, 'rgba(0, 0, 0, 0)');
   ctx.fillStyle = voidGlow;
   ctx.beginPath();
   ctx.arc(x, shipY, voidRadius, 0, Math.PI * 2);
@@ -41,8 +42,8 @@ export function drawMothershipBoss(ctx: CanvasRenderingContext2D, boss: Boss, ti
   // Aura de dano (vermelha pulsante crítica)
   if (boss.hp < boss.maxHp * 0.5) {
     const damageAura = ctx.createRadialGradient(x, shipY, 0, x, shipY, 120);
-    damageAura.addColorStop(0, `rgba(255, 0, 0, ${0.4 + damageFlash})`);
-    damageAura.addColorStop(1, 'rgba(255, 0, 0, 0)');
+    safeAddColorStop(damageAura, 0, `rgba(255, 0, 0, ${0.4 + damageFlash})`);
+    safeAddColorStop(damageAura, 1, 'rgba(255, 0, 0, 0)');
     ctx.fillStyle = damageAura;
     ctx.beginPath();
     ctx.arc(x, shipY, 120, 0, Math.PI * 2);
@@ -51,11 +52,11 @@ export function drawMothershipBoss(ctx: CanvasRenderingContext2D, boss: Boss, ti
 
   // Corpo principal da nave (disco) - Mais escuro e sinistro
   const bodyGradient = ctx.createLinearGradient(x - 90, shipY - 25, x + 90, shipY + 25);
-  bodyGradient.addColorStop(0, '#000000');
-  bodyGradient.addColorStop(0.3, '#1a0b2e'); // Roxo muito escuro
-  bodyGradient.addColorStop(0.5, '#2e0b3d');
-  bodyGradient.addColorStop(0.7, '#1a0b2e');
-  bodyGradient.addColorStop(1, '#000000');
+  safeAddColorStop(bodyGradient, 0, '#000000');
+  safeAddColorStop(bodyGradient, 0.3, '#1a0b2e'); // Roxo muito escuro
+  safeAddColorStop(bodyGradient, 0.5, '#2e0b3d');
+  safeAddColorStop(bodyGradient, 0.7, '#1a0b2e');
+  safeAddColorStop(bodyGradient, 1, '#000000');
   ctx.fillStyle = bodyGradient;
   ctx.beginPath();
   ctx.ellipse(x, shipY, 90, 25, 0, 0, Math.PI * 2);
@@ -78,9 +79,9 @@ export function drawMothershipBoss(ctx: CanvasRenderingContext2D, boss: Boss, ti
     `rgba(255, ${255 * Math.abs(Math.sin(time * 0.05))}, 255, 1)` : '#ff0000'; // Vermelho puro ou branco piscando
 
   const domeGradient = ctx.createRadialGradient(x, shipY - 15, 0, x, shipY - 15, 30);
-  domeGradient.addColorStop(0, '#ffcccc');
-  domeGradient.addColorStop(0.3, domeColor);
-  domeGradient.addColorStop(1, '#330000');
+  safeAddColorStop(domeGradient, 0, '#ffcccc');
+  safeAddColorStop(domeGradient, 0.3, domeColor);
+  safeAddColorStop(domeGradient, 1, '#330000');
 
   ctx.fillStyle = domeGradient;
   ctx.beginPath();
@@ -165,14 +166,14 @@ export function drawMothershipBoss(ctx: CanvasRenderingContext2D, boss: Boss, ti
   const hpPercent = boss.hp / boss.maxHp;
   const hpGradient = ctx.createLinearGradient(barX, barY, barX + barWidth, barY);
   if (hpPercent > 0.5) {
-    hpGradient.addColorStop(0, '#00FF88');
-    hpGradient.addColorStop(1, '#00CC66');
+    safeAddColorStop(hpGradient, 0, '#00FF88');
+    safeAddColorStop(hpGradient, 1, '#00CC66');
   } else if (hpPercent > 0.25) {
-    hpGradient.addColorStop(0, '#FFAA00');
-    hpGradient.addColorStop(1, '#FF8800');
+    safeAddColorStop(hpGradient, 0, '#FFAA00');
+    safeAddColorStop(hpGradient, 1, '#FF8800');
   } else {
-    hpGradient.addColorStop(0, '#FF4444');
-    hpGradient.addColorStop(1, '#CC0000');
+    safeAddColorStop(hpGradient, 0, '#FF4444');
+    safeAddColorStop(hpGradient, 1, '#CC0000');
   }
 
   ctx.fillStyle = hpGradient;
@@ -300,8 +301,8 @@ export function drawBossDemon(ctx: CanvasRenderingContext2D, boss: Boss, time: n
 
   // Aura de fogo
   const gradient = ctx.createRadialGradient(cx, cy, 30, cx, cy, 70 + pulse);
-  gradient.addColorStop(0, '#FFA500');
-  gradient.addColorStop(1, 'rgba(255, 0, 0, 0)');
+  safeAddColorStop(gradient, 0, '#FFA500');
+  safeAddColorStop(gradient, 1, 'rgba(255, 0, 0, 0)');
   ctx.fillStyle = gradient;
   ctx.beginPath();
   ctx.arc(cx, cy, 70 + pulse, 0, Math.PI * 2);
@@ -556,8 +557,8 @@ export function drawBoss(ctx: CanvasRenderingContext2D, boss: Boss, time: number
 
   // Vida
   const hpGradient = ctx.createLinearGradient(barX, barY, barX + barWidth, barY);
-  hpGradient.addColorStop(0, '#E74C3C');
-  hpGradient.addColorStop(1, '#C0392B');
+  safeAddColorStop(hpGradient, 0, '#E74C3C');
+  safeAddColorStop(hpGradient, 1, '#C0392B');
 
   ctx.fillStyle = hpGradient;
   ctx.beginPath();
