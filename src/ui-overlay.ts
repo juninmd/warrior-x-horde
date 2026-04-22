@@ -154,7 +154,16 @@ function createShopButton(type: string, price: number, color: string, label: str
   btn.style.borderColor = color;
   btn.style.borderBottomColor = color; // Maintain the colored border
 
-  btn.innerHTML = `<span class="shop-icon" style="filter: drop-shadow(0 0 5px ${color});">${label}</span><span class="shop-price">💰 ${price}</span>`;
+  const iconSpan = document.createElement('span');
+  iconSpan.className = 'shop-icon';
+  iconSpan.style.filter = `drop-shadow(0 0 5px ${color})`;
+  iconSpan.textContent = label;
+
+  const priceSpan = document.createElement('span');
+  priceSpan.className = 'shop-price';
+  priceSpan.textContent = `💰 ${price.toLocaleString('pt-BR')}`;
+
+  btn.append(iconSpan, priceSpan);
 
   btn.addEventListener('pointerdown', () => {
       // transform handled by CSS :active, but scale logic was JS based before.
@@ -189,11 +198,23 @@ export function setupShopUI(onBuy: BuyAction): void {
     const btn = createShopButton(cfg.type, cfg.price, cfg.color, cfg.label);
 
     if (cfg.id === 'soldier') {
-         btn.innerHTML = `<span class="shop-icon">🛡️</span><span class="shop-label">+10 UNITS</span><span class="shop-price">💰 ${cfg.price}</span>`;
+         btn.replaceChildren();
+         const iSpan = document.createElement('span'); iSpan.className = 'shop-icon'; iSpan.textContent = '🛡️';
+         const lSpan = document.createElement('span'); lSpan.className = 'shop-label'; lSpan.textContent = '+10 UNITS';
+         const pSpan = document.createElement('span'); pSpan.className = 'shop-price'; pSpan.textContent = `💰 ${cfg.price.toLocaleString('pt-BR')}`;
+         btn.append(iSpan, lSpan, pSpan);
     } else if (cfg.id === 'nuke') {
-         btn.innerHTML = `<span class="shop-icon">☢️</span><span class="shop-label">NUKE</span><span class="shop-price">💰 ${cfg.price}</span>`;
+         btn.replaceChildren();
+         const iSpan = document.createElement('span'); iSpan.className = 'shop-icon'; iSpan.textContent = '☢️';
+         const lSpan = document.createElement('span'); lSpan.className = 'shop-label'; lSpan.textContent = 'NUKE';
+         const pSpan = document.createElement('span'); pSpan.className = 'shop-price'; pSpan.textContent = `💰 ${cfg.price.toLocaleString('pt-BR')}`;
+         btn.append(iSpan, lSpan, pSpan);
     } else if (cfg.id === 'recharge') {
-         btn.innerHTML = `<span class="shop-icon">🔋</span><span class="shop-label">RECARGA</span><span class="shop-price">💰 ${cfg.price}</span>`;
+         btn.replaceChildren();
+         const iSpan = document.createElement('span'); iSpan.className = 'shop-icon'; iSpan.textContent = '🔋';
+         const lSpan = document.createElement('span'); lSpan.className = 'shop-label'; lSpan.textContent = 'RECARGA';
+         const pSpan = document.createElement('span'); pSpan.className = 'shop-price'; pSpan.textContent = `💰 ${cfg.price.toLocaleString('pt-BR')}`;
+         btn.append(iSpan, lSpan, pSpan);
     }
 
     const handler = (e: Event) => {
@@ -246,12 +267,12 @@ export function setupSuperCannonUI(onActivate: SuperCannonAction): void {
     }
 
     superCannonContainer.className = 'super-cannon-container';
-    superCannonContainer.innerHTML = '';
+    superCannonContainer.replaceChildren();
 
     const btn = document.createElement('button');
     btn.id = 'superCannonBtn';
     btn.className = 'super-cannon-btn';
-    btn.innerHTML = '⚡ SUPER';
+    btn.textContent = '⚡ SUPER';
 
     const trigger = (e: Event) => {
         e.stopPropagation();
@@ -283,16 +304,16 @@ export function updateSuperCannonUI(gameState: GameState): void {
     const isOnCooldown = cooldownRemaining > 0 && !gameState.superCannonActive;
 
     if (gameState.superCannonActive) {
-        btn.innerHTML = '⚡ ATIVO!';
+        btn.textContent = '⚡ ATIVO!';
         btn.classList.add('active');
         btn.disabled = true;
     } else if (isOnCooldown) {
         const cooldownSecs = Math.ceil(cooldownRemaining / 1000);
-        btn.innerHTML = `⏳ ${cooldownSecs}s`;
+        btn.textContent = `⏳ ${cooldownSecs}s`;
         btn.classList.remove('active');
         btn.disabled = true;
     } else {
-        btn.innerHTML = '⚡ SUPER';
+        btn.textContent = '⚡ SUPER';
         btn.classList.remove('active');
         btn.disabled = false;
     }
@@ -314,7 +335,7 @@ export function setupGameOverUI(onRestart: () => void, onShare: (platform: 'x' |
         document.body.appendChild(gameOverContainer);
     }
 
-    gameOverContainer.innerHTML = '';
+    gameOverContainer.replaceChildren();
 
     const content = document.createElement('div');
     content.className = 'game-over-content';
@@ -533,7 +554,7 @@ export function showGameOverScreen(gameState: GameState): void {
             const progress = Math.min((timestamp - startTimestamp) / duration, 1);
             const ease = 1 - Math.pow(1 - progress, 3);
             const value = Math.floor(ease * (end - start) + start);
-            scoreDisplay.innerHTML = value.toLocaleString('pt-BR');
+            scoreDisplay.textContent = value.toLocaleString('pt-BR');
             if (progress < 1) {
                 window.requestAnimationFrame(step);
             }
