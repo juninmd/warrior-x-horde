@@ -105,6 +105,10 @@
       color: #FFF;
     }
 
+    .icon-btn:active {
+      transform: scale(0.92) !important;
+    }
+
     .controls-hint {
       color: #888;
       font-size: clamp(9px, 2.5vw, 12px);
@@ -257,6 +261,10 @@
       transform: scale(1.05);
     }
 
+    .story-close-btn:active {
+      transform: scale(0.92) !important;
+    }
+
     .story-btn {
       background: linear-gradient(180deg, #6c5ce7 0%, #5541d7 100%);
       color: white;
@@ -305,7 +313,7 @@
       font-weight: bold;
       transition: transform 0.2s;
       min-height: 54px; /* Mobile touch target */
-      backdrop-filter: blur(12px);
+      backdrop-filter: blur(8px);
       box-shadow: 0 4px 6px rgba(0,0,0,0.2);
     }
 
@@ -378,8 +386,8 @@
       padding: 30px 20px;
       text-align: center;
       box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       max-width: 95%;
       width: 500px;
       position: relative;
@@ -505,7 +513,7 @@
   border-radius: 15px;
   cursor: pointer;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(8px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -641,7 +649,7 @@
   border: 2px solid rgba(255, 255, 255, 0.2);
   border-radius: 12px;
   cursor: pointer;
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(8px);
   transition: all 0.2s;
   min-height: 60px; /* Touch friendly */
 }
@@ -677,7 +685,7 @@
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(8px);
   z-index: 100;
   opacity: 0;
   transition: opacity 0.5s ease;
@@ -685,8 +693,8 @@
 
 .game-over-content {
   background: rgba(20, 20, 35, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(0, 201, 255, 0.4);
   border-radius: 20px;
   padding: 30px;
@@ -785,7 +793,7 @@
   padding: 12px;
   margin-bottom: max(20px, env(safe-area-inset-bottom) + 10px);
   width: 100%;
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(8px);
 }
 
 .leaderboard-title {

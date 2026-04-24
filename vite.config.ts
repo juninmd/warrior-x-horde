@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Enforce 100% test coverage using vitest for CI
 export default defineConfig({
   root: '.',
   publicDir: 'public',

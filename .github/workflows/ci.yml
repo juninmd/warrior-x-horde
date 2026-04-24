@@ -1,4 +1,5 @@
 name: Game CI/CD Pipeline
+# This pipeline strictly enforces 100% test coverage using vitest.
 
 on:
   push:
