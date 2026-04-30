@@ -42,21 +42,5 @@ jobs:
       run: npm run coverage
       # Vitest is configured to fail if 100% coverage is not met
 
-    - name: Upload Coverage Report
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: coverage-report
-        path: coverage/
-        retention-days: 14
-
     - name: Build Production Assets
       run: npm run build
-
-    - name: Upload Build Artifacts
-      if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
-      uses: actions/upload-artifact@v4
-      with:
-        name: game-dist
-        path: dist/
-        retention-days: 14
