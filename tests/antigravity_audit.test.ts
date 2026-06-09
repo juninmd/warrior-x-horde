@@ -15,7 +15,7 @@ vi.mock('../src/input', () => ({
 }));
 vi.mock('../src/renderer-boss', () => ({ drawBoss: vi.fn() }));
 vi.mock('../src/renderer-utils', () => ({
-  drawGlassBadge: vi.fn(), drawStar: vi.fn(), drawJoystick: vi.fn(), getComboColor: vi.fn()
+  drawGlassBadge: vi.fn(), drawStar: vi.fn(), drawJoystick: vi.fn(), getComboColor: vi.fn(), safeAddColorStop: vi.fn()
 }));
 vi.mock('../src/quality', () => ({
   QualityManager: {
