@@ -39,7 +39,8 @@ jobs:
       run: npm run typecheck
 
     - name: Run Tests & Coverage
-      run: npm run coverage
+      # The vitest run sometimes times out, increasing timeout limit. We are working on optimizing the test coverage command.
+      run: npm run coverage -- --testTimeout=30000
       # Vitest is configured to fail if 100% coverage is not met
 
     - name: Upload Coverage Report
