@@ -61,7 +61,7 @@ describe('Antigravity Audit', () => {
       expect(texts.length).toBe(1);
       const ft = texts[0];
 
-      // Initial state: "Pop" effect means upward velocity (negative Vy)
+      // Initial state: \"Pop\" effect means upward velocity (negative Vy)
       expect(ft.vy).toBeLessThan(0);
       const initialVy = ft.vy;
       const initialY = ft.y;
