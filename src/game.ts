@@ -130,15 +130,13 @@ const startScreen = document.getElementById('startScreen');
 // startBtnOverlay is accessed dynamically or unused variable here removed
 
 // --- Wake Lock API (Mobile Screen Keep-Alive) ---
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let wakeLock: any = null;
+let wakeLock: WakeLockSentinel | null = null;
 
 /* v8 ignore start */
 async function requestWakeLock() {
   if (typeof navigator !== 'undefined' && 'wakeLock' in navigator) {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      wakeLock = await (navigator as any).wakeLock.request('screen');
+      wakeLock = await navigator.wakeLock.request('screen');
     } catch (err) {
       /* v8 ignore next */
       console.warn('Wake Lock request failed:', err);
@@ -572,7 +570,7 @@ function gameLoop(currentTime: number = 0): void {
             leaderboard = [];
         } else {
             // Sanitize existing entries to prevent crashes during sort
-            leaderboard = leaderboard.filter((entry: any) => entry && typeof entry === 'object' && typeof entry.score === 'number');
+            leaderboard = leaderboard.filter((entry: unknown) => entry && typeof entry === 'object' && typeof (entry as {score?: unknown}).score === 'number');
         }
         leaderboard.push({ score: gameState.score, date: Date.now() });
         leaderboard.sort((a: { score: number }, b: { score: number }) => b.score - a.score);

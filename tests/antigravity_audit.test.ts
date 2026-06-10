@@ -15,7 +15,7 @@ vi.mock('../src/input', () => ({
 }));
 vi.mock('../src/renderer-boss', () => ({ drawBoss: vi.fn() }));
 vi.mock('../src/renderer-utils', () => ({
-  drawGlassBadge: vi.fn(), drawStar: vi.fn(), drawJoystick: vi.fn(), getComboColor: vi.fn(), safeAddColorStop: vi.fn()
+  safeAddColorStop: vi.fn(), drawGlassBadge: vi.fn(), drawStar: vi.fn(), drawJoystick: vi.fn(), getComboColor: vi.fn()
 }));
 vi.mock('../src/quality', () => ({
   QualityManager: {
@@ -61,7 +61,7 @@ describe('Antigravity Audit', () => {
       expect(texts.length).toBe(1);
       const ft = texts[0];
 
-      // Initial state: "Pop" effect means upward velocity (negative Vy)
+      // Initial state: \"Pop\" effect means upward velocity (negative Vy)
       expect(ft.vy).toBeLessThan(0);
       const initialVy = ft.vy;
       const initialY = ft.y;

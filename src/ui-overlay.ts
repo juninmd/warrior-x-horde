@@ -18,7 +18,7 @@ function getLeaderboardElement(currentScore: number = -1): HTMLElement {
         if (!Array.isArray(parsed)) {
             leaderboard = [];
         } else {
-            leaderboard = parsed.filter((entry: unknown) => entry && typeof entry === 'object' && typeof (entry as any).score === 'number');
+            leaderboard = parsed.filter((entry: unknown) => entry && typeof entry === 'object' && typeof (entry as {score?: unknown}).score === 'number');
         }
     } catch (e) {
         console.error('Failed to load leaderboard', e);
