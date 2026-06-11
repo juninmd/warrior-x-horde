@@ -1,1 +1,17 @@
-{"task_id": "628d2d67cb992cd7", "task_status": "completed", "task_priority": "high"}
+{
+  "id": "628d2d67cb992cd7",
+  "title": "Review PR #159: perf: optimize ui and rendering arrays and layout styles",
+  "status": "backlog",
+  "branchName": null,
+  "baseBranch": "master",
+  "parentTaskId": null,
+  "tags": [
+    "github-assistance",
+    "opencode"
+  ],
+  "goal": null,
+  "desiredOutcome": null,
+  "runId": "41beb249ca352209",
+  "engine": "opencode",
+  "matchedSkills": []
+}
