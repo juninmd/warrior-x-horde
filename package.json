@@ -21,7 +21,7 @@
     "@playwright/test": "^1.60.0",
     "@types/node": "^25.9.2",
     "@typescript-eslint/eslint-plugin": "^8.61.1",
-    "@typescript-eslint/parser": "^8.61.0",
+    "@typescript-eslint/parser": "^8.61.1",
     "@vitest/coverage-v8": "^4.1.8",
     "cpx": "^1.5.0",
     "eslint": "^9.31.0",
@@ -29,7 +29,7 @@
     "jsdom": "^27.4.0",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.61.0",
+    "typescript-eslint": "^8.61.1",
     "vite": "^6.4.2",
     "vitest": "^4.1.8"
   }
