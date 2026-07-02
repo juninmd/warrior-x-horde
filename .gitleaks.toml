@@ -1,9 +1,8 @@
-[[allowlist]]
-description = "False positive: generic-api-key in index.html"
-rules = ["generic-api-key"]
-paths = ["index.html"]
-
-[[allowlist]]
-description = "False positive: generic-api-key in index.html"
-rules = ["generic-api-key"]
-paths = ["index.html"]
+[allowlist]
+description = "Merged allowlist"
+rules = [
+  "generic-api-key"
+]
+paths = [
+  "index.html"
+]
