@@ -21,7 +21,7 @@ jobs:
 
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v7
+      uses: actions/checkout@v4
 
     - name: Setup Node.js
       uses: actions/setup-node@v6
@@ -30,7 +30,7 @@ jobs:
         cache: 'npm'
 
     - name: Install dependencies
-      run: npm ci
+      run: npm ci --legacy-peer-deps
 
     - name: Run ESLint
       run: npm run lint
