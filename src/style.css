@@ -44,10 +44,10 @@
       color: #fff;
       font-size: clamp(28px, 8vw, 42px);
       font-weight: 900;
-      background: linear-gradient(135deg, #00D2FF 0%, #3A7BD5 100%);
+      background: linear-gradient(135deg, #FF416C 0%, #FF4B2B 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      text-shadow: 0 8px 20px rgba(0, 0, 0, 0.8), 0 0 35px rgba(0, 210, 255, 0.6);
+      text-shadow: 0 8px 20px rgba(0, 0, 0, 0.8), 0 0 35px rgba(255, 65, 108, 0.6);
       margin-bottom: 5px;
       text-align: center;
       letter-spacing: 2px;
@@ -411,7 +411,7 @@
     .game-logo {
       font-size: clamp(24px, 10vw, 48px); /* Smaller to ensure full background-clip rendering without cutoff */
       margin-bottom: 15px;
-      background: linear-gradient(135deg, #00D2FF 0%, #3A7BD5 100%); /* Blue gradient per memory */
+      background: linear-gradient(135deg, #FF416C 0%, #FF4B2B 100%); /* Red gradient per memory */
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       filter: drop-shadow(0 4px 6px rgba(0,0,0,0.8));
@@ -428,11 +428,11 @@
 
     @keyframes logo-pulse {
       0%, 100% { transform: scale(1); filter: drop-shadow(0 4px 6px rgba(0,0,0,0.8)); }
-      50% { transform: scale(1.08); filter: drop-shadow(0 0 25px rgba(0, 210, 255, 0.8)); }
+      50% { transform: scale(1.08); filter: drop-shadow(0 0 25px rgba(255, 65, 108, 0.8)); }
     }
 
     .start-btn {
-      background: linear-gradient(135deg, #00D2FF 0%, #3A7BD5 100%); /* Blue gradient per memory */
+      background: linear-gradient(135deg, #FF416C 0%, #FF4B2B 100%); /* Red gradient per memory */
       border: 3px solid rgba(255, 255, 255, 0.5);
       border-radius: 50px;
       padding: 24px 30px; /* Larger touch area */
@@ -440,7 +440,7 @@
       font-size: 32px; /* Larger text */
       font-weight: 900;
       cursor: pointer;
-      box-shadow: 0 10px 30px rgba(58, 123, 213, 0.6), inset 0 -4px 0 rgba(0,0,0,0.2);
+      box-shadow: 0 10px 30px rgba(255, 75, 43, 0.6), inset 0 -4px 0 rgba(0,0,0,0.2);
       transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       margin-top: 30px;
       width: 90%;
@@ -453,20 +453,20 @@
     }
 
     @keyframes pulse-glow {
-      0% { box-shadow: 0 0 0 0 rgba(58, 123, 213, 0.6), inset 0 -4px 0 rgba(0,0,0,0.2); }
-      70% { box-shadow: 0 0 0 25px rgba(58, 123, 213, 0), inset 0 -4px 0 rgba(0,0,0,0.2); }
-      100% { box-shadow: 0 0 0 0 rgba(58, 123, 213, 0), inset 0 -4px 0 rgba(0,0,0,0.2); }
+      0% { box-shadow: 0 0 0 0 rgba(255, 75, 43, 0.6), inset 0 -4px 0 rgba(0,0,0,0.2); }
+      70% { box-shadow: 0 0 0 25px rgba(255, 75, 43, 0), inset 0 -4px 0 rgba(0,0,0,0.2); }
+      100% { box-shadow: 0 0 0 0 rgba(255, 75, 43, 0), inset 0 -4px 0 rgba(0,0,0,0.2); }
     }
 
     .start-btn:hover {
       transform: translateY(-4px) scale(1.05);
-      box-shadow: 0 15px 40px rgba(0, 210, 255, 0.8), inset 0 -4px 0 rgba(0,0,0,0.2);
-      background: linear-gradient(135deg, #3A7BD5 0%, #00D2FF 100%);
+      box-shadow: 0 15px 40px rgba(255, 65, 108, 0.8), inset 0 -4px 0 rgba(0,0,0,0.2);
+      background: linear-gradient(135deg, #FF4B2B 0%, #FF416C 100%);
     }
 
     .start-btn:active {
       transform: translateY(4px) scale(0.92) !important;
-      background: linear-gradient(135deg, #00B4DB 0%, #0083B0 100%);
+      background: linear-gradient(135deg, #FF416C 0%, #FF4B2B 100%);
       box-shadow: inset 0 6px 15px rgba(0, 0, 0, 0.6);
       border-color: rgba(255, 255, 255, 0.2);
     }
@@ -746,7 +746,7 @@
 }
 
 .game-over-btn:active {
-  transform: scale(0.94);
+  transform: scale(0.92) !important;
   box-shadow: 0 2px 0 #1A5276;
   background: linear-gradient(180deg, #2980B9 0%, #1F618D 100%);
 }
@@ -1051,7 +1051,7 @@
 }
 
 .settings-close-btn:active {
-  transform: scale(0.98);
+  transform: scale(0.92) !important;
   box-shadow: 0 2px 0 #B8860B;
 }
 
@@ -1076,7 +1076,7 @@
 
 /* --- Install App Button (Start Screen) --- */
 .install-btn {
-  background: linear-gradient(135deg, #00D2FF 0%, #3A7BD5 100%) !important;
+  background: linear-gradient(135deg, #FF416C 0%, #FF4B2B 100%) !important;
   color: #FFF !important;
   margin-top: 15px !important;
   font-size: 16px !important;

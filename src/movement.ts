@@ -83,12 +83,12 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
   const pursuitThreshold = canvasHeight * 0.6;
 
   // Mover gates para baixo (velocidade aumenta com level)
-  for (const gate of entities.gates) {
+  for (let i = 0; i < entities.gates.length; i++) { const gate = entities.gates[i];
     gate.y += gateSpeed;
   }
 
   // Mover hordas inimigas para baixo (LENTO) e perseguir jogador
-  for (const horde of entities.enemyHordes) {
+  for (let i = 0; i < entities.enemyHordes.length; i++) { const horde = entities.enemyHordes[i];
     horde.y += enemySpeed;
 
     // Calcular limites da estrada nesta posição Y
@@ -201,7 +201,7 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
   }
 
   // Mover Mystery Boxes (mesma velocidade das gates/mundo)
-  for (const box of entities.mysteryBoxes) {
+  for (let i = 0; i < entities.mysteryBoxes.length; i++) { const box = entities.mysteryBoxes[i];
     /* v8 ignore start */
     if (box && !box.passed) {
       box.y += gateSpeed;
@@ -210,7 +210,7 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
   }
 
   // Mover Moedas (mesma velocidade das gates)
-  for (const coin of entities.coins) {
+  for (let i = 0; i < entities.coins.length; i++) { const coin = entities.coins[i];
     /* v8 ignore start */
     if (coin && !coin.passed) {
       coin.y += gateSpeed;
@@ -219,7 +219,7 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
   }
 
   // Mover mini-bosses (mais lentos que as hordas normais)
-  for (const miniBoss of entities.miniBosses) {
+  for (let i = 0; i < entities.miniBosses.length; i++) { const miniBoss = entities.miniBosses[i];
     /* v8 ignore next */
     if (!miniBoss.isActive) continue;
 
