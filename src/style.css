@@ -44,7 +44,7 @@
       color: #fff;
       font-size: clamp(28px, 8vw, 42px);
       font-weight: 900;
-      background: linear-gradient(135deg, #00D2FF 0%, #3A7BD5 100%);
+      background: linear-gradient(135deg, #FF416C 0%, #FF4B2B 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       text-shadow: 0 8px 20px rgba(0, 0, 0, 0.8), 0 0 35px rgba(0, 210, 255, 0.6);
@@ -95,7 +95,7 @@
       align-items: center;
       justify-content: center;
       transition: all 0.2s;
-      backdrop-filter: blur(4px);
+      backdrop-filter: blur(8px);
       touch-action: manipulation;
     }
 
@@ -305,7 +305,7 @@
       font-weight: bold;
       transition: transform 0.2s;
       min-height: 54px; /* Mobile touch target */
-      backdrop-filter: blur(4px);
+      backdrop-filter: blur(8px);
       box-shadow: 0 4px 6px rgba(0,0,0,0.2);
     }
 
@@ -378,8 +378,8 @@
       padding: 30px 20px;
       text-align: center;
       box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       max-width: 95%;
       width: 500px;
       position: relative;
@@ -411,7 +411,7 @@
     .game-logo {
       font-size: clamp(24px, 10vw, 48px); /* Smaller to ensure full background-clip rendering without cutoff */
       margin-bottom: 15px;
-      background: linear-gradient(135deg, #00D2FF 0%, #3A7BD5 100%); /* Blue gradient per memory */
+      background: linear-gradient(135deg, #FF416C 0%, #FF4B2B 100%); /* Blue gradient per memory */
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       filter: drop-shadow(0 4px 6px rgba(0,0,0,0.8));
@@ -428,11 +428,11 @@
 
     @keyframes logo-pulse {
       0%, 100% { transform: scale(1); filter: drop-shadow(0 4px 6px rgba(0,0,0,0.8)); }
-      50% { transform: scale(1.08); filter: drop-shadow(0 0 25px rgba(0, 210, 255, 0.8)); }
+      50% { transform: scale(1.08); filter: drop-shadow(0 0 25px rgba(255, 65, 108, 0.8)); }
     }
 
     .start-btn {
-      background: linear-gradient(135deg, #00D2FF 0%, #3A7BD5 100%); /* Blue gradient per memory */
+      background: linear-gradient(135deg, #FF416C 0%, #FF4B2B 100%); /* Blue gradient per memory */
       border: 3px solid rgba(255, 255, 255, 0.5);
       border-radius: 50px;
       padding: 24px 30px; /* Larger touch area */
@@ -440,7 +440,7 @@
       font-size: 32px; /* Larger text */
       font-weight: 900;
       cursor: pointer;
-      box-shadow: 0 10px 30px rgba(58, 123, 213, 0.6), inset 0 -4px 0 rgba(0,0,0,0.2);
+      box-shadow: 0 10px 30px rgba(255, 75, 43, 0.6), inset 0 -4px 0 rgba(0,0,0,0.2);
       transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       margin-top: 30px;
       width: 90%;
@@ -453,20 +453,20 @@
     }
 
     @keyframes pulse-glow {
-      0% { box-shadow: 0 0 0 0 rgba(58, 123, 213, 0.6), inset 0 -4px 0 rgba(0,0,0,0.2); }
+      0% { box-shadow: 0 0 0 0 rgba(255, 75, 43, 0.6), inset 0 -4px 0 rgba(0,0,0,0.2); }
       70% { box-shadow: 0 0 0 25px rgba(58, 123, 213, 0), inset 0 -4px 0 rgba(0,0,0,0.2); }
       100% { box-shadow: 0 0 0 0 rgba(58, 123, 213, 0), inset 0 -4px 0 rgba(0,0,0,0.2); }
     }
 
     .start-btn:hover {
       transform: translateY(-4px) scale(1.05);
-      box-shadow: 0 15px 40px rgba(0, 210, 255, 0.8), inset 0 -4px 0 rgba(0,0,0,0.2);
-      background: linear-gradient(135deg, #3A7BD5 0%, #00D2FF 100%);
+      box-shadow: 0 15px 40px rgba(255, 65, 108, 0.8), inset 0 -4px 0 rgba(0,0,0,0.2);
+      background: linear-gradient(135deg, #FF4B2B 0%, #FF416C 100%);
     }
 
     .start-btn:active {
       transform: translateY(4px) scale(0.92) !important;
-      background: linear-gradient(135deg, #00B4DB 0%, #0083B0 100%);
+      background: linear-gradient(135deg, #E22850 0%, #E02626 100%);
       box-shadow: inset 0 6px 15px rgba(0, 0, 0, 0.6);
       border-color: rgba(255, 255, 255, 0.2);
     }
@@ -505,7 +505,7 @@
   border-radius: 15px;
   cursor: pointer;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(8px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -612,8 +612,8 @@
   position: fixed;
   top: 0; left: 0; width: 100%; height: 100%;
   background: rgba(10, 10, 20, 0.85);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   display: none;
   flex-direction: column;
   justify-content: center;
@@ -641,9 +641,9 @@
   border: 2px solid rgba(255, 255, 255, 0.2);
   border-radius: 12px;
   cursor: pointer;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(8px);
   transition: all 0.2s;
-  min-height: 60px; /* Touch friendly */
+  min-height: 54px; /* Touch friendly */
 }
 
 .pause-btn:active {
@@ -677,7 +677,7 @@
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(8px);
   z-index: 100;
   opacity: 0;
   transition: opacity 0.5s ease;
@@ -685,8 +685,8 @@
 
 .game-over-content {
   background: rgba(20, 20, 35, 0.85);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(0, 201, 255, 0.4);
   border-radius: 20px;
   padding: 30px;
@@ -742,7 +742,7 @@
   box-shadow: 0 4px 0 #1A5276;
   transition: transform 0.1s;
   animation: pulse-btn 2s infinite ease-in-out;
-  min-height: 60px;
+  min-height: 54px;
 }
 
 .game-over-btn:active {
@@ -785,7 +785,7 @@
   padding: 12px;
   margin-bottom: max(20px, env(safe-area-inset-bottom) + 10px);
   width: 100%;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(8px);
 }
 
 .leaderboard-title {
@@ -905,8 +905,8 @@
   width: 100%;
   height: 100%;
   background: rgba(10, 10, 20, 0.85);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   display: none;
   justify-content: center;
   align-items: center;
@@ -1047,7 +1047,7 @@
   font-size: 18px;
   transition: transform 0.1s;
   box-shadow: 0 4px 0 #B8860B;
-  min-height: 56px;
+  min-height: 54px;
 }
 
 .settings-close-btn:active {
@@ -1076,7 +1076,7 @@
 
 /* --- Install App Button (Start Screen) --- */
 .install-btn {
-  background: linear-gradient(135deg, #00D2FF 0%, #3A7BD5 100%) !important;
+  background: linear-gradient(135deg, #FF416C 0%, #FF4B2B 100%) !important;
   color: #FFF !important;
   margin-top: 15px !important;
   font-size: 16px !important;
