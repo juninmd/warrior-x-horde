@@ -56,7 +56,7 @@ function findNearestTarget(shooter: Soldier, hordes: EnemyHorde[], boss: Boss | 
   const MAX_TARGET_DIST_SQ = MAX_TARGET_DIST * MAX_TARGET_DIST;
 
   // Procurar inimigos nas hordas - OTIMIZAÇÃO: Alvejar a horda, não soldados individuais
-  for (const horde of hordes) {
+  for (let i = 0; i < hordes.length; i++) { const horde = hordes[i];
     if (!horde.isActive || horde.soldiers.length === 0) continue;
 
     const dy = horde.y - shooter.y;
@@ -79,7 +79,7 @@ function findNearestTarget(shooter: Soldier, hordes: EnemyHorde[], boss: Boss | 
   }
 
   // Verificar mini-bosses
-  for (const miniBoss of miniBosses) {
+  for (let j = 0; j < miniBosses.length; j++) { const miniBoss = miniBosses[j];
     /* v8 ignore next */
     if (!miniBoss.isActive) continue;
     const dx = miniBoss.x + miniBoss.width / 2 - shooter.x;
@@ -209,7 +209,7 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
   /* v8 ignore stop */
   /* v8 ignore stop */
 
-  for (const shooter of tempShooters) {
+  for (let i = 0; i < tempShooters.length; i++) { const shooter = tempShooters[i];
     // Cada atirador procura seu alvo mais próximo
     const target = findNearestTarget(shooter, entities.enemyHordes, entities.boss, entities.miniBosses);
     if (!target) continue;
