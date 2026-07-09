@@ -1,5 +1,5 @@
 // shooting.ts - Sistema de tiro automatico e Super Cannon
-import { Entities, GameState, Bullet, Army, EnemyHorde, Boss, Soldier, MiniBoss } from './types';
+import { Entities, GameState, Bullet, Army, EnemyHorde, Boss, Soldier, MiniBoss, MysteryBox } from './types';
 import { addFloatingText, addExplosion, addParticle } from './renderer';
 import { ObjectPool } from './pool';
 import { SpatialHashGrid } from './spatial';
@@ -310,6 +310,19 @@ export function updateBullets(entities: Entities, gameState: GameState): void {
         ref: { type: 'miniboss', obj: mb }
       });
     }
+
+    // Mystery Boxes
+    for (const box of entities.mysteryBoxes) {
+      if (!box.passed) {
+        enemyGrid.insert({
+          x: box.x,
+          y: box.y,
+          width: box.width,
+          height: box.height,
+          ref: { type: 'mysterybox', obj: box }
+        });
+      }
+    }
   }
 
   for (let i = entities.bullets.length - 1; i >= 0; i--) {
@@ -349,6 +362,23 @@ export function updateBullets(entities: Entities, gameState: GameState): void {
                 addParticle(horde.x, horde.y, 'star', '#FFD700', 8);
               }
             }
+          }
+
+          bulletPool.release(bullet);
+          entities.bullets.splice(i, 1);
+          bulletHit = true;
+        }
+      } else if (item.ref.type === 'mysterybox') {
+        const box = item.ref.obj as MysteryBox;
+        if (!box.passed && bullet.x > box.x && bullet.x < box.x + box.width &&
+            bullet.y > box.y && bullet.y < box.y + box.height) {
+
+          box.hp -= bullet.damage;
+          addExplosion(bullet.x, bullet.y, '#FFFFFF');
+
+          if (box.hp <= 0) {
+            addFloatingText('REWARD!', box.x + box.width / 2, box.y, '#FFD700');
+            // A função applyMysteryBoxEffect será chamada em checkCollisions
           }
 
           bulletPool.release(bullet);
