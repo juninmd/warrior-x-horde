@@ -105,6 +105,10 @@
       color: #FFF;
     }
 
+    .icon-btn:active {
+      transform: scale(0.92) !important;
+    }
+
     .controls-hint {
       color: #888;
       font-size: clamp(9px, 2.5vw, 12px);
@@ -299,26 +303,28 @@
     }
 
     .game-controls button {
-      background: linear-gradient(180deg, #e74c3c 0%, #c0392b 100%);
+      background: linear-gradient(135deg, #2c3e50 0%, #1a252f 100%);
       color: white;
-      border: none;
+      border: 1px solid rgba(255, 255, 255, 0.1);
       padding: 8px 16px;
       border-radius: 12px;
       cursor: pointer;
       font-size: 12px;
       font-weight: bold;
-      transition: transform 0.2s;
+      transition: transform 0.2s, box-shadow 0.2s;
       min-height: 54px; /* Mobile touch target */
       backdrop-filter: blur(4px);
-      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5), inset 0 2px 0 rgba(255, 255, 255, 0.1);
     }
 
     .game-controls button:hover {
       transform: scale(1.05);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.2);
     }
 
     .game-controls .go-btn {
-      background: linear-gradient(180deg, #27ae60 0%, #1e8449 100%);
+      background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%);
+      box-shadow: 0 4px 15px rgba(0, 176, 155, 0.4), inset 0 2px 0 rgba(255, 255, 255, 0.2);
     }
 
     .game-controls .pause-btn {
@@ -326,14 +332,15 @@
     }
 
     .game-controls .super-btn {
-      background: linear-gradient(180deg, #FFD700 0%, #FFA500 100%);
-      color: #333;
+      background: linear-gradient(135deg, #f12711 0%, #f5af19 100%);
+      color: #fff;
       font-weight: 800;
       font-size: 14px;
       padding: 8px 24px;
-      box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 4px 15px rgba(245, 175, 25, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.3);
       animation: pulse 2s infinite;
-      border: 2px solid #FFF;
+      border: 1px solid rgba(255, 255, 255, 0.4);
     }
 
     @keyframes pulse {
