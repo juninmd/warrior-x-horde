@@ -28,7 +28,7 @@ jobs:
     - name: Test Coverage
       run: npm run coverage
 
-    - name: Upload coverage reports to Codecov
+    - name: Upload coverage reports
       uses: actions/upload-artifact@v4
       with:
         name: coverage-report
