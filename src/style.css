@@ -1097,3 +1097,21 @@
   min-height: 54px !important;
   border: 2px solid rgba(255, 255, 255, 0.3) !important;
 }
+
+/* Additional Mobile UI/UX optimizations */
+.game-controls button,
+.icon-btn,
+.start-btn,
+.shop-btn,
+.super-cannon-btn,
+.pause-btn,
+.game-over-btn,
+.share-btn,
+.settings-toggle-btn,
+.settings-go-btn,
+.settings-close-btn {
+  /* Enhance tactile feedback */
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
