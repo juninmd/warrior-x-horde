@@ -489,9 +489,7 @@ export function showGameOverScreen(gameState: GameState): void {
         const installBtn = document.createElement('button');
         installBtn.id = 'goInstallBtn';
         installBtn.className = 'game-over-btn';
-        installBtn.style.background = '#FFD700';
         installBtn.style.color = '#333';
-        installBtn.style.boxShadow = '0 4px 0 #DAA520';
         installBtn.textContent = '📲 INSTALL APP';
         content.appendChild(installBtn);
     }
