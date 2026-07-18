@@ -509,8 +509,8 @@
   padding: 6px;
   font-family: 'Segoe UI', sans-serif;
   font-weight: bold;
-  background: linear-gradient(135deg, rgba(40, 40, 50, 0.95) 0%, rgba(25, 25, 35, 0.95) 100%);
-  color: #FFF;
+  background: linear-gradient(135deg, #FF416C 0%, #FF4B2B 100%);
+  color: #FFFFFF;
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-bottom: 3px solid rgba(255, 255, 255, 0.2); /* Default fallback */
   border-radius: 15px;
