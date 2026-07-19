@@ -41,6 +41,7 @@ describe('Spawner', () => {
         } as any;
 
         vi.clearAllMocks();
+        resetSpawnerState(); // Important: reset lastMiniBossSpawn between tests
     });
 
     afterEach(() => {
@@ -233,6 +234,28 @@ describe('Spawner', () => {
             // Should spawn multiple
             expect(createMiniBoss).toHaveBeenCalled();
             expect(entities.miniBosses.length).toBeGreaterThan(0);
+        });
+
+        it('should not spawn if active mini-bosses equals maxConcurrent', () => {
+            // maxConcurrent for level 1 is 5
+            entities.miniBosses = [
+                { isActive: true }, { isActive: true }, { isActive: true }, { isActive: true }, { isActive: true }, { isActive: false }
+            ] as any;
+            const initialLength = entities.miniBosses.length;
+            gameState.distanceTraveled = 300;
+            spawnMiniBoss(entities, 800, gameState);
+            expect(entities.miniBosses.length).toBe(initialLength);
+        });
+
+        it('should spawn if active mini-bosses < maxConcurrent', () => {
+            // maxConcurrent for level 1 is 5
+            entities.miniBosses = [
+                { isActive: true }, { isActive: true }, { isActive: true }, { isActive: true }, { isActive: false }
+            ] as any;
+            const initialLength = entities.miniBosses.length;
+            gameState.distanceTraveled = 300;
+            spawnMiniBoss(entities, 800, gameState);
+            expect(entities.miniBosses.length).toBeGreaterThan(initialLength);
         });
 
         it('should reset the mini-boss spawn counter for a new run', () => {

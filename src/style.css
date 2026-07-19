@@ -1115,3 +1115,21 @@
   user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
+
+/* Force mobile minimum touch targets and racing red active state */
+button, .icon-btn, .start-btn, .shop-btn {
+  min-height: 54px !important;
+}
+
+button:active, .icon-btn:active, .start-btn:active, .shop-btn:active, .super-cannon-btn:active, .game-controls button:active {
+  background: linear-gradient(135deg, #FF416C 0%, #FF4B2B 100%) !important;
+  color: white !important;
+  transform: scale(0.92) !important;
+}
+
+.top-controls {
+  pointer-events: none;
+}
+.top-controls button {
+  pointer-events: auto;
+}
