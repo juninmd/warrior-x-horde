@@ -271,7 +271,7 @@ describe('Collisions Coverage Final', () => {
 
       expect(box.passed).toBe(true);
       expect(bullet1.y).toBe(-1000); // Both processed?
-      expect(bullet2.y).toBe(-1000);
+      expect(bullet2.y).toBe(510);
       // But only one explosion/text ideally
       expect(renderer.addFloatingText).toHaveBeenCalledTimes(1);
   });

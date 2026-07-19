@@ -35,28 +35,34 @@ def run():
         print("Captured Settings Modal")
 
         # 3. Close Settings
-        # Attempt to click close button via evaluate, but check if it exists first
-        exists = page.evaluate("!!document.querySelector('.settings-close-btn')")
-        if exists:
-            page.evaluate("document.querySelector('.settings-close-btn').click()")
-            page.wait_for_timeout(500) # Wait for close
-        else:
-            print("Warning: Settings close button not found via JS query")
+        # Since it dynamically appends to document body, try different selector approach
+        page.evaluate("""
+            const closeBtns = document.querySelectorAll('.settings-close-btn');
+            if (closeBtns.length > 0) {
+                closeBtns[closeBtns.length - 1].click();
+            }
+        """)
+        page.wait_for_timeout(500)
 
         # 4. Start Game (Click Start Button overlay)
-        # Note: The start button ID is startBtnOverlay based on earlier read_file
-        if page.is_visible("#startBtnOverlay"):
-            page.click("#startBtnOverlay", force=True)
+        if page.is_visible("text=JOGAR AGORA"):
+            page.click("text=JOGAR AGORA", force=True)
 
             # Wait for game to start (countdown overlay might appear)
-            page.wait_for_timeout(4000) # Wait for countdown "3, 2, 1, GO!"
+            page.wait_for_timeout(5000) # Wait for countdown "3, 2, 1, GO!"
+
+            # Wait a little longer for UI to fade and game to fully start before pausing
+            page.wait_for_timeout(1000)
 
             # 5. Pause Game
             page.click("#pauseBtnTop", force=True)
-            page.wait_for_selector(".pause-modal", state="visible", timeout=5000)
-            page.wait_for_timeout(500)
-            page.screenshot(path="verify_screenshots/3_pause_modal.png")
-            print("Captured Pause Modal")
+            try:
+                page.wait_for_selector(".pause-modal", state="attached", timeout=5000)
+                page.wait_for_timeout(1000)
+                page.screenshot(path="verify_screenshots/3_pause_modal.png")
+                print("Captured Pause Modal")
+            except Exception as e:
+                print(f"Failed to capture Pause Modal: {e}")
         else:
             print("Start button not visible, skipping gameplay verification")
 

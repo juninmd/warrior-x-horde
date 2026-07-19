@@ -1,4 +1,4 @@
-# Warrior X Horder
+# Warrior X Horde
 
 [![CI](https://github.com/juninmd/warrior-x-horde/actions/workflows/ci.yml/badge.svg)](https://github.com/juninmd/warrior-x-horde/actions/workflows/ci.yml)
 [![Netlify](https://img.shields.io/badge/Netlify-Deployed-00C7B7?logo=netlify)](https://warrior-x-horde.netlify.app/)
@@ -9,7 +9,7 @@
 
 ## Sobre
 
-Warrior X Horder é um jogo de ação desenvolvido em TypeScript com renderização Canvas. Você controla um guerreiro que deve sobreviver a ondas de zumbis, coletando power-ups, barris de benefícios e utilizando canhões poderosos.
+Warrior X Horde é um jogo de ação desenvolvido em TypeScript com renderização Canvas. Você controla um guerreiro que deve sobreviver a ondas de zumbis, coletando power-ups, barris de benefícios e utilizando canhões poderosos.
 
 ## Funcionalidades
 
@@ -57,7 +57,7 @@ npm run lint       # Lint
 ## Estrutura
 
 ```
-warrior-x-horder/
+warrior-x-horde/
 ├── src/
 │   ├── game.ts          # Game loop principal
 │   ├── renderer.ts      # Renderização Canvas

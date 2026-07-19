@@ -6,7 +6,7 @@ vi.mock('../src/renderer-utils', () => ({
     drawGlassBadge: vi.fn(),
     drawStar: vi.fn(),
     drawJoystick: vi.fn(),
-    getComboColor: vi.fn().mockReturnValue('#fff'),
+    getComboColor: vi.fn().mockReturnValue('#fff'), safeAddColorStop: vi.fn(),
 }));
 
 vi.mock('../src/renderer-boss', () => ({
@@ -73,7 +73,7 @@ describe('Renderer', () => {
       const entities: Entities = {
           playerArmy: army,
           coins: [{ x: 50, y: 50, passed: false, value: 1 }],
-          gates: [{ x: 50, y: 50, passed: false, type: 'add', value: 1 }],
+          gates: [{ x: 50, y: 50, passed: false, type: 'add', value: 1, color: '#00D2FF' }],
           enemyHordes: [{ isActive: true, soldiers: [], y: 50 }],
           mysteryBoxes: [{ x: 50, y: 50, passed: false }],
           miniBosses: [{ isActive: true, x: 50, y: 50 }],

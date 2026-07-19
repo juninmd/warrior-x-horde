@@ -72,7 +72,9 @@ export function spawnGates(entities: Entities, canvasWidth: number, gameState: G
     const currentHeroCount = entities.playerArmy.aliveCount;
     const currentEnemyCount = getTotalEnemyCount(entities);
     const newGates = createGatePair(canvasWidth, spawnY - gateSpacing, gameState.currentLevel, currentHeroCount, currentEnemyCount);
-    entities.gates.push(...newGates);
+    for (let i = 0; i < newGates.length; i++) {
+      entities.gates.push(newGates[i]);
+    }
   }
 }
 

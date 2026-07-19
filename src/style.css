@@ -44,10 +44,10 @@
       color: #fff;
       font-size: clamp(28px, 8vw, 42px);
       font-weight: 900;
-      background: linear-gradient(135deg, #00D2FF 0%, #3A7BD5 100%);
+      background: linear-gradient(135deg, #FF416C 0%, #FF4B2B 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      text-shadow: 0 8px 20px rgba(0, 0, 0, 0.8), 0 0 35px rgba(0, 210, 255, 0.6);
+      text-shadow: 0 8px 20px rgba(0, 0, 0, 0.8), 0 0 35px rgba(255, 65, 108, 0.6);
       margin-bottom: 5px;
       text-align: center;
       letter-spacing: 2px;
@@ -103,6 +103,10 @@
       background: rgba(255, 255, 255, 0.1);
       transform: scale(1.15);
       color: #FFF;
+    }
+
+    .icon-btn:active {
+      transform: scale(0.92) !important;
     }
 
     .controls-hint {
@@ -253,6 +257,8 @@
       min-height: 54px; /* Mobile touch */
     }
 
+    .story-close-btn:active { transform: scale(0.92) !important; }
+
     .story-close-btn:hover {
       transform: scale(1.05);
     }
@@ -268,6 +274,8 @@
       transition: transform 0.2s;
       min-height: 54px; /* Mobile touch */
     }
+
+    .story-btn:active { transform: scale(0.92) !important; }
 
     .story-btn:hover {
       transform: scale(1.05);
@@ -295,26 +303,28 @@
     }
 
     .game-controls button {
-      background: linear-gradient(180deg, #e74c3c 0%, #c0392b 100%);
+      background: linear-gradient(135deg, #2c3e50 0%, #1a252f 100%);
       color: white;
-      border: none;
+      border: 1px solid rgba(255, 255, 255, 0.1);
       padding: 8px 16px;
       border-radius: 12px;
       cursor: pointer;
       font-size: 12px;
       font-weight: bold;
-      transition: transform 0.2s;
+      transition: transform 0.2s, box-shadow 0.2s;
       min-height: 54px; /* Mobile touch target */
-      backdrop-filter: blur(12px);
-      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+      backdrop-filter: blur(4px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5), inset 0 2px 0 rgba(255, 255, 255, 0.1);
     }
 
     .game-controls button:hover {
       transform: scale(1.05);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.2);
     }
 
     .game-controls .go-btn {
-      background: linear-gradient(180deg, #27ae60 0%, #1e8449 100%);
+      background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%);
+      box-shadow: 0 4px 15px rgba(0, 176, 155, 0.4), inset 0 2px 0 rgba(255, 255, 255, 0.2);
     }
 
     .game-controls .pause-btn {
@@ -322,14 +332,15 @@
     }
 
     .game-controls .super-btn {
-      background: linear-gradient(180deg, #FFD700 0%, #FFA500 100%);
-      color: #333;
+      background: linear-gradient(135deg, #f12711 0%, #f5af19 100%);
+      color: #fff;
       font-weight: 800;
       font-size: 14px;
       padding: 8px 24px;
-      box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 4px 15px rgba(245, 175, 25, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.3);
       animation: pulse 2s infinite;
-      border: 2px solid #FFF;
+      border: 1px solid rgba(255, 255, 255, 0.4);
     }
 
     @keyframes pulse {
@@ -378,8 +389,8 @@
       padding: 30px 20px;
       text-align: center;
       box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
       max-width: 95%;
       width: 500px;
       position: relative;
@@ -411,7 +422,7 @@
     .game-logo {
       font-size: clamp(24px, 10vw, 48px); /* Smaller to ensure full background-clip rendering without cutoff */
       margin-bottom: 15px;
-      background: linear-gradient(135deg, #00D2FF 0%, #3A7BD5 100%); /* Blue gradient per memory */
+      background: linear-gradient(135deg, #FF416C 0%, #FF4B2B 100%); /* Red gradient per memory */
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       filter: drop-shadow(0 4px 6px rgba(0,0,0,0.8));
@@ -428,11 +439,11 @@
 
     @keyframes logo-pulse {
       0%, 100% { transform: scale(1); filter: drop-shadow(0 4px 6px rgba(0,0,0,0.8)); }
-      50% { transform: scale(1.08); filter: drop-shadow(0 0 25px rgba(0, 210, 255, 0.8)); }
+      50% { transform: scale(1.08); filter: drop-shadow(0 0 25px rgba(255, 65, 108, 0.8)); }
     }
 
     .start-btn {
-      background: linear-gradient(135deg, #00D2FF 0%, #3A7BD5 100%); /* Blue gradient per memory */
+      background: linear-gradient(135deg, #FF416C 0%, #FF4B2B 100%); /* Red gradient per memory */
       border: 3px solid rgba(255, 255, 255, 0.5);
       border-radius: 50px;
       padding: 24px 30px; /* Larger touch area */
@@ -440,7 +451,7 @@
       font-size: 32px; /* Larger text */
       font-weight: 900;
       cursor: pointer;
-      box-shadow: 0 10px 30px rgba(58, 123, 213, 0.6), inset 0 -4px 0 rgba(0,0,0,0.2);
+      box-shadow: 0 10px 30px rgba(255, 75, 43, 0.6), inset 0 -4px 0 rgba(0,0,0,0.2);
       transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       margin-top: 30px;
       width: 90%;
@@ -453,20 +464,20 @@
     }
 
     @keyframes pulse-glow {
-      0% { box-shadow: 0 0 0 0 rgba(58, 123, 213, 0.6), inset 0 -4px 0 rgba(0,0,0,0.2); }
-      70% { box-shadow: 0 0 0 25px rgba(58, 123, 213, 0), inset 0 -4px 0 rgba(0,0,0,0.2); }
-      100% { box-shadow: 0 0 0 0 rgba(58, 123, 213, 0), inset 0 -4px 0 rgba(0,0,0,0.2); }
+      0% { box-shadow: 0 0 0 0 rgba(255, 75, 43, 0.6), inset 0 -4px 0 rgba(0,0,0,0.2); }
+      70% { box-shadow: 0 0 0 25px rgba(255, 75, 43, 0), inset 0 -4px 0 rgba(0,0,0,0.2); }
+      100% { box-shadow: 0 0 0 0 rgba(255, 75, 43, 0), inset 0 -4px 0 rgba(0,0,0,0.2); }
     }
 
     .start-btn:hover {
       transform: translateY(-4px) scale(1.05);
-      box-shadow: 0 15px 40px rgba(0, 210, 255, 0.8), inset 0 -4px 0 rgba(0,0,0,0.2);
-      background: linear-gradient(135deg, #3A7BD5 0%, #00D2FF 100%);
+      box-shadow: 0 15px 40px rgba(255, 65, 108, 0.8), inset 0 -4px 0 rgba(0,0,0,0.2);
+      background: linear-gradient(135deg, #FF4B2B 0%, #FF416C 100%);
     }
 
     .start-btn:active {
       transform: translateY(4px) scale(0.92) !important;
-      background: linear-gradient(135deg, #00B4DB 0%, #0083B0 100%);
+      background: linear-gradient(135deg, #FF416C 0%, #FF4B2B 100%);
       box-shadow: inset 0 6px 15px rgba(0, 0, 0, 0.6);
       border-color: rgba(255, 255, 255, 0.2);
     }
@@ -498,14 +509,14 @@
   padding: 6px;
   font-family: 'Segoe UI', sans-serif;
   font-weight: bold;
-  background: linear-gradient(135deg, rgba(40, 40, 50, 0.95) 0%, rgba(25, 25, 35, 0.95) 100%);
+  background: linear-gradient(135deg, #FF416C 0%, #FF4B2B 100%);
   color: #FFF;
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-bottom: 3px solid rgba(255, 255, 255, 0.2); /* Default fallback */
   border-radius: 15px;
   cursor: pointer;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(4px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -612,8 +623,8 @@
   position: fixed;
   top: 0; left: 0; width: 100%; height: 100%;
   background: rgba(10, 10, 20, 0.85);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   display: none;
   flex-direction: column;
   justify-content: center;
@@ -641,7 +652,7 @@
   border: 2px solid rgba(255, 255, 255, 0.2);
   border-radius: 12px;
   cursor: pointer;
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(4px);
   transition: all 0.2s;
   min-height: 60px; /* Touch friendly */
 }
@@ -677,7 +688,7 @@
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(4px);
   z-index: 100;
   opacity: 0;
   transition: opacity 0.5s ease;
@@ -685,8 +696,8 @@
 
 .game-over-content {
   background: rgba(20, 20, 35, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   border: 1px solid rgba(0, 201, 255, 0.4);
   border-radius: 20px;
   padding: 30px;
@@ -734,21 +745,21 @@
   font-size: 22px;
   font-weight: bold;
   color: #FFF;
-  background: linear-gradient(180deg, #4A90D9 0%, #2980B9 100%);
+  background: linear-gradient(135deg, #FF416C 0%, #FF4B2B 100%);
   border: none;
   border-radius: 12px;
   cursor: pointer;
   margin-bottom: 15px;
-  box-shadow: 0 4px 0 #1A5276;
+  box-shadow: 0 10px 30px rgba(255, 75, 43, 0.6), inset 0 -4px 0 rgba(0,0,0,0.2);
   transition: transform 0.1s;
   animation: pulse-btn 2s infinite ease-in-out;
   min-height: 60px;
 }
 
 .game-over-btn:active {
-  transform: scale(0.94);
-  box-shadow: 0 2px 0 #1A5276;
-  background: linear-gradient(180deg, #2980B9 0%, #1F618D 100%);
+  transform: scale(0.92) !important;
+  box-shadow: inset 0 6px 15px rgba(0, 0, 0, 0.6);
+  background: linear-gradient(135deg, #FF4B2B 0%, #FF416C 100%);
 }
 
 .share-btn-group {
@@ -768,6 +779,8 @@
   min-height: 54px;
 }
 
+.share-btn:active { transform: scale(0.92) !important; }
+
 .share-btn.x {
   background: #1DA1F2;
   box-shadow: 0 3px 0 #0C7ABF;
@@ -785,7 +798,7 @@
   padding: 12px;
   margin-bottom: max(20px, env(safe-area-inset-bottom) + 10px);
   width: 100%;
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(4px);
 }
 
 .leaderboard-title {
@@ -905,8 +918,8 @@
   width: 100%;
   height: 100%;
   background: rgba(10, 10, 20, 0.85);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   display: none;
   justify-content: center;
   align-items: center;
@@ -1016,6 +1029,7 @@
   color: #FFF;
   text-align: center;
   font-size: 14px;
+  min-height: 54px;
 }
 
 .settings-go-btn {
@@ -1050,7 +1064,7 @@
 }
 
 .settings-close-btn:active {
-  transform: scale(0.98);
+  transform: scale(0.92) !important;
   box-shadow: 0 2px 0 #B8860B;
 }
 
@@ -1075,11 +1089,29 @@
 
 /* --- Install App Button (Start Screen) --- */
 .install-btn {
-  background: linear-gradient(135deg, #00D2FF 0%, #3A7BD5 100%) !important;
+  background: linear-gradient(135deg, #FF416C 0%, #FF4B2B 100%) !important;
   color: #FFF !important;
   margin-top: 15px !important;
   font-size: 16px !important;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3) !important;
   min-height: 54px !important;
   border: 2px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Additional Mobile UI/UX optimizations */
+.game-controls button,
+.icon-btn,
+.start-btn,
+.shop-btn,
+.super-cannon-btn,
+.pause-btn,
+.game-over-btn,
+.share-btn,
+.settings-toggle-btn,
+.settings-go-btn,
+.settings-close-btn {
+  /* Enhance tactile feedback */
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }

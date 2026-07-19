@@ -18,7 +18,14 @@ function getLeaderboardElement(currentScore: number = -1): HTMLElement {
         if (!Array.isArray(parsed)) {
             leaderboard = [];
         } else {
-            leaderboard = parsed.filter((entry: unknown) => entry && typeof entry === 'object' && typeof (entry as any).score === 'number');
+            const sanitized = [];
+            for (let i = 0; i < parsed.length; i++) {
+                const entry = parsed[i];
+                if (entry && typeof entry === 'object' && typeof (entry as {score?: unknown}).score === 'number') {
+                    sanitized.push(entry);
+                }
+            }
+            leaderboard = sanitized;
         }
     } catch (e) {
         console.error('Failed to load leaderboard', e);
@@ -53,7 +60,8 @@ function getLeaderboardElement(currentScore: number = -1): HTMLElement {
     list.className = 'leaderboard-list';
     box.appendChild(list);
 
-    leaderboard.forEach((entry: { score: number }, index: number) => {
+    for (let index = 0; index < leaderboard.length; index++) {
+        const entry = leaderboard[index];
         let safeScore = Number(entry.score);
         /* v8 ignore start */
         if (isNaN(safeScore) || !isFinite(safeScore)) safeScore = 0;
@@ -88,7 +96,7 @@ function getLeaderboardElement(currentScore: number = -1): HTMLElement {
         item.appendChild(rankCol);
         item.appendChild(scoreCol);
         list.appendChild(item);
-    });
+    }
 
     return box;
 }
@@ -481,9 +489,7 @@ export function showGameOverScreen(gameState: GameState): void {
         const installBtn = document.createElement('button');
         installBtn.id = 'goInstallBtn';
         installBtn.className = 'game-over-btn';
-        installBtn.style.background = '#FFD700';
         installBtn.style.color = '#333';
-        installBtn.style.boxShadow = '0 4px 0 #DAA520';
         installBtn.textContent = '📲 INSTALL APP';
         content.appendChild(installBtn);
     }
