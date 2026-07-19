@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { updateSpawns, spawnCoins, spawnMysteryBoxes, spawnGates, spawnEnemies, checkBossSpawn, spawnMiniBoss } from '../src/spawner';
+import { updateSpawns, spawnCoins, spawnMysteryBoxes, spawnGates, spawnEnemies, checkBossSpawn, spawnMiniBoss, resetSpawnerState } from '../src/spawner';
 import { GameState, Entities } from '../src/types';
 
 vi.mock('../src/entities', async () => {
@@ -233,6 +233,28 @@ describe('Spawner', () => {
             // Should spawn multiple
             expect(createMiniBoss).toHaveBeenCalled();
             expect(entities.miniBosses.length).toBeGreaterThan(0);
+        });
+
+        it('should reset the mini-boss spawn counter for a new run', () => {
+            resetSpawnerState(); // deterministic start, independent of prior tests
+
+            // First run advances the internal lastMiniBossSpawn counter
+            gameState.distanceTraveled = 300; // > interval (250)
+            spawnMiniBoss(entities, 480, gameState);
+            expect(entities.miniBosses.length).toBe(1);
+
+            // A new run at the same early distance WITHOUT reset spawns nothing
+            entities.miniBosses = [];
+            gameState.distanceTraveled = 300;
+            spawnMiniBoss(entities, 480, gameState);
+            expect(entities.miniBosses.length).toBe(0);
+
+            // After resetSpawnerState, the early-run spawn works again
+            resetSpawnerState();
+            spawnMiniBoss(entities, 480, gameState);
+            expect(entities.miniBosses.length).toBe(1);
+
+            resetSpawnerState(); // leave module state clean for later tests
         });
     });
 

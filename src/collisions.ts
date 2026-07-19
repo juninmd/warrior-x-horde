@@ -11,9 +11,9 @@ import { soldierPool } from './soldierPool';
 import { saveGameProgress } from './gameState';
 
 function getComboMultiplier(gameState: GameState): number {
-    // 10% bonus per combo count, capped at 300% (3.0x) for balance, or maybe uncapped?
-    // Let's go with 5% per combo to keep numbers sane but rewarding.
-    return 1 + (gameState.combo * 0.05);
+    // 5% bonus per combo count, capped at 3.0x so a long clear streak cannot
+    // inflate score/coins without bound (coins persist to localStorage).
+    return Math.min(3.0, 1 + gameState.combo * 0.05);
 }
 
 function cleanupDeadSoldiers(soldiers: Soldier[]): void {

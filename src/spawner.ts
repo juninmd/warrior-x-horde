@@ -174,6 +174,13 @@ export function spawnEnemies(entities: Entities, canvasWidth: number, gameState:
 // Mini-boss spawn durante as hordas
 let lastMiniBossSpawn = 0;
 
+// Reset spawner module state on a new run. Without this, lastMiniBossSpawn
+// carries over from a previous run that ended before its boss, biasing the
+// early difficulty of the next run (no mini-bosses until distance catches up).
+export function resetSpawnerState(): void {
+  lastMiniBossSpawn = 0;
+}
+
 export function spawnMiniBoss(entities: Entities, canvasWidth: number, gameState: GameState): void {
   // Spawnar mini-boss
   // Se for level > 11 (Sistema Anti-Astolfo), spawna muito mais frequente

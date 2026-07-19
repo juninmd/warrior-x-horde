@@ -243,8 +243,9 @@ function renderSoldierShape(ctx: CanvasRenderingContext2D | OffscreenCanvasRende
   ctx.roundRect(x - s * 0.5, y - s * 0.28, s, s * 0.85, s * 0.24);
   ctx.fill();
 
-  // Vest details: straps + chest pouch
-  if (detailed) {
+  // Torso details differ for player (military kit) vs enemy (rotting flesh)
+  if (detailed && isPlayer) {
+    // Vest straps + chest pouch
     ctx.strokeStyle = shadeColor(color, -45);
     ctx.lineWidth = Math.max(1, s * 0.09);
     ctx.beginPath();
@@ -259,6 +260,31 @@ function renderSoldierShape(ctx: CanvasRenderingContext2D | OffscreenCanvasRende
     ctx.fill();
     // Rim light on left shoulder edge
     ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+    ctx.lineWidth = Math.max(1, s * 0.07);
+    ctx.beginPath();
+    ctx.arc(x - s * 0.5, y - s * 0.04, s * 0.24, Math.PI * 0.9, Math.PI * 1.5);
+    ctx.stroke();
+  } else if (detailed) {
+    // Enemy: torn ribcage wound + tattered clothing
+    ctx.fillStyle = shadeColor(color, -55);
+    ctx.beginPath();
+    ctx.ellipse(x + s * 0.08, y + s * 0.12, s * 0.24, s * 0.3, 0.2, 0, Math.PI * 2);
+    ctx.fill();
+    // Exposed rib bones over the wound
+    ctx.strokeStyle = '#e8e0c8';
+    ctx.lineWidth = Math.max(1, s * 0.06);
+    ctx.beginPath();
+    ctx.moveTo(x - s * 0.12, y - s * 0.02); ctx.lineTo(x + s * 0.26, y + s * 0.02);
+    ctx.moveTo(x - s * 0.12, y + s * 0.14); ctx.lineTo(x + s * 0.26, y + s * 0.18);
+    ctx.moveTo(x - s * 0.12, y + s * 0.3); ctx.lineTo(x + s * 0.22, y + s * 0.32);
+    ctx.stroke();
+    // Dark blood splatter on the chest
+    ctx.fillStyle = 'rgba(80, 0, 0, 0.55)';
+    ctx.beginPath();
+    ctx.arc(x - s * 0.28, y - s * 0.05, s * 0.12, 0, Math.PI * 2);
+    ctx.fill();
+    // Sickly green rim light (bioluminescent rot)
+    ctx.strokeStyle = 'rgba(120, 220, 90, 0.4)';
     ctx.lineWidth = Math.max(1, s * 0.07);
     ctx.beginPath();
     ctx.arc(x - s * 0.5, y - s * 0.04, s * 0.24, Math.PI * 0.9, Math.PI * 1.5);
@@ -359,23 +385,45 @@ function renderSoldierShape(ctx: CanvasRenderingContext2D | OffscreenCanvasRende
   ctx.arc(x, y - s * 0.62, s * 0.38, 0, Math.PI * 2);
   ctx.fill();
 
-  // --- Helmet ---
-  ctx.fillStyle = isFlash ? '#FFF' : shadeColor(color, -42);
-  ctx.beginPath();
-  ctx.arc(x, y - s * 0.7, s * 0.4, Math.PI * 1.02, Math.PI * 1.98);
-  ctx.fill();
-  // Helmet brim
-  ctx.fillStyle = isFlash ? '#FFF' : shadeColor(color, -55);
-  ctx.beginPath();
-  ctx.roundRect(x - s * 0.42, y - s * 0.74, s * 0.84, s * 0.16, s * 0.06);
-  ctx.fill();
-  if (detailed) {
-    // Helmet rim highlight
-    ctx.strokeStyle = 'rgba(255,255,255,0.4)';
-    ctx.lineWidth = Math.max(1, s * 0.06);
+  // --- Headgear: military helmet (player) vs rotting scalp (enemy) ---
+  if (isPlayer) {
+    ctx.fillStyle = isFlash ? '#FFF' : shadeColor(color, -42);
     ctx.beginPath();
-    ctx.arc(x - s * 0.08, y - s * 0.78, s * 0.32, Math.PI * 1.15, Math.PI * 1.55);
-    ctx.stroke();
+    ctx.arc(x, y - s * 0.7, s * 0.4, Math.PI * 1.02, Math.PI * 1.98);
+    ctx.fill();
+    // Helmet brim
+    ctx.fillStyle = isFlash ? '#FFF' : shadeColor(color, -55);
+    ctx.beginPath();
+    ctx.roundRect(x - s * 0.42, y - s * 0.74, s * 0.84, s * 0.16, s * 0.06);
+    ctx.fill();
+    if (detailed) {
+      // Helmet rim highlight
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+      ctx.lineWidth = Math.max(1, s * 0.06);
+      ctx.beginPath();
+      ctx.arc(x - s * 0.08, y - s * 0.78, s * 0.32, Math.PI * 1.15, Math.PI * 1.55);
+      ctx.stroke();
+    }
+  } else {
+    // Enemy: matted, rotting scalp with a bald patch (exposed skull)
+    ctx.fillStyle = isFlash ? '#FFF' : '#243d18';
+    ctx.beginPath();
+    ctx.arc(x, y - s * 0.72, s * 0.4, Math.PI * 1.05, Math.PI * 1.95);
+    ctx.fill();
+    if (detailed) {
+      // Exposed skull patch
+      ctx.fillStyle = '#c8bfa0';
+      ctx.beginPath();
+      ctx.arc(x + s * 0.16, y - s * 0.82, s * 0.13, 0, Math.PI * 2);
+      ctx.fill();
+      // Jagged hair tufts
+      ctx.strokeStyle = '#1c2f12';
+      ctx.lineWidth = Math.max(1, s * 0.05);
+      ctx.beginPath();
+      ctx.moveTo(x - s * 0.3, y - s * 0.82); ctx.lineTo(x - s * 0.4, y - s * 1.0);
+      ctx.moveTo(x - s * 0.05, y - s * 0.92); ctx.lineTo(x - s * 0.02, y - s * 1.08);
+      ctx.stroke();
+    }
   }
 
   // Head extras per type
@@ -403,15 +451,33 @@ function renderSoldierShape(ctx: CanvasRenderingContext2D | OffscreenCanvasRende
       ctx.arc(x + s * 0.14, y - s * 0.58, s * 0.06, 0, Math.PI * 2);
       ctx.fill();
     } else {
-      // Glowing enemy eyes
+      // Glowing enemy eyes (asymmetric: one wide, one sunken)
       ctx.fillStyle = '#FFD700';
       ctx.shadowColor = '#FF4500';
       ctx.shadowBlur = detailed ? 5 : 0;
       ctx.beginPath();
-      ctx.arc(x - s * 0.15, y - s * 0.6, s * 0.1, 0, Math.PI * 2);
-      ctx.arc(x + s * 0.15, y - s * 0.6, s * 0.1, 0, Math.PI * 2);
+      ctx.arc(x - s * 0.16, y - s * 0.62, s * 0.11, 0, Math.PI * 2);
+      ctx.arc(x + s * 0.15, y - s * 0.58, s * 0.07, 0, Math.PI * 2);
       ctx.fill();
       ctx.shadowBlur = 0;
+      if (detailed) {
+        // Slack, gaping jaw
+        ctx.fillStyle = '#1a0a0a';
+        ctx.beginPath();
+        ctx.ellipse(x, y - s * 0.4, s * 0.14, s * 0.12, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // Broken teeth
+        ctx.fillStyle = '#d8cfa8';
+        ctx.fillRect(x - s * 0.1, y - s * 0.5, s * 0.05, s * 0.07);
+        ctx.fillRect(x + s * 0.03, y - s * 0.5, s * 0.05, s * 0.07);
+        // Dripping drool
+        ctx.strokeStyle = 'rgba(150, 220, 120, 0.5)';
+        ctx.lineWidth = Math.max(1, s * 0.05);
+        ctx.beginPath();
+        ctx.moveTo(x + s * 0.02, y - s * 0.3);
+        ctx.lineTo(x + s * 0.02, y - s * 0.12);
+        ctx.stroke();
+      }
     }
   }
 
