@@ -1,9 +1,10 @@
 {
   "name": "warrior-x-horder",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "",
   "main": "index.js",
   "type": "module",
+  "packageManager": "pnpm@10.33.2",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
@@ -12,19 +13,19 @@
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
     "test": "vitest",
+    "e2e": "playwright test",
     "coverage": "vitest run --coverage --testTimeout=30000"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@playwright/test": "^1.61.1",
     "@eslint/js": "^9.24.0",
+    "@playwright/test": "^1.61.1",
     "@types/node": "^26.1.1",
     "@typescript-eslint/eslint-plugin": "^8.62.1",
     "@typescript-eslint/parser": "^8.62.0",
     "@vitest/coverage-v8": "^4.1.10",
-    "cpx": "^1.5.0",
     "eslint": "^10.6.0",
     "globals": "^17.7.0",
     "jsdom": "^29.1.1",

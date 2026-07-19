@@ -241,10 +241,11 @@ export function updateShopUI(gameState: GameState): void {
   if (!shopContainer) return;
 
   if (!gameState.isStarted || gameState.isGameOver) {
-    shopContainer.style.display = 'none';
+    // Only touch the DOM when the value actually changes (avoids per-frame style recalc)
+    if (shopContainer.style.display !== 'none') shopContainer.style.display = 'none';
     return;
   }
-  shopContainer.style.display = 'flex';
+  if (shopContainer.style.display !== 'flex') shopContainer.style.display = 'flex';
 
   const costs: Record<string, number> = {
       'soldier': 50, 'bazooka': 50, 'rambo': 100, 'laser': 150, 'nuke': 500, 'recharge': 200
@@ -252,11 +253,9 @@ export function updateShopUI(gameState: GameState): void {
 
   Object.entries(buttons).forEach(([id, btn]) => {
       const cost = costs[id];
-      if (gameState.coins >= cost) {
-          btn.disabled = false;
-      } else {
-          btn.disabled = true;
-      }
+      const shouldDisable = gameState.coins < cost;
+      // Skip redundant writes: only mutate .disabled when it changes
+      if (btn.disabled !== shouldDisable) btn.disabled = shouldDisable;
   });
 }
 
@@ -300,31 +299,32 @@ export function updateSuperCannonUI(gameState: GameState): void {
     const btn = buttons['superCannon'];
 
     if (!gameState.isStarted || gameState.isGameOver) {
-        superCannonContainer.style.display = 'none';
+        if (superCannonContainer.style.display !== 'none') superCannonContainer.style.display = 'none';
         return;
     }
 
-    superCannonContainer.style.display = 'flex';
+    if (superCannonContainer.style.display !== 'flex') superCannonContainer.style.display = 'flex';
 
     const now = Date.now();
     const timeSinceLastUse = now - gameState.superCannonLastUsed;
     const cooldownRemaining = Math.max(0, gameState.superCannonCooldown - timeSinceLastUse);
     const isOnCooldown = cooldownRemaining > 0 && !gameState.superCannonActive;
 
+    // Compute target state, then apply only the writes that change (avoids per-frame DOM churn)
+    let text: string;
+    let active: boolean;
+    let disabled: boolean;
     if (gameState.superCannonActive) {
-        btn.textContent = '⚡ ATIVO!';
-        btn.classList.add('active');
-        btn.disabled = true;
+        text = '⚡ ATIVO!'; active = true; disabled = true;
     } else if (isOnCooldown) {
-        const cooldownSecs = Math.ceil(cooldownRemaining / 1000);
-        btn.textContent = `⏳ ${cooldownSecs}s`;
-        btn.classList.remove('active');
-        btn.disabled = true;
+        text = `⏳ ${Math.ceil(cooldownRemaining / 1000)}s`; active = false; disabled = true;
     } else {
-        btn.textContent = '⚡ SUPER';
-        btn.classList.remove('active');
-        btn.disabled = false;
+        text = '⚡ SUPER'; active = false; disabled = false;
     }
+
+    if (btn.textContent !== text) btn.textContent = text;
+    if (btn.classList.contains('active') !== active) btn.classList.toggle('active', active);
+    if (btn.disabled !== disabled) btn.disabled = disabled;
 }
 
 // --- Game Over UI ---
