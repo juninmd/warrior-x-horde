@@ -1,11 +1,14 @@
 // renderer-boss.ts - Boss specific rendering logic
 import { Boss } from './types';
 import { safeAddColorStop } from './renderer-utils';
+import { BASE_WIDTH } from './constants';
 
 // Boss final - Nave Mãe Alienígena (Scarier version)
 export function drawMothershipBoss(ctx: CanvasRenderingContext2D, boss: Boss, time: number): void {
-  const { width } = ctx.canvas;
-  const x = width / 2;
+  // Coordenadas de desenho são lógicas (o ctx já está escalado pelo DPR), então
+  // `ctx.canvas.width` (backing store) deslocaria a nave para fora da tela em
+  // qualquer aparelho com devicePixelRatio > 1.
+  const x = BASE_WIDTH / 2;
   const y = boss.y;
   const hover = Math.sin(time * 0.002) * 5; // Mais movimento
   const shipY = y + hover;
@@ -149,7 +152,7 @@ export function drawMothershipBoss(ctx: CanvasRenderingContext2D, boss: Boss, ti
   const barWidth = 280;
   const barHeight = 20;
   const barX = x - barWidth / 2;
-  const barY = shipY + 45;
+  const barY = shipY + 78; // abaixo do casco e das luzes da base, sem cobrir a nave
 
   // Fundo da barra
   ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
