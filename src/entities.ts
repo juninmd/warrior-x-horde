@@ -3,6 +3,7 @@ import { Army, Soldier, EnemyHorde, Gate, Boss, Entities, MiniBoss, MysteryBox, 
 import { MAX_HEROES } from './constants';
 import { shadeColor } from './utils';
 import { soldierPool } from './soldierPool';
+import { getActiveSkin } from './skins';
 
 function updateGateColorCache(gate: Gate): void {
   gate.cachedColors = {
@@ -104,6 +105,7 @@ export function createPlayerArmy(canvasWidth: number, canvasHeight: number): Arm
   const centerX = canvasWidth / 2;
   const centerY = canvasHeight - 80; // Mais para baixo - mais tempo de reação
   const soldiers: Soldier[] = [];
+  const skinColor = getActiveSkin().primary;
 
   // Começa com 5 soldados para ter uma base decente
   for (let i = 0; i < 5; i++) {
@@ -112,7 +114,7 @@ export function createPlayerArmy(canvasWidth: number, canvasHeight: number): Arm
     soldiers.push(createSoldier(
       centerX + Math.cos(angle) * radius,
       centerY + Math.sin(angle) * radius * 0.6, // 0.6 para efeito 3D
-      '#4A90D9'
+      skinColor
     ));
   }
 
@@ -121,7 +123,7 @@ export function createPlayerArmy(canvasWidth: number, canvasHeight: number): Arm
     centerX,
     centerY,
     targetX: centerX,
-    color: '#4A90D9',
+    color: skinColor,
     isPlayer: true,
     fireRate: 700, // FireRate base: 700ms (mais lento para equilibrar)
     lastShotTime: 0,
@@ -129,7 +131,7 @@ export function createPlayerArmy(canvasWidth: number, canvasHeight: number): Arm
     aliveCount: soldiers.length,
     trail: {
       points: [],
-      color: '#4A90D9', // Matches player color
+      color: skinColor, // Matches player color
       width: 40,
       maxLength: 20
     },
@@ -309,15 +311,15 @@ export function createGate(canvasWidth: number, y: number, side: 'left' | 'right
     } else if (roll < 0.70) {
       type = 'damage';
       value = 2;
-      color = '#9900ffff';
+      color = '#9900ff';
     } else if (roll < 0.85) {
       type = 'subtract';
       value = Math.floor(Math.random() * 2) + 1;
-      color = '#ff1900ff';
+      color = '#ff1900';
     } else {
       type = 'divide';
       value = 1.2;
-      color = '#ff0000ff';
+      color = '#ff0000';
     }
   } else {
     // Buffs escalam com base em: tamanho do exército, quantidade de inimigos E level
@@ -385,7 +387,7 @@ export function createGate(canvasWidth: number, y: number, side: 'left' | 'right
       type = 'damage';
       // Apenas +5% a +10% de dano
       value = 1.05 + (level * 0.01);
-      color = '#9900ffff';
+      color = '#9900ff';
     } else if (roll < 0.94) {
       // 14% - Super Guerreiro - mais conservador
       type = 'superwarrior';
@@ -398,12 +400,12 @@ export function createGate(canvasWidth: number, y: number, side: 'left' | 'right
       // 3% - Subtrair soldados (valores baixos)
       type = 'subtract';
       value = Math.floor(Math.random() * 3) + 1; // 1-3 soldados apenas
-      color = '#ff1900ff';
+      color = '#ff1900';
     } else {
       // 3% - Dividir soldados (sempre por 1.2, bem leve)
       type = 'divide';
       value = 1.2; // Divide por 1.2
-      color = '#ff0000ff';
+      color = '#ff0000';
     }
   }
 
@@ -489,7 +491,7 @@ export function createGatePair(canvasWidth: number, y: number, level: number = 1
       } else {
         leftGate.type = 'damage';
         leftGate.value = 2;
-        leftGate.color = '#9900ffff';
+        leftGate.color = '#9900ff';
       }
     } else {
       if (buffRoll < 0.4) {

@@ -6,6 +6,10 @@ import { COLORS, MAX_PARTICLES, MAX_RENDERED_SOLDIERS, ThemeConfig, BASE_WIDTH, 
 import { safeAddColorStop, drawGlassBadge, drawStar, drawJoystick, getComboColor } from './renderer-utils';
 import { drawBoss } from './renderer-boss';
 import { QualityManager } from './quality';
+import { HERO_SKINS, getActiveSkin } from './skins';
+
+const HERO_SKIN_COLORS = new Set(HERO_SKINS.map(s => s.primary));
+const isHeroSkinColor = (color: string): boolean => HERO_SKIN_COLORS.has(color);
 
 // --- Sprite Caching System ---
 interface SpriteCache {
@@ -79,6 +83,7 @@ export function preRenderSprites(): void {
   // Common colors
   const colors = [
     COLORS.PLAYER.NORMAL,
+    getActiveSkin().primary, // skin escolhida (duplicatas são ignoradas pelo cache)
     COLORS.ENEMY.BASE,
     COLORS.PLAYER.SUPER,
     COLORS.PLAYER.BAZOOKA,
@@ -208,7 +213,7 @@ function renderSoldierToCache(type: Soldier['type'], color: string, size: number
 }
 
 function renderSoldierShape(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, type: Soldier['type'], color: string, x: number, y: number, actualSize: number, isSuper: boolean, isFlash: boolean) {
-  const isPlayer = color === COLORS.PLAYER.NORMAL || color === COLORS.PLAYER.SUPER || color === COLORS.PLAYER.BAZOOKA || color === COLORS.PLAYER.LASER || type !== 'normal';
+  const isPlayer = color === COLORS.PLAYER.NORMAL || color === COLORS.PLAYER.SUPER || color === COLORS.PLAYER.BAZOOKA || color === COLORS.PLAYER.LASER || isHeroSkinColor(color) || type !== 'normal';
   const quality = QualityManager.getInstance().settings;
   const detailed = !isFlash && !quality.simplifiedRendering;
   const s = actualSize;

@@ -56,9 +56,13 @@ export function initAudio(): void {
     console.warn('LocalStorage access denied', e);
   }
 
-  // Pré-carregar todos os áudios
+  // Pré-carregar apenas o que ainda não começou a carregar: `preload = 'auto'`
+  // já dispara o download, e chamar load() de novo aborta a requisição em voo
+  // (net::ERR_ABORTED) e recomeça do zero.
   Object.values(audioManager).forEach(audio => {
-    audio.load();
+    if (audio.networkState !== HTMLMediaElement.NETWORK_LOADING && audio.readyState === HTMLMediaElement.HAVE_NOTHING) {
+      audio.load();
+    }
   });
 
   audioInitialized = true;

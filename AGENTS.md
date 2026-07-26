@@ -9,6 +9,7 @@ This file serves as the "Living Memory" for Jules and other agents working on th
 - **Rendering:** `src/renderer.ts` handles all canvas drawing. It uses a `spriteCache` for soldiers and particles to optimize performance.
 - **State Management:** `src/gameState.ts` holds the singleton `gameState` object. `src/types.ts` defines all interfaces.
 - **Entities:** `src/entities.ts` contains factory functions for creating game objects (soldiers, hordes, gates).
+- **Skins:** `src/skins.ts` holds the hero skin catalog + persisted selection (`crowdHeroSkin`, unlock by high score); `src/ui-skins.ts` renders the start-screen picker. The chosen `primary` color drives `createPlayerArmy` and is pre-rendered into the sprite cache.
 - **Collision:** `src/collisions.ts` manages interactions (Army vs Horde, Army vs Gate). It uses optimized bounding box checks (`getArmyBounds`).
 - **Optimization:**
     - **Object Pools:** Used for `Soldier`, `Particle`, and `FloatingText` to minimize GC.
