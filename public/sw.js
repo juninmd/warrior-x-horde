@@ -1,4 +1,5 @@
-const CACHE_NAME = 'crowd-runner-v2';
+// Bump this on every deploy that changes cached shell assets.
+const CACHE_NAME = 'crowd-runner-v3';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -8,6 +9,7 @@ const ASSETS_TO_CACHE = [
 
 // Install Event
 self.addEventListener('install', (event) => {
+  self.skipWaiting(); // Activate the new SW as soon as it finishes installing
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       console.log('[Service Worker] Caching Assets');
@@ -26,35 +28,48 @@ self.addEventListener('activate', (event) => {
           return caches.delete(key);
         }
       }));
-    })
+    }).then(() => self.clients.claim())
   );
-  return self.clients.claim();
 });
+
+function isNavigationRequest(request) {
+  return request.mode === 'navigate' || request.destination === 'document';
+}
 
 // Fetch Event
 self.addEventListener('fetch', (event) => {
-  // Skip cross-origin requests
-  if (!event.request.url.startsWith(self.location.origin)) return;
+  const { request } = event;
 
+  // Only handle same-origin GET requests
+  if (request.method !== 'GET' || !request.url.startsWith(self.location.origin)) return;
+
+  // Network-first for HTML/navigation so a redeploy (new hashed bundles) is always
+  // picked up. Falling back to cache only when offline. This prevents a stale
+  // index.html from referencing a hashed bundle that no longer exists (404 -> dead app).
+  if (isNavigationRequest(request)) {
+    event.respondWith(
+      fetch(request)
+        .then((networkResponse) => {
+          const copy = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put('./index.html', copy));
+          return networkResponse;
+        })
+        .catch(() => caches.match(request).then((r) => r || caches.match('./index.html')))
+    );
+    return;
+  }
+
+  // Cache-first for other assets (hashed bundles are immutable, safe to cache long-term).
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
+    caches.match(request).then((cachedResponse) => {
+      if (cachedResponse) return cachedResponse;
 
-      return fetch(event.request).then((networkResponse) => {
-        // Check if we received a valid response
+      return fetch(request).then((networkResponse) => {
         if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
           return networkResponse;
         }
-
-        // Clone the response
         const responseToCache = networkResponse.clone();
-
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
-        });
-
+        caches.open(CACHE_NAME).then((cache) => cache.put(request, responseToCache));
         return networkResponse;
       });
     })

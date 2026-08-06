@@ -97,13 +97,17 @@ export class QualityManager {
     if (this.lowQualityTriggered) return; // Already low quality
 
     // Estimate FPS from dt (dt is in ms)
-    // Avoid tracking very long pauses
-    if (dt > 100) return;
+    // Ignora apenas travadas reais (aba em segundo plano, GC longo). O limite
+    // anterior de 100ms descartava todo quadro abaixo de 10fps — justamente o
+    // cenário em que a queda automática de qualidade precisa disparar.
+    if (dt > 1000) return;
 
     const fps = 1000 / Math.max(1, dt);
 
     if (fps < 45) {
-      this.fpsDropFrames++;
+      // Pondera pelo tempo decorrido: o gatilho passa a significar ~2s de queda
+      // real, independentemente de quantos quadros couberam nesse intervalo.
+      this.fpsDropFrames += Math.max(1, dt / 16.67);
     } else {
       this.fpsDropFrames = Math.max(0, this.fpsDropFrames - 1);
     }

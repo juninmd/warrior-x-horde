@@ -80,8 +80,18 @@ describe('QualityManager Coverage', () => {
     qualityManager.setQuality('auto');
     const initial = (qualityManager as any).fpsDropFrames;
 
-    qualityManager.updateFPS(500); // 500ms > 100ms limit
+    qualityManager.updateFPS(1500); // travada real (aba em segundo plano / GC)
 
     expect((qualityManager as any).fpsDropFrames).toBe(initial);
+  });
+
+  it('should still react to catastrophic frame times below 10fps', () => {
+    qualityManager.setQuality('auto');
+    (qualityManager as any).fpsDropFrames = 0;
+
+    // 5 quadros de 500ms = 2,5s de queda: peso ~30 por quadro (limite 120)
+    for (let i = 0; i < 5; i++) qualityManager.updateFPS(500);
+
+    expect((qualityManager as any).lowQualityTriggered).toBe(true);
   });
 });

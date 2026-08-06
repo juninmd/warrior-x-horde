@@ -6,6 +6,10 @@ import { COLORS, MAX_PARTICLES, MAX_RENDERED_SOLDIERS, ThemeConfig, BASE_WIDTH, 
 import { safeAddColorStop, drawGlassBadge, drawStar, drawJoystick, getComboColor } from './renderer-utils';
 import { drawBoss } from './renderer-boss';
 import { QualityManager } from './quality';
+import { HERO_SKINS, getActiveSkin } from './skins';
+
+const HERO_SKIN_COLORS = new Set(HERO_SKINS.map(s => s.primary));
+const isHeroSkinColor = (color: string): boolean => HERO_SKIN_COLORS.has(color);
 
 // --- Sprite Caching System ---
 interface SpriteCache {
@@ -79,6 +83,7 @@ export function preRenderSprites(): void {
   // Common colors
   const colors = [
     COLORS.PLAYER.NORMAL,
+    getActiveSkin().primary, // skin escolhida (duplicatas são ignoradas pelo cache)
     COLORS.ENEMY.BASE,
     COLORS.PLAYER.SUPER,
     COLORS.PLAYER.BAZOOKA,
@@ -208,138 +213,289 @@ function renderSoldierToCache(type: Soldier['type'], color: string, size: number
 }
 
 function renderSoldierShape(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, type: Soldier['type'], color: string, x: number, y: number, actualSize: number, isSuper: boolean, isFlash: boolean) {
-  const isPlayer = color === COLORS.PLAYER.NORMAL || color === COLORS.PLAYER.SUPER || color === COLORS.PLAYER.BAZOOKA || color === COLORS.PLAYER.LASER || type !== 'normal';
+  const isPlayer = color === COLORS.PLAYER.NORMAL || color === COLORS.PLAYER.SUPER || color === COLORS.PLAYER.BAZOOKA || color === COLORS.PLAYER.LASER || isHeroSkinColor(color) || type !== 'normal';
   const quality = QualityManager.getInstance().settings;
+  const detailed = !isFlash && !quality.simplifiedRendering;
+  const s = actualSize;
 
-  // If flashing, skip complex gradients and details, just shape
-
+  // Ground shadow (static relative to body)
   if (!isFlash && quality.enableShadows) {
-    // Sombra (static relative to body)
     ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
     ctx.beginPath();
-    ctx.ellipse(x, y + actualSize * 0.8, actualSize * 0.6, actualSize * 0.2, 0, 0, Math.PI * 2);
+    ctx.ellipse(x, y + s * 0.95, s * 0.62, s * 0.2, 0, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  // Corpo (círculo principal)
-  let bodyFill: string | CanvasGradient = color;
-  if (!isFlash && !quality.simplifiedRendering) {
-      const bodyGradient = ctx.createRadialGradient(x - actualSize * 0.2, y - actualSize * 0.2, 0, x, y, actualSize);
-      safeAddColorStop(bodyGradient, 0, color);
-      safeAddColorStop(bodyGradient, 1, shadeColor(color, -30));
-      bodyFill = bodyGradient;
-  }
-
-  ctx.fillStyle = bodyFill;
+  // --- Legs (two boots/limbs below the torso) ---
+  const legColor = isFlash ? '#FFF' : (isPlayer ? shadeColor(color, -55) : shadeColor(color, -35));
+  ctx.fillStyle = legColor;
   ctx.beginPath();
-  ctx.arc(x, y, actualSize * 0.7, 0, Math.PI * 2);
+  ctx.roundRect(x - s * 0.42, y + s * 0.35, s * 0.32, s * 0.6, s * 0.14);
+  ctx.roundRect(x + s * 0.1, y + s * 0.35, s * 0.32, s * 0.6, s * 0.14);
   ctx.fill();
 
+  // --- Torso (tactical vest) ---
+  let torsoFill: string | CanvasGradient = isFlash ? '#FFF' : color;
+  if (detailed) {
+    const g = ctx.createLinearGradient(x - s * 0.5, y - s * 0.3, x + s * 0.5, y + s * 0.4);
+    safeAddColorStop(g, 0, shadeColor(color, 18));
+    safeAddColorStop(g, 0.5, color);
+    safeAddColorStop(g, 1, shadeColor(color, -35));
+    torsoFill = g;
+  }
+  ctx.fillStyle = torsoFill;
+  ctx.beginPath();
+  ctx.roundRect(x - s * 0.5, y - s * 0.28, s, s * 0.85, s * 0.24);
+  ctx.fill();
+
+  // Torso details differ for player (military kit) vs enemy (rotting flesh)
+  if (detailed && isPlayer) {
+    // Vest straps + chest pouch
+    ctx.strokeStyle = shadeColor(color, -45);
+    ctx.lineWidth = Math.max(1, s * 0.09);
+    ctx.beginPath();
+    ctx.moveTo(x - s * 0.22, y - s * 0.24);
+    ctx.lineTo(x - s * 0.22, y + s * 0.5);
+    ctx.moveTo(x + s * 0.22, y - s * 0.24);
+    ctx.lineTo(x + s * 0.22, y + s * 0.5);
+    ctx.stroke();
+    ctx.fillStyle = shadeColor(color, -30);
+    ctx.beginPath();
+    ctx.roundRect(x - s * 0.18, y + s * 0.02, s * 0.36, s * 0.26, s * 0.06);
+    ctx.fill();
+    // Rim light on left shoulder edge
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+    ctx.lineWidth = Math.max(1, s * 0.07);
+    ctx.beginPath();
+    ctx.arc(x - s * 0.5, y - s * 0.04, s * 0.24, Math.PI * 0.9, Math.PI * 1.5);
+    ctx.stroke();
+  } else if (detailed) {
+    // Enemy: torn ribcage wound + tattered clothing
+    ctx.fillStyle = shadeColor(color, -55);
+    ctx.beginPath();
+    ctx.ellipse(x + s * 0.08, y + s * 0.12, s * 0.24, s * 0.3, 0.2, 0, Math.PI * 2);
+    ctx.fill();
+    // Exposed rib bones over the wound
+    ctx.strokeStyle = '#e8e0c8';
+    ctx.lineWidth = Math.max(1, s * 0.06);
+    ctx.beginPath();
+    ctx.moveTo(x - s * 0.12, y - s * 0.02); ctx.lineTo(x + s * 0.26, y + s * 0.02);
+    ctx.moveTo(x - s * 0.12, y + s * 0.14); ctx.lineTo(x + s * 0.26, y + s * 0.18);
+    ctx.moveTo(x - s * 0.12, y + s * 0.3); ctx.lineTo(x + s * 0.22, y + s * 0.32);
+    ctx.stroke();
+    // Dark blood splatter on the chest
+    ctx.fillStyle = 'rgba(80, 0, 0, 0.55)';
+    ctx.beginPath();
+    ctx.arc(x - s * 0.28, y - s * 0.05, s * 0.12, 0, Math.PI * 2);
+    ctx.fill();
+    // Sickly green rim light (bioluminescent rot)
+    ctx.strokeStyle = 'rgba(120, 220, 90, 0.4)';
+    ctx.lineWidth = Math.max(1, s * 0.07);
+    ctx.beginPath();
+    ctx.arc(x - s * 0.5, y - s * 0.04, s * 0.24, Math.PI * 0.9, Math.PI * 1.5);
+    ctx.stroke();
+  }
+
+  // --- Shoulder pads ---
+  ctx.fillStyle = isFlash ? '#FFF' : shadeColor(color, -20);
+  ctx.beginPath();
+  ctx.arc(x - s * 0.5, y - s * 0.12, s * 0.22, 0, Math.PI * 2);
+  ctx.arc(x + s * 0.5, y - s * 0.12, s * 0.22, 0, Math.PI * 2);
+  ctx.fill();
+
+  // --- Arms + weapon (right arm holds the gun forward/up) ---
+  const armColor = isFlash ? '#FFF' : shadeColor(color, -40);
+  ctx.strokeStyle = armColor;
+  ctx.lineCap = 'round';
+  ctx.lineWidth = Math.max(2, s * 0.2);
+  ctx.beginPath();
+  ctx.moveTo(x + s * 0.5, y - s * 0.1);
+  ctx.lineTo(x + s * 0.35, y - s * 0.45);
+  ctx.stroke();
+
+  // Weapon per type
   if (isPlayer) {
     if (type === 'bazooka') {
       ctx.fillStyle = isFlash ? '#FFF' : '#2c3e50';
       ctx.beginPath();
-      ctx.roundRect(x - actualSize * 0.6, y - actualSize * 0.8, actualSize * 0.4, actualSize * 1.2, 2);
+      ctx.roundRect(x + s * 0.05, y - s * 0.62, s * 0.85, s * 0.26, s * 0.08);
       ctx.fill();
+      if (!isFlash) {
+        ctx.fillStyle = '#e67e22';
+        ctx.beginPath();
+        ctx.arc(x + s * 0.9, y - s * 0.49, s * 0.13, 0, Math.PI * 2);
+        ctx.fill();
+      }
     } else if (type === 'rambo') {
       ctx.fillStyle = isFlash ? '#FFF' : '#111';
-      ctx.fillRect(x + actualSize * 0.3, y, actualSize * 0.8, actualSize * 0.2);
-    } else if (type === 'laser') {
-      ctx.fillStyle = '#FFF';
-      ctx.fillRect(x + actualSize * 0.3, y, actualSize * 0.6, actualSize * 0.15);
-      if (!isFlash) {
-          ctx.strokeStyle = '#00ffff';
-          ctx.strokeRect(x + actualSize * 0.3, y, actualSize * 0.6, actualSize * 0.15);
-      }
-    } else {
-      ctx.fillStyle = isFlash ? '#FFF' : shadeColor(color, 20);
       ctx.beginPath();
-      ctx.arc(x - actualSize * 0.4, y + actualSize * 0.2, actualSize * 0.3, 0, Math.PI * 2);
+      ctx.roundRect(x + s * 0.1, y - s * 0.5, s * 0.85, s * 0.16, s * 0.04);
       ctx.fill();
       if (!isFlash) {
-          ctx.strokeStyle = '#FFF';
-          ctx.lineWidth = 1;
-          ctx.stroke();
-
-          ctx.strokeStyle = '#DDD';
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.moveTo(x + actualSize * 0.3, y);
-          ctx.lineTo(x + actualSize * 0.8, y - actualSize * 0.4);
-          ctx.stroke();
+        ctx.fillStyle = '#333';
+        ctx.fillRect(x + s * 0.28, y - s * 0.36, s * 0.14, s * 0.22); // magazine
       }
+    } else if (type === 'laser') {
+      ctx.fillStyle = isFlash ? '#FFF' : '#2c3e50';
+      ctx.beginPath();
+      ctx.roundRect(x + s * 0.1, y - s * 0.5, s * 0.8, s * 0.16, s * 0.05);
+      ctx.fill();
+      if (!isFlash) {
+        ctx.fillStyle = '#00ffff';
+        ctx.shadowColor = '#00ffff';
+        ctx.shadowBlur = detailed ? 6 : 0;
+        ctx.fillRect(x + s * 0.7, y - s * 0.47, s * 0.3, s * 0.1);
+        ctx.shadowBlur = 0;
+      }
+    } else {
+      // Standard rifle
+      ctx.fillStyle = isFlash ? '#FFF' : '#2b2b2b';
+      ctx.beginPath();
+      ctx.roundRect(x + s * 0.15, y - s * 0.48, s * 0.72, s * 0.14, s * 0.04);
+      ctx.fill();
     }
   } else {
-    // Enemy Spikes
-    ctx.fillStyle = isFlash ? '#FFF' : shadeColor(color, -50);
+    // Enemy: reaching claw arms instead of a weapon
+    ctx.strokeStyle = armColor;
     ctx.beginPath();
-    ctx.moveTo(x - actualSize * 0.6, y - actualSize * 0.2);
-    ctx.lineTo(x - actualSize * 0.9, y - actualSize * 0.5);
-    ctx.lineTo(x - actualSize * 0.4, y - actualSize * 0.4);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(x + actualSize * 0.6, y - actualSize * 0.2);
-    ctx.lineTo(x + actualSize * 0.9, y - actualSize * 0.5);
-    ctx.lineTo(x + actualSize * 0.4, y - actualSize * 0.4);
-    ctx.fill();
+    ctx.moveTo(x - s * 0.5, y - s * 0.1);
+    ctx.lineTo(x - s * 0.75, y - s * 0.5);
+    ctx.stroke();
+    if (!isFlash) {
+      ctx.fillStyle = shadeColor(color, -55);
+      ctx.beginPath();
+      ctx.arc(x - s * 0.75, y - s * 0.5, s * 0.1, 0, Math.PI * 2);
+      ctx.arc(x + s * 0.35, y - s * 0.45, s * 0.1, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 
-  // Cabeça
+  // --- Head ---
   let headFill: string | CanvasGradient;
   if (isFlash) {
-      headFill = '#FFF';
+    headFill = '#FFF';
   } else {
-    const headGradient = ctx.createRadialGradient(x - actualSize * 0.1, y - actualSize * 0.6, 0, x, y - actualSize * 0.5, actualSize * 0.4);
+    const headGradient = ctx.createRadialGradient(x - s * 0.1, y - s * 0.72, 0, x, y - s * 0.6, s * 0.4);
     if (isPlayer) {
-        safeAddColorStop(headGradient, 0, '#FFE4C4');
-        safeAddColorStop(headGradient, 1, '#DEB887');
+      safeAddColorStop(headGradient, 0, '#FFE4C4');
+      safeAddColorStop(headGradient, 1, '#C99A6E');
     } else {
-        safeAddColorStop(headGradient, 0, '#90EE90');
-        safeAddColorStop(headGradient, 1, '#2E8B57');
+      safeAddColorStop(headGradient, 0, '#9ACD32');
+      safeAddColorStop(headGradient, 1, '#2E6B2E');
     }
     headFill = headGradient;
   }
-
   ctx.fillStyle = headFill;
   ctx.beginPath();
-  ctx.arc(x, y - actualSize * 0.5, actualSize * 0.4, 0, Math.PI * 2);
+  ctx.arc(x, y - s * 0.62, s * 0.38, 0, Math.PI * 2);
   ctx.fill();
 
-  // Capacete
-  ctx.fillStyle = isFlash ? '#FFF' : shadeColor(color, -40);
-  ctx.beginPath();
-  ctx.arc(x, y - actualSize * 0.6, actualSize * 0.35, Math.PI, 0);
-  ctx.fill();
-
-  // Detalhes extras de cabeça
-  if (type === 'rambo') {
-    ctx.strokeStyle = isFlash ? '#FFF' : '#ff0000';
-    ctx.lineWidth = 3;
+  // --- Headgear: military helmet (player) vs rotting scalp (enemy) ---
+  if (isPlayer) {
+    ctx.fillStyle = isFlash ? '#FFF' : shadeColor(color, -42);
     ctx.beginPath();
-    ctx.moveTo(x - actualSize * 0.35, y - actualSize * 0.7);
-    ctx.lineTo(x + actualSize * 0.35, y - actualSize * 0.7);
-    ctx.stroke();
-  } else if (type === 'laser') {
-    ctx.fillStyle = isFlash ? '#FFF' : '#00ffff';
-    ctx.fillRect(x - actualSize * 0.25, y - actualSize * 0.65, actualSize * 0.5, actualSize * 0.15);
+    ctx.arc(x, y - s * 0.7, s * 0.4, Math.PI * 1.02, Math.PI * 1.98);
+    ctx.fill();
+    // Helmet brim
+    ctx.fillStyle = isFlash ? '#FFF' : shadeColor(color, -55);
+    ctx.beginPath();
+    ctx.roundRect(x - s * 0.42, y - s * 0.74, s * 0.84, s * 0.16, s * 0.06);
+    ctx.fill();
+    if (detailed) {
+      // Helmet rim highlight
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+      ctx.lineWidth = Math.max(1, s * 0.06);
+      ctx.beginPath();
+      ctx.arc(x - s * 0.08, y - s * 0.78, s * 0.32, Math.PI * 1.15, Math.PI * 1.55);
+      ctx.stroke();
+    }
+  } else {
+    // Enemy: matted, rotting scalp with a bald patch (exposed skull)
+    ctx.fillStyle = isFlash ? '#FFF' : '#243d18';
+    ctx.beginPath();
+    ctx.arc(x, y - s * 0.72, s * 0.4, Math.PI * 1.05, Math.PI * 1.95);
+    ctx.fill();
+    if (detailed) {
+      // Exposed skull patch
+      ctx.fillStyle = '#c8bfa0';
+      ctx.beginPath();
+      ctx.arc(x + s * 0.16, y - s * 0.82, s * 0.13, 0, Math.PI * 2);
+      ctx.fill();
+      // Jagged hair tufts
+      ctx.strokeStyle = '#1c2f12';
+      ctx.lineWidth = Math.max(1, s * 0.05);
+      ctx.beginPath();
+      ctx.moveTo(x - s * 0.3, y - s * 0.82); ctx.lineTo(x - s * 0.4, y - s * 1.0);
+      ctx.moveTo(x - s * 0.05, y - s * 0.92); ctx.lineTo(x - s * 0.02, y - s * 1.08);
+      ctx.stroke();
+    }
   }
 
-  // Olhos brilhantes para inimigos
-  if (!isPlayer && !isFlash) {
-    ctx.fillStyle = '#FFD700';
+  // Head extras per type
+  if (type === 'rambo') {
+    ctx.strokeStyle = isFlash ? '#FFF' : '#c0392b';
+    ctx.lineWidth = Math.max(2, s * 0.14);
     ctx.beginPath();
-    ctx.arc(x - actualSize * 0.15, y - actualSize * 0.5, actualSize * 0.1, 0, Math.PI * 2);
-    ctx.arc(x + actualSize * 0.15, y - actualSize * 0.5, actualSize * 0.1, 0, Math.PI * 2);
+    ctx.moveTo(x - s * 0.36, y - s * 0.82);
+    ctx.lineTo(x + s * 0.38, y - s * 0.9);
+    ctx.stroke();
+  } else if (type === 'laser') {
+    // Visor
+    ctx.fillStyle = isFlash ? '#FFF' : '#00ffff';
+    ctx.beginPath();
+    ctx.roundRect(x - s * 0.28, y - s * 0.68, s * 0.56, s * 0.16, s * 0.06);
     ctx.fill();
   }
 
-  // Super effect overlay (baked in)
+  // Face: eyes
+  if (!isFlash) {
+    if (isPlayer) {
+      ctx.fillStyle = '#3a2a1a';
+      ctx.beginPath();
+      ctx.arc(x - s * 0.14, y - s * 0.58, s * 0.06, 0, Math.PI * 2);
+      ctx.arc(x + s * 0.14, y - s * 0.58, s * 0.06, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      // Glowing enemy eyes (asymmetric: one wide, one sunken)
+      ctx.fillStyle = '#FFD700';
+      ctx.shadowColor = '#FF4500';
+      ctx.shadowBlur = detailed ? 5 : 0;
+      ctx.beginPath();
+      ctx.arc(x - s * 0.16, y - s * 0.62, s * 0.11, 0, Math.PI * 2);
+      ctx.arc(x + s * 0.15, y - s * 0.58, s * 0.07, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      if (detailed) {
+        // Slack, gaping jaw
+        ctx.fillStyle = '#1a0a0a';
+        ctx.beginPath();
+        ctx.ellipse(x, y - s * 0.4, s * 0.14, s * 0.12, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // Broken teeth
+        ctx.fillStyle = '#d8cfa8';
+        ctx.fillRect(x - s * 0.1, y - s * 0.5, s * 0.05, s * 0.07);
+        ctx.fillRect(x + s * 0.03, y - s * 0.5, s * 0.05, s * 0.07);
+        // Dripping drool
+        ctx.strokeStyle = 'rgba(150, 220, 120, 0.5)';
+        ctx.lineWidth = Math.max(1, s * 0.05);
+        ctx.beginPath();
+        ctx.moveTo(x + s * 0.02, y - s * 0.3);
+        ctx.lineTo(x + s * 0.02, y - s * 0.12);
+        ctx.stroke();
+      }
+    }
+  }
+
+  // Super aura (baked in)
   if (isSuper && !isFlash) {
     ctx.strokeStyle = '#FFD700';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = Math.max(2, s * 0.12);
+    ctx.shadowColor = '#FFD700';
+    ctx.shadowBlur = detailed ? 8 : 0;
     ctx.beginPath();
-    ctx.arc(x, y, actualSize + 2, 0, Math.PI * 2);
+    ctx.arc(x, y, s * 1.15, 0, Math.PI * 2);
     ctx.stroke();
+    ctx.shadowBlur = 0;
   }
 }
 

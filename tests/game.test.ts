@@ -112,6 +112,7 @@ vi.mock('../src/movement', () => ({
 
 vi.mock('../src/spawner', () => ({
     updateSpawns: vi.fn(),
+    resetSpawnerState: vi.fn(),
 }));
 
 vi.mock('../src/collisions', () => ({
