@@ -1,15 +1,23 @@
 // movement.ts - Sistema de movimento
 import { Entities, GameState, Army } from './types';
 
+// Frame-rate independent smoothing factor.
+// Exponential decay keeps the follow "feel" identical across framerates and
+// never overshoots on long frames (unlike raw `rate * dtFactor`).
+// At dtFactor === 1 it collapses to `rate`, preserving legacy behavior.
+function smoothFactor(rate: number, dtFactor: number): number {
+  return 1 - Math.pow(1 - rate, dtFactor);
+}
+
 export function updateArmyPosition(army: Army, targetX: number, canvasWidth: number, dtFactor: number): void {
   // Limitar movimento horizontal
   const minX = 50;
   const maxX = canvasWidth - 50;
   army.targetX = Math.max(minX, Math.min(maxX, targetX));
 
-  // Mover centro do exército suavemente para o target (ajustado por delta time)
+  // Mover centro do exército suavemente para o target (independente de framerate)
   const dx = army.targetX - army.centerX;
-  army.centerX += dx * 0.1 * dtFactor;
+  army.centerX += dx * smoothFactor(0.1, dtFactor);
 
   // Atualizar posição de cada soldado
   updateSoldierFormation(army, dtFactor);
@@ -52,9 +60,10 @@ export function updateSoldierFormation(army: Army, dtFactor: number): void {
       soldier.targetX = army.centerX + Math.cos(angle) * ringRadius;
       soldier.targetY = army.centerY + Math.sin(angle) * ringRadius * 0.6; // 0.6 para efeito 3D
 
-      // Movimento suave para a posição alvo
-      soldier.x += (soldier.targetX - soldier.x) * 0.15 * dtFactor;
-      soldier.y += (soldier.targetY - soldier.y) * 0.15 * dtFactor;
+      // Movimento suave para a posição alvo (independente de framerate)
+      const followF = smoothFactor(0.15, dtFactor);
+      soldier.x += (soldier.targetX - soldier.x) * followF;
+      soldier.y += (soldier.targetY - soldier.y) * followF;
 
       processedCount++;
     }
@@ -83,12 +92,12 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
   const pursuitThreshold = canvasHeight * 0.6;
 
   // Mover gates para baixo (velocidade aumenta com level)
-  for (const gate of entities.gates) {
+  for (let i = 0; i < entities.gates.length; i++) { const gate = entities.gates[i];
     gate.y += gateSpeed;
   }
 
   // Mover hordas inimigas para baixo (LENTO) e perseguir jogador
-  for (const horde of entities.enemyHordes) {
+  for (let i = 0; i < entities.enemyHordes.length; i++) { const horde = entities.enemyHordes[i];
     horde.y += enemySpeed;
 
     // Calcular limites da estrada nesta posição Y
@@ -201,7 +210,7 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
   }
 
   // Mover Mystery Boxes (mesma velocidade das gates/mundo)
-  for (const box of entities.mysteryBoxes) {
+  for (let i = 0; i < entities.mysteryBoxes.length; i++) { const box = entities.mysteryBoxes[i];
     /* v8 ignore start */
     if (box && !box.passed) {
       box.y += gateSpeed;
@@ -210,7 +219,7 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
   }
 
   // Mover Moedas (mesma velocidade das gates)
-  for (const coin of entities.coins) {
+  for (let i = 0; i < entities.coins.length; i++) { const coin = entities.coins[i];
     /* v8 ignore start */
     if (coin && !coin.passed) {
       coin.y += gateSpeed;
@@ -219,7 +228,7 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
   }
 
   // Mover mini-bosses (mais lentos que as hordas normais)
-  for (const miniBoss of entities.miniBosses) {
+  for (let i = 0; i < entities.miniBosses.length; i++) { const miniBoss = entities.miniBosses[i];
     /* v8 ignore next */
     if (!miniBoss.isActive) continue;
 
@@ -300,9 +309,10 @@ function updateHordeFormation(horde: { count?: number; x: number; y: number; sol
       soldier.targetX = horde.x + Math.cos(angle) * ringRadius;
       soldier.targetY = horde.y + Math.sin(angle) * ringRadius * 0.5;
 
-      // Movimento suave para a posição alvo
-      soldier.x += (soldier.targetX - soldier.x) * 0.1 * dtFactor;
-      soldier.y += (soldier.targetY - soldier.y) * 0.1 * dtFactor + speed;
+      // Movimento suave para a posição alvo (independente de framerate)
+      const followF = smoothFactor(0.1, dtFactor);
+      soldier.x += (soldier.targetX - soldier.x) * followF;
+      soldier.y += (soldier.targetY - soldier.y) * followF + speed;
 
       processedCount++;
     }

@@ -4,7 +4,7 @@ import { gameState, resetGameState, saveGameProgress } from './gameState';
 import { createInitialEntities, createEnemyHorde, createSoldier, addSpecialSoldiersToArmy, addSoldiersToArmy } from './entities';
 import { render, shareOnX, shareOnWhatsApp, addFloatingText, updateFloatingTexts, addParticle } from './renderer';
 import { checkCollisions } from './collisions';
-import { updateSpawns } from './spawner';
+import { updateSpawns, resetSpawnerState } from './spawner';
 import { updateMovement } from './movement';
 import { setupInput, getMouseX, initializeMousePosition, setGameStateRef, triggerHaptic } from './input';
 import { setInputScale } from './input-state';
@@ -14,6 +14,7 @@ import { BASE_WIDTH, BASE_HEIGHT, ASPECT_RATIO, COLORS } from './constants';
 import { setupShopUI, updateShopUI, setupSuperCannonUI, updateSuperCannonUI, BuyAction, setupGameOverUI, showGameOverScreen, startCountdown, updateStartScreenLeaderboard, setupStartScreenInstallBtn, createPauseModal } from './ui-overlay';
 import { QualityManager } from './quality';
 import { setupSettingsUI, toggleSettingsMenu } from './ui-settings';
+import { renderSkinSelector } from './ui-skins';
 import { MOBILE_RESOLUTION_SCALE } from './constants';
 
 // Canvas setup
@@ -58,7 +59,8 @@ function resizeCanvas(): void {
   } else {
       // Desktop: Keep constrained
       const maxWidth = Math.min(window.innerWidth - 20, 600);
-      const maxHeight = window.innerHeight - 100;
+      // Reserva espaço para título, subtítulo, dica e a barra de controles inline
+      const maxHeight = window.innerHeight - 210;
 
       newWidth = maxWidth;
       newHeight = newWidth / ASPECT_RATIO;
@@ -272,6 +274,9 @@ setupSuperCannonUI(handleSuperCannon);
 // Game loop
 let wasInBossFight = false;
 let lastTime = 0;
+// Wall-clock timestamp when the game was paused, used to keep the Date.now()-based
+// Super Cannon cooldown from elapsing while paused (would otherwise recharge for free).
+let pauseStartTime = 0;
 
 // Exported for testing/logic separation
 export function fixedUpdate(dt: number): void {
@@ -640,8 +645,15 @@ function advanceToNextLevel(): void {
 }
 
 // Iniciar jogo
+// Cada chamada a startGame invalida a contagem regressiva anterior: sem isso,
+// dois startGame() próximos (ex.: pular de nível durante a contagem) deixariam
+// dois loops de animação vivos ao mesmo tempo.
+let startToken = 0;
+
 export function startGame(): void {
+  const token = ++startToken;
   resetGameState();
+  resetSpawnerState(); // Clear carried-over mini-boss spawn counter from prior run
   entities = createInitialEntities(BASE_WIDTH, BASE_HEIGHT);
   initializeMousePosition(BASE_WIDTH);
   setGameStateRef(gameState); // Configurar referência para input de Super Cannon
@@ -656,6 +668,7 @@ export function startGame(): void {
 
   // Start Countdown then Game
   startCountdown(() => {
+    if (token !== startToken) return; // uma partida mais recente já assumiu
     gameState.isStarted = true;
     requestWakeLock(); // Keep screen on
 
@@ -789,6 +802,12 @@ setupInput(canvas, (screenX, screenY) => {
 initializeMousePosition(BASE_WIDTH);
 initAudio(); // Inicializar sistema de áudio
 setupSettingsUI(debugSetLevel); // Inicializar Settings UI
+
+// Ordem na tela inicial: skins primeiro, leaderboard depois, CTA por último
+renderSkinSelector(() => {
+  entities = createInitialEntities(BASE_WIDTH, BASE_HEIGHT);
+  render(ctx, entities, gameState);
+});
 updateStartScreenLeaderboard(); // Show leaderboard on start
 
 // Auto-pause quando a aba for trocada ou minimizada (Mobile friendly)
@@ -888,7 +907,10 @@ export function togglePause(): void {
   const modal = document.getElementById('pauseModal');
 
   if (gameState.isPaused) {
-    // Resume with countdown
+    // Resume with countdown.
+    // Shift the wall-clock cooldown stamp forward by the paused duration so the
+    // Super Cannon does not recharge while the game is frozen.
+    gameState.superCannonLastUsed += Date.now() - pauseStartTime;
     if (modal) modal.style.display = 'none';
 
     startCountdown(() => {
@@ -902,6 +924,7 @@ export function togglePause(): void {
   } else {
     // Pause immediately
     gameState.isPaused = true;
+    pauseStartTime = Date.now();
     releaseWakeLock();
     const pauseBtn = document.getElementById('pauseBtnTop');
     if (pauseBtn) pauseBtn.textContent = '▶️';
