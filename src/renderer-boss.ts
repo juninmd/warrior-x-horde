@@ -2,6 +2,7 @@
 import { Boss } from './types';
 import { safeAddColorStop } from './renderer-utils';
 import { BASE_WIDTH } from './constants';
+import { QualityManager } from './quality';
 
 // Boss final - Nave Mãe Alienígena (Scarier version)
 export function drawMothershipBoss(ctx: CanvasRenderingContext2D, boss: Boss, time: number): void {
@@ -195,8 +196,10 @@ export function drawMothershipBoss(ctx: CanvasRenderingContext2D, boss: Boss, ti
   ctx.fillStyle = '#FF4444';
   ctx.font = 'bold 14px Arial';
   ctx.textAlign = 'center';
-  ctx.shadowColor = '#000';
-  ctx.shadowBlur = 4;
+  if (QualityManager.getInstance().settings.enableShadows) {
+    ctx.shadowColor = '#000';
+    ctx.shadowBlur = 4;
+  }
   ctx.fillText('🛸 NAVE MÃE ALIENÍGENA 🛸', x, barY - 10);
 
   ctx.fillStyle = '#FFF';
@@ -333,8 +336,10 @@ export function drawBossDemon(ctx: CanvasRenderingContext2D, boss: Boss, time: n
 
   // Olhos vermelhos brilhantes
   ctx.fillStyle = '#FF0000';
-  ctx.shadowColor = '#FF0000';
-  ctx.shadowBlur = 10;
+  if (QualityManager.getInstance().settings.enableShadows) {
+    ctx.shadowColor = '#FF0000';
+    ctx.shadowBlur = 10;
+  }
   ctx.beginPath();
   ctx.moveTo(cx - 15, cy - 5);
   ctx.lineTo(cx - 5, cy + 5);
@@ -346,7 +351,9 @@ export function drawBossDemon(ctx: CanvasRenderingContext2D, boss: Boss, time: n
   ctx.lineTo(cx + 5, cy + 5);
   ctx.lineTo(cx + 25, cy + 5);
   ctx.fill();
-  ctx.shadowBlur = 0;
+  if (QualityManager.getInstance().settings.enableShadows) {
+    ctx.shadowBlur = 0;
+  }
 }
 
 export function drawBossSlime(ctx: CanvasRenderingContext2D, boss: Boss, time: number): void {
