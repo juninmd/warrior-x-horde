@@ -50,8 +50,8 @@ describe('ui-skins', () => {
     expect(card.disabled).toBe(true);
     expect(card.classList.contains('locked')).toBe(true);
     expect(card.querySelector('.skin-avatar')?.textContent).toBe('🔒');
-    expect(card.querySelector('.skin-name')?.textContent).toBe(String(locked.unlockScore));
-    expect(card.getAttribute('aria-label')).toContain(String(locked.unlockScore));
+    expect(card.querySelector('.skin-name')?.textContent).toBe(locked.unlockScore.toLocaleString('pt-BR'));
+    expect(card.getAttribute('aria-label')).toContain(locked.unlockScore.toLocaleString('pt-BR'));
   });
 
   it('selects an unlocked skin, persists it and notifies the caller', () => {
