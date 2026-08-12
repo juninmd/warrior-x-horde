@@ -16,7 +16,7 @@ function buildCard(skin: HeroSkin, unlocked: boolean, selectedId: string): HTMLB
   card.setAttribute('aria-pressed', String(skin.id === selectedId));
   card.setAttribute(
     'aria-label',
-    unlocked ? `Skin ${skin.name}` : `Skin ${skin.name} bloqueada, requer ${skin.unlockScore} pontos`
+    unlocked ? `Skin ${skin.name}` : `Skin ${skin.name} bloqueada, requer ${skin.unlockScore.toLocaleString('pt-BR')} pontos`
   );
   card.disabled = !unlocked;
 
@@ -26,7 +26,7 @@ function buildCard(skin: HeroSkin, unlocked: boolean, selectedId: string): HTMLB
 
   const name = document.createElement('span');
   name.className = 'skin-name';
-  name.textContent = unlocked ? skin.name : `${skin.unlockScore}`;
+  name.textContent = unlocked ? skin.name : `${skin.unlockScore.toLocaleString('pt-BR')}`;
 
   card.append(avatar, name);
   return card;
