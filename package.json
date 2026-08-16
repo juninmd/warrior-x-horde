@@ -14,7 +14,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest",
     "e2e": "playwright test",
-    "coverage": "vitest run --coverage --testTimeout=30000"
+    "coverage": "vitest run --coverage --testTimeout=1000"
   },
   "keywords": [],
   "author": "",
