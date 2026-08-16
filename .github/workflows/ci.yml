@@ -31,7 +31,7 @@ jobs:
       run: pnpm run lint
 
     - name: Test Coverage
-      run: pnpm run coverage || true
+      run: pnpm run coverage
 
     - name: Upload coverage reports
       uses: actions/upload-artifact@v4
