@@ -185,8 +185,8 @@ body {
   align-items: center;
   justify-content: center;
   transition: transform 0.18s var(--ease-pop), background 0.18s, border-color 0.18s;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
   box-shadow: var(--sh-1);
   touch-action: manipulation;
 }
@@ -236,7 +236,7 @@ body {
   letter-spacing: 0.5px;
   transition: transform 0.18s var(--ease-pop), box-shadow 0.18s, border-color 0.18s;
   min-height: 54px;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(2px);
   box-shadow: var(--sh-1), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
@@ -326,8 +326,8 @@ body {
   padding: 30px 20px;
   text-align: center;
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
   max-width: 95%;
   width: 500px;
   position: relative;
@@ -342,7 +342,7 @@ body {
   align-items: center;
   justify-content: center;
   background: rgba(6, 9, 18, 0.88);
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(2px);
   border-radius: calc(var(--r-lg) - 2px);
   z-index: 100;
   opacity: 0;
@@ -352,8 +352,8 @@ body {
 
 .game-over-content {
   background: var(--surface-strong);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   padding: 26px;
@@ -466,7 +466,7 @@ body {
 
 #startScreenLeaderboard {
   width: 100%;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(2px);
 }
 
 .leaderboard-box {
@@ -476,7 +476,7 @@ body {
   padding: 12px;
   margin-bottom: 16px;
   width: 100%;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(2px);
 }
 
 .leaderboard-title {
@@ -558,8 +558,8 @@ body {
   position: fixed;
   inset: 0;
   background: rgba(6, 9, 18, 0.86);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
   display: none;
   justify-content: center;
   align-items: center;
