@@ -1,0 +1,720 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90m/app[39m
+      [2mCoverage enabled with [22m[33mv8[39m
+
+[90mstdout[2m | tests/optimization_audit.test.ts[2m > [22m[2mOptimization Audit[2m > [22m[2mdebug imports
+[22m[39mrenderer keys: [
+  [32m'_resetSpriteCache'[39m,
+  [32m'preRenderSprites'[39m,
+  [32m'_testing'[39m,
+  [32m'addParticle'[39m,
+  [32m'addExplosion'[39m,
+  [32m'addTrail'[39m,
+  [32m'updateParticles'[39m,
+  [32m'addFloatingText'[39m,
+  [32m'updateFloatingTexts'[39m,
+  [32m'renderDecorationSprite'[39m,
+  [32m'prepareSoldiersToDraw'[39m,
+  [32m'drawBullets'[39m,
+  [32m'shareOnX'[39m,
+  [32m'shareOnWhatsApp'[39m,
+  [32m'drawPauseScreen'[39m,
+  [32m'render'[39m
+]
+
+[90mstdout[2m | tests/renderer.test.ts[2m > [22m[2mRenderer[2m > [22m[2mshould pre-render sprites
+[22m[39mSprites pre-rendered. Cache size: [33m394[39m
+
+[90mstdout[2m | tests/optimization_audit.test.ts[2m > [22m[2mOptimization Audit[2m > [22m[2mshould use cached sprites for bullets instead of gradients
+[22m[39mSprites pre-rendered. Cache size: [33m394[39m
+
+[90mstdout[2m | tests/game_callbacks.test.ts[2m > [22m[2mGame Logic Cleanup[2m > [22m[2mshould handle buy actions
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:01.252Z
+Quality set to AUTO
+Sprites pre-rendered. Cache size: [33m394[39m
+
+[90mstdout[2m | tests/optimization_audit.test.ts[2m > [22m[2mOptimization Audit[2m > [22m[2mshould initialize bullet cache keys
+[22m[39mSprites pre-rendered. Cache size: [33m394[39m
+
+ [32m✓[39m tests/optimization_audit.test.ts [2m([22m[2m3 tests[22m[2m)[22m[33m 627[2mms[22m[39m
+     [33m[2m✓[22m[39m should use cached sprites for bullets instead of gradients [33m 328[2mms[22m[39m
+[90mstdout[2m | tests/renderer.test.ts[2m > [22m[2mRenderer[2m > [22m[2mshould force re-render sprites
+[22m[39mSprites pre-rendered. Cache size: [33m394[39m
+
+ [32m✓[39m tests/renderer.test.ts [2m([22m[2m10 tests[22m[2m)[22m[33m 911[2mms[22m[39m
+     [33m[2m✓[22m[39m should pre-render sprites [33m 400[2mms[22m[39m
+     [33m[2m✓[22m[39m should force re-render sprites [33m 369[2mms[22m[39m
+[90mstdout[2m | tests/game_callbacks.test.ts[2m > [22m[2mGame Logic Cleanup[2m > [22m[2mshould handle super cannon button
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:01.607Z
+Sprites pre-rendered. Cache size: [33m394[39m
+
+[90mstdout[2m | tests/game_callbacks.test.ts[2m > [22m[2mGame Logic Cleanup[2m > [22m[2mshould handle super cannon button
+[22m[39mSuper Cannon button pressed! { isStarted: [33mfalse[39m, isGameOver: [33mfalse[39m, superCannonReady: [33mtrue[39m }
+Super Cannon button pressed! { isStarted: [33mtrue[39m, isGameOver: [33mfalse[39m, superCannonReady: [33mtrue[39m }
+
+[90mstdout[2m | tests/game_callbacks.test.ts[2m > [22m[2mGame Logic Cleanup[2m > [22m[2mshould handle low army warning
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:01.972Z
+Sprites pre-rendered. Cache size: [33m394[39m
+
+ [32m✓[39m tests/game_callbacks.test.ts [2m([22m[2m3 tests[22m[2m)[22m[33m 1523[2mms[22m[39m
+     [33m[2m✓[22m[39m should handle buy actions [33m 728[2mms[22m[39m
+     [33m[2m✓[22m[39m should handle super cannon button [33m 348[2mms[22m[39m
+     [33m[2m✓[22m[39m should handle low army warning [33m 440[2mms[22m[39m
+[90mstdout[2m | tests/renderer_extra_logic.test.ts[2m > [22m[2mCleanup Coverage[2m > [22m[2mRenderer[2m > [22m[2mshould recycle particles
+[22m[39mSprites pre-rendered. Cache size: [33m394[39m
+
+ [32m✓[39m tests/renderer_extra_logic.test.ts [2m([22m[2m3 tests[22m[2m)[22m[33m 536[2mms[22m[39m
+       [33m[2m✓[22m[39m should recycle particles [33m 528[2mms[22m[39m
+[90mstdout[2m | tests/game_start_guard.test.ts[2m > [22m[2mstartGame reentrancy guard[2m > [22m[2mignores the countdown of a superseded start
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:03.497Z
+Quality set to AUTO
+Sprites pre-rendered. Cache size: [33m394[39m
+
+ [32m✓[39m tests/game_start_guard.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 496[2mms[22m[39m
+     [33m[2m✓[22m[39m ignores the countdown of a superseded start [33m 493[2mms[22m[39m
+[90mstdout[2m | tests/renderer_extra.test.ts[2m > [22m[2mRenderer Extra Coverage[2m > [22m[2mParticles[2m > [22m[2mshould render cached particles
+[22m[39mSprites pre-rendered. Cache size: [33m394[39m
+
+ [32m✓[39m tests/renderer_extra.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 315[2mms[22m[39m
+       [33m[2m✓[22m[39m should render cached particles [33m 303[2mms[22m[39m
+[90mstdout[2m | tests/renderer_full.test.ts[2m > [22m[2mRenderer - Full Coverage[2m > [22m[2mEntities Rendering[2m > [22m[2mshould render army and soldiers
+[22m[39mSprites pre-rendered. Cache size: [33m394[39m
+
+[90mstdout[2m | tests/visual_holylight.test.ts[2m > [22m[2mHoly Light VFX[2m > [22m[2mshould draw beam particle with gradients
+[22m[39mSprites pre-rendered. Cache size: [33m394[39m
+
+ [32m✓[39m tests/renderer_full.test.ts [2m([22m[2m8 tests[22m[2m)[22m[33m 378[2mms[22m[39m
+       [33m[2m✓[22m[39m should render army and soldiers [33m 362[2mms[22m[39m
+ [32m✓[39m tests/visual_holylight.test.ts [2m([22m[2m2 tests[22m[2m)[22m[33m 388[2mms[22m[39m
+     [33m[2m✓[22m[39m should draw beam particle with gradients [33m 376[2mms[22m[39m
+[90mstdout[2m | tests/gate_rendering.test.ts[2m > [22m[2mGate Rendering Caching[2m > [22m[2mshould create and use cachedCanvas for a gate
+[22m[39mSprites pre-rendered. Cache size: [33m394[39m
+
+ [32m✓[39m tests/gate_rendering.test.ts [2m([22m[2m2 tests[22m[2m)[22m[33m 375[2mms[22m[39m
+     [33m[2m✓[22m[39m should create and use cachedCanvas for a gate [33m 342[2mms[22m[39m
+[90mstdout[2m | tests/renderer_logic.test.ts[2m > [22m[2mRenderer Coverage[2m > [22m[2mshould render everything without crashing
+[22m[39mSprites pre-rendered. Cache size: [33m394[39m
+
+ [32m✓[39m tests/renderer_logic.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 351[2mms[22m[39m
+     [33m[2m✓[22m[39m should render everything without crashing [33m 341[2mms[22m[39m
+[90mstdout[2m | tests/visual_enhancements.test.ts[2m > [22m[2mVisual Enhancements[2m > [22m[2mtriggers confetti on new record
+[22m[39mSprites pre-rendered. Cache size: [33m394[39m
+
+ [32m✓[39m tests/visual_enhancements.test.ts [2m([22m[2m2 tests[22m[2m)[22m[33m 372[2mms[22m[39m
+     [33m[2m✓[22m[39m triggers confetti on new record [33m 351[2mms[22m[39m
+ [32m✓[39m tests/ui_overlay_final_coverage_v2.test.ts [2m([22m[2m18 tests[22m[2m)[22m[33m 396[2mms[22m[39m
+[90mstdout[2m | tests/renderer_culling_fix.test.ts[2m > [22m[2mRenderer Culling[2m > [22m[2mshould cull bullets outside viewport
+[22m[39mSprites pre-rendered. Cache size: [33m394[39m
+
+ [32m✓[39m tests/renderer_culling_fix.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 321[2mms[22m[39m
+     [33m[2m✓[22m[39m should cull bullets outside viewport [33m 318[2mms[22m[39m
+ [32m✓[39m tests/ui-overlay.test.ts [2m([22m[2m20 tests[22m[2m)[22m[33m 311[2mms[22m[39m
+[90mstdout[2m | tests/mobile_optimization.test.ts[2m > [22m[2mMobile Optimization[2m > [22m[2mshould not set shadowBlur when rendering on mobile settings
+[22m[39mSprites pre-rendered. Cache size: [33m394[39m
+
+ [32m✓[39m tests/mobile_optimization.test.ts [2m([22m[2m3 tests[22m[2m)[22m[33m 340[2mms[22m[39m
+     [33m[2m✓[22m[39m should not set shadowBlur when rendering on mobile settings [33m 321[2mms[22m[39m
+[90mstdout[2m | tests/game_extra.test.ts[2m > [22m[2mGame Extra Coverage[2m > [22m[2mshould handle resize with High DPI
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:11.323Z
+Quality set to AUTO
+
+[90mstdout[2m | tests/game_extra.test.ts[2m > [22m[2mGame Extra Coverage[2m > [22m[2mshould handle screenToCanvas conversion
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:11.352Z
+Quality set to AUTO
+
+[90mstdout[2m | tests/game_extra.test.ts[2m > [22m[2mGame Extra Coverage[2m > [22m[2mshould handle Shop Buy checks
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:11.367Z
+Quality set to AUTO
+
+[90mstdout[2m | tests/game_full.test.ts[2m > [22m[2mGame Loop - Full Coverage[2m > [22m[2mshould initialize game on load
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:11.349Z
+Quality set to AUTO
+
+[90mstdout[2m | tests/game_extra.test.ts[2m > [22m[2mGame Extra Coverage[2m > [22m[2mshould handle Keyboard Shortcuts
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:11.384Z
+Quality set to AUTO
+
+[90mstdout[2m | tests/game_full.test.ts[2m > [22m[2mGame Loop - Full Coverage[2m > [22m[2mshould start game on interaction
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:11.385Z
+Quality set to AUTO
+
+[90mstdout[2m | tests/game_extra.test.ts[2m > [22m[2mGame Extra Coverage[2m > [22m[2mshould handle Keyboard Shortcuts
+[22m[39m⏸️ Jogo pausado
+⏸️ Jogo retomado
+
+[90mstdout[2m | tests/game_extra.test.ts[2m > [22m[2mGame Extra Coverage[2m > [22m[2mshould handle Touch Start to Unpause
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:11.398Z
+Quality set to AUTO
+
+[90mstdout[2m | tests/game_extra.test.ts[2m > [22m[2mGame Extra Coverage[2m > [22m[2mshould handle Touch Start to Unpause
+[22m[39m⏸️ Jogo retomado
+
+[90mstdout[2m | tests/game_full.test.ts[2m > [22m[2mGame Loop - Full Coverage[2m > [22m[2mshould run game loop steps
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:11.404Z
+Quality set to AUTO
+
+[90mstdout[2m | tests/game_full.test.ts[2m > [22m[2mGame Loop - Full Coverage[2m > [22m[2mshould run game loop steps
+[22m[39m🎮 Debug: Indo para Level 1
+
+[90mstdout[2m | tests/game_extra.test.ts[2m > [22m[2mGame Extra Coverage[2m > [22m[2mshould update Inline Super Button
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:11.413Z
+Quality set to AUTO
+
+[90mstdout[2m | tests/game_full.test.ts[2m > [22m[2mGame Loop - Full Coverage[2m > [22m[2mshould pause and resume
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:11.420Z
+Quality set to AUTO
+
+[90mstdout[2m | tests/game_full.test.ts[2m > [22m[2mGame Loop - Full Coverage[2m > [22m[2mshould pause and resume
+[22m[39m🎮 Debug: Indo para Level 1
+⏸️ Jogo pausado
+⏸️ Jogo retomado
+
+[90mstdout[2m | tests/game_extra.test.ts[2m > [22m[2mGame Extra Coverage[2m > [22m[2mshould handle debugSetLevel > 10
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:11.426Z
+Quality set to AUTO
+
+[90mstdout[2m | tests/game_extra.test.ts[2m > [22m[2mGame Extra Coverage[2m > [22m[2mshould handle debugSetLevel > 10
+[22m[39m🎮 Debug: Indo para Level 11
+🛸 Mothership boss aparecerá em breve!
+
+[90mstdout[2m | tests/game_full.test.ts[2m > [22m[2mGame Loop - Full Coverage[2m > [22m[2mshould handle visibility change (auto-pause)
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:11.435Z
+Quality set to AUTO
+
+[90mstdout[2m | tests/game_full.test.ts[2m > [22m[2mGame Loop - Full Coverage[2m > [22m[2mshould handle visibility change (auto-pause)
+[22m[39m🎮 Debug: Indo para Level 1
+⏸️ Jogo pausado
+⏸️ Jogo pausado
+⏸️ Jogo pausado
+⏸️ Jogo pausado
+
+[90mstdout[2m | tests/game_extra.test.ts[2m > [22m[2mGame Extra Coverage[2m > [22m[2mshould handle orientation change
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:11.442Z
+Quality set to AUTO
+
+[90mstdout[2m | tests/game_full.test.ts[2m > [22m[2mGame Loop - Full Coverage[2m > [22m[2mshould handle super cannon trigger
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:11.450Z
+Quality set to AUTO
+
+[90mstdout[2m | tests/game_full.test.ts[2m > [22m[2mGame Loop - Full Coverage[2m > [22m[2mshould handle game over restart callback
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:11.463Z
+Quality set to AUTO
+
+[90mstdout[2m | tests/game_extra.test.ts[2m > [22m[2mGame Extra Coverage[2m > [22m[2mshould trigger screen shake
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:11.467Z
+Quality set to AUTO
+
+[90mstdout[2m | tests/game_full.test.ts[2m > [22m[2mGame Loop - Full Coverage[2m > [22m[2mshould handle window resize
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:11.484Z
+Quality set to AUTO
+
+ [32m✓[39m tests/game_extra.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 219[2mms[22m[39m
+[90mstdout[2m | tests/game_full.test.ts[2m > [22m[2mGame Loop - Full Coverage[2m > [22m[2mshould handle Shop Buy callbacks
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:11.499Z
+Quality set to AUTO
+
+[90mstdout[2m | tests/game_full.test.ts[2m > [22m[2mGame Loop - Full Coverage[2m > [22m[2mshould handle Super Cannon UI callbacks
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:11.513Z
+Quality set to AUTO
+
+[90mstdout[2m | tests/game_full.test.ts[2m > [22m[2mGame Loop - Full Coverage[2m > [22m[2mshould handle Super Cannon UI callbacks
+[22m[39mSuper Cannon button pressed! { isStarted: [33mtrue[39m, isGameOver: [33mfalse[39m, superCannonReady: [33mtrue[39m }
+
+ [32m✓[39m tests/game_full.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 218[2mms[22m[39m
+[90mstdout[2m | tests/ui_install_prompt.test.ts[2m > [22m[2mUI Overlay Interactions[2m > [22m[2mshould show prompt if deferredInstallPrompt exists
+[22m[39mQuality set to AUTO
+
+[90mstdout[2m | tests/ui_install_prompt.test.ts[2m > [22m[2mUI Overlay Interactions[2m > [22m[2mshould show prompt if deferredInstallPrompt exists
+[22m[39mUser response to install prompt: accepted
+
+ [32m✓[39m tests/ui_install_prompt.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 170[2mms[22m[39m
+[90mstdout[2m | tests/game_logic.test.ts[2m > [22m[2mGame Coverage[2m > [22m[2mshould start game
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:13.066Z
+Quality set to AUTO
+
+[90mstdout[2m | tests/game_logic.test.ts[2m > [22m[2mGame Coverage[2m > [22m[2mshould toggle pause
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:13.102Z
+Quality set to AUTO
+
+[90mstdout[2m | tests/game_logic.test.ts[2m > [22m[2mGame Coverage[2m > [22m[2mshould toggle pause
+[22m[39m⏸️ Jogo pausado
+⏸️ Jogo retomado
+
+[90mstdout[2m | tests/game_loop_logic.test.ts[2m > [22m[2mGame Loop Logic Coverage[2m > [22m[2mshould advance to next level on victory (Level < 10)
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:13.093Z
+Quality set to AUTO
+
+[90mstdout[2m | tests/game_loop_logic.test.ts[2m > [22m[2mGame Loop Logic Coverage[2m > [22m[2mshould advance to next level on victory (Level < 10)
+[22m[39m🎮 Debug: Indo para Level 1
+
+[90mstdout[2m | tests/game_logic.test.ts[2m > [22m[2mGame Coverage[2m > [22m[2mshould execute game loop logic
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:13.118Z
+Quality set to AUTO
+
+[90mstdout[2m | tests/game_loop_logic.test.ts[2m > [22m[2mGame Loop Logic Coverage[2m > [22m[2mshould trigger game over on victory (Level 10)
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:13.133Z
+Quality set to AUTO
+
+[90mstdout[2m | tests/game_loop_logic.test.ts[2m > [22m[2mGame Loop Logic Coverage[2m > [22m[2mshould trigger game over on victory (Level 10)
+[22m[39m🎮 Debug: Indo para Level 1
+
+[90mstdout[2m | tests/game_logic.test.ts[2m > [22m[2mGame Coverage[2m > [22m[2mshould toggle fullscreen
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:13.143Z
+Quality set to AUTO
+
+[90mstdout[2m | tests/game_loop_logic.test.ts[2m > [22m[2mGame Loop Logic Coverage[2m > [22m[2mshould handle Slow Mo timer
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:13.147Z
+Quality set to AUTO
+
+[90mstdout[2m | tests/game_loop_logic.test.ts[2m > [22m[2mGame Loop Logic Coverage[2m > [22m[2mshould handle Slow Mo timer
+[22m[39m🎮 Debug: Indo para Level 1
+
+[90mstdout[2m | tests/game_logic.test.ts[2m > [22m[2mGame Coverage[2m > [22m[2mshould debug set level
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:13.157Z
+Quality set to AUTO
+
+[90mstdout[2m | tests/game_loop_logic.test.ts[2m > [22m[2mGame Loop Logic Coverage[2m > [22m[2mshould handle Screen Shake decay
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:13.161Z
+Quality set to AUTO
+
+[90mstdout[2m | tests/game_loop_logic.test.ts[2m > [22m[2mGame Loop Logic Coverage[2m > [22m[2mshould handle Screen Shake decay
+[22m[39m🎮 Debug: Indo para Level 1
+
+[90mstdout[2m | tests/game_logic.test.ts[2m > [22m[2mGame Coverage[2m > [22m[2mshould debug set level
+[22m[39m🎮 Debug: Indo para Level 5
+
+[90mstdout[2m | tests/game_loop_logic.test.ts[2m > [22m[2mGame Loop Logic Coverage[2m > [22m[2mshould handle Combo timer
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:13.174Z
+Quality set to AUTO
+
+[90mstdout[2m | tests/game_loop_logic.test.ts[2m > [22m[2mGame Loop Logic Coverage[2m > [22m[2mshould handle Combo timer
+[22m[39m🎮 Debug: Indo para Level 1
+
+[90mstdout[2m | tests/game_logic.test.ts[2m > [22m[2mGame Coverage[2m > [22m[2mshould handle resize
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:13.175Z
+Quality set to AUTO
+
+[90mstdout[2m | tests/game_loop_logic.test.ts[2m > [22m[2mGame Loop Logic Coverage[2m > [22m[2mshould handle new record reached visual
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:13.188Z
+Quality set to AUTO
+
+[90mstdout[2m | tests/game_loop_logic.test.ts[2m > [22m[2mGame Loop Logic Coverage[2m > [22m[2mshould handle new record reached visual
+[22m[39m🎮 Debug: Indo para Level 1
+
+[90mstdout[2m | tests/game_loop_logic.test.ts[2m > [22m[2mGame Loop Logic Coverage[2m > [22m[2mshould process mystery box movement
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:13.202Z
+Quality set to AUTO
+
+[90mstdout[2m | tests/game_loop_logic.test.ts[2m > [22m[2mGame Loop Logic Coverage[2m > [22m[2mshould process mystery box movement
+[22m[39m🎮 Debug: Indo para Level 1
+
+[90mstdout[2m | tests/game_logic.test.ts[2m > [22m[2mGame Coverage[2m > [22m[2mshould handle buy action
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:13.200Z
+Quality set to AUTO
+
+ [32m✓[39m tests/game_loop_logic.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 172[2mms[22m[39m
+ [32m✓[39m tests/game_logic.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 218[2mms[22m[39m
+[90mstdout[2m | tests/game_gap_2.test.ts[2m > [22m[2mGame Gap Coverage 2[2m > [22m[2mshould handle "recharge_super" shop action when already ready
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:13.306Z
+Quality set to AUTO
+
+[90mstdout[2m | tests/game_gap_2.test.ts[2m > [22m[2mGame Gap Coverage 2[2m > [22m[2mshould update newRecordReached if score is higher
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:13.353Z
+Quality set to AUTO
+
+[90mstdout[2m | tests/game_gap_2.test.ts[2m > [22m[2mGame Gap Coverage 2[2m > [22m[2mshould handle leaderboard save error
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:13.366Z
+Quality set to AUTO
+
+[90mstdout[2m | tests/game_gap_2.test.ts[2m > [22m[2mGame Gap Coverage 2[2m > [22m[2mshould unpause on canvas click if paused
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:13.381Z
+Quality set to AUTO
+
+[90mstdout[2m | tests/game_gap_2.test.ts[2m > [22m[2mGame Gap Coverage 2[2m > [22m[2mshould unpause on canvas click if paused
+[22m[39m⏸️ Jogo retomado
+
+[90mstdout[2m | tests/game_gap_2.test.ts[2m > [22m[2mGame Gap Coverage 2[2m > [22m[2mshould request Wake Lock when visibility becomes visible
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:13.394Z
+Quality set to AUTO
+
+[90mstdout[2m | tests/game_gap_2.test.ts[2m > [22m[2mGame Gap Coverage 2[2m > [22m[2mshould capture beforeinstallprompt
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:13.406Z
+Quality set to AUTO
+
+[90mstdout[2m | tests/game_gap_2.test.ts[2m > [22m[2mGame Gap Coverage 2[2m > [22m[2mshould capture beforeinstallprompt
+[22m[39m📱 PWA Install Prompt captured
+📱 PWA Install Prompt captured
+📱 PWA Install Prompt captured
+📱 PWA Install Prompt captured
+📱 PWA Install Prompt captured
+📱 PWA Install Prompt captured
+
+[90mstdout[2m | tests/game_gap_2.test.ts[2m > [22m[2mGame Gap Coverage 2[2m > [22m[2mshould decay visual timers and reset killstreak
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:13.418Z
+Quality set to AUTO
+
+[90mstdout[2m | tests/game_gap_2.test.ts[2m > [22m[2mGame Gap Coverage 2[2m > [22m[2mshould save high score on game over
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:13.430Z
+Quality set to AUTO
+
+ [32m✓[39m tests/game_gap_2.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 203[2mms[22m[39m
+ [32m✓[39m tests/ui_overlay_fixes.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 171[2mms[22m[39m
+[90mstdout[2m | tests/ui_overlay_final_coverage.test.ts[2m > [22m[2mUI Overlay Final Coverage[2m > [22m[2mshowGameOverScreen[2m > [22m[2mshould handle Install App button click
+[22m[39mUser response to install prompt: accepted
+
+ [32m✓[39m tests/ui_overlay_final_coverage.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 195[2mms[22m[39m
+[90mstdout[2m | tests/extra_coverage_p2.test.ts[2m > [22m[2mExtra Coverage Part 2[2m > [22m[2mUI Overlay[2m > [22m[2mshould handle Super Cannon click
+[22m[39mQuality set to AUTO
+
+ [32m✓[39m tests/extra_coverage_p2.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 175[2mms[22m[39m
+[90mstdout[2m | tests/ui_skins.test.ts[2m > [22m[2mui-skins[2m > [22m[2mselects an unlocked skin, persists it and notifies the caller
+[22m[39mQuality set to AUTO
+
+ [32m✓[39m tests/ui_skins.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 113[2mms[22m[39m
+ [32m✓[39m tests/entities.test.ts [2m([22m[2m24 tests[22m[2m)[22m[32m 51[2mms[22m[39m
+[90mstdout[2m | tests/performance_ux.test.ts
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:16.812Z
+Quality set to AUTO
+Sprites pre-rendered. Cache size: [33m394[39m
+
+ [32m✓[39m tests/performance_ux.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 81[2mms[22m[39m
+ [32m✓[39m tests/ui-overlay_extra.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 92[2mms[22m[39m
+ [32m✓[39m tests/ui_settings_callback.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 110[2mms[22m[39m
+ [32m✓[39m tests/ui_settings_full.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 78[2mms[22m[39m
+[90mstdout[2m | tests/ui_settings_coverage.test.ts[2m > [22m[2mUI Settings Coverage[2m > [22m[2mshould create settings modal on setup
+[22m[39mQuality set to AUTO
+Quality set to AUTO
+
+[90mstdout[2m | tests/ui_settings_coverage.test.ts[2m > [22m[2mUI Settings Coverage[2m > [22m[2mshould toggle settings menu visibility
+[22m[39mQuality set to AUTO
+
+[90mstdout[2m | tests/ui_settings_coverage.test.ts[2m > [22m[2mUI Settings Coverage[2m > [22m[2mshould sync sound button state on open
+[22m[39mQuality set to AUTO
+
+[90mstdout[2m | tests/ui_settings_coverage.test.ts[2m > [22m[2mUI Settings Coverage[2m > [22m[2mshould handle Sound Toggle click
+[22m[39mQuality set to AUTO
+
+[90mstdout[2m | tests/ui_settings_coverage.test.ts[2m > [22m[2mUI Settings Coverage[2m > [22m[2mshould play music when unmuting if game is active
+[22m[39mQuality set to AUTO
+
+[90mstdout[2m | tests/ui_settings_coverage.test.ts[2m > [22m[2mUI Settings Coverage[2m > [22m[2mshould handle Haptics Toggle click
+[22m[39mQuality set to AUTO
+
+[90mstdout[2m | tests/ui_settings_coverage.test.ts[2m > [22m[2mUI Settings Coverage[2m > [22m[2mshould handle Quality Toggle click (cycle)
+[22m[39mQuality set to AUTO
+
+[90mstdout[2m | tests/ui_settings_coverage.test.ts[2m > [22m[2mUI Settings Coverage[2m > [22m[2mshould handle Quality Toggle click (cycle)
+[22m[39mQuality set to HIGH
+Quality set to LOW
+Quality set to AUTO
+
+[90mstdout[2m | tests/ui_settings_coverage.test.ts[2m > [22m[2mUI Settings Coverage[2m > [22m[2mshould handle Close button
+[22m[39mQuality set to AUTO
+
+ [32m✓[39m tests/ui_settings_coverage.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 68[2mms[22m[39m
+[90mstdout[2m | tests/game_nuke.test.ts[2m > [22m[2mNuke Logic[2m > [22m[2mshould handle NUKE purchase correctly
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:19.791Z
+
+ [32m✓[39m tests/game_nuke.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 64[2mms[22m[39m
+[90mstdout[2m | tests/game.test.ts[2m > [22m[2mGame[2m > [22m[2mshould toggle pause
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:20.371Z
+
+[90mstdout[2m | tests/game.test.ts[2m > [22m[2mGame[2m > [22m[2mshould toggle pause
+[22m[39m⏸️ Jogo pausado
+⏸️ Jogo retomado
+
+[90mstdout[2m | tests/game.test.ts[2m > [22m[2mGame[2m > [22m[2mshould set level (debug)
+[22m[39m🎮 Debug: Indo para Level 5
+
+ [32m✓[39m tests/game.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 59[2mms[22m[39m
+[90mstdout[2m | tests/ui_pause.test.ts[2m > [22m[2mPause Modal[2m > [22m[2mshould create modal elements
+[22m[39mQuality set to AUTO
+
+ [32m✓[39m tests/ui_pause.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 49[2mms[22m[39m
+[90mstdout[2m | tests/input.test.ts[2m > [22m[2mInput[2m > [22m[2mshould vibrate
+[22m[39mQuality set to AUTO
+
+ [32m✓[39m tests/input.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 38[2mms[22m[39m
+[90mstdout[2m | tests/ui_settings_fix.test.ts[2m > [22m[2mUI Settings Fix[2m > [22m[2mshould cover existing settingsModal branch in setupSettingsUI
+[22m[39mQuality set to AUTO
+
+ [32m✓[39m tests/ui_settings_fix.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 26[2mms[22m[39m
+ [32m✓[39m tests/ui_overlay_install.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 53[2mms[22m[39m
+ [32m✓[39m tests/collisions.test.ts [2m([22m[2m27 tests[22m[2m)[22m[32m 25[2mms[22m[39m
+[90mstdout[2m | tests/extra_coverage_p1.test.ts
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:23.485Z
+Quality set to AUTO
+Sprites pre-rendered. Cache size: [33m394[39m
+
+[90mstdout[2m | tests/extra_coverage_p1.test.ts[2m > [22m[2mExtra Coverage Part 1[2m > [22m[2mGame[2m > [22m[2mshould handle toggleFullscreen
+[22m[39mError attempting to enable fullscreen: Failed
+
+ [32m✓[39m tests/extra_coverage_p1.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 41[2mms[22m[39m
+[90mstdout[2m | tests/settings_coverage.test.ts[2m > [22m[2mSettingsManager Coverage[2m > [22m[2mshould load default settings if localStorage is empty
+[22m[39mQuality set to AUTO
+
+[90mstdout[2m | tests/settings_coverage.test.ts[2m > [22m[2mSettingsManager Coverage[2m > [22m[2mshould load settings from localStorage
+[22m[39mQuality set to HIGH
+
+[90mstdout[2m | tests/settings_coverage.test.ts[2m > [22m[2mSettingsManager Coverage[2m > [22m[2mshould handle corrupt localStorage data
+[22m[39mQuality set to AUTO
+
+[90mstdout[2m | tests/settings_coverage.test.ts[2m > [22m[2mSettingsManager Coverage[2m > [22m[2mshould save settings when modified
+[22m[39mQuality set to AUTO
+
+[90mstdout[2m | tests/settings_coverage.test.ts[2m > [22m[2mSettingsManager Coverage[2m > [22m[2mshould update quality and notify QualityManager
+[22m[39mQuality set to AUTO
+Quality set to LOW
+
+[90mstdout[2m | tests/settings_coverage.test.ts[2m > [22m[2mSettingsManager Coverage[2m > [22m[2mshould update sound enabled state
+[22m[39mQuality set to AUTO
+
+[90mstdout[2m | tests/settings_coverage.test.ts[2m > [22m[2mSettingsManager Coverage[2m > [22m[2mshould handle localStorage write errors gracefully
+[22m[39mQuality set to AUTO
+
+ [32m✓[39m tests/settings_coverage.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 22[2mms[22m[39m
+ [32m✓[39m tests/shooting.test.ts [2m([22m[2m15 tests[22m[2m)[22m[32m 27[2mms[22m[39m
+ [32m✓[39m tests/entities_logic.test.ts [2m([22m[2m24 tests[22m[2m)[22m[32m 105[2mms[22m[39m
+[90mstdout[2m | tests/ui_settings_power.test.ts[2m > [22m[2mUI Settings Power Saver Coverage[2m > [22m[2mshould handle Power Saver Toggle click
+[22m[39mQuality set to AUTO
+
+ [32m✓[39m tests/ui_settings_power.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 36[2mms[22m[39m
+ [32m✓[39m tests/ui_overlay_error.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 27[2mms[22m[39m
+[90mstdout[2m | tests/input_logic.test.ts[2m > [22m[2mInput Coverage[2m > [22m[2mshould vibrate safely
+[22m[39mQuality set to AUTO
+
+ [32m✓[39m tests/input_logic.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 34[2mms[22m[39m
+[90mstdout[2m | tests/quality_recovery.test.ts[2m > [22m[2mQualityManager Recovery[2m > [22m[2mshould trigger low quality on FPS drops
+[22m[39mQuality set to AUTO
+
+[90mstdout[2m | tests/quality_recovery.test.ts[2m > [22m[2mQualityManager Recovery[2m > [22m[2mshould recover quality after stability
+[22m[39mQuality set to AUTO
+✅ Performance stabilized. Restoring Quality.
+
+[90mstdout[2m | tests/quality_recovery.test.ts[2m > [22m[2mQualityManager Recovery[2m > [22m[2mshould not recover if FPS dips
+[22m[39mQuality set to AUTO
+
+[90mstdout[2m | tests/quality_recovery.test.ts[2m > [22m[2mQualityManager Recovery[2m > [22m[2mshould not check recovery in manual mode
+[22m[39mQuality set to LOW
+
+ [32m✓[39m tests/quality_recovery.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 27[2mms[22m[39m
+[90mstdout[2m | tests/ui_settings_logic.test.ts[2m > [22m[2mUI Settings Coverage[2m > [22m[2mshould play music when unmuting if game is active
+[22m[39mQuality set to AUTO
+Quality set to AUTO
+
+ [32m✓[39m tests/ui_settings_logic.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 39[2mms[22m[39m
+ [32m✓[39m tests/gap_coverage.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 35[2mms[22m[39m
+ [32m✓[39m tests/entities_full.test.ts [2m([22m[2m20 tests[22m[2m)[22m[32m 20[2mms[22m[39m
+ [32m✓[39m tests/collisions_full.test.ts [2m([22m[2m21 tests[22m[2m)[22m[32m 32[2mms[22m[39m
+ [32m✓[39m tests/collisions_coverage_final.test.ts [2m([22m[2m19 tests[22m[2m)[22m[32m 27[2mms[22m[39m
+[90mstdout[2m | tests/collisions_coverage.test.ts
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:30.769Z
+Quality set to AUTO
+
+[90mstdout[2m | tests/collisions_logic.test.ts[2m > [22m[2mCollisions Coverage[2m > [22m[2mMystery Box Effects[2m > [22m[2mshould apply subtract effect
+[22m[39mQuality set to AUTO
+
+ [32m✓[39m tests/collisions_coverage.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 23[2mms[22m[39m
+ [32m✓[39m tests/collisions_logic.test.ts [2m([22m[2m23 tests[22m[2m)[22m[32m 25[2mms[22m[39m
+ [32m✓[39m tests/collisions_extra_coverage.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 40[2mms[22m[39m
+[90mstdout[2m | tests/game_interactions.test.ts
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:32.415Z
+Quality set to AUTO
+
+[90mstdout[2m | tests/game_interactions.test.ts[2m > [22m[2mGame Interactions[2m > [22m[2mInput & Events[2m > [22m[2mshould handle visibilitychange to pause game
+[22m[39m⏸️ Jogo pausado
+
+ [32m✓[39m tests/game_interactions.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+[90mstdout[2m | tests/antigravity_audit.test.ts
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:32.471Z
+Sprites pre-rendered. Cache size: [33m394[39m
+
+ [32m✓[39m tests/antigravity_audit.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 34[2mms[22m[39m
+[90mstdout[2m | tests/visuals.test.ts
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:33.508Z
+Quality set to AUTO
+Sprites pre-rendered. Cache size: [33m394[39m
+
+[90mstdout[2m | tests/visuals.test.ts[2m > [22m[2mVisual Effects[2m > [22m[2mshould render trail when enabled
+[22m[39mQuality set to HIGH
+
+[90mstdout[2m | tests/visuals.test.ts[2m > [22m[2mVisual Effects[2m > [22m[2mshould not render trail when disabled
+[22m[39mQuality set to HIGH
+
+[90mstdout[2m | tests/visuals.test.ts[2m > [22m[2mVisual Effects[2m > [22m[2mshould render vignette when enabled
+[22m[39mQuality set to HIGH
+
+[90mstdout[2m | tests/visuals.test.ts[2m > [22m[2mVisual Effects[2m > [22m[2mshould not render vignette when disabled
+[22m[39mQuality set to HIGH
+
+[90mstdout[2m | tests/visuals.test.ts[2m > [22m[2mVisual Effects[2m > [22m[2mshould trigger dodge when passing negative gate without collision
+[22m[39mQuality set to HIGH
+
+[90mstdout[2m | tests/visuals.test.ts[2m > [22m[2mVisual Effects[2m > [22m[2mshould not trigger dodge for positive gates
+[22m[39mQuality set to HIGH
+
+[90mstdout[2m | tests/visuals.test.ts[2m > [22m[2mVisual Effects[2m > [22m[2mshould trigger dodge for divide gate
+[22m[39mQuality set to HIGH
+
+[90mstdout[2m | tests/visuals.test.ts[2m > [22m[2mVisual Effects[2m > [22m[2mshould trigger PERFECT CLEAR visual when horde is cleared flawlessly
+[22m[39mQuality set to HIGH
+
+ [32m✓[39m tests/visuals.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 24[2mms[22m[39m
+ [32m✓[39m tests/shooting_advanced.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 21[2mms[22m[39m
+ [32m✓[39m tests/skins.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 37[2mms[22m[39m
+ [32m✓[39m tests/spatial.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m tests/input_events.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 24[2mms[22m[39m
+[90mstdout[2m | tests/coverage_final.test.ts[2m > [22m[2mFinal Coverage Fixes[2m > [22m[2mshould handle stable FPS range (50-55) in checkRecovery
+[22m[39mQuality set to AUTO
+
+[90mstdout[2m | tests/coverage_final.test.ts[2m > [22m[2mFinal Coverage Fixes[2m > [22m[2mshould restore quality with mobile settings
+[22m[39m✅ Performance stabilized. Restoring Quality.
+
+ [32m✓[39m tests/coverage_final.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+ [32m✓[39m tests/renderer_boss_gap.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+ [32m✓[39m tests/audio.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+ [32m✓[39m tests/audio_coverage.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32m✓[39m tests/entities_coverage.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 63[2mms[22m[39m
+[90mstdout[2m | tests/shooting_full.test.ts
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:39.058Z
+Quality set to AUTO
+
+ [32m✓[39m tests/shooting_full.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 40[2mms[22m[39m
+[90mstdout[2m | tests/haptics.test.ts[2m > [22m[2mHaptic System[2m > [22m[2mshould call navigator.vibrate with correct pattern for "light"
+[22m[39mQuality set to AUTO
+
+ [32m✓[39m tests/haptics.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 40[2mms[22m[39m
+ [32m✓[39m tests/spawner.test.ts [2m([22m[2m21 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+ [32m✓[39m tests/audio_throttle.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+[90mstdout[2m | tests/loop_coverage.test.ts
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:41.918Z
+Quality set to AUTO
+
+ [32m✓[39m tests/loop_coverage.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 18[2mms[22m[39m
+[90mstdout[2m | tests/gameplay_polish.test.ts[2m > [22m[2mGameplay Polish[2m > [22m[2mPerfect Clear Logic[2m > [22m[2mshould trigger PERFECT! when horde is cleared via shooting (no melee damage)
+[22m[39mQuality set to AUTO
+
+ [32m✓[39m tests/gameplay_polish.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+[90mstdout[2m | tests/final_coverage.test.ts
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:43.169Z
+Quality set to AUTO
+
+ [32m✓[39m tests/final_coverage.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32m✓[39m tests/performance_visuals.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 20[2mms[22m[39m
+ [32m✓[39m tests/shooting_coverage.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+[90mstdout[2m | tests/shooting_fix.test.ts
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:15:44.833Z
+Quality set to AUTO
+
+ [32m✓[39m tests/shooting_fix.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+ [32m✓[39m tests/gameState_coverage.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m tests/quality_coverage.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m tests/movement.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m tests/quality_unknown.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m tests/storage.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+ [32m✓[39m tests/shooting_miniboss_fix.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 8[2mms[22m[39m
+[90mstdout[2m | tests/quality.test.ts[2m > [22m[2mQualityManager[2m > [22m[2mshould handle "high" quality setting
+[22m[39mQuality set to AUTO
+
+[90mstdout[2m | tests/quality.test.ts[2m > [22m[2mQualityManager[2m > [22m[2mshould handle "high" quality setting
+[22m[39mQuality set to HIGH
+
+[90mstdout[2m | tests/quality.test.ts[2m > [22m[2mQualityManager[2m > [22m[2mshould handle "low" quality setting
+[22m[39mQuality set to AUTO
+
+[90mstdout[2m | tests/quality.test.ts[2m > [22m[2mQualityManager[2m > [22m[2mshould handle "low" quality setting
+[22m[39mQuality set to LOW
+
+[90mstdout[2m | tests/quality.test.ts[2m > [22m[2mQualityManager[2m > [22m[2mshould handle "auto" quality setting
+[22m[39mQuality set to AUTO
+
+[90mstdout[2m | tests/quality.test.ts[2m > [22m[2mQualityManager[2m > [22m[2mshould handle "auto" quality setting
+[22m[39mQuality set to LOW
+Quality set to AUTO
+
+[90mstdout[2m | tests/quality.test.ts[2m > [22m[2mQualityManager[2m > [22m[2mshould detect mobile device and adjust settings
+[22m[39mQuality set to AUTO
+
+ [32m✓[39m tests/quality.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m tests/renderer_shadows.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32m✓[39m tests/audio_init.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+ [32m✓[39m tests/utils.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m tests/input_extra.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+ [32m✓[39m tests/quality_fix.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32m✓[39m tests/collisions_gate_unknown.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m tests/entities_max_heroes.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m tests/entities_advanced.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m tests/shooting_gap.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m tests/movement_extra.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+[90mstdout[2m | tests/collisions_cleanup.test.ts[2m > [22m[2mCollisions Coverage[2m > [22m[2mshould cleanup dead soldiers in the middle of the array (gap removal)
+[22m[39mQuality set to AUTO
+
+ [32m✓[39m tests/gameState.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m tests/collisions_cleanup.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 21[2mms[22m[39m
+ [32m✓[39m tests/renderer_boss.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m tests/weapons_extra.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m tests/renderer_utils.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32m✓[39m tests/collisions_gate_types.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m tests/renderer_utils_coverage.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m tests/collisions_advanced.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m tests/pool.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+[90mstdout[2m | tests/quality_mobile.test.ts[2m > [22m[2mQualityManager Mobile Detection[2m > [22m[2mshould detect mobile device and adjust settings
+[22m[39mQuality set to AUTO
+
+ [32m✓[39m tests/pool_double_release.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 10[2mms[22m[39m
+[90mstdout[2m | tests/quality_mobile.test.ts[2m > [22m[2mQualityManager Mobile Detection[2m > [22m[2mshould detect desktop device and adjust settings
+[22m[39mQuality set to AUTO
+
+ [32m✓[39m tests/quality_mobile.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m tests/entities_rebalance.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m tests/entities_gate_logic.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m tests/entities_gate_types_full.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32m✓[39m tests/input_state_coverage.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m tests/weapons.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m tests/weapons_coverage.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m tests/visual_physics.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m tests/constants.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+[90mstdout[2m | tests/shooting_inactive_miniboss.test.ts
+[22m[39mCrowd Runner v1.1.0 - Build: 2026-08-22T15:16:03.640Z
+Quality set to AUTO
+
+ [32m✓[39m tests/shooting_inactive_miniboss.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m tests/game_coverage.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m tests/game_scenarios.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 6[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m115 passed[39m[22m[90m (115)[39m
+[2m      Tests [22m [1m[32m747 passed[39m[22m[90m (747)[39m
+[2m   Start at [22m 15:14:59
+[2m   Duration [22m 66.19s[2m (transform 3.02s, setup 3.13s, import 9.21s, tests 11.79s, environment 130.29s)[22m
+
+[34m % [39m[2mCoverage report from [22m[33mv8[39m
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s
+-------------------|---------|----------|---------|---------|-------------------
+All files          |   99.69 |    98.48 |   99.01 |   99.87 |
+ audio.ts          |     100 |      100 |     100 |     100 |
+ collisions.ts     |   99.72 |     98.9 |    87.5 |     100 | 502,524
+ constants.ts      |     100 |      100 |     100 |     100 |
+ entities.ts       |     100 |      100 |     100 |     100 |
+ game.ts           |     100 |      100 |     100 |     100 |
+ gameState.ts      |     100 |      100 |     100 |     100 |
+ input-state.ts    |     100 |      100 |     100 |     100 |
+ input.ts          |     100 |      100 |     100 |     100 |
+ movement.ts       |   96.02 |    89.65 |     100 |   97.67 | 57,273,320
+ pool.ts           |     100 |      100 |     100 |     100 |
+ quality.ts        |     100 |      100 |     100 |     100 |
+ renderer-boss.ts  |     100 |    95.91 |     100 |     100 | 205,367
+ renderer-utils.ts |     100 |       80 |     100 |     100 | 14
+ renderer.ts       |     100 |      100 |     100 |     100 |
+ settings.ts       |     100 |      100 |     100 |     100 |
+ shooting.ts       |     100 |      100 |     100 |     100 |
+ skins.ts          |     100 |      100 |     100 |     100 |
+ soldierPool.ts    |     100 |      100 |     100 |     100 |
+ spatial.ts        |     100 |      100 |     100 |     100 |
+ spawner.ts        |     100 |      100 |     100 |     100 |
+ ui-overlay.ts     |   99.79 |    98.62 |   97.14 |     100 | 251,314
+ ui-settings.ts    |     100 |      100 |     100 |     100 |
+ ui-skins.ts       |     100 |      100 |     100 |     100 |
+ utils.ts          |     100 |      100 |     100 |     100 |
+ weapons.ts        |     100 |    95.83 |     100 |     100 | 80
+-------------------|---------|----------|---------|---------|-------------------
