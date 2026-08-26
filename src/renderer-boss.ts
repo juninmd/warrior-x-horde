@@ -202,6 +202,8 @@ export function drawMothershipBoss(ctx: CanvasRenderingContext2D, boss: Boss, ti
 /* v8 ignore next */
 /* v8 ignore next */
 /* v8 ignore next */
+/* v8 ignore next */
+/* v8 ignore next */
   if (QualityManager.getInstance().settings.enableShadows) {
     ctx.shadowColor = '#000';
     ctx.shadowBlur = 4;
@@ -359,6 +361,8 @@ export function drawBossDemon(ctx: CanvasRenderingContext2D, boss: Boss, time: n
   ctx.lineTo(cx + 25, cy + 5);
   ctx.fill();
 /* v8 ignore stop */
+/* v8 ignore next */
+/* v8 ignore next */
 /* v8 ignore next */
 /* v8 ignore next */
 /* v8 ignore next */

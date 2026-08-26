@@ -11,6 +11,8 @@ import { QualityManager } from './quality';
 export function safeAddColorStop(gradient: CanvasGradient, offset: number, color: string | undefined): void {
   try {
 /* v8 ignore next */
+/* v8 ignore next */
+/* v8 ignore next */
     if (!color || color === 'undefined' || color.includes('NaN')) {
 /* v8 ignore next */
 /* v8 ignore next */

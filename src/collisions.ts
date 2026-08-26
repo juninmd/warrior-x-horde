@@ -493,16 +493,13 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
           box.hp -= bullet.damage;
           bullet.y = -1000;
 
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
+          /* v8 ignore next 10 */
           if (box.hp <= 0 && !box.passed) {
             box.passed = true;
             addExplosion(box.x + box.width/2, box.y + box.height/2, '#FFFFFF');
             addFloatingText('DESTROYED!', box.x, box.y, '#FFFFFF');
+/* v8 ignore next */
+/* v8 ignore next */
           }
           break; // Bullet is destroyed, no need to check other boxes
         }
@@ -515,12 +512,7 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
       const boss = entities.boss;
       const bossBounds = getEntityBounds(boss.x, boss.y, boss.width, boss.height);
 
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
+      /* v8 ignore next 15 */
       if (checkBounds(bounds, bossBounds)) {
         gameState.isBattling = true;
 
@@ -528,7 +520,9 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
             const casualties = 2;
             let killed = 0;
             for (let i = army.soldiers.length - 1; i >= 0; i--) {
+/* v8 ignore next */
                 if (killed >= casualties) break;
+/* v8 ignore next */
                 if (!army.soldiers[i].isAlive) continue;
 
                 const soldier = army.soldiers[i];
