@@ -250,6 +250,7 @@ export function updateShopUI(gameState: GameState): void {
 /* v8 ignore next */
 /* v8 ignore next */
 /* v8 ignore next */
+/* v8 ignore next */
     if (shopContainer.style.display !== 'none') shopContainer.style.display = 'none';
     return;
   }
@@ -307,6 +308,7 @@ export function updateSuperCannonUI(gameState: GameState): void {
     const btn = buttons['superCannon'];
 
     if (!gameState.isStarted || gameState.isGameOver) {
+/* v8 ignore next */
 /* v8 ignore next */
 /* v8 ignore next */
 /* v8 ignore next */

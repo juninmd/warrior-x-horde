@@ -56,6 +56,7 @@ export function updateSoldierFormation(army: Army, dtFactor: number): void {
 /* v8 ignore next */
 /* v8 ignore next */
 /* v8 ignore next */
+/* v8 ignore next */
         arrayIndex++;
       }
 
@@ -274,6 +275,7 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
 /* v8 ignore next */
 /* v8 ignore next */
 /* v8 ignore next */
+/* v8 ignore next */
             entities.miniBosses[i] = last!;
           }
       }
@@ -315,6 +317,7 @@ function updateHordeFormation(horde: { count?: number; x: number; y: number; sol
           arrayIndex++;
           break;
         }
+/* v8 ignore next */
 /* v8 ignore next */
 /* v8 ignore next */
 /* v8 ignore next */

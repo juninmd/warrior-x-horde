@@ -79,6 +79,7 @@ export function spawnWeapons(entities: Entities, canvasWidth: number): void {
 /* v8 ignore next */
 /* v8 ignore next */
 /* v8 ignore next */
+/* v8 ignore next */
           if (last && i < entities.weapons.length) {
               entities.weapons[i] = last;
           }

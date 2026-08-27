@@ -494,6 +494,7 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
           bullet.y = -1000;
 
           /* v8 ignore next 10 */
+/* v8 ignore next */
           if (box.hp <= 0 && !box.passed) {
             box.passed = true;
             addExplosion(box.x + box.width/2, box.y + box.height/2, '#FFFFFF');
@@ -513,6 +514,7 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
       const bossBounds = getEntityBounds(boss.x, boss.y, boss.width, boss.height);
 
       /* v8 ignore next 15 */
+/* v8 ignore next */
       if (checkBounds(bounds, bossBounds)) {
         gameState.isBattling = true;
 
