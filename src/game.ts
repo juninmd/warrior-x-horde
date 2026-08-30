@@ -19,7 +19,7 @@ import { MOBILE_RESOLUTION_SCALE } from './constants';
 
 // Canvas setup
 export const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
-const ctx = canvas.getContext('2d')!;
+const ctx = canvas.getContext('2d', { alpha: false })!;
 
 // Escala atual
 let scale = 1;
@@ -88,8 +88,8 @@ function resizeCanvas(): void {
       resolutionScale = MOBILE_RESOLUTION_SCALE;
   }
 
-  // Base DPR (capped at 3 for sanity on super high density screens)
-  const baseDpr = Math.min(window.devicePixelRatio || 1, 3);
+  // Base DPR (capped at 2 for performance on mobile devices with extremely high pixel density)
+  const baseDpr = Math.min(window.devicePixelRatio || 1, 2);
   const effectiveDpr = baseDpr * resolutionScale;
 
   canvas.width = BASE_WIDTH * effectiveDpr;
@@ -911,7 +911,11 @@ export function togglePause(): void {
     // Shift the wall-clock cooldown stamp forward by the paused duration so the
     // Super Cannon does not recharge while the game is frozen.
     gameState.superCannonLastUsed += Date.now() - pauseStartTime;
-    if (modal) modal.style.display = 'none';
+
+    if (modal) {
+        modal.classList.remove('active');
+        setTimeout(() => { if (!gameState.isPaused) modal.style.display = 'none'; }, 200);
+    }
 
     startCountdown(() => {
       gameState.isPaused = false;
@@ -929,7 +933,11 @@ export function togglePause(): void {
     const pauseBtn = document.getElementById('pauseBtnTop');
     if (pauseBtn) pauseBtn.textContent = '▶️';
     console.log('⏸️ Jogo pausado');
-    if (modal) modal.style.display = 'flex';
+    if (modal) {
+        modal.style.display = 'flex';
+        void modal.offsetWidth; // Force reflow
+        modal.classList.add('active');
+    }
   }
 }
 

@@ -574,6 +574,60 @@ body {
   flex-direction: column;
   z-index: 2000;
 }
+.pause-modal.active {
+  display: flex !important;
+  animation: fadeIn 0.2s ease-out;
+}
+.pause-title {
+  color: var(--cyan-1);
+  font-size: clamp(32px, 8vw, 42px);
+  font-weight: 900;
+  letter-spacing: 4px;
+  margin-bottom: 24px;
+  text-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+  animation: slideInRight 0.3s var(--ease-pop);
+}
+.pause-btn {
+  background: var(--grad-surface), var(--surface-strong);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 16px 24px;
+  margin-bottom: 12px;
+  width: 240px;
+  max-width: 90%;
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: var(--sh-1);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  transition: transform 0.15s var(--ease-pop), background 0.2s, box-shadow 0.2s;
+  animation: modal-in 0.3s var(--ease-pop) both;
+}
+.pause-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: var(--sh-2);
+  transform: translateY(-2px);
+}
+.pause-btn:active {
+  transform: scale(0.92) !important;
+}
+.pause-btn.resume {
+  background: var(--grad-action);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: var(--sh-glow-red);
+}
+.pause-btn.resume:hover {
+  transform: translateY(-2px) scale(1.02);
+}
+.pause-btn.quit {
+  background: rgba(231, 76, 60, 0.15);
+  border-color: var(--danger);
+  color: #ffa79d;
+}
 .story-content,
 .settings-content {
   background: var(--surface-strong);
@@ -837,11 +891,13 @@ button {
   .game-controls { display: none !important; }
   .game-subtitle { display: none; }
   .game-title {
-    font-size: 18px;
+    font-size: clamp(20px, 5vw, 26px);
     margin-top: 10px;
-    padding-right: 124px;
-    padding-left: 16px;
+    padding-right: 100px; /* Room for pause/settings buttons */
+    padding-left: 10px;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .leaderboard-list { max-height: 124px; }
   .tutorial-hand { margin: 8px auto; }
