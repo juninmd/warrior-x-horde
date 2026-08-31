@@ -201,90 +201,53 @@ body {
   transform: scale(0.92) !important;
 }
 
-.game-controls {
-  display: flex;
-  gap: 8px;
-  margin-top: 10px;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
+.super-cannon-container {
+  position: absolute;
+  bottom: 25px;
+  right: 25px;
+  z-index: 60;
+  pointer-events: auto;
 }
 
-.game-controls select {
-  background: var(--surface-strong);
-  color: var(--text);
-  border: 1px solid var(--border);
-  padding: 4px 12px;
-  border-radius: var(--r-sm);
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  min-height: 54px;
-}
-
-.game-controls button {
-  background: var(--grad-surface), var(--surface-strong);
-  color: var(--text);
-  border: 1px solid var(--border);
-  padding: 8px 18px;
-  border-radius: var(--r-md);
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  transition: transform 0.18s var(--ease-pop), box-shadow 0.18s, border-color 0.18s;
-  min-height: 54px;
-  backdrop-filter: blur(2px);
-  box-shadow: var(--sh-1), inset 0 1px 0 rgba(255, 255, 255, 0.12);
-}
-
-.game-controls button:hover {
-  transform: translateY(-2px);
-  border-color: var(--border-strong);
-  box-shadow: var(--sh-2), inset 0 1px 0 rgba(255, 255, 255, 0.18);
-}
-
-.game-controls .go-btn {
-  background: var(--grad-cool);
-  border-color: transparent;
-  color: #04121f;
-  box-shadow: var(--sh-glow-cyan);
-}
-
-.game-controls .pause-btn {
-  background: linear-gradient(135deg, #f7b733 0%, #fc4a1a 100%);
-  border-color: transparent;
-}
-
-.game-controls .super-btn {
+.super-cannon-btn {
   background: var(--grad-action);
-  border-color: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
   color: #fff;
-  font-weight: 800;
-  font-size: 14px;
-  padding: 8px 24px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
-  box-shadow: var(--sh-glow-red);
+  font-family: inherit;
+  font-weight: 900;
+  font-size: 16px;
+  width: 76px;
+  height: 76px;
+  cursor: pointer;
+  box-shadow: var(--sh-glow-red), inset 0 -3px 0 rgba(0, 0, 0, 0.22);
+  transition: transform 0.12s var(--ease-pop), filter 0.2s;
   animation: pulse 2.4s infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.game-controls .super-btn:disabled {
-  background: rgba(255, 255, 255, 0.06);
+.super-cannon-btn:active {
+  transform: scale(0.88) !important;
+  background: linear-gradient(135deg, var(--red-1) 0%, var(--red-2) 100%);
+  box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.4);
+}
+
+.super-cannon-btn:disabled {
+  background: rgba(255, 255, 255, 0.1);
   color: var(--text-mute);
   animation: none;
   box-shadow: none;
-}
-
-.story-btn {
-  background: linear-gradient(135deg, var(--violet) 0%, #5b3fd6 100%) !important;
-  border-color: transparent !important;
-  color: #fff;
+  border-color: rgba(255, 255, 255, 0.1);
+  transform: scale(1);
 }
 
 .start-btn {
-  background: linear-gradient(135deg, #FF416C 0%, #FF4B2B 100%);
+  background: var(--grad-action);
   border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: var(--r-pill);
   padding: 20px 30px;
@@ -313,7 +276,7 @@ body {
 
 .start-btn:active {
   transform: translateY(2px) scale(0.92) !important;
-  background: linear-gradient(135deg, #FF4B2B 0%, #FF416C 100%);
+  background: linear-gradient(135deg, var(--red-1) 0%, var(--red-2) 100%);
   box-shadow: inset 0 6px 15px rgba(0, 0, 0, 0.55);
 }
 
@@ -662,7 +625,7 @@ body {
   font-weight: 700;
 }
 .story-close-btn {
-  background: linear-gradient(135deg, #FF416C 0%, #FF4B2B 100%);
+  background: var(--grad-action);
   color: #fff;
   border: none;
   padding: 12px 30px;
@@ -679,7 +642,7 @@ body {
 .story-close-btn:hover { transform: scale(1.04); }
 .story-close-btn:active {
   transform: scale(0.92) !important;
-  background: linear-gradient(135deg, #FF4B2B 0%, #FF416C 100%);
+  background: linear-gradient(135deg, var(--red-1) 0%, var(--red-2) 100%);
   box-shadow: inset 0 6px 15px rgba(0, 0, 0, 0.55);
 }
 

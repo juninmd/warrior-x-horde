@@ -47,7 +47,7 @@ test.describe('Crowd Runner Game Tests', () => {
     expect(consoleErrors, `Console errors: ${consoleErrors.join(' | ')}`).toHaveLength(0);
 
     // Ensure the main UI overlay exists
-    const controlBtn = page.locator('#superCannonBtnInline');
+    const controlBtn = page.locator('#superCannonBtn');
     await expect(controlBtn).toBeVisible();
   });
 
