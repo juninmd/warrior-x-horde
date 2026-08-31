@@ -24,10 +24,6 @@ const ctx = canvas.getContext('2d', { alpha: false })!;
 // Escala atual
 let scale = 1;
 
-let cachedSuperBtn: HTMLButtonElement | null = null;
-let lastSuperText: string = '';
-let lastSuperDisabled: boolean | null = null;
-
 // Fixed Timestep Constants
 export const FIXED_TIMESTEP = 1000 / 60; // 60 updates per second (~16.667ms)
 let accumulator = 0;
@@ -540,7 +536,6 @@ function gameLoop(currentTime: number = 0): void {
 
   // UI Updates (Run once per frame)
   updateSuperCannonUI(gameState);
-  updateSuperButtonInline();
   updateShopUI(gameState);
 
   // Renderizar (Interpolation could be added here, but simple state render is fine for this style)
@@ -754,33 +749,11 @@ if (pauseBtnTop) pauseBtnTop.addEventListener('click', () => togglePause());
 const settingsBtn = document.getElementById('settingsBtn');
 if (settingsBtn) settingsBtn.addEventListener('click', () => toggleSettingsMenu());
 
-const storyBtn = document.querySelector('.story-btn');
-if (storyBtn) storyBtn.addEventListener('click', () => {
-     const modal = document.getElementById('storyModal');
-     if (modal) modal.classList.add('active');
-});
-
 const storyCloseBtn = document.querySelector('.story-close-btn');
 if (storyCloseBtn) storyCloseBtn.addEventListener('click', () => {
      const modal = document.getElementById('storyModal');
      if (modal) modal.classList.remove('active');
 });
-
-const goBtn = document.querySelector('.go-btn');
-const levelSelector = document.getElementById('levelSelector') as HTMLSelectElement;
-if (goBtn && levelSelector) {
-     goBtn.addEventListener('click', () => {
-         const lvl = parseInt(levelSelector.value);
-         debugSetLevel(lvl);
-     });
-}
-
-const superCannonBtnInline = document.getElementById('superCannonBtnInline');
-if (superCannonBtnInline) {
-     superCannonBtnInline.addEventListener('click', () => {
-         triggerSuperCannon();
-     });
-}
 
 
 // Resize handler
@@ -966,55 +939,6 @@ export function triggerSuperCannon(): void {
   }
   /* v8 ignore stop */
 }
-
-// Atualizar estado do botão Super inline
-/* v8 ignore start */
-function updateSuperButtonInline(): void {
-  if (typeof document === 'undefined') return;
-
-  if (!cachedSuperBtn) {
-    cachedSuperBtn = document.getElementById('superCannonBtnInline') as HTMLButtonElement;
-  }
-
-  if (!cachedSuperBtn) return;
-
-  let newText = '';
-  let newDisabled = false;
-
-  if (!gameState.isStarted || gameState.isGameOver) {
-    newDisabled = true;
-    newText = '⚡ SUPER';
-  } else {
-    const now = Date.now();
-    const timeSinceLastUse = now - gameState.superCannonLastUsed;
-    const cooldownRemaining = Math.max(0, gameState.superCannonCooldown - timeSinceLastUse);
-    const isOnCooldown = cooldownRemaining > 0 && !gameState.superCannonActive;
-
-    if (gameState.superCannonActive) {
-      newText = '⚡ ATIVO!';
-      newDisabled = true;
-    } else if (isOnCooldown) {
-      const cooldownSecs = Math.ceil(cooldownRemaining / 1000);
-      newText = `⏳ ${cooldownSecs}s`;
-      newDisabled = true;
-    } else {
-      newText = '⚡ SUPER';
-      newDisabled = false;
-    }
-  }
-
-  // Update DOM only if changed
-  if (lastSuperText !== newText) {
-    cachedSuperBtn.textContent = newText;
-    lastSuperText = newText;
-  }
-
-  if (lastSuperDisabled !== newDisabled) {
-    cachedSuperBtn.disabled = newDisabled;
-    lastSuperDisabled = newDisabled;
-  }
-}
-/* v8 ignore stop */
 
 // Expor funções globalmente para o HTML acessar
 (window as unknown as {
