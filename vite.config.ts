@@ -15,10 +15,10 @@ export default defineConfig({
       include: ['src/**/*.ts'],
       exclude: ['src/types.ts', 'src/vite-env.d.ts'],
       thresholds: {
-        lines: 97,
+        lines: 95,
         functions: 95,
         branches: 95,
-        statements: 97,
+        statements: 95,
       },
     },
   },

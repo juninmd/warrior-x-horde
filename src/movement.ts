@@ -48,19 +48,10 @@ export function updateSoldierFormation(army: Army, dtFactor: number): void {
           arrayIndex++;
           break;
         }
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
         arrayIndex++;
       }
 
-      if (!soldier) break;
+      if (!soldier) { processedCount = count; break; }
 
       // Offset por anel para efeito espiral
       const angleOffset = ring * 0.5;
@@ -139,9 +130,7 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
     // Nave mãe (boss final do level 10) - movimento aleatório suave
     if (boss.type === 'mothership') {
       // Inicializa velocidades aleatórias se não existirem
-      /* v8 ignore next 3 */
       if (boss.vx === undefined) boss.vx = (Math.random() - 0.5) * 2;
-      /* v8 ignore next 2 */
       if (boss.vy === undefined) boss.vy = (Math.random() - 0.5) * 0.5;
 
       // Movimento suave
@@ -151,7 +140,6 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
       // Limites horizontais (margem de 20px)
       const minX = 20;
       const maxX = canvasWidth - boss.width - 20;
-      /* v8 ignore start */
       if (boss.x < minX) {
         boss.x = minX;
         boss.vx = Math.abs(boss.vx) * (0.8 + Math.random() * 0.4);
@@ -159,12 +147,10 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
         boss.x = maxX;
         boss.vx = -Math.abs(boss.vx) * (0.8 + Math.random() * 0.4);
       }
-      /* v8 ignore stop */
 
       // Limites verticais (entre y=20 e y=80)
       const minY = 20;
       const maxY = 80;
-      /* v8 ignore start */
       if (boss.y < minY) {
         boss.y = minY;
         boss.vy = Math.abs(boss.vy) * (0.8 + Math.random() * 0.4);
@@ -172,10 +158,8 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
         boss.y = maxY;
         boss.vy = -Math.abs(boss.vy) * (0.8 + Math.random() * 0.4);
       }
-      /* v8 ignore stop */
 
       // Mudança aleatória de direção ocasional (ajustada para delta time)
-      /* v8 ignore start */
       if (Math.random() < 0.02 * dtFactor) {
         boss.vx += (Math.random() - 0.5) * 0.5;
         boss.vy += (Math.random() - 0.5) * 0.2;
@@ -183,18 +167,15 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
         boss.vx = Math.max(-2, Math.min(2, boss.vx));
         boss.vy = Math.max(-0.5, Math.min(0.5, boss.vy));
       }
-      /* v8 ignore stop */
     } else {
       // Boss normal - fica parado por 10 segundos, depois avança
       const timeSinceSpawn = Date.now() - boss.spawnTime;
       const waitTime = 10000; // 10 segundos parado
 
       // Primeiro, mover até a posição inicial (y = 100)
-      /* v8 ignore start */
       if (boss.y < 100) {
         boss.y += baseSpeed * dtFactor;
       } else if (timeSinceSpawn > waitTime) {
-        /* v8 ignore stop */
         // Após 10 segundos, começa a avançar igual aos inimigos comuns
         boss.isMoving = true;
 
@@ -220,42 +201,34 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
 
   // Mover Mystery Boxes (mesma velocidade das gates/mundo)
   for (let i = 0; i < entities.mysteryBoxes.length; i++) { const box = entities.mysteryBoxes[i];
-    /* v8 ignore start */
     if (box && !box.passed) {
       box.y += gateSpeed;
     }
-    /* v8 ignore stop */
   }
 
   // Mover Moedas (mesma velocidade das gates)
   for (let i = 0; i < entities.coins.length; i++) { const coin = entities.coins[i];
-    /* v8 ignore start */
     if (coin && !coin.passed) {
       coin.y += gateSpeed;
     }
-    /* v8 ignore stop */
   }
 
   // Mover mini-bosses (mais lentos que as hordas normais)
   for (let i = 0; i < entities.miniBosses.length; i++) { const miniBoss = entities.miniBosses[i];
-    /* v8 ignore next */
     if (!miniBoss.isActive) continue;
 
     // Mini-boss se move mais devagar verticalmente
     const miniBossSpeed = baseSpeed * 0.4 * dtFactor; // 40% da velocidade base (bem lento)
 
-    /* v8 ignore start */
     if (miniBoss.y < 200) {
       miniBoss.y += miniBossSpeed;
     } else {
-      /* v8 ignore stop */
       // Mini-boss continua descendo lentamente e persegue o jogador
       miniBoss.y += miniBossSpeed * 0.3;
 
       // Mini-boss persegue o jogador horizontalmente (lentamente)
       const targetX = entities.playerArmy.centerX - miniBoss.width / 2;
       const dx = targetX - miniBoss.x;
-      /* v8 ignore next */
       miniBoss.x += dx * 0.015 * dtFactor; // Perseguição mais lenta
     }
   }
@@ -267,15 +240,6 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
           // Fast remove
           const last = entities.miniBosses.pop();
           if (i < entities.miniBosses.length) {
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
             entities.miniBosses[i] = last!;
           }
       }
@@ -317,19 +281,10 @@ function updateHordeFormation(horde: { count?: number; x: number; y: number; sol
           arrayIndex++;
           break;
         }
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
         arrayIndex++;
       }
 
-      if (!soldier) break;
+      if (!soldier) { processedCount = count; break; }
 
       const angle = ring === 0 ? 0 : (i / soldiersInRing) * Math.PI * 2;
 

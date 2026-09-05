@@ -63,9 +63,9 @@ function getLeaderboardElement(currentScore: number = -1): HTMLElement {
     for (let index = 0; index < leaderboard.length; index++) {
         const entry = leaderboard[index];
         let safeScore = Number(entry.score);
-        /* v8 ignore start */
+
         if (isNaN(safeScore) || !isFinite(safeScore)) safeScore = 0;
-        /* v8 ignore stop */
+
         safeScore = Math.floor(safeScore);
 
         const isCurrent = safeScore === currentScore;
@@ -89,9 +89,9 @@ function getLeaderboardElement(currentScore: number = -1): HTMLElement {
 
         const scoreCol = document.createElement('div');
         scoreCol.className = 'score-col';
-        /* v8 ignore start */
+
         scoreCol.textContent = safeScore === 0 ? '0' : safeScore.toLocaleString('pt-BR');
-        /* v8 ignore stop */
+
 
         item.appendChild(rankCol);
         item.appendChild(scoreCol);
@@ -242,15 +242,15 @@ export function updateShopUI(gameState: GameState): void {
 
   if (!gameState.isStarted || gameState.isGameOver) {
     // Only touch the DOM when the value actually changes (avoids per-frame style recalc)
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
+
+
+
+
+
+
+
+
+
     if (shopContainer.style.display !== 'none') shopContainer.style.display = 'none';
     return;
   }
@@ -308,15 +308,15 @@ export function updateSuperCannonUI(gameState: GameState): void {
     const btn = buttons['superCannon'];
 
     if (!gameState.isStarted || gameState.isGameOver) {
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
-/* v8 ignore next */
+
+
+
+
+
+
+
+
+
         if (superCannonContainer.style.display !== 'none') superCannonContainer.style.display = 'none';
         return;
     }
@@ -678,5 +678,11 @@ export const _testing = {
         shopContainer = null;
         superCannonContainer = null;
         gameOverContainer = null;
-    }
+    },
+    setShopContainer: (el: HTMLElement) => { shopContainer = el; },
+    setSuperCannonElements: (container: HTMLElement) => {
+        superCannonContainer = container;
+    },
+    updateShopUI,
+    updateSuperCannonUI
 };
