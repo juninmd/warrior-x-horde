@@ -678,5 +678,11 @@ export const _testing = {
         shopContainer = null;
         superCannonContainer = null;
         gameOverContainer = null;
-    }
+    },
+    setShopContainer: (el: HTMLElement) => { shopContainer = el; },
+    setSuperCannonElements: (container: HTMLElement) => {
+        superCannonContainer = container;
+    },
+    updateShopUI,
+    updateSuperCannonUI
 };
