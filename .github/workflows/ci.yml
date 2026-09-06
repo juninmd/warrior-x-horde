@@ -32,6 +32,8 @@ jobs:
 
     - name: Test Coverage
       run: pnpm run coverage
+    - name: Install Playwright Browsers
+      run: pnpm exec playwright install --with-deps
 
     - name: Run E2E Tests
       run: pnpm run e2e
