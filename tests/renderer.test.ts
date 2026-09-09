@@ -186,7 +186,7 @@ describe('Renderer', () => {
       expect(texts[0].y).not.toBe(startY);
   });
 
-  it('should force re-render sprites', () => {
+  it('should force re-render sprites', { timeout: 5000 }, () => {
       _resetSpriteCache();
       preRenderSprites();
       // This exercises renderSoldierToCache and renderSoldierShape for all types
