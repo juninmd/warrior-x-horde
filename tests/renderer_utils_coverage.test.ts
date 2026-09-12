@@ -84,3 +84,33 @@ describe('Renderer Utils Coverage', () => {
         expect(ctx.save).toHaveBeenCalled();
     });
 });
+
+    it('should catch error in safeAddColorStop and execute fallback', async () => {
+        const { safeAddColorStop } = await import('../src/renderer-utils');
+
+        let shouldThrow = true;
+        const gradient = {
+            addColorStop: vi.fn().mockImplementation((offset, color) => {
+                if (shouldThrow) {
+                    shouldThrow = false;
+                    throw new Error("Invalid gradient");
+                }
+            })
+        };
+        const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+        safeAddColorStop(gradient as any, 0, '#FFF');
+
+        expect(consoleSpy).toHaveBeenCalled();
+        expect(gradient.addColorStop).toHaveBeenCalledWith(0, 'rgba(0,0,0,0)');
+        consoleSpy.mockRestore();
+    });
+
+    it('should handle invalid string color in safeAddColorStop', async () => {
+        const { safeAddColorStop } = await import('../src/renderer-utils');
+        const gradient = {
+            addColorStop: vi.fn()
+        };
+        safeAddColorStop(gradient as any, 0, 'undefined');
+        expect(gradient.addColorStop).toHaveBeenCalledWith(0, 'rgba(0,0,0,0)');
+    });

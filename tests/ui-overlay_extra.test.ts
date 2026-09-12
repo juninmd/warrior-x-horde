@@ -57,3 +57,41 @@ describe('UI Overlay Extra Coverage', () => {
         });
     });
 });
+
+describe('getLeaderboardElement coverage', () => {
+    it('should handle corrupted score formats like NaN or Infinity', async () => {
+        vi.resetModules();
+
+        const originalParse = JSON.parse;
+        vi.spyOn(JSON, 'parse').mockImplementation((text) => {
+            if (text === 'CROWD_MOCK') {
+                return [
+                    { name: 'Corrupt 1', score: NaN },
+                    { name: 'Corrupt 2', score: Infinity },
+                    { name: 'Zero', score: 0 }
+                ];
+            }
+            return originalParse(text);
+        });
+
+        vi.spyOn(window.localStorage, 'getItem').mockImplementation((key) => {
+            if (key === 'crowdLeaderboard') {
+                return 'CROWD_MOCK';
+            }
+            return null;
+        });
+
+        const uiModule = await import('../src/ui-overlay');
+        const getLeaderboardElement = uiModule._testing.getLeaderboardElement;
+
+        const el = getLeaderboardElement(0);
+        const items = el.querySelectorAll('.score-col');
+
+        expect(items.length).toBeGreaterThan(0);
+        expect(items[0].textContent).toBe('0');
+        expect(items[1].textContent).toBe('0');
+        expect(items[2].textContent).toBe('0');
+
+        vi.restoreAllMocks();
+    });
+});
