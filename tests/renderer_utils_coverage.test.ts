@@ -13,7 +13,7 @@ vi.mock('../src/input-state', () => ({
     }
 }));
 
-import { drawJoystick } from '../src/renderer-utils';
+import { drawJoystick, safeAddColorStop } from '../src/renderer-utils';
 import { virtualJoystick } from '../src/input-state';
 
 describe('Renderer Utils Coverage', () => {
@@ -54,6 +54,43 @@ describe('Renderer Utils Coverage', () => {
         expect(ctx.restore).toHaveBeenCalled();
         // Check clamp logic indirectly by ensuring it ran through
         expect(ctx.translate).toHaveBeenCalled();
+    });
+
+    it('should safely add color stop or fallback', () => {
+        let fallbackCalled = false;
+        let normalCalled = false;
+
+        const gradient = {
+            addColorStop: vi.fn((offset, color) => {
+                if (color === 'rgba(0,0,0,0)') {
+                    fallbackCalled = true;
+                } else if (color === 'invalid') {
+                    throw new Error('invalid color');
+                } else {
+                    normalCalled = true;
+                }
+            })
+        } as unknown as CanvasGradient;
+
+        safeAddColorStop(gradient, 0, '#FFF');
+        expect(normalCalled).toBe(true);
+        expect(fallbackCalled).toBe(false);
+
+        fallbackCalled = false;
+        safeAddColorStop(gradient, 0, 'undefined');
+        expect(fallbackCalled).toBe(true);
+
+        fallbackCalled = false;
+        safeAddColorStop(gradient, 0, undefined);
+        expect(fallbackCalled).toBe(true);
+
+        fallbackCalled = false;
+        safeAddColorStop(gradient, 0, 'rgba(NaN, 0, 0, 1)');
+        expect(fallbackCalled).toBe(true);
+
+        fallbackCalled = false;
+        safeAddColorStop(gradient, 0, 'invalid');
+        expect(fallbackCalled).toBe(true);
     });
 
     it('should draw joystick when fading out', () => {

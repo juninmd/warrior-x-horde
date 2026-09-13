@@ -170,3 +170,29 @@ describe('Collisions - Advanced', () => {
         // expect(gameState.isGameOver).toBe(true); // Deferred
     });
 });
+
+    it('should destroy box with passed is false and no negative hp', () => {
+        const army: Army = { soldiers: [], centerX: 100, centerY: 100, aliveCount: 0 } as any;
+        const box = { isActive: true, x: 100, y: 100, width: 20, height: 20, hp: 5, passed: false };
+        const bullet = { isActive: true, x: 110, y: 110, damage: 10 };
+        const entities: Entities = { playerArmy: army, coins: [], gates: [], enemyHordes: [], mysteryBoxes: [box], miniBosses: [], boss: null, bullets: [bullet], weapons: [] } as any;
+        const gameState: GameState = { isGameOver: false, isDying: false, coins: 0, highScore: 0, score: 0 } as any;
+
+        checkCollisions(entities, gameState);
+        expect(box.passed).toBe(true);
+        expect(bullet.y).toBe(-1000);
+    });
+
+    it('should kill multiple soldiers when overlapping with boss', () => {
+        const army: Army = {
+            soldiers: [{ isAlive: true, x: 100, y: 100, size: 10, hp: 10, type: 'normal' }, { isAlive: true, x: 101, y: 101, size: 10, hp: 10, type: 'normal' }, { isAlive: true, x: 102, y: 102, size: 10, hp: 10, type: 'normal' }],
+            centerX: 100, centerY: 100, aliveCount: 3
+        } as any;
+        const boss = { isActive: true, x: 50, y: 50, width: 100, height: 100, hp: 100, type: 'beast' };
+        const entities: Entities = { playerArmy: army, coins: [], gates: [], enemyHordes: [], mysteryBoxes: [], miniBosses: [], boss: boss, bullets: [], weapons: [] } as any;
+        const gameState: GameState = { score: 0, isBattling: false, coins: 0, highScore: 0 } as any;
+
+        checkCollisions(entities, gameState);
+        expect(gameState.isBattling).toBe(true);
+        expect(army.aliveCount).toBeLessThan(3);
+    });

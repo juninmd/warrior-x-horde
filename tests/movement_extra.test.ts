@@ -141,4 +141,58 @@ describe('Movement Extra Coverage', () => {
             expect(horde.x).toBeGreaterThan(oldX);
         });
     });
+
+    describe('Soldier Movement Missing Lines', () => {
+        it('should skip dead soldiers when updating army formation', () => {
+            entities.playerArmy = {
+                centerX: 240, centerY: 600,
+                aliveCount: 1,
+                soldiers: [
+                    { isAlive: false, x: 0, y: 0, size: 10, hp: 1, type: 'normal' },
+                    { isAlive: true, x: 10, y: 10, size: 10, hp: 1, type: 'normal' }
+                ]
+            } as any;
+            updateMovement(entities, { left: false, right: false }, gameState, 1);
+            expect(entities.playerArmy.soldiers[1].targetX).toBeDefined();
+        });
+
+        it('should skip dead soldiers when updating horde formation', () => {
+            entities.enemyHordes = [{
+                isActive: true, x: 100, y: 100, count: 1,
+                soldiers: [
+                    { isAlive: false, x: 0, y: 0, size: 10, hp: 1, type: 'normal' },
+                    { isAlive: true, x: 10, y: 10, size: 10, hp: 1, type: 'normal' }
+                ]
+            } as any];
+            moveEntitiesDown(entities, gameState, 1);
+            expect(entities.enemyHordes[0].soldiers[1].targetX).toBeDefined();
+        });
+
+        it('should random move mothership boss', () => {
+            const boss: Boss = { type: 'mothership', x: 200, y: 50, width: 100, height: 100, vx: 1, vy: 1, isActive: true } as any;
+            entities.boss = boss;
+            const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0.01);
+            moveEntitiesDown(entities, gameState, 1);
+            randomSpy.mockRestore();
+            expect(boss.vx).not.toBe(1);
+        });
+
+        it('should move boss vertically before waitTime if y < 100', () => {
+            const boss: Boss = { type: 'beast', x: 200, y: 50, spawnTime: Date.now(), isActive: true, width: 50, height: 50 } as any;
+            entities.boss = boss;
+            const oldY = boss.y;
+            moveEntitiesDown(entities, gameState, 1);
+            expect(boss.y).toBeGreaterThan(oldY);
+        });
+
+        it('should skip moving passed mystery boxes and passed coins', () => {
+            entities.mysteryBoxes = [ { y: 100, passed: true } as any, { y: 100, passed: false } as any ];
+            entities.coins = [ { y: 100, passed: true } as any, { y: 100, passed: false } as any ];
+            moveEntitiesDown(entities, gameState, 1);
+            expect(entities.mysteryBoxes[0].y).toBe(100);
+            expect(entities.mysteryBoxes[1].y).toBeGreaterThan(100);
+            expect(entities.coins[0].y).toBe(100);
+            expect(entities.coins[1].y).toBeGreaterThan(100);
+        });
+    });
 });
