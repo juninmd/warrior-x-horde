@@ -906,3 +906,18 @@ button {
     transition-duration: 0.01ms !important;
   }
 }
+
+.game-logo {
+  font-size: clamp(40px, 12vw, 60px);
+  font-weight: 900;
+  line-height: 0.9;
+  margin-bottom: 20px;
+  background: var(--grad-action);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 4px 10px rgba(255, 65, 108, 0.4));
+  animation: logo-pulse 3s infinite ease-in-out;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
