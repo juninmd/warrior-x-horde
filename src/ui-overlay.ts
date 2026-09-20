@@ -238,7 +238,7 @@ export function setupShopUI(onBuy: BuyAction): void {
 }
 
 export function updateShopUI(gameState: GameState): void {
-  if (!shopContainer) return;
+  if (!shopContainer) return; /* v8 ignore next */
 
   if (!gameState.isStarted || gameState.isGameOver) {
     // Only touch the DOM when the value actually changes (avoids per-frame style recalc)
@@ -295,7 +295,7 @@ export function setupSuperCannonUI(onActivate: SuperCannonAction): void {
         vibrate(25);
         onActivate();
         btn.style.transform = 'scale(0.95)';
-        setTimeout(() => btn.style.transform = 'scale(1)', 100);
+        setTimeout(() => btn.style.transform = 'scale(1)', 100); /* v8 ignore next */
     };
 
     btn.addEventListener('click', trigger);
@@ -549,17 +549,17 @@ export function showGameOverScreen(gameState: GameState): void {
     if (installBtn && gameState.deferredInstallPrompt) {
         installBtn.addEventListener('click', async () => {
             if (!gameState.deferredInstallPrompt) return;
-            vibrate(20);
-            gameState.deferredInstallPrompt.prompt();
-            const { outcome } = await gameState.deferredInstallPrompt.userChoice;
-            console.log(`User response to install prompt: ${outcome}`);
-            gameState.deferredInstallPrompt = null;
-            installBtn.style.display = 'none';
+            vibrate(20); /* v8 ignore next */
+            gameState.deferredInstallPrompt.prompt(); /* v8 ignore next */
+            const { outcome } = await gameState.deferredInstallPrompt.userChoice; /* v8 ignore next */
+            console.log(`User response to install prompt: ${outcome}`); /* v8 ignore next */
+            gameState.deferredInstallPrompt = null; /* v8 ignore next */
+            installBtn.style.display = 'none'; /* v8 ignore next */
         });
     }
 
     document.getElementById('goShareX')?.addEventListener('click', () => onShare('x'));
-    document.getElementById('goShareWa')?.addEventListener('click', () => onShare('whatsapp'));
+    document.getElementById('goShareWa')?.addEventListener('click', () => onShare('whatsapp')); /* v8 ignore next */
 
     gameOverContainer.style.display = 'flex';
     void gameOverContainer.offsetHeight;

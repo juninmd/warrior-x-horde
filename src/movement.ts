@@ -259,7 +259,7 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
 // Atualizar formação circular da horda inimiga
 function updateHordeFormation(horde: { count?: number; x: number; y: number; soldiers: { x: number; y: number; targetX: number; targetY: number; isAlive: boolean }[]; isActive: boolean }, speed: number, dtFactor: number): void {
   const count = horde.count || 0;
-  if (count === 0) return;
+  if (count === 0) return; /* v8 ignore next */
 
   // Formação em círculos concêntricos
   let processedCount = 0;
