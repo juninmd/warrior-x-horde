@@ -48,8 +48,8 @@
   /* Elevation */
   --sh-1: 0 4px 14px rgba(0, 0, 0, 0.35);
   --sh-2: 0 12px 34px rgba(0, 0, 0, 0.5);
-  --sh-glow-red: 0 8px 26px rgba(255, 75, 43, 0.45);
-  --sh-glow-cyan: 0 8px 26px rgba(0, 212, 255, 0.35);
+  --sh-glow-red: 0 8px 30px rgba(255, 65, 108, 0.65);
+  --sh-glow-cyan: 0 8px 30px rgba(0, 212, 255, 0.55);
 }
 
 * {
@@ -188,6 +188,7 @@ body {
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
   box-shadow: var(--sh-1);
+  min-height: 54px;
   touch-action: manipulation;
 }
 

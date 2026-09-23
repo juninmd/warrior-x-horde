@@ -59,4 +59,13 @@ describe('Weapons', () => {
 
       expect(checkWeaponCollision(army, missWeapon)).toBe(false);
   });
+
+
+  it('should remove passed weapon at end of array', async () => {
+      const { spawnWeapons } = await import('../src/weapons');
+      const entities = { weapons: [] } as any;
+      entities.weapons.push({ passed: true, y: 100 } as any);
+      spawnWeapons(entities, 500);
+      expect(entities.weapons.length).toBe(0);
+  });
 });
