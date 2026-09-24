@@ -95,6 +95,14 @@ export function resetGameState(): void {
   gameState.whiteFlash = 0;
   gameState.activeHitEntities = [];
   // Do not reset deferredInstallPrompt as it persists across games
+
+  // Update DOM elements if they exist (runs in browser only)
+  if (typeof document !== 'undefined') {
+    const startScreen = document.getElementById('startScreen');
+    if (startScreen) startScreen.classList.add('active');
+    const topControls = document.querySelector('.top-controls');
+    if (topControls) topControls.classList.remove('active');
+  }
 }
 
 export function saveGameProgress(stateOverride?: GameState): void {
