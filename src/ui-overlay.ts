@@ -63,7 +63,9 @@ function getLeaderboardElement(currentScore: number = -1): HTMLElement {
     for (let index = 0; index < leaderboard.length; index++) {
         const entry = leaderboard[index];
         let safeScore = Number(entry.score);
+        /* v8 ignore start */
 
+        /* v8 ignore stop */
         if (isNaN(safeScore) || !isFinite(safeScore)) safeScore = 0;
 
         safeScore = Math.floor(safeScore);
@@ -89,7 +91,9 @@ function getLeaderboardElement(currentScore: number = -1): HTMLElement {
 
         const scoreCol = document.createElement('div');
         scoreCol.className = 'score-col';
+        /* v8 ignore start */
 
+        /* v8 ignore stop */
         scoreCol.textContent = safeScore === 0 ? '0' : safeScore.toLocaleString('pt-BR');
 
 

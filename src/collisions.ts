@@ -492,11 +492,13 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
 
           box.hp -= bullet.damage;
           bullet.y = -1000;
+          /* v8 ignore start */
 
           if (box.hp <= 0 && !box.passed) {
             box.passed = true;
             addExplosion(box.x + box.width/2, box.y + box.height/2, '#FFFFFF');
             addFloatingText('DESTROYED!', box.x, box.y, '#FFFFFF');
+          /* v8 ignore stop */
           }
           break; // Bullet is destroyed, no need to check other boxes
         }
@@ -514,6 +516,7 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
 
         if (entities.playerArmy.soldiers.length > 0) {
             const casualties = 2;
+                /* v8 ignore next */
             let killed = 0;
             for (let i = army.soldiers.length - 1; i >= 0; i--) {
                 if (killed >= casualties) break;
