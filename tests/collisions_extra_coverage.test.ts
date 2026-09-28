@@ -178,6 +178,7 @@ describe('Collisions Extra Coverage', () => {
        mockEntities.mysteryBoxes = [{ passed: false, x: 100, y: 500, width: 30, height: 30, hp: 10 }];
        vi.spyOn(Math, 'random').mockReturnValue(randomIndex);
        vi.spyOn(utils, 'checkBounds').mockReturnValue(true);
+       vi.spyOn(utils, 'getArmyBounds').mockReturnValue({ left: 80, right: 120, top: 480, bottom: 520 });
 
        checkCollisions(mockEntities, mockGameState);
        if (expectedCall) expectedCall();
@@ -259,6 +260,7 @@ describe('Collisions Extra Coverage', () => {
       ];
 
       vi.spyOn(Math, 'random').mockReturnValue(0.15); // Nuke
+      vi.spyOn(utils, 'getArmyBounds').mockReturnValue({ left: 80, right: 120, top: 480, bottom: 520 });
 
       vi.spyOn(utils, 'checkBounds').mockImplementation((r1, r2) => {
           // Mock collision only for mystery box (y=500)
@@ -307,6 +309,34 @@ describe('Collisions Extra Coverage', () => {
       expect(mockEntities.playerArmy.soldiers.length).toBe(2);
       expect(mockEntities.playerArmy.soldiers[0].id).toBe(1);
       expect(mockEntities.playerArmy.soldiers[1].id).toBe(3);
+  });
+
+  it('should test else branches in query', () => {
+      mockEntities.enemyHordes.push({ isActive: false, x: 100, y: 500, width: 50, height: 50, soldiers: [], count: 0 });
+      mockEntities.miniBosses.push({ isActive: false, x: 100, y: 500, width: 50, height: 50, hp: 0, maxHp: 100 });
+      mockEntities.gates.push({ id: 99, passed: true, x: 100, y: 500, width: 50, height: 50, type: 'add', value: 1 });
+      mockEntities.coins.push({ id: 99, passed: true, x: 100, y: 500, width: 50, height: 50, value: 1, bounceOffset: 0 });
+      mockEntities.mysteryBoxes.push({ passed: true, x: 100, y: 500, width: 50, height: 50, hp: 10, maxHp: 10, id: 99 });
+
+      vi.spyOn(utils, 'getArmyBounds').mockReturnValue({ left: 80, right: 120, top: 480, bottom: 520 });
+      vi.spyOn(utils, 'checkBounds').mockReturnValue(false); // To cover else checks where bounds don't overlap despite being in the same spatial grid
+      checkCollisions(mockEntities, mockGameState);
+      expect(mockGameState.isBattling).toBe(false);
+  });
+
+  it('should test active entities but no bounds collision in query', () => {
+      mockEntities.enemyHordes.push({ isActive: true, x: 100, y: 500, width: 50, height: 50, soldiers: [], count: 0 });
+      mockEntities.miniBosses.push({ isActive: true, x: 100, y: 500, width: 50, height: 50, hp: 100, maxHp: 100 });
+      mockEntities.gates.push({ id: 99, passed: false, x: 1000, y: 1500, width: 50, height: 50, type: 'add', value: 1 }); // Gate with no bounds overlap (will not hit armyCenterX condition)
+      mockEntities.coins.push({ id: 99, passed: false, x: 100, y: 500, width: 50, height: 50, value: 1, bounceOffset: 0 });
+      mockEntities.mysteryBoxes.push({ passed: false, x: 100, y: 500, width: 50, height: 50, hp: 10, maxHp: 10, id: 99 });
+
+      vi.spyOn(utils, 'getArmyBounds').mockReturnValue({ left: 80, right: 120, top: 480, bottom: 520 });
+      mockEntities.playerArmy.centerX = 100;
+
+      vi.spyOn(utils, 'checkBounds').mockReturnValue(false); // To cover else checks where bounds don't overlap despite being in the same spatial grid
+      checkCollisions(mockEntities, mockGameState);
+      expect(mockGameState.isBattling).toBe(false);
   });
 
   it('should trigger damage flash on player death in battle', () => {

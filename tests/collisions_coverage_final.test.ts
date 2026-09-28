@@ -359,6 +359,7 @@ describe('Collisions Coverage Final', () => {
       mockEntities.playerArmy.soldiers.push({ x: 100, y: 500, isAlive: true });
       mockEntities.playerArmy.aliveCount += 2;
 
+      vi.spyOn(utils, 'getArmyBounds').mockReturnValue({ left: 80, right: 120, top: 480, bottom: 520 });
       vi.spyOn(utils, 'getEntityBounds').mockReturnValue({ left: 100, right: 160, top: 500, bottom: 560 });
       vi.spyOn(utils, 'checkBounds').mockReturnValue(true);
 
