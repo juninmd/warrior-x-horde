@@ -197,8 +197,7 @@ export function drawMothershipBoss(ctx: CanvasRenderingContext2D, boss: Boss, ti
   ctx.font = 'bold 14px Arial';
   /* v8 ignore start */
   ctx.textAlign = 'center';
-  /* v8 ignore next 4 */
-  if (QualityManager.getInstance().settings.enableShadows) {
+  if (QualityManager.getInstance().settings.enableShadows) { /* v8 ignore next */
     ctx.shadowColor = '#000';
   /* v8 ignore stop */
     ctx.shadowBlur = 4;

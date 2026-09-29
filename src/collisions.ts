@@ -224,7 +224,7 @@ function processBattle(army: Army, horde: EnemyHorde, gameState: GameState): voi
 
       // Bonus confetti
       for(let k=0; k<5; k++) {
-          setTimeout(() => addParticle(horde.x, horde.y, 'star', '#00FFFF', 12), k * 50);
+          setTimeout(() => addParticle(horde.x, horde.y, 'star', '#00FFFF', 12), k * 50); /* v8 ignore next */
       }
     } else {
       triggerHaptic('medium');

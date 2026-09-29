@@ -9,8 +9,7 @@ import { QualityManager } from './quality';
  * Adiciona um color stop de forma segura, evitando DOMException por cores inválidas.
  */
 export function safeAddColorStop(gradient: CanvasGradient, offset: number, color: string | undefined): void {
-  try {
-    /* v8 ignore start */
+  try { /* v8 ignore next */
     if (!color || color === 'undefined' || color.includes('NaN')) {
       gradient.addColorStop(offset, 'rgba(0,0,0,0)');
       return;
