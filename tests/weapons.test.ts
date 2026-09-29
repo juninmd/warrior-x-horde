@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { createWeapon, applyWeapon, updateWeapons, checkWeaponCollision } from '../src/weapons';
+import { createWeapon, applyWeapon, updateWeapons, checkWeaponCollision, spawnWeapons } from '../src/weapons';
 import { Army, GameState, Entities } from '../src/types';
 
 describe('Weapons', () => {
@@ -10,6 +10,28 @@ describe('Weapons', () => {
     expect(['rifle', 'shotgun', 'minigun', 'rocket']).toContain(weapon.type);
     expect(weapon.damage).toBeGreaterThan(0);
     expect(weapon.fireRate).toBeGreaterThan(0);
+  });
+
+  it('should remove passed or out-of-bounds weapons via swap and pop', () => {
+      const entities: Entities = {
+          weapons: [
+              createWeapon(500, -100),
+              createWeapon(500, 1500),
+              createWeapon(500, 100),
+              createWeapon(500, 200)
+          ],
+      } as any;
+      entities.weapons[3].passed = true;
+
+      const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(1);
+
+      spawnWeapons(entities, 500);
+
+      randomSpy.mockRestore();
+
+      expect(entities.weapons.length).toBe(2);
+      expect(entities.weapons.some(w => w.passed)).toBe(false);
+      expect(entities.weapons.some(w => w.y >= 1000)).toBe(false);
   });
 
   it('should apply weapon stats to army', () => {
