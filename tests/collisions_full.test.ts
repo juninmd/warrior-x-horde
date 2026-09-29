@@ -514,3 +514,47 @@ describe('Collisions System', () => {
       expect(mockGameState.isBattling).toBe(false);
   });
 });
+
+    it('MysteryBox hits 0 HP and gets destroyed', () => {
+        const entities: any = {
+            bullets: [{ isEnemy: false, y: 15, x: 15, damage: 10, width: 2, height: 2 }],
+            mysteryBoxes: [{ y: 10, x: 10, width: 10, height: 10, hp: 10, passed: false }],
+            playerArmy: { centerX: 0, centerY: 0, soldiers: [], aliveCount: 0 },
+            boss: null,
+            enemyHordes: [],
+            gates: [],
+            miniBosses: [],
+            coins: [],
+            weapons: [],
+            itemsToCleanup: []
+        };
+        const gameState: any = { isBattling: false, isGameOver: false, coins: 0, score: 0, highScore: 0 };
+        checkCollisions(entities, gameState);
+        expect(entities.mysteryBoxes[0].passed).toBe(true);
+    });
+
+    it('Boss hits army but army has 0 soldiers', () => {
+        const entities: any = {
+            boss: { isActive: true, x: 40, y: 40, width: 20, height: 20, hp: 100 },
+            playerArmy: {
+                centerX: 50,
+                centerY: 50,
+                soldiers: [], // no soldiers
+                aliveCount: 0
+            },
+            bullets: [],
+            mysteryBoxes: [],
+            enemyHordes: [],
+            gates: [],
+            miniBosses: [],
+            coins: [],
+            weapons: [],
+            itemsToCleanup: []
+        };
+        const gameState: any = { isBattling: false, isGameOver: false, coins: 0, score: 0, highScore: 0 };
+
+        vi.spyOn(utils, 'checkBounds').mockReturnValue(true);
+
+        checkCollisions(entities, gameState);
+        expect(gameState.isBattling).toBe(true);
+    });

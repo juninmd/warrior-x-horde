@@ -78,3 +78,22 @@ describe('Weapons - Additional', () => {
         expect(checkWeaponCollision(army, weapon)).toBe(false);
     });
 });
+
+    it('should hit the fast removal edge case when last == current', () => {
+        const entities: Entities = {
+            weapons: [
+                { passed: false, y: 100 },
+                { passed: true, y: 100 },
+                { passed: false, y: 100 }
+            ]
+        } as any;
+
+        vi.spyOn(Math, 'random').mockReturnValue(0.9);
+
+        spawnWeapons(entities, 500, {} as any);
+
+        expect(entities.weapons.length).toBe(2);
+        expect(entities.weapons[1].y).toBe(100);
+
+        vi.restoreAllMocks();
+    });

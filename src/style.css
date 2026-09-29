@@ -99,7 +99,7 @@ body {
   align-items: center;
   justify-content: center;
   width: 100%;
-  height: 100%;
+  height: 100dvh;
   max-width: 100vw;
   padding: 6px;
   padding-bottom: env(safe-area-inset-bottom, 20px);
@@ -914,4 +914,76 @@ button {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Overlay classes from index.html that were missing styles */
+.glass-overlay {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(8, 11, 22, 0.7);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  z-index: 50;
+}
+
+.glass-overlay.active {
+  display: flex;
+}
+
+/* .game-logo was missing entirely */
+.game-logo {
+  font-size: clamp(32px, 8vw, 48px);
+  font-weight: 900;
+  line-height: 1.1;
+  margin-bottom: 20px;
+  background: var(--grad-action);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: var(--sh-glow-red);
+}
+
+.start-screen-description {
+  font-size: clamp(14px, 4vw, 18px);
+  color: var(--text-dim);
+  margin-bottom: 25px;
+}
+
+/* Overlay classes from index.html that were missing styles */
+.glass-overlay {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(8, 11, 22, 0.7);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  z-index: 50;
+}
+
+.glass-overlay.active {
+  display: flex;
+}
+
+/* .game-logo was missing entirely */
+.game-logo {
+  font-size: clamp(32px, 8vw, 48px);
+  font-weight: 900;
+  line-height: 1.1;
+  margin-bottom: 20px;
+  background: var(--grad-action);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: var(--sh-glow-red);
+}
+
+.start-screen-description {
+  font-size: clamp(14px, 4vw, 18px);
+  color: var(--text-dim);
+  margin-bottom: 25px;
 }

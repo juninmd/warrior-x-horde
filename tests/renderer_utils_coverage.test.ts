@@ -100,25 +100,32 @@ describe('Renderer Utils Coverage', () => {
     });
 });
 
-    it('should cover safeAddColorStop invalid colors', () => {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d')!;
-        const grad = ctx.createLinearGradient(0,0,10,10);
+    it('should catch error in safeAddColorStop and execute fallback', async () => {
+        const { safeAddColorStop } = await import('../src/renderer-utils');
 
-        safeAddColorStop(grad, 0, undefined);
-        safeAddColorStop(grad, 0, 'undefined');
-        safeAddColorStop(grad, 0, 'rgba(NaN,0,0,1)');
+        let shouldThrow = true;
+        const gradient = {
+            addColorStop: vi.fn().mockImplementation((offset, color) => {
+                if (shouldThrow) {
+                    shouldThrow = false;
+                    throw new Error("Invalid gradient");
+                }
+            })
+        };
+        const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-        expect(true).toBe(true);
+        safeAddColorStop(gradient as any, 0, '#FFF');
+
+        expect(consoleSpy).toHaveBeenCalled();
+        expect(gradient.addColorStop).toHaveBeenCalledWith(0, 'rgba(0,0,0,0)');
+        consoleSpy.mockRestore();
     });
 
-    it('should cover safeAddColorStop error catch', () => {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d')!;
-        const grad = ctx.createLinearGradient(0,0,10,10);
-
-        // This will throw error inside canvas api which is caught
-        safeAddColorStop(grad, 0, 'invalid-color-format');
-
-        expect(true).toBe(true);
+    it('should handle invalid string color in safeAddColorStop', async () => {
+        const { safeAddColorStop } = await import('../src/renderer-utils');
+        const gradient = {
+            addColorStop: vi.fn()
+        };
+        safeAddColorStop(gradient as any, 0, 'undefined');
+        expect(gradient.addColorStop).toHaveBeenCalledWith(0, 'rgba(0,0,0,0)');
     });
