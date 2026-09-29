@@ -331,4 +331,13 @@ describe('UI Overlay', () => {
             expect(lb2!.children.length).toBe(originalChildCount); // Still has 1 child (the leaderboard box)
         });
     });
+
+
+    it('should handle NaN score in leaderboard', async () => {
+        const { _testing } = await import('../src/ui-overlay');
+        const { getLeaderboardElement } = _testing;
+        localStorage.setItem('crowd_runner_leaderboard', JSON.stringify([{ score: 'NaN', date: '' }]));
+        const element = getLeaderboardElement(0);
+        expect(element.textContent).toContain('0'); // Fallback logic
+    });
 });

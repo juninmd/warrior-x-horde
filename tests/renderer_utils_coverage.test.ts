@@ -83,4 +83,18 @@ describe('Renderer Utils Coverage', () => {
         expect(virtualJoystick.alpha).toBeLessThan(0.5);
         expect(ctx.save).toHaveBeenCalled();
     });
+
+
+    it('should catch error when color is an object', async () => {
+        const { safeAddColorStop } = await import('../src/renderer-utils');
+        const gradient = {
+            addColorStop: vi.fn()
+        };
+        gradient.addColorStop.mockImplementation((offset, color) => {
+            if (color === 'throw') throw new Error('Invalid color');
+        });
+
+        safeAddColorStop(gradient, 0, 'throw');
+        expect(gradient.addColorStop).toHaveBeenCalledWith(0, 'rgba(0,0,0,0)');
+    });
 });

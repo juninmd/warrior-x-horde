@@ -44,4 +44,60 @@ describe('Renderer Boss', () => {
         drawBoss(ctx, boss, 0);
         expect(ctx.fill).toHaveBeenCalled();
     });
+
+
+    it('should branch on shadow for normal boss', async () => {
+        const ctx = document.createElement('canvas').getContext('2d')!;
+        ctx.fill = vi.fn();
+        ctx.fillText = vi.fn();
+
+        const { QualityManager } = await import('../src/quality');
+        QualityManager.getInstance().settings.enableShadows = true;
+
+        const boss: Boss = {
+            type: 'beast',
+            x: 100,
+            y: 100,
+            width: 100,
+            height: 100,
+            hp: 100,
+            maxHp: 100,
+            isActive: true,
+            color: '#000',
+            spawnTime: 0,
+            isMoving: false,
+            hitTimer: 0
+        } as any;
+
+        drawBoss(ctx, boss, 0);
+        expect(ctx.fill).toHaveBeenCalled();
+    });
+
+    it('should draw slime boss with shadow branches', async () => {
+        const ctx = document.createElement('canvas').getContext('2d')!;
+        ctx.fill = vi.fn();
+        ctx.fillText = vi.fn();
+
+        const { QualityManager } = await import('../src/quality');
+        QualityManager.getInstance().settings.enableShadows = true;
+
+        const boss: Boss = {
+            type: 'slime',
+            x: 100,
+            y: 100,
+            width: 100,
+            height: 100,
+            hp: 100,
+            maxHp: 100,
+            isActive: true,
+            color: '#000',
+            spawnTime: 0,
+            isMoving: false,
+            hitTimer: 0
+        } as any;
+
+        const { drawBossSlime } = await import('../src/renderer-boss');
+        drawBossSlime(ctx, boss, 0);
+        expect(ctx.fill).toHaveBeenCalled();
+    });
 });
