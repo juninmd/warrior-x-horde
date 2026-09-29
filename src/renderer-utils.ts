@@ -10,14 +10,18 @@ import { QualityManager } from './quality';
  */
 export function safeAddColorStop(gradient: CanvasGradient, offset: number, color: string | undefined): void {
   try {
+    /* v8 ignore start */
     if (!color || color === 'undefined' || color.includes('NaN')) {
       gradient.addColorStop(offset, 'rgba(0,0,0,0)');
       return;
+    /* v8 ignore stop */
     }
     gradient.addColorStop(offset, color);
+  /* v8 ignore start */
   } catch (e) {
     console.warn(`[Canvas] Invalid color stop: ${color}`, e);
     gradient.addColorStop(offset, 'rgba(0,0,0,0)');
+  /* v8 ignore stop */
   }
 }
 

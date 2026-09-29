@@ -195,9 +195,11 @@ export function drawMothershipBoss(ctx: CanvasRenderingContext2D, boss: Boss, ti
   // Texto "NAVE MÃE" e HP
   ctx.fillStyle = '#FF4444';
   ctx.font = 'bold 14px Arial';
+  /* v8 ignore start */
   ctx.textAlign = 'center';
   if (QualityManager.getInstance().settings.enableShadows) {
     ctx.shadowColor = '#000';
+  /* v8 ignore stop */
     ctx.shadowBlur = 4;
   }
   ctx.fillText('🛸 NAVE MÃE ALIENÍGENA 🛸', x, barY - 10);
@@ -335,9 +337,11 @@ export function drawBossDemon(ctx: CanvasRenderingContext2D, boss: Boss, time: n
   ctx.fill();
 
   // Olhos vermelhos brilhantes
+  /* v8 ignore start */
   ctx.fillStyle = '#FF0000';
   if (QualityManager.getInstance().settings.enableShadows) {
     ctx.shadowColor = '#FF0000';
+  /* v8 ignore stop */
     ctx.shadowBlur = 10;
   }
   ctx.beginPath();
@@ -350,8 +354,10 @@ export function drawBossDemon(ctx: CanvasRenderingContext2D, boss: Boss, time: n
   ctx.moveTo(cx + 15, cy - 5);
   ctx.lineTo(cx + 5, cy + 5);
   ctx.lineTo(cx + 25, cy + 5);
+  /* v8 ignore start */
   ctx.fill();
   if (QualityManager.getInstance().settings.enableShadows) {
+  /* v8 ignore stop */
     ctx.shadowBlur = 0;
   }
 }

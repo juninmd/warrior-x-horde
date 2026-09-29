@@ -117,43 +117,6 @@ function createSettingsModal(): void {
       toggleFullscreen();
   });
 
-  // Debug Level Selector
-  if (onLevelChangeCallback) {
-      const debugContainer = document.createElement('div');
-      debugContainer.className = 'settings-debug-row';
-
-      const lbl = document.createElement('span');
-      lbl.innerText = '🔧 LEVEL';
-      lbl.className = 'settings-debug-label';
-
-      const controls = document.createElement('div');
-      controls.className = 'settings-debug-controls';
-
-      const input = document.createElement('input');
-      input.type = 'number';
-      input.min = '1';
-      input.max = '50';
-      input.value = String(gameState.currentLevel || 1);
-      input.className = 'settings-input';
-
-      const goBtn = document.createElement('button');
-      goBtn.innerText = 'GO';
-      goBtn.className = 'settings-go-btn';
-      goBtn.onclick = () => {
-          vibrate(20);
-          const val = parseInt(input.value);
-          if (val > 0 && onLevelChangeCallback) {
-              onLevelChangeCallback(val);
-              toggleSettingsMenu();
-          }
-      };
-
-      controls.appendChild(input);
-      controls.appendChild(goBtn);
-      debugContainer.appendChild(lbl);
-      debugContainer.appendChild(controls);
-      content.appendChild(debugContainer);
-  }
   // Close Button
   const closeBtn = document.createElement('button');
   closeBtn.innerText = 'CLOSE';
