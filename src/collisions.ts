@@ -1,5 +1,5 @@
 // collisions.ts - Sistema de colisões
-import { Entities, GameState, Army, EnemyHorde, Gate, MiniBoss, MysteryBox, Soldier } from './types';
+import { Entities, GameState, Army, EnemyHorde, Gate, MiniBoss, MysteryBox, Soldier, Coin } from './types';
 import { addSoldiersToArmy, multiplySoldiersInArmy, removeSoldiersFromArmy, addSuperSoldiersToArmy, addSpecialSoldiersToArmy } from './entities';
 import { addFloatingText, addExplosion, addParticle } from './renderer';
 import { playSound, audioManager } from './audio';
@@ -9,6 +9,10 @@ import { getArmyBounds, checkBounds, getEntityBounds, Rect } from './utils';
 import { COLORS } from './constants';
 import { soldierPool } from './soldierPool';
 import { saveGameProgress } from './gameState';
+import { SpatialHashGrid, SpatialItem } from './spatial';
+
+const collisionGrid = new SpatialHashGrid(120, 800, 2000);
+const spatialQueryArray: SpatialItem[] = [];
 
 function getComboMultiplier(gameState: GameState): number {
     // 5% bonus per combo count, capped at 3.0x so a long clear streak cannot
@@ -377,78 +381,105 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
   const bounds = getArmyBounds(army);
   const armyCenterX = army.centerX;
 
-  // Check Gates
-  for (const gate of entities.gates) {
-    if (gate.passed) continue;
+  collisionGrid.clear();
 
-    // Collision Check
-    if (armyCenterX >= gate.x &&
-        armyCenterX <= gate.x + gate.width &&
-        bounds.bottom > gate.y &&
-        bounds.top < gate.y + gate.height) {
-      applyGateEffect(army, gate, gameState);
-      // Pass sibling gate
-      for (const otherGate of entities.gates) {
-        if (otherGate.id !== gate.id && Math.abs(otherGate.y - gate.y) < 10) {
-          otherGate.passed = true;
-        }
-      }
-      continue;
+  // Populate grid
+  for (const horde of entities.enemyHordes) {
+    if (horde.isActive) {
+      collisionGrid.insert(horde.x - horde.width / 2, horde.y - horde.height / 2, horde.width, horde.height, 'horde', horde);
     }
-
-    // Dodge Check (Passed Y without collision)
-    if (gate.y > bounds.bottom) {
-        gate.passed = true;
-        if (gate.type === 'subtract' || gate.type === 'divide') {
-             addFloatingText("DODGE!", gate.x + gate.width/2, gate.y - 50, "#00FFFF", 1.2);
-             gameState.score += 50;
-             gameState.nearMissCount++;
-             triggerHaptic('light');
-        }
+  }
+  for (const miniBoss of entities.miniBosses) {
+    if (miniBoss.isActive) {
+      collisionGrid.insert(miniBoss.x, miniBoss.y, miniBoss.width, miniBoss.height, 'miniboss', miniBoss);
+    }
+  }
+  for (const box of entities.mysteryBoxes) {
+    if (box && !box.passed) {
+      collisionGrid.insert(box.x, box.y, box.width, box.height, 'box', box);
+    }
+  }
+  for (const gate of entities.gates) {
+    if (!gate.passed) {
+      collisionGrid.insert(gate.x, gate.y, gate.width, gate.height, 'gate', gate);
+    }
+  }
+  for (const coin of entities.coins) {
+    if (!coin.passed) {
+      collisionGrid.insert(coin.x - coin.width / 2, coin.y - coin.height / 2, coin.width, coin.height, 'coin', coin);
     }
   }
 
-  // Check Hordes
-  for (const horde of entities.enemyHordes) {
-    if (horde.isActive) {
+  // Check Gates Dodge (Since they are dodge-able based on Y)
+  for (const gate of entities.gates) {
+      if (gate.passed) continue;
+      if (gate.y > bounds.bottom) {
+          gate.passed = true;
+          if (gate.type === 'subtract' || gate.type === 'divide') {
+               addFloatingText("DODGE!", gate.x + gate.width/2, gate.y - 50, "#00FFFF", 1.2);
+               gameState.score += 50;
+               gameState.nearMissCount++;
+               triggerHaptic('light');
+          }
+      }
+  }
+
+  const armyWidth = bounds.right - bounds.left;
+  const armyHeight = bounds.bottom - bounds.top;
+
+  const queriedEntities = collisionGrid.query(bounds.left, bounds.top, armyWidth, armyHeight, spatialQueryArray);
+
+  for (let i = 0; i < queriedEntities.length; i++) {
+    const item = queriedEntities[i];
+
+    if (item.type === 'gate') {
+      const gate = item.obj as Gate;
+      if (gate.passed) continue;
+      if (armyCenterX >= gate.x &&
+          armyCenterX <= gate.x + gate.width &&
+          bounds.bottom > gate.y &&
+          bounds.top < gate.y + gate.height) {
+        applyGateEffect(army, gate, gameState);
+        for (const otherGate of entities.gates) {
+          if (otherGate.id !== gate.id && Math.abs(otherGate.y - gate.y) < 10) {
+            otherGate.passed = true;
+          }
+        }
+      }
+    } else if (item.type === 'horde') {
+      const horde = item.obj as EnemyHorde;
+      if (horde.isActive) {
         const hordeBounds: Rect = {
             left: horde.x - horde.width / 2,
             right: horde.x + horde.width / 2,
             top: horde.y - horde.height / 2,
             bottom: horde.y + horde.height / 2
         };
-
         if (checkBounds(bounds, hordeBounds)) {
             gameState.isBattling = true;
             processBattle(army, horde, gameState);
         }
-    }
-  }
-
-  // Check MiniBosses
-  for (const miniBoss of entities.miniBosses) {
-    if (miniBoss.isActive) {
+      }
+    } else if (item.type === 'miniboss') {
+      const miniBoss = item.obj as MiniBoss;
+      if (miniBoss.isActive) {
         const mbBounds = getEntityBounds(miniBoss.x, miniBoss.y, miniBoss.width, miniBoss.height);
         if (checkBounds(bounds, mbBounds)) {
              gameState.isBattling = true;
              processMiniBossBattle(army, miniBoss, gameState);
         }
-    }
-  }
-
-  // Check Mystery Boxes
-  for (const box of entities.mysteryBoxes) {
-    if (box && !box.passed) {
+      }
+    } else if (item.type === 'box') {
+      const box = item.obj as MysteryBox;
+      if (box && !box.passed) {
         const boxBounds = getEntityBounds(box.x, box.y, box.width, box.height);
         if (checkBounds(bounds, boxBounds)) {
             applyMysteryBoxEffect(army, box, gameState, entities);
         }
-    }
-  }
-
-  // Check Coins
-  for (const coin of entities.coins) {
-    if (!coin.passed) {
+      }
+    } else if (item.type === 'coin') {
+      const coin = item.obj as Coin;
+      if (!coin.passed) {
         const coinBounds: Rect = {
             left: coin.x - coin.width / 2,
             right: coin.x + coin.width / 2,
@@ -458,13 +489,13 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
         if (checkBounds(bounds, coinBounds)) {
             coin.passed = true;
             const multiplier = getComboMultiplier(gameState);
-            gameState.coins += Math.floor(coin.value * multiplier); // Multiplier applies to coins too? Why not!
-            gameState.score += Math.floor(coin.value * 2 * multiplier); // Score from coins
-
+            gameState.coins += Math.floor(coin.value * multiplier);
+            gameState.score += Math.floor(coin.value * 2 * multiplier);
             playSound(audioManager.powerUp);
             addFloatingText(`+$${Math.floor(coin.value * multiplier)}`, coin.x, coin.y, COLORS.UI.GOLD);
             addParticle(coin.x, coin.y, 'spark', COLORS.UI.GOLD, 3);
         }
+      }
     }
   }
 

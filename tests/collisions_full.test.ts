@@ -368,6 +368,7 @@ describe('Collisions System', () => {
   it('should handle bad mystery box effect', () => {
      const box = { passed: false, x: 100, y: 500, width: 30, height: 30, hp: 10 };
      mockEntities.mysteryBoxes.push(box);
+     vi.spyOn(utils, 'getArmyBounds').mockReturnValue({ left: 80, right: 120, top: 480, bottom: 520 });
      vi.spyOn(utils, 'checkBounds').mockReturnValue(true);
      // Mock random for divide (index 7)
      vi.spyOn(Math, 'random').mockReturnValue(0.75); // 0.75 * 10 = 7.5 -> 7
@@ -398,6 +399,7 @@ describe('Collisions System', () => {
   it('should collect coin', () => {
       const coin = { passed: false, x: 100, y: 500, width: 20, height: 20, value: 10 };
       mockEntities.coins.push(coin);
+      vi.spyOn(utils, 'getArmyBounds').mockReturnValue({ left: 80, right: 120, top: 480, bottom: 520 });
       vi.spyOn(utils, 'checkBounds').mockReturnValue(true);
 
       checkCollisions(mockEntities, mockGameState);
