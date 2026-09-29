@@ -658,8 +658,10 @@ export function startGame(): void {
   gameState.runStartTime = Date.now();
   gameState.totalKills = 0;
 
-  // Esconder overlay de start
+  // Esconder overlay de start e mostrar controles do topo
   if (startScreen) startScreen.classList.remove('active');
+  const topControls = document.querySelector('.top-controls');
+  if (topControls) topControls.classList.add('active');
 
   // Start Countdown then Game
   startCountdown(() => {
