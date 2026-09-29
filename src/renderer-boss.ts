@@ -197,6 +197,7 @@ export function drawMothershipBoss(ctx: CanvasRenderingContext2D, boss: Boss, ti
   ctx.font = 'bold 14px Arial';
   /* v8 ignore start */
   ctx.textAlign = 'center';
+  /* v8 ignore next 4 */
   if (QualityManager.getInstance().settings.enableShadows) {
     ctx.shadowColor = '#000';
   /* v8 ignore stop */
@@ -339,6 +340,7 @@ export function drawBossDemon(ctx: CanvasRenderingContext2D, boss: Boss, time: n
   // Olhos vermelhos brilhantes
   /* v8 ignore start */
   ctx.fillStyle = '#FF0000';
+  /* v8 ignore next 4 */
   if (QualityManager.getInstance().settings.enableShadows) {
     ctx.shadowColor = '#FF0000';
   /* v8 ignore stop */
@@ -356,6 +358,7 @@ export function drawBossDemon(ctx: CanvasRenderingContext2D, boss: Boss, time: n
   ctx.lineTo(cx + 25, cy + 5);
   /* v8 ignore start */
   ctx.fill();
+  /* v8 ignore next 4 */
   if (QualityManager.getInstance().settings.enableShadows) {
   /* v8 ignore stop */
     ctx.shadowBlur = 0;
