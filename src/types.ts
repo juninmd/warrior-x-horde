@@ -220,6 +220,8 @@ export interface Bullet {
   speed: number;
   damage: number;
   isEnemy: boolean;
+  /** Horizontal velocity (px/frame); used by boss projectiles. */
+  vx?: number;
 }
 
 export interface Boss {
@@ -237,6 +239,12 @@ export interface Boss {
   vx?: number; // Velocidade horizontal (para mothership)
   vy?: number; // Velocidade vertical (para mothership)
   hitTimer?: number;
+  /** Boss AI state (see boss-ai.ts) */
+  phase?: number;
+  attackTimer?: number;
+  telegraph?: number;
+  pattern?: 'aimed' | 'fan' | 'rain';
+  introShown?: boolean;
 }
 
 export interface Entities {

@@ -2,7 +2,7 @@
 import { GameState } from './types';
 import { SettingsManager } from './settings';
 import { virtualJoystick, getCurrentScale } from './input-state';
-import { SENSITIVITY } from './constants';
+import { SENSITIVITY, BASE_WIDTH } from './constants';
 
 export { setInputScale, virtualJoystick, VirtualJoystick } from './input-state';
 
@@ -205,7 +205,7 @@ export function setupInput(canvas: HTMLCanvasElement, onTouchEffect?: (x: number
       isDragging = true;
     }
     if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
-      mouseX = Math.min(canvas.width, mouseX + step);
+      mouseX = Math.min(BASE_WIDTH, mouseX + step);
       isDragging = true;
     }
   });

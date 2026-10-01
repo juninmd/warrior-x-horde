@@ -8,6 +8,12 @@ This file serves as the "Living Memory" for Jules and other agents working on th
 - **Game Loop:** The core loop is in `src/game.ts`, handling physics updates (`deltaTime`) and rendering.
 - **Rendering:** `src/renderer.ts` handles all canvas drawing. It uses a `spriteCache` for soldiers and particles to optimize performance.
 - **State Management:** `src/gameState.ts` holds the singleton `gameState` object. `src/types.ts` defines all interfaces.
+- **Pixi Layer:** `src/pixi-layer.ts` (PixiJS v8, WebGL) draws soldiers, hordes, bullets, particles and trail as sprites using the `spriteCache` canvases as textures. Layers are stacked in `.game-canvas-wrapper`: `#gameCanvas` (2D world) < `#pixiCanvas` < `#hudCanvas` (HUD/effects). `renderer.setWorldLayer()` enables it; without WebGL the pure Canvas2D path is used. Imports `pixi.js/unsafe-eval` because of the CSP.
+- **Mobile (Capacitor):** `capacitor.config.ts`, `android/`. Run `npm run cap:android` (build + sync + open Android Studio).
+- **E2E:** `npm run e2e` (Playwright, `tests/e2e`); screenshots in `test-results/screenshots`, samples in `docs/screenshots`. Set `PW_CHROMIUM` to use a custom Chromium binary.
+- **Boss AI:** `src/boss-ai.ts` – 3 HP phases (66%/33%), telegraphed volleys (`aimed`/`fan`/`rain`), enemy bullets (`isEnemy`, `vx`) that kill soldiers (`resolveEnemyBullets`). Names/taunts in `src/boss-lore.ts`.
+- **Story:** `src/story.ts` – 10 chapters (one per level), chapter/boss banners (`#storyBanner`), victory/defeat epilogues.
+- **Dev hook:** `window.__wxh` (DEV only) exposes state/cheats for e2e (`goToLevel`, `forceBoss`, `killBoss`, `setCoins`...).
 - **Entities:** `src/entities.ts` contains factory functions for creating game objects (soldiers, hordes, gates).
 - **Skins:** `src/skins.ts` holds the hero skin catalog + persisted selection (`crowdHeroSkin`, unlock by high score); `src/ui-skins.ts` renders the start-screen picker. The chosen `primary` color drives `createPlayerArmy` and is pre-rendered into the sprite cache.
 - **Collision:** `src/collisions.ts` manages interactions (Army vs Horde, Army vs Gate). It uses optimized bounding box checks (`getArmyBounds`).

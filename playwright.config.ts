@@ -8,6 +8,11 @@ export default defineConfig({
   workers: 1,
   reporter: 'list',
   use: {
+    launchOptions: {
+      // Software GL so WebGL (PixiJS) works in headless CI; PW_CHROMIUM overrides the binary
+      executablePath: process.env.PW_CHROMIUM || undefined,
+      args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
+    },
     baseURL: 'http://localhost:5173',
     trace: 'on-first-retry',
   },

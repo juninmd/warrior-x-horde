@@ -10,7 +10,7 @@ vi.mock('../src/renderer-utils', () => ({
 }));
 
 vi.mock('../src/renderer-boss', () => ({
-    drawBoss: vi.fn(),
+    drawBoss: vi.fn(), drawBossTelegraph: vi.fn(),
 }));
 
 import { describe, it, expect, beforeEach } from 'vitest';

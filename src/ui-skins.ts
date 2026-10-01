@@ -19,6 +19,7 @@ function buildCard(skin: HeroSkin, unlocked: boolean, selectedId: string): HTMLB
     unlocked ? `Skin ${skin.name}` : `Skin ${skin.name} bloqueada, requer ${skin.unlockScore.toLocaleString('pt-BR')} pontos`
   );
   card.disabled = !unlocked;
+  card.title = unlocked ? `${skin.name}: ${skin.desc}` : `${skin.name} — desbloqueie com ${skin.unlockScore.toLocaleString('pt-BR')} pontos de recorde`;
 
   const avatar = document.createElement('span');
   avatar.className = 'skin-avatar';

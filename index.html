@@ -14,6 +14,7 @@
   <meta property="og:title" content="Crowd Runner">
   <meta property="og:description" content="Multiply your army and defeat the boss!">
   <meta property="og:image" content="icon-512.png">
+  <link rel="icon" type="image/png" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icon-192.png">
   <title>Crowd Runner - Warrior x Horde</title>
@@ -24,28 +25,35 @@
 </head>
 
 <body>
-  <div class="top-controls">
-    <button id="pauseBtnTop" class="icon-btn" title="Pausar" aria-label="Pausar">⏸️</button>
-    <button id="settingsBtn" class="icon-btn" title="Configurações" aria-label="Configurações">⚙️</button>
-  </div>
-
   <div class="game-container">
     <h1 class="game-title">⚔️ Crowd Runner ⚔️</h1>
     <p class="game-subtitle">Multiplique seu exército e destrua as hordas!</p>
 
     <div class="game-canvas-wrapper">
-        <canvas id="gameCanvas" width="480" height="800"></canvas>
+        <canvas id="gameCanvas" width="480" height="800" role="img" aria-label="Área do jogo"></canvas>
+
+        <div class="top-controls">
+          <button id="pauseBtnTop" class="icon-btn" title="Pausar (P)" aria-label="Pausar">⏸️</button>
+          <button id="settingsBtn" class="icon-btn" title="Configurações" aria-label="Configurações">⚙️</button>
+        </div>
 
         <!-- Start Screen Overlay -->
         <div id="startScreen" class="glass-overlay active">
             <div class="start-screen-content">
-                <div class="game-logo">WARRIOR<br>X<br>HORDE</div>
+                <div class="game-logo">WARRIOR <br>X<br> HORDE</div>
                 <p class="start-screen-description">Lidere seu exército contra a invasão alienígena!</p>
 
                 <div class="tutorial-hand">
                     <div class="hand-icon">👆</div>
                     <div class="hand-text">ARRASTE PARA MOVER</div>
                 </div>
+
+                <ol class="how-to" aria-label="Como jogar">
+                    <li><span class="how-to-ico">👆</span><span><b>Arraste</b> na tela (ou use <b>A/D</b> e setas) para mover o exército.</span></li>
+                    <li><span class="how-to-ico">🚪</span><span><b>Portais verdes/azuis</b> multiplicam suas tropas. <b>Vermelhos</b> as reduzem.</span></li>
+                    <li><span class="how-to-ico">🔫</span><span>Seus soldados <b>atiram sozinhos</b>. Elimine as hordas antes que cheguem.</span></li>
+                    <li><span class="how-to-ico">💰</span><span>Ganhe moedas e use a <b>loja à direita</b>. Use o <b>⚡ SUPER</b> à esquerda.</span></li>
+                </ol>
 
                 <button class="start-btn" id="startBtnOverlay">JOGAR AGORA</button>
             </div>
