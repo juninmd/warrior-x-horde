@@ -2,7 +2,7 @@
 import { Entities, BeforeInstallPromptEvent } from './types';
 import { gameState, resetGameState, saveGameProgress } from './gameState';
 import { createInitialEntities, createEnemyHorde, createSoldier, addSpecialSoldiersToArmy, addSoldiersToArmy } from './entities';
-import { render, shareOnX, shareOnWhatsApp, addFloatingText, updateFloatingTexts, addParticle } from './renderer';
+import { setWorldLayer, render, shareOnX, shareOnWhatsApp, addFloatingText, updateFloatingTexts, addParticle } from './renderer';
 import { checkCollisions } from './collisions';
 import { updateSpawns, resetSpawnerState } from './spawner';
 import { updateMovement } from './movement';
@@ -13,6 +13,7 @@ import { initAudio, playMusic, playSound, stopAllMusic, audioManager, isMusicMut
 import { BASE_WIDTH, BASE_HEIGHT, ASPECT_RATIO, COLORS } from './constants';
 import { setupShopUI, updateShopUI, setupSuperCannonUI, updateSuperCannonUI, BuyAction, setupGameOverUI, showGameOverScreen, startCountdown, updateStartScreenLeaderboard, setupStartScreenInstallBtn, createPauseModal } from './ui-overlay';
 import { QualityManager } from './quality';
+import { initPixiLayer, PixiLayer } from './pixi-layer';
 import { setupSettingsUI, toggleSettingsMenu } from './ui-settings';
 import { renderSkinSelector } from './ui-skins';
 import { MOBILE_RESOLUTION_SCALE } from './constants';
@@ -20,6 +21,12 @@ import { MOBILE_RESOLUTION_SCALE } from './constants';
 // Canvas setup
 export const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d', { alpha: false })!;
+
+// Camadas empilhadas: gameCanvas (mundo 2D) < pixiCanvas (WebGL: unidades) < hudCanvas (HUD/efeitos)
+let pixiLayer: PixiLayer | null = null;
+let hudCanvas: HTMLCanvasElement | null = null;
+let hudCtx: CanvasRenderingContext2D | null = null;
+let layerDpr = 1;
 
 // Escala atual
 let scale = 1;
@@ -92,10 +99,59 @@ function resizeCanvas(): void {
   canvas.height = BASE_HEIGHT * effectiveDpr;
 
   ctx.scale(effectiveDpr, effectiveDpr);
+  layerDpr = effectiveDpr;
+  syncLayers();
 
   // Calcular escala para eventos de input
   scale = newWidth / BASE_WIDTH;
   setInputScale(scale);
+}
+/* v8 ignore stop */
+
+/* v8 ignore start */
+function syncLayers(): void {
+  // Usa o tamanho renderizado real (CSS max-width/max-height podem limitar o style inline)
+  const cssWidth = canvas.clientWidth;
+  const cssHeight = canvas.clientHeight;
+  const place = (el: HTMLElement) => {
+    el.style.position = 'absolute';
+    el.style.left = `${canvas.offsetLeft}px`;
+    el.style.top = `${canvas.offsetTop}px`;
+    el.style.width = `${cssWidth}px`;
+    el.style.height = `${cssHeight}px`;
+    el.style.pointerEvents = 'none';
+    el.style.borderRadius = 'calc(var(--r-lg) - 2px)';
+  };
+  if (pixiLayer) {
+    pixiLayer.resize(BASE_WIDTH, BASE_HEIGHT, layerDpr);
+    place(pixiLayer.app.canvas as HTMLCanvasElement);
+  }
+  if (hudCanvas && hudCtx) {
+    hudCanvas.width = BASE_WIDTH * layerDpr;
+    hudCanvas.height = BASE_HEIGHT * layerDpr;
+    hudCtx.setTransform(layerDpr, 0, 0, layerDpr, 0, 0);
+    place(hudCanvas);
+  }
+}
+
+async function setupPixi(): Promise<void> {
+  const wrapper = canvas.parentElement;
+  if (!wrapper) return;
+  const layer = await initPixiLayer(wrapper);
+  if (!layer) return; // sem WebGL: segue em Canvas2D puro
+  pixiLayer = layer;
+  hudCanvas = document.createElement('canvas');
+  hudCanvas.id = 'hudCanvas';
+  hudCanvas.setAttribute('aria-hidden', 'true');
+  hudCtx = hudCanvas.getContext('2d')!;
+  wrapper.appendChild(hudCanvas);
+  // Overlays (start screen, modais) devem ficar acima das camadas
+  wrapper.querySelectorAll<HTMLElement>('.glass-overlay').forEach(el => wrapper.appendChild(el));
+  syncLayers();
+  setWorldLayer(layer, hudCtx);
+  // O layout pode mudar depois do resize (max-width, fontes, safe-area): mantém camadas alinhadas
+  if (typeof ResizeObserver !== 'undefined') new ResizeObserver(() => syncLayers()).observe(canvas);
+  document.documentElement.dataset.renderer = 'pixi';
 }
 /* v8 ignore stop */
 
@@ -768,6 +824,22 @@ window.addEventListener('orientationchange', () => {
 /* v8 ignore next */
 console.log(`Crowd Runner v1.1.0 - Build: ${new Date().toISOString()}`);
 resizeCanvas(); // Configurar tamanho inicial
+void setupPixi();
+
+// Hook de observabilidade para testes e2e (somente em dev)
+/* v8 ignore start */
+if (import.meta.env.DEV) {
+  (window as unknown as { __wxh: unknown }).__wxh = {
+    armyX: () => entities?.playerArmy.centerX,
+    armyAlive: () => entities?.playerArmy.aliveCount,
+    mouseX: () => getMouseX(),
+    pixiSprites: () => pixiLayer?.visibleSprites() ?? -1,
+    score: () => gameState.score,
+    isGameOver: () => gameState.isGameOver,
+    isStarted: () => gameState.isStarted,
+  };
+}
+/* v8 ignore stop */
 setupInput(canvas, (screenX, screenY) => {
     // Touch ripple effect
     const pos = screenToCanvas(screenX, screenY);

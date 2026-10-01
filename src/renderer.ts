@@ -698,7 +698,7 @@ export function updateParticles(): void {
 }
 
 /* v8 ignore start */
-function drawParticles(ctx: CanvasRenderingContext2D): void {
+function drawParticles(ctx: CanvasRenderingContext2D, skipSpriteTypes: boolean = false): void {
   ctx.save();
   // Performance: Use additive blending for neon glow instead of expensive shadowBlur
   ctx.globalCompositeOperation = 'lighter';
@@ -792,6 +792,7 @@ function drawParticles(ctx: CanvasRenderingContext2D): void {
 
     const key = `particle_${p.type}_${p.color}`;
     const cachedCanvas = spriteCache.images.get(key);
+    if (skipSpriteTypes && cachedCanvas) continue; // rendered by Pixi
 
     if (cachedCanvas) {
       // Optimization: Manual Transform instead of save/restore
@@ -1635,49 +1636,7 @@ export function prepareSoldiersToDraw(army: Army): Soldier[] {
 }
 
 /* v8 ignore start */
-function drawArmy(ctx: CanvasRenderingContext2D, army: Army, time: number): void {
-  if (!spriteCache.initialized) {
-    preRenderSprites();
-  }
-
-  const dx = army.centerX - lastArmyX;
-  if (Math.abs(dx) > 2) {
-    // Optimization: Avoid filtering entire array just for trail check. Try random sampling.
-    for (let i = 0; i < 5; i++) {
-      const randIdx = Math.floor(Math.random() * army.soldiers.length);
-      const s = army.soldiers[randIdx];
-      if (s && s.isAlive && Math.random() < 0.3) {
-        addTrail(s.x, s.y + 10, '#4A90D9');
-        break;
-      }
-    }
-  }
-  lastArmyX = army.centerX;
-
-  const soldiersToDraw = prepareSoldiersToDraw(army);
-
-  for (const soldier of soldiersToDraw) {
-    const isFlash = (soldier.hitTimer || 0) > 0;
-
-    if (soldier.isSuper) {
-      // Use super sprite
-      drawSoldier3D(ctx, soldier.x, soldier.y, soldier.size, '#FFD700', soldier.animOffset, time, soldier.type, true, isFlash);
-
-      // Star overhead (simple text, could be sprite too)
-      ctx.fillStyle = '#FFD700';
-      ctx.font = `10px ${FONT_FAMILY}`;
-      ctx.textAlign = 'center';
-      ctx.fillText('⭐', soldier.x, soldier.y - soldier.size - 5);
-    } else {
-      drawSoldier3D(ctx, soldier.x, soldier.y, soldier.size, soldier.color, soldier.animOffset, time, soldier.type, false, isFlash);
-    }
-  }
-}
-
-function drawEnemyHorde(ctx: CanvasRenderingContext2D, horde: EnemyHorde, time: number): void {
-  if (!spriteCache.initialized) preRenderSprites();
-
-  // Optimized: Use reusable array to avoid allocations
+function collectEnemySoldiers(horde: EnemyHorde): Soldier[] {
   tempEnemySoldiers.length = 0;
 
   for (const s of horde.soldiers) {
@@ -1705,6 +1664,74 @@ function drawEnemyHorde(ctx: CanvasRenderingContext2D, horde: EnemyHorde, time: 
   if (!QualityManager.getInstance().settings.simplifiedRendering) {
       tempEnemySoldiers.sort((a, b) => a.y - b.y);
   }
+  return tempEnemySoldiers;
+}
+
+export function getHordeAlpha(horde: EnemyHorde): number {
+  const fadeStartY = 100;
+  const fadeEndY = 200;
+  return horde.y < fadeStartY ? 0 : horde.y < fadeEndY ? (horde.y - fadeStartY) / (fadeEndY - fadeStartY) : 1;
+}
+/* v8 ignore stop */
+
+/* v8 ignore start */
+function drawHordeBadges(ctx: CanvasRenderingContext2D, hordes: EnemyHorde[]): void {
+  for (const horde of hordes) {
+    if (!horde.isActive || horde.count <= 0) continue;
+    if (getHordeAlpha(horde) <= 0.5) continue;
+    drawGlassBadge(ctx, horde.x - 25, horde.y - 60, 50, 30, horde.count.toString(), '#E74C3C');
+  }
+}
+/* v8 ignore stop */
+
+/* v8 ignore start */
+export function updateArmyTrail(army: Army): void {
+  const dx = army.centerX - lastArmyX;
+  if (Math.abs(dx) > 2) {
+    // Optimization: Avoid filtering entire array just for trail check. Try random sampling.
+    for (let i = 0; i < 5; i++) {
+      const randIdx = Math.floor(Math.random() * army.soldiers.length);
+      const s = army.soldiers[randIdx];
+      if (s && s.isAlive && Math.random() < 0.3) {
+        addTrail(s.x, s.y + 10, '#4A90D9');
+        break;
+      }
+    }
+  }
+  lastArmyX = army.centerX;
+}
+
+function drawArmy(ctx: CanvasRenderingContext2D, army: Army, time: number): void {
+  if (!spriteCache.initialized) {
+    preRenderSprites();
+  }
+
+  updateArmyTrail(army);
+
+  const soldiersToDraw = prepareSoldiersToDraw(army);
+
+  for (const soldier of soldiersToDraw) {
+    const isFlash = (soldier.hitTimer || 0) > 0;
+
+    if (soldier.isSuper) {
+      // Use super sprite
+      drawSoldier3D(ctx, soldier.x, soldier.y, soldier.size, '#FFD700', soldier.animOffset, time, soldier.type, true, isFlash);
+
+      // Star overhead (simple text, could be sprite too)
+      ctx.fillStyle = '#FFD700';
+      ctx.font = `10px ${FONT_FAMILY}`;
+      ctx.textAlign = 'center';
+      ctx.fillText('⭐', soldier.x, soldier.y - soldier.size - 5);
+    } else {
+      drawSoldier3D(ctx, soldier.x, soldier.y, soldier.size, soldier.color, soldier.animOffset, time, soldier.type, false, isFlash);
+    }
+  }
+}
+
+function drawEnemyHorde(ctx: CanvasRenderingContext2D, horde: EnemyHorde, time: number): void {
+  if (!spriteCache.initialized) preRenderSprites();
+
+  collectEnemySoldiers(horde);
 
   const fadeStartY = 100;
   const fadeEndY = 200;
@@ -2778,6 +2805,40 @@ function drawKillstreakOverlay(ctx: CanvasRenderingContext2D, width: number, hei
   ctx.restore();
 }
 
+/* v8 ignore start */
+// --- Pixi (WebGL) layer hooks -------------------------------------------
+export interface WorldLayer {
+  draw(entities: Entities, time: number, shakeX: number, shakeY: number): void;
+}
+let worldLayer: WorldLayer | null = null;
+let hudCtx: CanvasRenderingContext2D | null = null;
+
+/** Activates the WebGL layer: entities go to Pixi, overlays/HUD to hudContext. */
+export function setWorldLayer(layer: WorldLayer | null, hud: CanvasRenderingContext2D | null = null): void {
+  worldLayer = layer;
+  hudCtx = layer ? hud : null;
+}
+
+export function getSpriteCanvas(key: string): HTMLCanvasElement | OffscreenCanvas | undefined {
+  if (!spriteCache.initialized) preRenderSprites();
+  return spriteCache.images.get(key);
+}
+
+export function getSoldierSprite(s: Soldier, color: string, isSuper: boolean) {
+  const isFlash = (s.hitTimer || 0) > 0;
+  const key = getSpriteKey(s.type, color, s.size, isSuper, isFlash);
+  let c = spriteCache.images.get(key);
+  if (!c) {
+    renderSoldierToCache(s.type, color, s.size, isSuper, isFlash);
+    c = spriteCache.images.get(key);
+  }
+  return { key, canvas: c };
+}
+
+export function getParticles(): Particle[] { return particles; }
+export { collectEnemySoldiers };
+/* v8 ignore stop */
+
 export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameState: GameState): void {
   const width = BASE_WIDTH;
   const height = BASE_HEIGHT;
@@ -2799,9 +2860,12 @@ export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameSt
   }
 
   const bossShake = gameState.bossActive ? Math.sin(time * 0.02) * 3 * gameState.bossAtmosphereIntensity : 0;
-  if (gameState.screenShakeActive || gameState.bossActive) {
-    const shakeX = (Math.random() - 0.5) * gameState.screenShakeIntensity + bossShake;
-    const shakeY = (Math.random() - 0.5) * gameState.screenShakeIntensity + bossShake * 0.5;
+  const layered = worldLayer !== null && hudCtx !== null;
+  let shakeX = 0, shakeY = 0;
+  const shaking = gameState.screenShakeActive || gameState.bossActive;
+  if (shaking) {
+    shakeX = (Math.random() - 0.5) * gameState.screenShakeIntensity + bossShake;
+    shakeY = (Math.random() - 0.5) * gameState.screenShakeIntensity + bossShake * 0.5;
     ctx.save();
     ctx.translate(shakeX, shakeY);
   }
@@ -2812,8 +2876,10 @@ export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameSt
   const sortedGates = [...entities.gates].sort((a, b) => a.y - b.y);
   for (const gate of sortedGates) drawGate(ctx, gate);
 
-  for (const horde of entities.enemyHordes) {
-    if (horde.isActive) drawEnemyHorde(ctx, horde, time);
+  if (!layered) {
+    for (const horde of entities.enemyHordes) {
+      if (horde.isActive) drawEnemyHorde(ctx, horde, time);
+    }
   }
 
   for (const box of entities.mysteryBoxes) drawMysteryBox(ctx, box, time);
@@ -2826,18 +2892,35 @@ export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameSt
     drawBoss(ctx, entities.boss, time);
   }
 
-  drawBullets(ctx, entities.bullets);
-  updateParticles();
-  drawParticles(ctx);
-  if (entities.playerArmy.trail) {
-    drawTrail(ctx, entities.playerArmy.trail);
+  let out = ctx;
+  if (layered) {
+    updateParticles();
+    updateArmyTrail(entities.playerArmy);
+    if (shaking) ctx.restore();
+    worldLayer!.draw(entities, time, shakeX, shakeY);
+    out = hudCtx!;
+    out.save();
+    out.setTransform(1, 0, 0, 1, 0, 0);
+    out.clearRect(0, 0, out.canvas.width, out.canvas.height);
+    out.restore();
+    if (shaking) { out.save(); out.translate(shakeX, shakeY); }
+    drawHordeBadges(out, entities.enemyHordes);
+    drawParticles(out, true);
+    drawSuperCannonBeam(out, entities.playerArmy.centerX, entities.playerArmy.centerY, gameState);
+    if (shaking) out.restore();
+  } else {
+    drawBullets(ctx, entities.bullets);
+    updateParticles();
+    drawParticles(ctx);
+    if (entities.playerArmy.trail) {
+      drawTrail(ctx, entities.playerArmy.trail);
+    }
+    drawArmy(ctx, entities.playerArmy, time);
+    drawSuperCannonBeam(ctx, entities.playerArmy.centerX, entities.playerArmy.centerY, gameState);
+    if (shaking) ctx.restore();
   }
-  drawArmy(ctx, entities.playerArmy, time);
-  drawSuperCannonBeam(ctx, entities.playerArmy.centerX, entities.playerArmy.centerY, gameState);
-
-  if (gameState.screenShakeActive || gameState.bossActive) {
-    ctx.restore();
-  }
+  // All overlays below draw on `out` (HUD canvas in layered mode)
+  ctx = out;
 
   if (gameState.bossAtmosphereIntensity > 0) {
     drawBossAtmosphere(ctx, width, height, gameState.bossAtmosphereIntensity, time);
