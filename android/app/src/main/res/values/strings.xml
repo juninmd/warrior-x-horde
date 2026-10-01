@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Warrior x Horde</string>
+    <string name="title_activity_main">Warrior x Horde</string>
+    <string name="package_name">com.juninmd.warriorxhorde</string>
+    <string name="custom_url_scheme">com.juninmd.warriorxhorde</string>
+</resources>

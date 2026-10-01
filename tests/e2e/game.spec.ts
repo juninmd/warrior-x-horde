@@ -9,7 +9,8 @@ test.describe('Crowd Runner Game Tests', () => {
 
     // Listen for console errors BEFORE navigating
     page.on('console', msg => {
-      if (msg.type() === 'error') {
+      // Ignore network-only noise (Google Fonts unreachable in sandboxed CI)
+      if (msg.type() === 'error' && !/ERR_CERT|ERR_NAME|ERR_INTERNET/.test(msg.text())) {
         consoleErrors.push(msg.text());
       }
     });

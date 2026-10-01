@@ -20,7 +20,7 @@ function getComboMultiplier(gameState: GameState): number {
     return Math.min(3.0, 1 + gameState.combo * 0.05);
 }
 
-function cleanupDeadSoldiers(soldiers: Soldier[]): void {
+export function cleanupDeadSoldiers(soldiers: Soldier[]): void {
   let activeCount = 0;
   for (let i = 0; i < soldiers.length; i++) {
     const s = soldiers[i];

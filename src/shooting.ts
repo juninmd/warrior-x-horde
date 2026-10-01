@@ -23,7 +23,7 @@ const tempNormals: Soldier[] = [];
 const tempShooters: Soldier[] = [];
 
 const bulletPool = new ObjectPool<Bullet>(
-  () => ({ x: 0, y: 0, targetX: 0, targetY: 0, speed: 0, damage: 0, isEnemy: false }),
+  () => ({ x: 0, y: 0, targetX: 0, targetY: 0, speed: 0, damage: 0, isEnemy: false, vx: 0 }),
   (b) => {
     b.x = 0;
     b.y = 0;
@@ -32,8 +32,13 @@ const bulletPool = new ObjectPool<Bullet>(
     b.speed = 0;
     b.damage = 0;
     b.isEnemy = false;
+    b.vx = 0;
   }
 );
+
+export function releaseBullet(b: Bullet): void {
+  bulletPool.release(b);
+}
 
 export function createBullet(x: number, y: number, targetX: number, targetY: number, damage: number, isEnemy: boolean): Bullet {
   const bullet = bulletPool.get();
@@ -44,6 +49,7 @@ export function createBullet(x: number, y: number, targetX: number, targetY: num
   bullet.speed = isEnemy ? 3 : -12; // Tiros do jogador mais rápidos
   bullet.damage = damage;
   bullet.isEnemy = isEnemy;
+  bullet.vx = 0;
   return bullet;
 }
 
@@ -369,8 +375,9 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
   for (let i = entities.bullets.length - 1; i >= 0; i--) {
     const bullet = entities.bullets[i];
     bullet.y += bullet.speed * dtFactor;
+    if (bullet.vx) bullet.x += bullet.vx * dtFactor;
 
-    if (bullet.y <= -50 || bullet.y >= 900) {
+    if (bullet.y <= -50 || bullet.y >= 900 || bullet.x < -40 || bullet.x > 520) {
       bulletPool.release(bullet);
       fastRemove(entities.bullets, i);
     } else if (!bullet.isEnemy) {

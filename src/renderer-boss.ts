@@ -3,6 +3,7 @@ import { Boss } from './types';
 import { safeAddColorStop } from './renderer-utils';
 import { BASE_WIDTH } from './constants';
 import { QualityManager } from './quality';
+import { getBossLore } from './boss-lore';
 
 // Boss final - Nave Mãe Alienígena (Scarier version)
 export function drawMothershipBoss(ctx: CanvasRenderingContext2D, boss: Boss, time: number): void {
@@ -583,6 +584,11 @@ export function drawBoss(ctx: CanvasRenderingContext2D, boss: Boss, time: number
   ctx.roundRect(barX + 2, barY + 2, (barWidth - 4) * (boss.hp / boss.maxHp), barHeight - 4, 4);
   ctx.fill();
 
+  // Marcas de fase (66% / 33%)
+  ctx.fillStyle = 'rgba(255,255,255,0.8)';
+  ctx.fillRect(barX + barWidth * 0.33 - 1, barY + 2, 2, barHeight - 4);
+  ctx.fillRect(barX + barWidth * 0.66 - 1, barY + 2, 2, barHeight - 4);
+
   // Borda
   ctx.strokeStyle = '#FFF';
   ctx.lineWidth = 2;
@@ -595,16 +601,46 @@ export function drawBoss(ctx: CanvasRenderingContext2D, boss: Boss, time: number
   ctx.font = 'bold 12px Arial';
   ctx.textAlign = 'center';
 
-  let bossName = 'BOSS';
-  if (boss.type === 'machine') bossName = 'MECHA TANK';
-  else if (boss.type === 'demon') bossName = 'DEMON LORD';
-  else if (boss.type === 'beast') bossName = 'GIANT BEAST';
-  else if (boss.type === 'slime') bossName = 'TOXIC SLIME';
-  else if (boss.type === 'eye') bossName = 'THE WATCHER';
-  else if (boss.type === 'spider') bossName = 'WIDOWMAKER';
-  else if (boss.type === 'skull') bossName = 'BONE KING';
-  else if (boss.type === 'ghost') bossName = 'PHANTOM';
-  else if (boss.type === 'crystal') bossName = 'PRISM CORE';
+  const bossName = getBossLore(boss.type).name;
 
   ctx.fillText(`${bossName}: ${Math.ceil(boss.hp)}`, barX + barWidth / 2, barY + barHeight / 2 + 4);
+}
+
+/** Warning drawn while a boss charges a volley: pulsing ring, "!" and a pattern hint. */
+export function drawBossTelegraph(ctx: CanvasRenderingContext2D, boss: Boss, playerX: number, playerY: number, time: number): void {
+  const t = boss.telegraph ?? 0;
+  if (t <= 0 || !boss.pattern) return;
+  const cx = boss.type === 'mothership' ? boss.x : boss.x + boss.width / 2;
+  const cy = boss.y + boss.height / 2;
+  const pulse = 0.55 + 0.45 * Math.sin(time * 0.03);
+  const r = Math.max(boss.width, 60) * 0.6 + (40 - t) * 0.6;
+
+  ctx.save();
+  ctx.strokeStyle = `rgba(255, 60, 60, ${pulse})`;
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.setLineDash([8, 8]);
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = `rgba(255, 90, 60, ${0.5 * pulse})`;
+  const my = boss.y + boss.height;
+  if (boss.pattern === 'aimed') {
+    ctx.beginPath(); ctx.moveTo(cx, my); ctx.lineTo(playerX, playerY); ctx.stroke();
+  } else if (boss.pattern === 'fan') {
+    for (const a of [-0.75, 0, 0.75]) {
+      ctx.beginPath(); ctx.moveTo(cx, my); ctx.lineTo(cx + Math.sin(a) * 700, my + Math.cos(a) * 700); ctx.stroke();
+    }
+  } else {
+    ctx.fillStyle = `rgba(255, 60, 60, ${0.18 * pulse})`;
+    ctx.fillRect(0, my, BASE_WIDTH, 36);
+  }
+  ctx.setLineDash([]);
+
+  ctx.fillStyle = '#FFD84A';
+  ctx.font = 'bold 28px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('!', cx, boss.y - 52);
+  ctx.restore();
 }

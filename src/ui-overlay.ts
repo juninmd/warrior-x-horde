@@ -2,6 +2,7 @@
 import { COLORS } from './constants';
 import { GameState, BeforeInstallPromptEvent } from './types';
 import { vibrate } from './input';
+import { VICTORY_TEXT, getDefeatLine } from './story';
 
 // Container elements (Declared at top to avoid TDZ)
 let shopContainer: HTMLElement | null = null;
@@ -159,114 +160,171 @@ export function setupStartScreenInstallBtn(deferredPrompt: BeforeInstallPromptEv
     }
 }
 
+// --- Shop catalog (single source of truth: rail buttons, help panel, prices) ---
+export type ShopType = 'bazooka' | 'rambo' | 'laser' | 'soldier' | 'nuke' | 'recharge_super';
+
+interface ShopItem {
+  id: string;
+  type: ShopType;
+  price: number;
+  color: string;
+  icon: string;
+  label: string;
+  desc: string;
+}
+
+const SHOP_ITEMS: ShopItem[] = [
+  { id: 'soldier', type: 'soldier', price: 50, color: COLORS.PLAYER.NORMAL, icon: '🛡️', label: '+10 TROPAS', desc: 'Adiciona 10 soldados ao seu exército.' },
+  { id: 'bazooka', type: 'bazooka', price: 50, color: COLORS.PLAYER.BAZOOKA, icon: '🚀', label: 'BAZUCA', desc: 'Recruta um soldado com bazuca: tiro explosivo.' },
+  { id: 'rambo', type: 'rambo', price: 100, color: COLORS.PLAYER.RAMBO, icon: '💪', label: 'RAMBO', desc: 'Recruta um Rambo: rajadas pesadas e muito dano.' },
+  { id: 'laser', type: 'laser', price: 150, color: COLORS.PLAYER.LASER, icon: '⚡', label: 'LASER', desc: 'Recruta um soldado laser: raio que atravessa inimigos.' },
+  { id: 'nuke', type: 'nuke', price: 500, color: COLORS.UI.GOLD, icon: '☢️', label: 'NUKE', desc: 'Ataque orbital: elimina todas as hordas e tiros inimigos da tela.' },
+  { id: 'recharge', type: 'recharge_super', price: 200, color: COLORS.UI.GOLD, icon: '🔋', label: 'RECARGA', desc: 'Recarrega na hora o Super Canhão (botão ⚡ à esquerda).' },
+];
+
+const fmtPrice = (n: number): string => n.toLocaleString('pt-BR');
+
+function getStage(): HTMLElement {
+  return (document.querySelector('.game-canvas-wrapper') as HTMLElement | null) ?? document.body;
+}
+
+function makeSpan(className: string, text: string): HTMLSpanElement {
+  const el = document.createElement('span');
+  el.className = className;
+  el.textContent = text;
+  return el;
+}
+
 // --- Helper: Create Shop Button ---
-function createShopButton(type: string, price: number, color: string, label: string): HTMLButtonElement {
+function createShopButton(item: ShopItem): HTMLButtonElement {
   const btn = document.createElement('button');
+  btn.type = 'button';
   btn.className = 'shop-btn';
-  btn.style.borderColor = color;
-  btn.style.borderBottomColor = color; // Maintain the colored border
-
-  const iconSpan = document.createElement('span');
-  iconSpan.className = 'shop-icon';
-  iconSpan.style.filter = `drop-shadow(0 0 5px ${color})`;
-  iconSpan.textContent = label;
-
-  const priceSpan = document.createElement('span');
-  priceSpan.className = 'shop-price';
-  priceSpan.textContent = `💰 ${price.toLocaleString('pt-BR')}`;
-
-  btn.append(iconSpan, priceSpan);
-
-  btn.addEventListener('pointerdown', () => {
-      // transform handled by CSS :active, but scale logic was JS based before.
-      // Keeping JS listener if we need specific logic, otherwise CSS :active covers it.
-  });
-
+  btn.dataset.shop = item.id;
+  btn.style.setProperty('--accent', item.color);
+  btn.title = `${item.label} — 💰 ${fmtPrice(item.price)}: ${item.desc}`;
+  btn.setAttribute('aria-label', `${item.label}, custa ${fmtPrice(item.price)} moedas. ${item.desc}`);
+  btn.append(
+    makeSpan('shop-icon', item.icon),
+    makeSpan('shop-label', item.label),
+    makeSpan('shop-price', `💰 ${fmtPrice(item.price)}`),
+  );
   return btn;
 }
 
+// --- Help panel (explains every item; toggled by the "?" button) ---
+let helpTimer: ReturnType<typeof setTimeout> | null = null;
+
+function setHelpOpen(panel: HTMLElement, toggle: HTMLButtonElement, open: boolean): void {
+  panel.hidden = !open;
+  toggle.setAttribute('aria-expanded', String(open));
+  if (helpTimer) { clearTimeout(helpTimer); helpTimer = null; }
+  if (open) helpTimer = setTimeout(() => setHelpOpen(panel, toggle, false), 10000);
+}
+
+function setupShopHelp(stage: HTMLElement): void {
+  document.getElementById('shopHelpBtn')?.remove();
+  document.getElementById('shopHelp')?.remove();
+
+  const toggle = document.createElement('button');
+  toggle.type = 'button';
+  toggle.id = 'shopHelpBtn';
+  toggle.className = 'shop-help-btn';
+  toggle.textContent = '?';
+  toggle.title = 'Como funciona a loja';
+  toggle.setAttribute('aria-label', 'Como funciona a loja');
+  toggle.setAttribute('aria-controls', 'shopHelp');
+  toggle.setAttribute('aria-expanded', 'false');
+
+  const panel = document.createElement('div');
+  panel.id = 'shopHelp';
+  panel.className = 'shop-help';
+  panel.setAttribute('role', 'dialog');
+  panel.setAttribute('aria-label', 'Guia da loja');
+  panel.hidden = true;
+
+  const title = document.createElement('h3');
+  title.textContent = '💰 Loja de reforços';
+  const intro = document.createElement('p');
+  intro.className = 'shop-help-intro';
+  intro.textContent = 'Derrote inimigos para ganhar moedas e gaste durante a partida:';
+  const list = document.createElement('ul');
+  for (const item of SHOP_ITEMS) {
+    const li = document.createElement('li');
+    li.style.setProperty('--accent', item.color);
+    const head = document.createElement('div');
+    head.className = 'shop-help-head';
+    head.append(makeSpan('shop-help-name', `${item.icon} ${item.label}`), makeSpan('shop-help-price', `💰 ${fmtPrice(item.price)}`));
+    const desc = document.createElement('div');
+    desc.className = 'shop-help-desc';
+    desc.textContent = item.desc;
+    li.append(head, desc);
+    list.appendChild(li);
+  }
+  const foot = document.createElement('p');
+  foot.className = 'shop-help-foot';
+  foot.textContent = 'Botões apagados = moedas insuficientes.';
+  panel.append(title, intro, list, foot);
+
+  const stop = (e: Event) => e.stopPropagation();
+  toggle.addEventListener('click', (e) => { stop(e); setHelpOpen(panel, toggle, panel.hidden); });
+  panel.addEventListener('click', (e) => { stop(e); setHelpOpen(panel, toggle, false); });
+  stage.append(toggle, panel);
+}
+
 // --- Setup Shop UI ---
-export type BuyAction = (type: 'bazooka' | 'rambo' | 'laser' | 'soldier' | 'nuke' | 'recharge_super', cost: number) => void;
+export type BuyAction = (type: ShopType, cost: number) => void;
 
 export function setupShopUI(onBuy: BuyAction): void {
   const existing = document.getElementById('shopContainer');
   if (existing) existing.remove();
 
+  const stage = getStage();
   shopContainer = document.createElement('div');
   shopContainer.id = 'shopContainer';
   shopContainer.className = 'shop-container';
-  document.body.appendChild(shopContainer);
+  shopContainer.setAttribute('role', 'toolbar');
+  shopContainer.setAttribute('aria-label', 'Loja de reforços');
+  stage.appendChild(shopContainer);
 
-  const configs = [
-    { id: 'soldier', type: 'soldier', price: 50, color: COLORS.PLAYER.NORMAL, label: '🛡️ +10' },
-    { id: 'bazooka', type: 'bazooka', price: 50, color: COLORS.PLAYER.BAZOOKA, label: '🚀' },
-    { id: 'rambo', type: 'rambo', price: 100, color: COLORS.PLAYER.RAMBO, label: '💪' },
-    { id: 'laser', type: 'laser', price: 150, color: COLORS.PLAYER.LASER, label: '⚡' },
-    { id: 'nuke', type: 'nuke', price: 500, color: COLORS.UI.GOLD, label: '☢️ NUKE' },
-    { id: 'recharge', type: 'recharge_super', price: 200, color: COLORS.UI.GOLD, label: '🔋 RECARGA' },
-  ];
-
-  configs.forEach(cfg => {
-    const btn = createShopButton(cfg.type, cfg.price, cfg.color, cfg.label);
-
-    if (cfg.id === 'soldier') {
-         btn.replaceChildren();
-         const iSpan = document.createElement('span'); iSpan.className = 'shop-icon'; iSpan.textContent = '🛡️';
-         const lSpan = document.createElement('span'); lSpan.className = 'shop-label'; lSpan.textContent = '+10 UNITS';
-         const pSpan = document.createElement('span'); pSpan.className = 'shop-price'; pSpan.textContent = `💰 ${cfg.price.toLocaleString('pt-BR')}`;
-         btn.append(iSpan, lSpan, pSpan);
-    } else if (cfg.id === 'nuke') {
-         btn.replaceChildren();
-         const iSpan = document.createElement('span'); iSpan.className = 'shop-icon'; iSpan.textContent = '☢️';
-         const lSpan = document.createElement('span'); lSpan.className = 'shop-label'; lSpan.textContent = 'NUKE';
-         const pSpan = document.createElement('span'); pSpan.className = 'shop-price'; pSpan.textContent = `💰 ${cfg.price.toLocaleString('pt-BR')}`;
-         btn.append(iSpan, lSpan, pSpan);
-    } else if (cfg.id === 'recharge') {
-         btn.replaceChildren();
-         const iSpan = document.createElement('span'); iSpan.className = 'shop-icon'; iSpan.textContent = '🔋';
-         const lSpan = document.createElement('span'); lSpan.className = 'shop-label'; lSpan.textContent = 'RECARGA';
-         const pSpan = document.createElement('span'); pSpan.className = 'shop-price'; pSpan.textContent = `💰 ${cfg.price.toLocaleString('pt-BR')}`;
-         btn.append(iSpan, lSpan, pSpan);
-    }
-
-    const handler = (e: Event) => {
-        e.stopPropagation();
-        vibrate(15);
-        onBuy(cfg.type as Parameters<BuyAction>[0], cfg.price);
-    };
-    btn.addEventListener('click', handler);
-
+  SHOP_ITEMS.forEach(item => {
+    const btn = createShopButton(item);
+    btn.addEventListener('click', (e: Event) => {
+      e.stopPropagation();
+      vibrate(15);
+      onBuy(item.type, item.price);
+    });
     shopContainer!.appendChild(btn);
-    buttons[cfg.id] = btn;
+    buttons[item.id] = btn;
   });
+
+  setupShopHelp(stage);
 }
 
 export function updateShopUI(gameState: GameState): void {
   if (!shopContainer) return; /* v8 ignore next */
 
-  if (!gameState.isStarted || gameState.isGameOver) {
-    // Only touch the DOM when the value actually changes (avoids per-frame style recalc)
+  const active = gameState.isStarted && !gameState.isGameOver;
+  // Only touch the DOM when the value actually changes (avoids per-frame style recalc)
+  if (document.body.classList.contains('playing') !== active) document.body.classList.toggle('playing', active);
 
-
-
-
-
-
-
-
-
+  const helpBtn = document.getElementById('shopHelpBtn');
+  if (!active) {
     if (shopContainer.style.display !== 'none') shopContainer.style.display = 'none';
+    if (helpBtn && helpBtn.style.display !== 'none') {
+      helpBtn.style.display = 'none';
+      const panel = document.getElementById('shopHelp');
+      if (panel) panel.hidden = true;
+    }
     return;
   }
   if (shopContainer.style.display !== 'flex') shopContainer.style.display = 'flex';
-
-  const costs: Record<string, number> = {
-      'soldier': 50, 'bazooka': 50, 'rambo': 100, 'laser': 150, 'nuke': 500, 'recharge': 200
-  };
+  if (helpBtn && helpBtn.style.display !== 'flex') helpBtn.style.display = 'flex';
 
   Object.entries(buttons).forEach(([id, btn]) => {
-      const cost = costs[id];
-      const shouldDisable = gameState.coins < cost;
+      const item = SHOP_ITEMS.find(i => i.id === id);
+      if (!item) return; // e.g. the super cannon button lives in this map too
+      const shouldDisable = gameState.coins < item.price;
       // Skip redundant writes: only mutate .disabled when it changes
       if (btn.disabled !== shouldDisable) btn.disabled = shouldDisable;
   });
@@ -283,7 +341,7 @@ export function setupSuperCannonUI(onActivate: SuperCannonAction): void {
         // Let's create it if missing to be robust
         superCannonContainer = document.createElement('div');
         superCannonContainer.id = 'superCannonContainer';
-        document.body.appendChild(superCannonContainer);
+        getStage().appendChild(superCannonContainer);
     }
 
     superCannonContainer.className = 'super-cannon-container';
@@ -293,6 +351,8 @@ export function setupSuperCannonUI(onActivate: SuperCannonAction): void {
     btn.id = 'superCannonBtn';
     btn.className = 'super-cannon-btn';
     btn.textContent = '⚡ SUPER';
+    btn.title = 'Super Canhão: rajada devastadora (tem tempo de recarga)';
+    btn.setAttribute('aria-label', 'Super Canhão');
 
     const trigger = (e: Event) => {
         e.stopPropagation();
@@ -384,6 +444,13 @@ export function setupGameOverUI(onRestart: () => void, onShare: (platform: 'x' |
     });
 }
 
+function makeEpilogue(text: string): HTMLElement {
+    const p = document.createElement('p');
+    p.className = 'epilogue';
+    p.textContent = text;
+    return p;
+}
+
 export function showGameOverScreen(gameState: GameState): void {
     if (!gameOverContainer) return;
 
@@ -440,6 +507,9 @@ export function showGameOverScreen(gameState: GameState): void {
         victoryText.style.marginBottom = '20px';
         victoryText.textContent = '🛸 MOTHERSHIP DESTROYED!';
         content.appendChild(victoryText);
+        content.appendChild(makeEpilogue(VICTORY_TEXT));
+    } else {
+        content.appendChild(makeEpilogue(getDefeatLine(gameState.currentLevel)));
     }
 
     const rankContainer = document.createElement('div');

@@ -193,4 +193,8 @@ dist
 # test & e2e artifacts
 coverage
 test-results
-playwright-report
+playwright-reportnode_modules/
+android/
+docs/screenshots/
+coverage/
+dist/

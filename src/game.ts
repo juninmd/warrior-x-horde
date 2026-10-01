@@ -2,8 +2,10 @@
 import { Entities, BeforeInstallPromptEvent } from './types';
 import { gameState, resetGameState, saveGameProgress } from './gameState';
 import { createInitialEntities, createEnemyHorde, createSoldier, addSpecialSoldiersToArmy, addSoldiersToArmy } from './entities';
-import { render, shareOnX, shareOnWhatsApp, addFloatingText, updateFloatingTexts, addParticle } from './renderer';
+import { setWorldLayer, render, shareOnX, shareOnWhatsApp, addFloatingText, updateFloatingTexts, addParticle } from './renderer';
 import { checkCollisions } from './collisions';
+import { showChapterBanner, showBossBanner, hideStoryBanner } from './story';
+import { updateBossAttacks, resolveEnemyBullets } from './boss-ai';
 import { updateSpawns, resetSpawnerState } from './spawner';
 import { updateMovement } from './movement';
 import { setupInput, getMouseX, initializeMousePosition, setGameStateRef, triggerHaptic } from './input';
@@ -13,6 +15,7 @@ import { initAudio, playMusic, playSound, stopAllMusic, audioManager, isMusicMut
 import { BASE_WIDTH, BASE_HEIGHT, ASPECT_RATIO, COLORS } from './constants';
 import { setupShopUI, updateShopUI, setupSuperCannonUI, updateSuperCannonUI, BuyAction, setupGameOverUI, showGameOverScreen, startCountdown, updateStartScreenLeaderboard, setupStartScreenInstallBtn, createPauseModal } from './ui-overlay';
 import { QualityManager } from './quality';
+import { initPixiLayer, PixiLayer } from './pixi-layer';
 import { setupSettingsUI, toggleSettingsMenu } from './ui-settings';
 import { renderSkinSelector } from './ui-skins';
 import { MOBILE_RESOLUTION_SCALE } from './constants';
@@ -20,6 +23,12 @@ import { MOBILE_RESOLUTION_SCALE } from './constants';
 // Canvas setup
 export const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d', { alpha: false })!;
+
+// Camadas empilhadas: gameCanvas (mundo 2D) < pixiCanvas (WebGL: unidades) < hudCanvas (HUD/efeitos)
+let pixiLayer: PixiLayer | null = null;
+let hudCanvas: HTMLCanvasElement | null = null;
+let hudCtx: CanvasRenderingContext2D | null = null;
+let layerDpr = 1;
 
 // Escala atual
 let scale = 1;
@@ -34,42 +43,23 @@ function resizeCanvas(): void {
   const container = canvas.parentElement;
   if (!container) return;
 
-  // Mobile Fullscreen Logic
+  // O canvas SEMPRE mantém a proporção do jogo (sem esticar sprites). No mobile ocupa a tela toda
+  // (letterbox vertical em telas mais altas); no desktop reserva espaço para título e dica.
   const isMobile = window.innerWidth <= 768;
+  const availW = (isMobile ? window.innerWidth : Math.min(window.innerWidth - 20, 600)) - 4; /* padding do wrapper */
+  const shortScreen = window.innerHeight < 560; // paisagem em celular
+  const availH = window.innerHeight - (isMobile || shortScreen ? 8 : 130);
 
-  let newWidth: number;
-  let newHeight: number;
-
-  if (isMobile) {
-      // Full width on mobile
-      newWidth = window.innerWidth;
-      // Height is screen height minus UI space (less padding than desktop)
-      newHeight = window.innerHeight;
-
-      // Ensure aspect ratio isn't too extreme (e.g., very long phones)
-      // We clip the height if it gets too tall relative to width
-      const maxAspectRatio = 2.2; // roughly 20:9
-      if (newHeight / newWidth > maxAspectRatio) {
-          newHeight = newWidth * maxAspectRatio;
-      }
-  } else {
-      // Desktop: Keep constrained
-      const maxWidth = Math.min(window.innerWidth - 20, 600);
-      // Reserva espaço para título, subtítulo, dica e a barra de controles inline
-      const maxHeight = window.innerHeight - 210;
-
-      newWidth = maxWidth;
-      newHeight = newWidth / ASPECT_RATIO;
-
-      if (newHeight > maxHeight) {
-        newHeight = maxHeight;
-        newWidth = newHeight * ASPECT_RATIO;
-      }
+  let newWidth = availW;
+  let newHeight = newWidth / ASPECT_RATIO;
+  if (newHeight > availH) {
+    newHeight = availH;
+    newWidth = newHeight * ASPECT_RATIO;
   }
 
   // Mínimo para não ficar muito pequeno
-  newWidth = Math.max(newWidth, 280);
-  newHeight = Math.max(newHeight, newWidth / ASPECT_RATIO);
+  const minW = shortScreen ? 150 : 240;
+  if (newWidth < minW) { newWidth = minW; newHeight = newWidth / ASPECT_RATIO; }
 
   // Aplicar dimensões de exibição (CSS)
   canvas.style.width = `${newWidth}px`;
@@ -92,10 +82,59 @@ function resizeCanvas(): void {
   canvas.height = BASE_HEIGHT * effectiveDpr;
 
   ctx.scale(effectiveDpr, effectiveDpr);
+  layerDpr = effectiveDpr;
+  syncLayers();
 
   // Calcular escala para eventos de input
   scale = newWidth / BASE_WIDTH;
   setInputScale(scale);
+}
+/* v8 ignore stop */
+
+/* v8 ignore start */
+function syncLayers(): void {
+  // Usa o tamanho renderizado real (CSS max-width/max-height podem limitar o style inline)
+  const cssWidth = canvas.clientWidth;
+  const cssHeight = canvas.clientHeight;
+  const place = (el: HTMLElement) => {
+    el.style.position = 'absolute';
+    el.style.left = `${canvas.offsetLeft}px`;
+    el.style.top = `${canvas.offsetTop}px`;
+    el.style.width = `${cssWidth}px`;
+    el.style.height = `${cssHeight}px`;
+    el.style.pointerEvents = 'none';
+    el.style.borderRadius = 'calc(var(--r-lg) - 2px)';
+  };
+  if (pixiLayer) {
+    pixiLayer.resize(BASE_WIDTH, BASE_HEIGHT, layerDpr);
+    place(pixiLayer.app.canvas as HTMLCanvasElement);
+  }
+  if (hudCanvas && hudCtx) {
+    hudCanvas.width = BASE_WIDTH * layerDpr;
+    hudCanvas.height = BASE_HEIGHT * layerDpr;
+    hudCtx.setTransform(layerDpr, 0, 0, layerDpr, 0, 0);
+    place(hudCanvas);
+  }
+}
+
+async function setupPixi(): Promise<void> {
+  const wrapper = canvas.parentElement;
+  if (!wrapper) return;
+  const layer = await initPixiLayer(wrapper);
+  if (!layer) return; // sem WebGL: segue em Canvas2D puro
+  pixiLayer = layer;
+  hudCanvas = document.createElement('canvas');
+  hudCanvas.id = 'hudCanvas';
+  hudCanvas.setAttribute('aria-hidden', 'true');
+  hudCtx = hudCanvas.getContext('2d')!;
+  wrapper.appendChild(hudCanvas);
+  // Overlays (start screen, modais) devem ficar acima das camadas
+  wrapper.querySelectorAll<HTMLElement>('.glass-overlay').forEach(el => wrapper.appendChild(el));
+  syncLayers();
+  setWorldLayer(layer, hudCtx);
+  // O layout pode mudar depois do resize (max-width, fontes, safe-area): mantém camadas alinhadas
+  if (typeof ResizeObserver !== 'undefined') new ResizeObserver(() => syncLayers()).observe(canvas);
+  document.documentElement.dataset.renderer = 'pixi';
 }
 /* v8 ignore stop */
 
@@ -395,6 +434,12 @@ export function fixedUpdate(dt: number): void {
   // Sistema de tiro
   updateShooting(entities, gameState);
   updateBullets(entities, gameState, dtFactor);
+  updateBossAttacks(entities, gameState, dtFactor);
+  if (entities.boss && entities.boss.isActive && !entities.boss.introShown) {
+    entities.boss.introShown = true;
+    showBossBanner(entities.boss.type);
+  }
+  resolveEnemyBullets(entities, gameState);
   updateSuperCannon(entities, gameState, dt);
   updateFloatingTexts(); // Visual updates (damage numbers)
 
@@ -617,6 +662,7 @@ function advanceToNextLevel(): void {
   triggerHaptic('success');
 
   gameState.currentLevel++;
+  showChapterBanner(gameState.currentLevel);
   gameState.distanceTraveled = 0;
   gameState.levelDistance += 900; // Incremento 3x maior por level (era 300)
   gameState.isVictory = false;
@@ -647,6 +693,7 @@ let startToken = 0;
 
 export function startGame(): void {
   const token = ++startToken;
+  hideStoryBanner();
   resetGameState();
   resetSpawnerState(); // Clear carried-over mini-boss spawn counter from prior run
   entities = createInitialEntities(BASE_WIDTH, BASE_HEIGHT);
@@ -676,6 +723,7 @@ export function startGame(): void {
     // Tutorial Hint
     /* v8 ignore next */
     addFloatingText("HOLD & DRAG", BASE_WIDTH / 2, BASE_HEIGHT / 2 + 100, "#FFFFFF", 1.5);
+    showChapterBanner(gameState.currentLevel);
 
     requestAnimationFrame(gameLoop);
   });
@@ -768,6 +816,36 @@ window.addEventListener('orientationchange', () => {
 /* v8 ignore next */
 console.log(`Crowd Runner v1.1.0 - Build: ${new Date().toISOString()}`);
 resizeCanvas(); // Configurar tamanho inicial
+void setupPixi();
+
+// Hook de observabilidade para testes e2e (somente em dev)
+/* v8 ignore start */
+if (import.meta.env.DEV) {
+  (window as unknown as { __wxh: unknown }).__wxh = {
+    armyX: () => entities?.playerArmy.centerX,
+    armyAlive: () => entities?.playerArmy.aliveCount,
+    mouseX: () => getMouseX(),
+    pixiSprites: () => pixiLayer?.visibleSprites() ?? -1,
+    score: () => gameState.score,
+    isGameOver: () => gameState.isGameOver,
+    isStarted: () => gameState.isStarted,
+    setCoins: (n: number) => { gameState.coins = n; },
+    goToLevel: (n: number) => debugSetLevel(n),
+    boss: () => entities?.boss ? { type: entities.boss.type, hp: entities.boss.hp, maxHp: entities.boss.maxHp, y: entities.boss.y, phase: entities.boss.phase ?? 0, telegraph: entities.boss.telegraph ?? 0 } : null,
+    setBossHpRatio: (r: number) => { if (entities?.boss) entities.boss.hp = Math.max(1, entities.boss.maxHp * r); },
+    killBoss: () => { if (entities?.boss) entities.boss.hp = 1; },
+    enemyBullets: () => entities?.bullets.filter(b => b.isEnemy).length ?? 0,
+    coins: () => gameState.coins,
+    // Jumps straight to the boss fight, clearing random hordes so the check is deterministic
+    forceBoss: () => {
+      if (entities) { entities.enemyHordes = []; entities.miniBosses = []; }
+      gameState.distanceTraveled = gameState.levelDistance * 0.9;
+    },
+    level: () => gameState.currentLevel,
+    victory: () => gameState.isVictory,
+  };
+}
+/* v8 ignore stop */
 setupInput(canvas, (screenX, screenY) => {
     // Touch ripple effect
     const pos = screenToCanvas(screenX, screenY);
@@ -818,6 +896,7 @@ export function debugSetLevel(targetLevel: number): void {
 
   // Definir o level
   gameState.currentLevel = targetLevel;
+  showChapterBanner(targetLevel);
   gameState.distanceTraveled = 0;
   gameState.levelDistance = 15000 + (targetLevel - 1) * 900; // 3x maior
   gameState.isVictory = false;
