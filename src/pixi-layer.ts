@@ -9,7 +9,7 @@ import { BASE_WIDTH, BASE_HEIGHT } from './constants';
 import { QualityManager } from './quality';
 import {
   WorldLayer, getSpriteCanvas, getSoldierSprite, getParticles,
-  collectEnemySoldiers, getHordeAlpha, updateArmyTrail, prepareSoldiersToDraw,
+  collectEnemySoldiers, getHordeAlpha, updateArmyTrail, prepareSoldiersToDraw, getPlayerBulletKey,
 } from './renderer';
 
 type Source = HTMLCanvasElement | OffscreenCanvas;
@@ -99,10 +99,11 @@ export class PixiLayer implements WorldLayer {
     this.enemies.end();
 
     // Bullets
+    const playerBullet = getPlayerBulletKey();
     this.bullets.begin();
     for (const b of entities.bullets) {
       if (b.y < -50 || b.y > BASE_HEIGHT + 50) continue;
-      const key = b.isEnemy ? 'bullet_enemy' : 'bullet_player';
+      const key = b.isEnemy ? 'bullet_enemy' : playerBullet;
       this.place(this.bullets, key, getSpriteCanvas(key), b.x, b.y);
     }
     this.bullets.end();

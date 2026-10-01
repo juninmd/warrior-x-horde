@@ -1176,3 +1176,46 @@ body:not(.playing) .shop-help { display: none !important; }
   .super-cannon-container { bottom: 54px; }
   .super-cannon-btn { width: 60px; height: 60px; }
 }
+
+/* ---- Story banners (chapter + boss intro) ------------------------------ */
+.story-banner {
+  position: absolute;
+  top: 34%;
+  left: 64px;
+  right: 64px;
+  z-index: 55;
+  padding: 10px 14px 12px;
+  text-align: center;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(8, 11, 22, 0.88), rgba(8, 11, 22, 0.7));
+  border: 1px solid var(--border-strong);
+  border-top: 3px solid var(--cyan-1);
+  border-radius: var(--r-md);
+  box-shadow: var(--sh-2);
+  opacity: 0;
+}
+.story-banner[hidden] { display: none; }
+.story-banner.show { animation: story-in 4.2s var(--ease-out) forwards; }
+.story-banner[data-variant='boss'] { border-top-color: var(--red-1); box-shadow: 0 0 28px rgba(255, 65, 108, 0.45), var(--sh-2); }
+.story-banner[data-variant='boss'].show { animation-duration: 3.6s; }
+.story-banner { background: linear-gradient(180deg, rgba(8, 11, 22, 0.8), rgba(8, 11, 22, 0.6)); }
+.story-kicker { font-size: 11px; font-weight: 800; letter-spacing: 3px; color: var(--cyan-1); }
+.story-banner[data-variant='boss'] .story-kicker { color: var(--red-2); }
+.story-title { font-size: 22px; font-weight: 900; letter-spacing: 1px; line-height: 1.1; margin: 2px 0 4px; text-transform: uppercase; }
+.story-text { font-size: 12.5px; line-height: 1.3; color: var(--text-dim); }
+@keyframes story-in {
+  0% { opacity: 0; transform: translateY(-10px) scale(0.96); }
+  8% { opacity: 1; transform: translateY(0) scale(1); }
+  85% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@media (max-height: 560px) { .story-banner { top: 30px; left: 60px; right: 60px; padding: 6px 10px; } .story-title { font-size: 16px; } .story-text { display: none; } }
+.epilogue { font-size: 13px; line-height: 1.35; font-style: italic; color: var(--text-dim); margin: 0 6px 16px; }
+
+/* Game over: use the whole viewport on phones; pause/settings only exist while playing */
+body:not(.playing) .top-controls { display: none; }
+@media (max-width: 768px) {
+  .game-over-container { position: fixed; border-radius: 0; z-index: 100; padding: 8px; }
+  .game-over-content { padding: 16px; width: 94%; }
+  .game-over-content .leaderboard-item:nth-child(n+4) { display: none; }
+}

@@ -4,6 +4,8 @@ import { gameState, resetGameState, saveGameProgress } from './gameState';
 import { createInitialEntities, createEnemyHorde, createSoldier, addSpecialSoldiersToArmy, addSoldiersToArmy } from './entities';
 import { setWorldLayer, render, shareOnX, shareOnWhatsApp, addFloatingText, updateFloatingTexts, addParticle } from './renderer';
 import { checkCollisions } from './collisions';
+import { showChapterBanner, showBossBanner, hideStoryBanner } from './story';
+import { updateBossAttacks, resolveEnemyBullets } from './boss-ai';
 import { updateSpawns, resetSpawnerState } from './spawner';
 import { updateMovement } from './movement';
 import { setupInput, getMouseX, initializeMousePosition, setGameStateRef, triggerHaptic } from './input';
@@ -432,6 +434,12 @@ export function fixedUpdate(dt: number): void {
   // Sistema de tiro
   updateShooting(entities, gameState);
   updateBullets(entities, gameState, dtFactor);
+  updateBossAttacks(entities, gameState, dtFactor);
+  if (entities.boss && entities.boss.isActive && !entities.boss.introShown) {
+    entities.boss.introShown = true;
+    showBossBanner(entities.boss.type);
+  }
+  resolveEnemyBullets(entities, gameState);
   updateSuperCannon(entities, gameState, dt);
   updateFloatingTexts(); // Visual updates (damage numbers)
 
@@ -654,6 +662,7 @@ function advanceToNextLevel(): void {
   triggerHaptic('success');
 
   gameState.currentLevel++;
+  showChapterBanner(gameState.currentLevel);
   gameState.distanceTraveled = 0;
   gameState.levelDistance += 900; // Incremento 3x maior por level (era 300)
   gameState.isVictory = false;
@@ -684,6 +693,7 @@ let startToken = 0;
 
 export function startGame(): void {
   const token = ++startToken;
+  hideStoryBanner();
   resetGameState();
   resetSpawnerState(); // Clear carried-over mini-boss spawn counter from prior run
   entities = createInitialEntities(BASE_WIDTH, BASE_HEIGHT);
@@ -713,6 +723,7 @@ export function startGame(): void {
     // Tutorial Hint
     /* v8 ignore next */
     addFloatingText("HOLD & DRAG", BASE_WIDTH / 2, BASE_HEIGHT / 2 + 100, "#FFFFFF", 1.5);
+    showChapterBanner(gameState.currentLevel);
 
     requestAnimationFrame(gameLoop);
   });
@@ -819,6 +830,19 @@ if (import.meta.env.DEV) {
     isGameOver: () => gameState.isGameOver,
     isStarted: () => gameState.isStarted,
     setCoins: (n: number) => { gameState.coins = n; },
+    goToLevel: (n: number) => debugSetLevel(n),
+    boss: () => entities?.boss ? { type: entities.boss.type, hp: entities.boss.hp, maxHp: entities.boss.maxHp, y: entities.boss.y, phase: entities.boss.phase ?? 0, telegraph: entities.boss.telegraph ?? 0 } : null,
+    setBossHpRatio: (r: number) => { if (entities?.boss) entities.boss.hp = Math.max(1, entities.boss.maxHp * r); },
+    killBoss: () => { if (entities?.boss) entities.boss.hp = 1; },
+    enemyBullets: () => entities?.bullets.filter(b => b.isEnemy).length ?? 0,
+    coins: () => gameState.coins,
+    // Jumps straight to the boss fight, clearing random hordes so the check is deterministic
+    forceBoss: () => {
+      if (entities) { entities.enemyHordes = []; entities.miniBosses = []; }
+      gameState.distanceTraveled = gameState.levelDistance * 0.9;
+    },
+    level: () => gameState.currentLevel,
+    victory: () => gameState.isVictory,
   };
 }
 /* v8 ignore stop */
@@ -872,6 +896,7 @@ export function debugSetLevel(targetLevel: number): void {
 
   // Definir o level
   gameState.currentLevel = targetLevel;
+  showChapterBanner(targetLevel);
   gameState.distanceTraveled = 0;
   gameState.levelDistance = 15000 + (targetLevel - 1) * 900; // 3x maior
   gameState.isVictory = false;

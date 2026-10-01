@@ -2,6 +2,7 @@
 import { COLORS } from './constants';
 import { GameState, BeforeInstallPromptEvent } from './types';
 import { vibrate } from './input';
+import { VICTORY_TEXT, getDefeatLine } from './story';
 
 // Container elements (Declared at top to avoid TDZ)
 let shopContainer: HTMLElement | null = null;
@@ -443,6 +444,13 @@ export function setupGameOverUI(onRestart: () => void, onShare: (platform: 'x' |
     });
 }
 
+function makeEpilogue(text: string): HTMLElement {
+    const p = document.createElement('p');
+    p.className = 'epilogue';
+    p.textContent = text;
+    return p;
+}
+
 export function showGameOverScreen(gameState: GameState): void {
     if (!gameOverContainer) return;
 
@@ -499,6 +507,9 @@ export function showGameOverScreen(gameState: GameState): void {
         victoryText.style.marginBottom = '20px';
         victoryText.textContent = '🛸 MOTHERSHIP DESTROYED!';
         content.appendChild(victoryText);
+        content.appendChild(makeEpilogue(VICTORY_TEXT));
+    } else {
+        content.appendChild(makeEpilogue(getDefeatLine(gameState.currentLevel)));
     }
 
     const rankContainer = document.createElement('div');
