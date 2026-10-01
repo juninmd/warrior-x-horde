@@ -41,42 +41,23 @@ function resizeCanvas(): void {
   const container = canvas.parentElement;
   if (!container) return;
 
-  // Mobile Fullscreen Logic
+  // O canvas SEMPRE mantém a proporção do jogo (sem esticar sprites). No mobile ocupa a tela toda
+  // (letterbox vertical em telas mais altas); no desktop reserva espaço para título e dica.
   const isMobile = window.innerWidth <= 768;
+  const availW = (isMobile ? window.innerWidth : Math.min(window.innerWidth - 20, 600)) - 4; /* padding do wrapper */
+  const shortScreen = window.innerHeight < 560; // paisagem em celular
+  const availH = window.innerHeight - (isMobile || shortScreen ? 8 : 130);
 
-  let newWidth: number;
-  let newHeight: number;
-
-  if (isMobile) {
-      // Full width on mobile
-      newWidth = window.innerWidth;
-      // Height is screen height minus UI space (less padding than desktop)
-      newHeight = window.innerHeight;
-
-      // Ensure aspect ratio isn't too extreme (e.g., very long phones)
-      // We clip the height if it gets too tall relative to width
-      const maxAspectRatio = 2.2; // roughly 20:9
-      if (newHeight / newWidth > maxAspectRatio) {
-          newHeight = newWidth * maxAspectRatio;
-      }
-  } else {
-      // Desktop: Keep constrained
-      const maxWidth = Math.min(window.innerWidth - 20, 600);
-      // Reserva espaço para título, subtítulo, dica e a barra de controles inline
-      const maxHeight = window.innerHeight - 210;
-
-      newWidth = maxWidth;
-      newHeight = newWidth / ASPECT_RATIO;
-
-      if (newHeight > maxHeight) {
-        newHeight = maxHeight;
-        newWidth = newHeight * ASPECT_RATIO;
-      }
+  let newWidth = availW;
+  let newHeight = newWidth / ASPECT_RATIO;
+  if (newHeight > availH) {
+    newHeight = availH;
+    newWidth = newHeight * ASPECT_RATIO;
   }
 
   // Mínimo para não ficar muito pequeno
-  newWidth = Math.max(newWidth, 280);
-  newHeight = Math.max(newHeight, newWidth / ASPECT_RATIO);
+  const minW = shortScreen ? 150 : 240;
+  if (newWidth < minW) { newWidth = minW; newHeight = newWidth / ASPECT_RATIO; }
 
   // Aplicar dimensões de exibição (CSS)
   canvas.style.width = `${newWidth}px`;
@@ -837,6 +818,7 @@ if (import.meta.env.DEV) {
     score: () => gameState.score,
     isGameOver: () => gameState.isGameOver,
     isStarted: () => gameState.isStarted,
+    setCoins: (n: number) => { gameState.coins = n; },
   };
 }
 /* v8 ignore stop */

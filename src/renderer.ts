@@ -2748,9 +2748,9 @@ function drawRecordLine(ctx: CanvasRenderingContext2D, gameState: GameState, pla
   // Label
   ctx.fillStyle = '#FFD700';
   ctx.font = `bold 14px ${FONT_FAMILY}`;
-  ctx.textAlign = 'right';
+  ctx.textAlign = 'left'; // left of the shop rail; right edge is covered by the shop
   ctx.shadowBlur = 0;
-  ctx.fillText(`👑 RECORD: ${Math.floor(gameState.highScore)}`, BASE_WIDTH - 20, y - 8);
+  ctx.fillText(`👑 RECORD: ${Math.floor(gameState.highScore)}`, 100, y - 8);
   ctx.restore();
 }
 
