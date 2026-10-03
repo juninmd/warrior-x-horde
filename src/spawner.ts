@@ -89,6 +89,9 @@ function getTotalEnemyCount(entities: Entities): number {
   return total;
 }
 
+/** Hordes that slipped past the army are released once they are well off-screen (was 1200: ~30 wasted hordes). */
+const HORDE_RELEASE_Y = 900;
+
 export function spawnEnemies(entities: Entities, canvasWidth: number, gameState: GameState, dtFactor: number): void {
   // Inimigos nascem do céu (da nave alienígena)
   const spawnY = -50; // Acima da tela, vindo da nave
@@ -97,7 +100,7 @@ export function spawnEnemies(entities: Entities, canvasWidth: number, gameState:
   // Apenas removemos hordas que saíram da tela
   for (let i = entities.enemyHordes.length - 1; i >= 0; i--) {
     const horde = entities.enemyHordes[i];
-    if (!horde.isActive || horde.y >= 1200) {
+    if (!horde.isActive || horde.y >= HORDE_RELEASE_Y) {
       releaseHorde(horde);
       fastRemove(entities.enemyHordes, i);
     }

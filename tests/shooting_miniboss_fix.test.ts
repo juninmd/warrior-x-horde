@@ -20,6 +20,7 @@ vi.mock('../src/audio', () => ({
 
 vi.mock('../src/game', () => ({
     triggerScreenShake: vi.fn(),
+    triggerHitStop: vi.fn(),
 }));
 
 describe('Shooting Fix - MiniBoss Infinite Money', () => {
@@ -63,7 +64,7 @@ describe('Shooting Fix - MiniBoss Infinite Money', () => {
         // IF BUGGY: isActive -> false (again). Score += 200 (Total 400).
         // IF FIXED: Check !isActive -> skip reward.
 
-        expect(gameState.score).toBe(200); // Should be exactly 200
+        expect(gameState.score).toBe(500); // MiniBoss reward is paid exactly once (500 x combo multiplier 1)
         expect(mb.isActive).toBe(false);
     });
 });

@@ -189,7 +189,9 @@ export function addSpecialSoldiersToArmy(army: Army, type: Soldier['type'], coun
 export function multiplySoldiersInArmy(army: Army, multiplier: number): void {
   const currentCount = army.soldiers.length;
   // Limitar multiplicador para evitar explosão de entidades
-  const targetCount = Math.min(MAX_HEROES, Math.floor(currentCount * multiplier));
+  let targetCount = Math.min(MAX_HEROES, Math.floor(currentCount * multiplier));
+  // A "×1.17" portal must always recruit at least one soldier (floor(5 × 1.17) = 5 used to be a no-op)
+  if (multiplier > 1 && currentCount > 0 && targetCount <= currentCount) targetCount = Math.min(MAX_HEROES, currentCount + 1);
   const newCount = targetCount - currentCount;
   addSoldiersToArmy(army, Math.max(0, newCount));
 }
@@ -305,6 +307,10 @@ export function createEnemyHorde(canvasWidth: number, y: number, count: number, 
     ring++;
   }
 
+  // Pooled HP is the sum of the members' HP, so tanks (4x) and runners (0.5x) count properly
+  let totalHp = 0;
+  for (const s of soldiers) totalHp += s.hp;
+
   return {
     id: hordeIdCounter++,
     soldiers,
@@ -316,8 +322,8 @@ export function createEnemyHorde(canvasWidth: number, y: number, count: number, 
     color: '#E74C3C',
     speed: 0,
     isActive: true,
-    hp: count * enemyHp,
-    maxHp: count * enemyHp,
+    hp: totalHp,
+    maxHp: totalHp,
     perfectClearEligible: true,
   };
 }

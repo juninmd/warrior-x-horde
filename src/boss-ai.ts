@@ -10,6 +10,7 @@ import { cleanupDeadSoldiers } from './collisions';
 import { addExplosion, addFloatingText } from './renderer';
 import { triggerScreenShake } from './game';
 import { fastRemove } from './utils';
+import { armyRadius } from './army-geometry';
 import { consumeShield, getMods } from './perks';
 
 export { BOSS_LORE, getBossLore };
@@ -119,11 +120,15 @@ export function updateBossAttacks(entities: Entities, gameState: GameState, dtFa
 export function resolveEnemyBullets(entities: Entities, gameState: GameState): number {
   if (gameState.isGameOver || gameState.isDying) return 0;
   const army = entities.playerArmy;
+  const reach = armyRadius(army.aliveCount) + 40;
   let totalKilled = 0;
 
   for (let i = entities.bullets.length - 1; i >= 0; i--) {
     const bullet = entities.bullets[i];
     if (!bullet.isEnemy) continue;
+
+    // quick reject: far from the formation
+    if (Math.abs(bullet.x - army.centerX) > reach || Math.abs(bullet.y - army.centerY) > reach) continue;
 
     let hit = false;
     for (const s of army.soldiers) {

@@ -1,5 +1,7 @@
 // movement.ts - Sistema de movimento
 import { Entities, GameState, Army } from './types';
+import { armyRadius } from './army-geometry';
+export { armyRadius };
 
 // Frame-rate independent smoothing factor.
 // Exponential decay keeps the follow "feel" identical across framerates and
@@ -11,8 +13,10 @@ function smoothFactor(rate: number, dtFactor: number): number {
 
 export function updateArmyPosition(army: Army, targetX: number, canvasWidth: number, dtFactor: number): void {
   // Limitar movimento horizontal
-  const minX = 50;
-  const maxX = canvasWidth - 50;
+  // Keep big formations on screen: margin grows with the army radius (capped so steering room remains)
+  const margin = Math.max(50, Math.min(110, 30 + armyRadius(army.aliveCount) * 0.8));
+  const minX = margin;
+  const maxX = canvasWidth - margin;
   army.targetX = Math.max(minX, Math.min(maxX, targetX));
 
   // Mover centro do exército suavemente para o target (independente de framerate)
