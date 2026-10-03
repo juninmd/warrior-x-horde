@@ -1,4 +1,5 @@
 // movement.ts - Sistema de movimento
+import { roadWorldBounds } from './perspective';
 import { Entities, GameState, Army } from './types';
 import { armyRadius } from './army-geometry';
 export { armyRadius };
@@ -106,13 +107,7 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
   for (let i = 0; i < entities.enemyHordes.length; i++) { const horde = entities.enemyHordes[i];
     horde.y += enemySpeed;
 
-    // Calcular limites da estrada nesta posição Y
-    const roadTopWidth = 0.3; // 30% da largura no topo
-    const normalizedY = Math.max(0, Math.min(1, horde.y / canvasHeight));
-    const canvasWidth = 480; // Largura padrão do canvas
-    const roadWidthAtY = canvasWidth * (roadTopWidth + (1 - roadTopWidth) * normalizedY);
-    const roadMinX = (canvasWidth - roadWidthAtY) / 2 + 30; // Margem de 30px
-    const roadMaxX = (canvasWidth + roadWidthAtY) / 2 - 30;
+    const { minX: roadMinX, maxX: roadMaxX } = roadWorldBounds(horde.y, 30);
 
     // Se a horda passou do threshold, perseguir o jogador horizontalmente
     if (horde.y > pursuitThreshold && horde.isActive) {

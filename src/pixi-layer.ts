@@ -2,6 +2,7 @@
 // soldiers, enemy hordes, bullets, particles and the army trail.
 // Static world / HUD stay on Canvas2D (see renderer.render). If WebGL is not
 // available, initPixiLayer resolves to null and the game keeps the 2D path.
+import { projectX } from './perspective';
 import 'pixi.js/unsafe-eval'; // game CSP forbids eval; use the precompiled shader path
 import { Application, Container, Graphics, Sprite, Texture } from 'pixi.js';
 import type { Entities, Particle } from './types';
@@ -94,7 +95,7 @@ export class PixiLayer implements WorldLayer {
       if (alpha <= 0) continue;
       for (const s of collectEnemySoldiers(horde)) {
         const sp = getSoldierSprite(s, s.color, false);
-        this.drawSoldier(this.enemies, sp.key, sp.canvas, s.x, s.y, s.animOffset, time, alpha);
+        this.drawSoldier(this.enemies, sp.key, sp.canvas, projectX(s.x, s.y), s.y, s.animOffset, time, alpha);
       }
     }
     this.enemies.end();
@@ -105,7 +106,7 @@ export class PixiLayer implements WorldLayer {
     for (const b of entities.bullets) {
       if (b.y < -50 || b.y > BASE_HEIGHT + 50) continue;
       const key = b.isEnemy ? 'bullet_enemy' : playerBullet;
-      this.place(this.bullets, key, getSpriteCanvas(key), b.x, b.y);
+      this.place(this.bullets, key, getSpriteCanvas(key), (b.isEnemy ? projectX(b.x, b.y) : b.x), b.y);
     }
     this.bullets.end();
 

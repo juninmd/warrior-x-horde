@@ -1,4 +1,5 @@
 // entities.ts - Criação de entidades
+import { roadWorldBounds } from './perspective';
 import { Army, Soldier, EnemyHorde, Gate, Boss, Entities, MiniBoss, MysteryBox, Coin } from './types';
 import { MAX_HEROES } from './constants';
 import { shadeColor } from './utils';
@@ -267,18 +268,9 @@ export function createEnemyUnit(x: number, y: number, hp: number, level: number,
 }
 
 export function createEnemyHorde(canvasWidth: number, y: number, count: number, level: number = 1): EnemyHorde {
-  // Calcular limites da estrada com perspectiva
-  // A estrada é mais estreita no topo e mais larga embaixo
-  const roadTopWidth = canvasWidth * 0.3;
-  const roadBottomWidth = canvasWidth;
-
-  // Calcular a largura da estrada nesta posição Y (interpolação linear)
-  // Como Y é negativo (acima da tela), usar um valor base
-  const normalizedY = Math.max(0, Math.min(1, (y + 200) / 800)); // Normalizar para 0-1
-  const roadWidthAtY = roadTopWidth + (roadBottomWidth - roadTopWidth) * normalizedY;
-
-  // Centralizar na estrada com pequena variação
-  const maxOffset = roadWidthAtY * 0.2; // 20% de variação máxima
+  // Shared road geometry (perspective.ts): keep the horde inside the asphalt
+  const roadBounds = roadWorldBounds(y, 40);
+  const maxOffset = (roadBounds.maxX - roadBounds.minX) * 0.2; // 20% de variação máxima
   const x = canvasWidth / 2 + (Math.random() - 0.5) * maxOffset;
 
   const soldiers: Soldier[] = [];

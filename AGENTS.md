@@ -22,6 +22,10 @@ This file serves as the "Living Memory" for Jules and other agents working on th
 - **Scenery:** `src/biome-art.ts` – sky, horizon landmarks, ground texture and road wear per biome, painted into a 2x background cache (`renderer.updateBackgroundCache`). Deterministic (seeded per biome).
 - **Gates:** `src/gate-art.ts` – sci-fi energy portals (pylons, field, caption, icon, value) cached at 2x (`GATE_SS`); firerate/damage gates show +N%. Right-side gates shift content left to clear the shop rail.
 - **HUD:** `src/hud.ts` – canvas HUD (progress with radio/boss milestones, chapter chip, rank medal, count-up score, coin pill, perk row, army panel). `renderer.drawUI` wraps it (rank-up toast). Right column / bottom-left are reserved for the DOM shop rail and the SUPER button.
+- **Rewards:** `src/rewards.ts` is the single source for kill/horde/boss/mini-boss rewards (idempotent boss defeat).
+- **Shop:** `src/shop-catalog.ts` (pure: items, dynamic price, cooldown) + `src/shop.ts` (`purchase`, nuke effect). UI imports only the catalog (avoids circular imports).
+- **Geometry:** `src/army-geometry.ts` (`armyRadius`) and `src/perspective.ts` (road trapezoid, `perspScale`, `projectX`, `roadWorldBounds`); hordes/gates/enemy bullets are projected horizontally toward the road center; lane dashes scroll via `drawLaneMotion`.
+- **Audits:** `tests/sim_invariants.test.ts` (headless bot sim) and `tests/logic_audit.test.ts` guard collision/army/reward logic.
 - **Dev hook:** `window.__wxh` (DEV only) exposes state/cheats for e2e (`goToLevel`, `forceBoss`, `killBoss`, `setCoins`...).
 - **Entities:** `src/entities.ts` contains factory functions for creating game objects (soldiers, hordes, gates).
 - **Skins:** `src/skins.ts` holds the hero skin catalog + persisted selection (`crowdHeroSkin`, unlock by high score); `src/ui-skins.ts` renders the start-screen picker. The chosen `primary` color drives `createPlayerArmy` and is pre-rendered into the sprite cache.

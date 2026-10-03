@@ -10,6 +10,7 @@ import { getActiveSkin } from './skins';
 import { paintCharacter, SPRITE_SS } from './soldier-art';
 import { paintBiomeScene, paintRoadDetail } from './biome-art';
 import { paintGate, GATE_SS, GATE_PADDING } from './gate-art';
+import { HORIZON_RATIO, HORIZON_Y, perspScale, projectX, roadHalfWidthAt } from './perspective';
 import { drawHud } from './hud';
 import { getMiniBossSprite, MINI_BOX, MINI_VISUAL_SCALE, MINI_NAMES } from './boss-art';
 import { WeatherState, createWeather, stepWeather, drawWeather } from './weather';
@@ -609,7 +610,7 @@ export function updateFloatingTexts(): void {
 
 // --- Map / Background Rendering ---
 /* v8 ignore start */
-const HORIZON_RATIO = 0.22;
+// HORIZON_RATIO comes from perspective.ts
 
 function drawSky(ctx: CanvasRenderingContext2D, width: number, height: number, theme: ThemeConfig): void {
   const horizonY = height * HORIZON_RATIO;
@@ -841,33 +842,7 @@ function drawRoadSurface(ctx: CanvasRenderingContext2D, width: number, height: n
       ctx.stroke();
   }
 
-  // Center Lines
-  if (theme.roadType !== 'dirt' && theme.roadType !== 'ice' && theme.roadType !== 'alien') {
-      ctx.strokeStyle = theme.roadType === 'holographic' ? '#00FFFF' : '#FFD700';
-      ctx.lineWidth = 4;
-      ctx.setLineDash([30, 40]);
-      ctx.beginPath();
-      ctx.moveTo(width / 2, roadStartY + 10);
-      ctx.lineTo(width / 2, height);
-      ctx.stroke();
-      ctx.setLineDash([]);
-  }
-
-  // Side Lines
-  if (theme.roadType === 'asphalt' || theme.roadType === 'brick') {
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([20, 30]);
-      ctx.beginPath();
-      ctx.moveTo(width / 2 - roadHorizonWidth / 2 + 5, roadStartY + 10);
-      ctx.lineTo(width / 2 - roadBottomWidth / 2 + 30, height);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(width / 2 + roadHorizonWidth / 2 - 5, roadStartY + 10);
-      ctx.lineTo(width / 2 + roadBottomWidth / 2 - 30, height);
-      ctx.stroke();
-      ctx.setLineDash([]);
-  }
+  // Lane markings scroll with the player's progress: see drawLaneMotion
 }
 
 function drawDecorations(ctx: CanvasRenderingContext2D, width: number, height: number, theme: ThemeConfig): void {
@@ -1114,6 +1089,45 @@ function drawTree(ctx: CanvasRenderingContext2D, x: number, y: number, size: num
   ctx.fill();
 }
 
+/** Perspective-correct scrolling lane dashes (center + side lines). Depth d runs 1 (horizon) .. 0 (bottom). */
+function drawLaneMotion(ctx: CanvasRenderingContext2D, theme: ThemeConfig, distance: number): void {
+  const center = theme.roadType !== 'dirt' && theme.roadType !== 'ice' && theme.roadType !== 'alien';
+  const sides = theme.roadType === 'asphalt' || theme.roadType === 'brick';
+  if (!center && !sides) return;
+  const scroll = (distance / 515) % 1;
+  const period = 0.14; // in "1/depth" units: dash cycle
+  const startRow = HORIZON_Y + 10;
+  const colour = theme.roadType === 'holographic' ? '#00FFFF' : '#FFD700';
+  const rows = 18;
+  for (let i = 0; i < rows; i++) {
+    const k0 = (i + scroll) * period, k1 = k0 + period * 0.45;
+    // screen row from depth: y = H + (B - H) * k^2 (denser near the horizon)
+    const y0 = startRow + (BASE_HEIGHT - startRow) * Math.min(1, (k0 * 0.9) ** 2 * 6.2);
+    const y1 = startRow + (BASE_HEIGHT - startRow) * Math.min(1, (k1 * 0.9) ** 2 * 6.2);
+    if (y0 >= BASE_HEIGHT || y1 - y0 < 0.5) continue;
+    const t = (y0 - HORIZON_Y) / (BASE_HEIGHT - HORIZON_Y);
+    if (center) {
+      ctx.fillStyle = colour;
+      const w0 = 1 + 4 * t, w1 = 1 + 4 * ((y1 - HORIZON_Y) / (BASE_HEIGHT - HORIZON_Y));
+      ctx.beginPath();
+      ctx.moveTo(240 - w0 / 2, y0); ctx.lineTo(240 + w0 / 2, y0);
+      ctx.lineTo(240 + w1 / 2, y1); ctx.lineTo(240 - w1 / 2, y1);
+      ctx.fill();
+    }
+    if (sides) {
+      ctx.fillStyle = 'rgba(255,255,255,0.65)';
+      const h0 = roadHalfWidthAt(y0) - 8 - 22 * t, h1 = roadHalfWidthAt(y1) - 8 - 22 * ((y1 - HORIZON_Y) / (BASE_HEIGHT - HORIZON_Y));
+      const sw0 = 1 + 2 * t, sw1 = 1 + 2 * ((y1 - HORIZON_Y) / (BASE_HEIGHT - HORIZON_Y));
+      for (const sgn of [-1, 1]) {
+        ctx.beginPath();
+        ctx.moveTo(240 + sgn * h0 - sw0 / 2, y0); ctx.lineTo(240 + sgn * h0 + sw0 / 2, y0);
+        ctx.lineTo(240 + sgn * h1 + sw1 / 2, y1); ctx.lineTo(240 + sgn * h1 - sw1 / 2, y1);
+        ctx.fill();
+      }
+    }
+  }
+}
+
 function drawRoad(ctx: CanvasRenderingContext2D, gameState: GameState): void {
   const width = BASE_WIDTH;
   const height = BASE_HEIGHT;
@@ -1138,6 +1152,8 @@ function drawRoad(ctx: CanvasRenderingContext2D, gameState: GameState): void {
     drawMountains(ctx, width, height, theme);
     drawGround(ctx, width, height, theme);
   }
+
+  drawLaneMotion(ctx, theme, gameState.distanceTraveled || 0);
 
   // Draw dynamic elements on top
   drawClouds(ctx, width, time, theme);
@@ -1383,7 +1399,7 @@ function drawHordeBadges(ctx: CanvasRenderingContext2D, hordes: EnemyHorde[]): v
   for (const horde of hordes) {
     if (!horde.isActive || horde.count <= 0) continue;
     if (getHordeAlpha(horde) <= 0.5) continue;
-    drawGlassBadge(ctx, horde.x - 25, horde.y - 60, 50, 30, horde.count.toString(), '#E74C3C');
+    drawGlassBadge(ctx, projectX(horde.x, horde.y) - 25, horde.y - 60, 50, 30, horde.count.toString(), '#E74C3C');
   }
 }
 /* v8 ignore stop */
@@ -1449,7 +1465,7 @@ function drawEnemyHorde(ctx: CanvasRenderingContext2D, horde: EnemyHorde, time: 
 
   for (const soldier of tempEnemySoldiers) {
     const isFlash = (soldier.hitTimer || 0) > 0;
-    drawSoldier3D(ctx, soldier.x, soldier.y, soldier.size, soldier.color, soldier.animOffset, time, soldier.type, false, isFlash);
+    drawSoldier3D(ctx, projectX(soldier.x, soldier.y), soldier.y, soldier.size * perspScale(soldier.y, 0.7), soldier.color, soldier.animOffset, time, soldier.type, false, isFlash);
   }
 
   const count = horde.count;
@@ -1540,7 +1556,7 @@ function drawGate(ctx: CanvasRenderingContext2D, gate: Gate): void {
     const scaledWidth = cachedWidth * scale;
     const scaledHeight = cachedHeight * scale;
 
-    const centerX = gate.x + gate.width / 2;
+    const centerX = projectX(gate.x + gate.width / 2, gate.y, 0.6);
     const drawX = centerX - scaledWidth / 2;
     const drawY = gate.y - padding * scale;
 
