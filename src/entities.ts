@@ -232,6 +232,38 @@ export function addSuperSoldiersToArmy(army: Army, count: number): void {
   army.aliveCount += actualCount;
 }
 
+/** Enemy archetype colors/sizes (distinct sprite-cache keys). */
+export const ENEMY_KINDS = {
+  runner: { color: '#FF9A3D', size: 13, hpMult: 0.5 },
+  tank: { color: '#8E2A2A', size: 22, hpMult: 4 },
+  spitter: { color: '#8BD02A', size: 16, hpMult: 1.5 },
+} as const;
+
+export function enemyKindChances(level: number): { runner: number; tank: number; spitter: number } {
+  return {
+    runner: level >= 2 ? Math.min(0.15, 0.04 * (level - 1)) : 0,
+    tank: level >= 3 ? Math.min(0.1, 0.02 * (level - 2)) : 0,
+    spitter: level >= 2 ? Math.min(0.12, 0.03 * (level - 1)) : 0,
+  };
+}
+
+/** Rolls an archetype for one horde member. The horde center (allowChange=false) stays a plain zombie. */
+export function createEnemyUnit(x: number, y: number, hp: number, level: number, allowChange: boolean, rng: () => number = Math.random): Soldier {
+  const ch = enemyKindChances(level);
+  const r = allowChange ? rng() : 1;
+  let kind: Soldier['kind'];
+  if (r < ch.spitter) kind = 'spitter';
+  else if (r < ch.spitter + ch.tank) kind = 'tank';
+  else if (r < ch.spitter + ch.tank + ch.runner) kind = 'runner';
+  if (!kind) return createSoldier(x, y, '#E74C3C', hp);
+  const def = ENEMY_KINDS[kind];
+  const s = createSoldier(x, y, def.color, Math.max(1, Math.round(hp * def.hpMult)));
+  s.size = def.size;
+  s.kind = kind;
+  if (kind === 'spitter') s.cooldown = 90 + Math.random() * 120;
+  return s;
+}
+
 export function createEnemyHorde(canvasWidth: number, y: number, count: number, level: number = 1): EnemyHorde {
   // Calcular limites da estrada com perspectiva
   // A estrada é mais estreita no topo e mais larga embaixo
@@ -267,7 +299,7 @@ export function createEnemyHorde(canvasWidth: number, y: number, count: number, 
       const soldierX = x + Math.cos(angle) * ringRadius;
       const soldierY = y + Math.sin(angle) * ringRadius * 0.5; // Achatar em Y para efeito 3D
 
-      soldiers.push(createSoldier(soldierX, soldierY, '#E74C3C', enemyHp));
+      soldiers.push(createEnemyUnit(soldierX, soldierY, enemyHp, level, soldierIndex > 0));
       soldierIndex++;
     }
     ring++;

@@ -1,4 +1,5 @@
 // shooting.ts - Sistema de tiro automatico e Super Cannon
+import { getMods } from './perks';
 import { Entities, GameState, Bullet, EnemyHorde, Boss, Soldier, MiniBoss } from './types';
 import { addFloatingText, addExplosion, addParticle } from './renderer';
 import { triggerScreenShake } from './game';
@@ -131,7 +132,7 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
   const army = entities.playerArmy;
   const now = Date.now();
 
-  if (now - army.lastShotTime < army.fireRate) return;
+  if (now - army.lastShotTime < army.fireRate / getMods().fireRateMult) return;
 
   // PERFORMANCE OPTIMIZATION: Use bucket sort instead of full sort
   /* v8 ignore start */
@@ -225,7 +226,7 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
     const dispersion = (shooter.isSuper || shooter.type !== 'normal') ? 0 : (Math.random() - 0.5) * 3;
 
     // Customizar tiro baseada na classe
-    let damage = army.damage;
+    let damage = army.damage * getMods().damageMult;
     let speed = 0; // Se 0, usa padrão do createBullet (-12)
 
     if (shooter.isSuper) damage *= 2;
@@ -325,7 +326,7 @@ function applySuperCannonDamage(entities: Entities, gameState: GameState): void 
 
   const beamX = army.centerX;
   const beamWidth = 40;
-  const damage = army.damage * gameState.superCannonDamageMultiplier;
+  const damage = army.damage * getMods().damageMult * gameState.superCannonDamageMultiplier;
 
   for (const horde of entities.enemyHordes) {
     if (!horde.isActive) continue;

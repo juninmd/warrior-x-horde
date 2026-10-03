@@ -7,6 +7,7 @@ import { triggerHaptic } from './input';
 import { triggerScreenShake, triggerHitStop } from './game';
 import { getArmyBounds, checkBounds, getEntityBounds, Rect } from './utils';
 import { COLORS } from './constants';
+import { getMods } from './perks';
 import { soldierPool } from './soldierPool';
 import { saveGameProgress } from './gameState';
 import { SpatialHashGrid, SpatialItem } from './spatial';
@@ -17,7 +18,7 @@ const spatialQueryArray: SpatialItem[] = [];
 function getComboMultiplier(gameState: GameState): number {
     // 5% bonus per combo count, capped at 3.0x so a long clear streak cannot
     // inflate score/coins without bound (coins persist to localStorage).
-    return Math.min(3.0, 1 + gameState.combo * 0.05);
+    return Math.min(3.0, 1 + gameState.combo * 0.05) * getMods().comboScoreMult;
 }
 
 export function cleanupDeadSoldiers(soldiers: Soldier[]): void {
@@ -489,10 +490,11 @@ export function checkCollisions(entities: Entities, gameState: GameState): void 
         if (checkBounds(bounds, coinBounds)) {
             coin.passed = true;
             const multiplier = getComboMultiplier(gameState);
-            gameState.coins += Math.floor(coin.value * multiplier);
+            const coinGain = Math.floor(coin.value * multiplier * getMods().coinMult);
+            gameState.coins += coinGain;
             gameState.score += Math.floor(coin.value * 2 * multiplier);
             playSound(audioManager.powerUp);
-            addFloatingText(`+$${Math.floor(coin.value * multiplier)}`, coin.x, coin.y, COLORS.UI.GOLD);
+            addFloatingText(`+$${coinGain}`, coin.x, coin.y, COLORS.UI.GOLD);
             addParticle(coin.x, coin.y, 'spark', COLORS.UI.GOLD, 3);
         }
       }

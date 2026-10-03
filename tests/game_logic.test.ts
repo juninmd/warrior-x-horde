@@ -137,6 +137,10 @@ describe('Game Coverage', () => {
       rafCallback(1096);
       expect(gameState.isVictory).toBe(false); // Reset by advanceToNextLevel
       expect(gameState.currentLevel).toBe(2);
+      // The run is paused on the perk-choice modal until a card is picked
+      expect(gameState.isPaused).toBe(true);
+      (document.querySelector('.perk-card') as HTMLElement).click();
+      expect(gameState.isPaused).toBe(false);
 
       // 9. Game Over Logic
       gameState.isGameOver = true;

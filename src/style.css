@@ -1219,3 +1219,36 @@ body:not(.playing) .top-controls { display: none; }
   .game-over-content { padding: 16px; width: 94%; }
   .game-over-content .leaderboard-item:nth-child(n+4) { display: none; }
 }
+
+/* ---- Perk choice (between chapters) ------------------------------------ */
+.perk-modal {
+  position: absolute; inset: 0; z-index: 90;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  padding: 16px 12px; text-align: center;
+  background: radial-gradient(120% 80% at 50% 0%, rgba(74, 158, 255, 0.18), rgba(6, 9, 18, 0.94) 60%);
+  backdrop-filter: blur(3px);
+  animation: fadeIn 0.3s var(--ease-out);
+  overflow-y: auto;
+}
+.perk-modal h2 { font-size: 24px; letter-spacing: 1px; text-transform: uppercase; background: var(--grad-action); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.perk-sub { color: var(--text-dim); font-size: 14px; }
+.perk-row { display: flex; flex-direction: column; gap: 10px; width: min(360px, 100%); }
+.perk-card {
+  position: relative; display: grid; grid-template-columns: 54px 1fr; grid-template-areas: 'icon name' 'icon desc';
+  align-items: center; column-gap: 12px; row-gap: 2px; min-height: 84px; padding: 12px 14px; text-align: left;
+  font-family: inherit; color: var(--text); cursor: pointer;
+  background: var(--grad-surface), var(--surface-strong);
+  border: 1px solid var(--border-strong); border-left: 5px solid var(--cyan-1); border-radius: var(--r-md);
+  box-shadow: var(--sh-1); transition: transform 0.14s var(--ease-pop), box-shadow 0.2s;
+}
+.perk-card.rare { border-left-color: var(--violet); }
+.perk-card.epic { border-left-color: var(--gold); box-shadow: 0 0 22px rgba(255, 210, 90, 0.25), var(--sh-1); }
+.perk-card:hover, .perk-card:focus-visible { transform: translateY(-3px) scale(1.02); box-shadow: var(--sh-glow-cyan); }
+.perk-card:active { transform: scale(0.96); }
+.perk-icon { grid-area: icon; font-size: 38px; text-align: center; }
+.perk-name { grid-area: name; font-size: 17px; font-weight: 800; }
+.perk-desc { grid-area: desc; font-size: 13px; color: var(--text-dim); line-height: 1.25; }
+.perk-rarity { position: absolute; top: 6px; right: 10px; font-size: 9px; letter-spacing: 2px; color: var(--text-mute); }
+.perk-key { position: absolute; bottom: 6px; right: 10px; font-size: 11px; color: var(--text-mute); border: 1px solid var(--border); border-radius: 4px; padding: 0 5px; }
+.perk-taken { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; font-size: 18px; color: var(--text-dim); }
+@media (max-height: 560px) { .perk-row { flex-direction: row; } .perk-card { grid-template-columns: 1fr; grid-template-areas: 'icon' 'name' 'desc'; text-align: center; min-height: 0; } .perk-desc { display: none; } }

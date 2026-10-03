@@ -4,8 +4,11 @@ import { gameState, resetGameState, saveGameProgress } from './gameState';
 import { createInitialEntities, createEnemyHorde, createSoldier, addSpecialSoldiersToArmy, addSoldiersToArmy } from './entities';
 import { setWorldLayer, render, shareOnX, shareOnWhatsApp, addFloatingText, updateFloatingTexts, addParticle } from './renderer';
 import { checkCollisions } from './collisions';
+import { rollOffers, pickPerk, resetPerks, refillShield, getMods, getTakenPerks, BASE_SUPER_COOLDOWN } from './perks';
+import { showPerkChoice, isPerkChoiceOpen } from './ui-perks';
 import { showChapterBanner, showBossBanner, hideStoryBanner } from './story';
 import { updateBossAttacks, resolveEnemyBullets } from './boss-ai';
+import { updateEnemyRanged } from './enemy-ai';
 import { updateSpawns, resetSpawnerState } from './spawner';
 import { updateMovement } from './movement';
 import { setupInput, getMouseX, initializeMousePosition, setGameStateRef, triggerHaptic } from './input';
@@ -435,6 +438,7 @@ export function fixedUpdate(dt: number): void {
   updateShooting(entities, gameState);
   updateBullets(entities, gameState, dtFactor);
   updateBossAttacks(entities, gameState, dtFactor);
+  updateEnemyRanged(entities, gameState, dtFactor);
   if (entities.boss && entities.boss.isActive && !entities.boss.introShown) {
     entities.boss.introShown = true;
     showBossBanner(entities.boss.type);
@@ -650,6 +654,27 @@ function gameLoop(currentTime: number = 0): void {
 }
 
 // Avançar para o próximo nível
+/** Pauses the run and lets the player pick a perk, then resumes with the next chapter banner. */
+function offerPerks(clearedLevel: number): void {
+  const offers = rollOffers(3);
+  if (offers.length === 0) {
+    showChapterBanner(gameState.currentLevel);
+    return;
+  }
+  gameState.isPaused = true;
+  const pausedAt = Date.now();
+  showPerkChoice(offers, clearedLevel, (id) => {
+    pickPerk(id, entities);
+    gameState.superCannonCooldown = BASE_SUPER_COOLDOWN * getMods().superCooldownMult;
+    gameState.superCannonLastUsed += Date.now() - pausedAt; // cooldown must not tick while choosing
+    refillShield();
+    gameState.isPaused = false;
+    lastTime = 0;
+    showChapterBanner(gameState.currentLevel);
+    requestAnimationFrame(gameLoop);
+  });
+}
+
 function advanceToNextLevel(): void {
   // Bonus Coins for clearing level
   const levelBonus = 100 + gameState.currentLevel * 50;
@@ -661,8 +686,8 @@ function advanceToNextLevel(): void {
   playSound(audioManager.victory);
   triggerHaptic('success');
 
+  const clearedLevel = gameState.currentLevel;
   gameState.currentLevel++;
-  showChapterBanner(gameState.currentLevel);
   gameState.distanceTraveled = 0;
   gameState.levelDistance += 900; // Incremento 3x maior por level (era 300)
   gameState.isVictory = false;
@@ -683,6 +708,8 @@ function advanceToNextLevel(): void {
     createEnemyHorde(BASE_WIDTH, -50, baseEnemies, gameState.currentLevel),
     createEnemyHorde(BASE_WIDTH, -200, baseEnemies + 3, gameState.currentLevel),
   ];
+
+  offerPerks(clearedLevel);
 }
 
 // Iniciar jogo
@@ -694,6 +721,8 @@ let startToken = 0;
 export function startGame(): void {
   const token = ++startToken;
   hideStoryBanner();
+  resetPerks();
+  gameState.superCannonCooldown = BASE_SUPER_COOLDOWN;
   resetGameState();
   resetSpawnerState(); // Clear carried-over mini-boss spawn counter from prior run
   entities = createInitialEntities(BASE_WIDTH, BASE_HEIGHT);
@@ -829,6 +858,9 @@ if (import.meta.env.DEV) {
     score: () => gameState.score,
     isGameOver: () => gameState.isGameOver,
     isStarted: () => gameState.isStarted,
+    perks: () => getTakenPerks().map(p => [p.perk.id, p.count]),
+    perkOpen: () => isPerkChoiceOpen(),
+    isPaused: () => gameState.isPaused,
     setCoins: (n: number) => { gameState.coins = n; },
     goToLevel: (n: number) => debugSetLevel(n),
     boss: () => entities?.boss ? { type: entities.boss.type, hp: entities.boss.hp, maxHp: entities.boss.maxHp, y: entities.boss.y, phase: entities.boss.phase ?? 0, telegraph: entities.boss.telegraph ?? 0 } : null,
@@ -941,7 +973,7 @@ export function debugSetLevel(targetLevel: number): void {
 
 // Função para pausar/despausar o jogo
 export function togglePause(): void {
-  if (!gameState.isStarted || gameState.isGameOver) return;
+  if (!gameState.isStarted || gameState.isGameOver || isPerkChoiceOpen()) return;
 
   triggerHaptic('light');
 

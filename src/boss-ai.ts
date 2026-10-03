@@ -10,6 +10,7 @@ import { cleanupDeadSoldiers } from './collisions';
 import { addExplosion, addFloatingText } from './renderer';
 import { triggerScreenShake } from './game';
 import { fastRemove } from './utils';
+import { consumeShield, getMods } from './perks';
 
 export { BOSS_LORE, getBossLore };
 export type { BossLore };
@@ -134,7 +135,14 @@ export function resolveEnemyBullets(entities: Entities, gameState: GameState): n
     }
     if (!hit) continue;
 
-    let toKill = bullet.damage;
+    if (consumeShield()) {
+      addExplosion(bullet.x, bullet.y, '#4AD0FF');
+      addFloatingText('BLOQUEADO', bullet.x, bullet.y - 12, '#4AD0FF', 0.8);
+      releaseBullet(bullet);
+      fastRemove(entities.bullets, i);
+      continue;
+    }
+    let toKill = Math.max(1, bullet.damage - getMods().bossDamageReduction);
     addExplosion(bullet.x, bullet.y, '#FF4040');
     for (let j = army.soldiers.length - 1; j >= 0 && toKill > 0; j--) {
       const s = army.soldiers[j];
