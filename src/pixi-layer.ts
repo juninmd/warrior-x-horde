@@ -7,6 +7,7 @@ import { Application, Container, Graphics, Sprite, Texture } from 'pixi.js';
 import type { Entities, Particle } from './types';
 import { BASE_WIDTH, BASE_HEIGHT } from './constants';
 import { QualityManager } from './quality';
+import { SPRITE_SS } from './soldier-art';
 import {
   WorldLayer, getSpriteCanvas, getSoldierSprite, getParticles,
   collectEnemySoldiers, getHordeAlpha, updateArmyTrail, prepareSoldiersToDraw, getPlayerBulletKey,
@@ -136,7 +137,7 @@ export class PixiLayer implements WorldLayer {
   private drawSoldier(pool: SpritePool, key: string, src: Source | undefined, x: number, y: number, anim: number, time: number, alpha: number): void {
     const bounce = Math.sin(time * 0.008 + anim) * 3;
     const scale = Math.max(0.5, 1 - (800 - y) / 1500);
-    this.place(pool, key, src, x, y + bounce, scale, alpha);
+    this.place(pool, key, src, x, y + bounce, scale / SPRITE_SS, alpha); // soldier sprites are supersampled
   }
 
   private drawParticle(p: Particle): void {

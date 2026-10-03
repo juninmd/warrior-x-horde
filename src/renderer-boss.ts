@@ -4,6 +4,7 @@ import { safeAddColorStop } from './renderer-utils';
 import { BASE_WIDTH } from './constants';
 import { QualityManager } from './quality';
 import { getBossLore } from './boss-lore';
+import { isPaintedBoss, getBossSprite, BOSS_BOX, BOSS_VISUAL_SCALE } from './boss-art';
 
 // Boss final - Nave Mãe Alienígena (Scarier version)
 export function drawMothershipBoss(ctx: CanvasRenderingContext2D, boss: Boss, time: number): void {
@@ -210,333 +211,38 @@ export function drawMothershipBoss(ctx: CanvasRenderingContext2D, boss: Boss, ti
   ctx.fillText(`${Math.ceil(boss.hp)} / ${boss.maxHp}`, x, barY + barHeight / 2 + 4);
 }
 
-// Funções de desenho específicas para variantes de boss
+/** Draws the cached detailed sprite with idle bobbing/breathing. Returns false when unavailable. */
+/* v8 ignore start */
+function drawPaintedBoss(ctx: CanvasRenderingContext2D, boss: Boss, time: number): boolean {
+  if (!isPaintedBoss(boss.type)) return false;
+  const flash = (boss.hitTimer ?? 0) > 0;
+  const sprite = getBossSprite(boss.type, flash);
+  if (!sprite) return false;
 
-export function drawBossBeast(ctx: CanvasRenderingContext2D, boss: Boss, time: number): void {
   const cx = boss.x + boss.width / 2;
   const cy = boss.y + boss.height / 2;
-  const pulse = Math.sin(time * 0.005) * 10;
-
-  // Corpo peludo/irregular
-  ctx.fillStyle = '#8B4513';
-  ctx.beginPath();
-  // Forma irregular base
-  for (let i = 0; i < 16; i++) {
-    const angle = (i / 16) * Math.PI * 2;
-    const r = (boss.width / 2) + Math.sin(angle * 5 + time * 0.003) * 5 + pulse;
-    const px = cx + Math.cos(angle) * r;
-    const py = cy + Math.sin(angle) * r;
-    if (i === 0) ctx.moveTo(px, py);
-    else ctx.lineTo(px, py);
-  }
-  ctx.closePath();
-  ctx.fill();
-
-  // Olho ciclope gigante
-  const eyeY = cy - 10;
-  ctx.fillStyle = '#FFF';
-  ctx.beginPath();
-  ctx.arc(cx, eyeY, 25, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Pupila
-  ctx.fillStyle = '#000';
-  const lookY = eyeY + Math.sin(time * 0.002) * 5;
-  ctx.beginPath();
-  ctx.arc(cx, lookY, 10, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Presas
-  ctx.fillStyle = '#F0E68C';
-  ctx.beginPath();
-  ctx.moveTo(cx - 20, cy + 20);
-  ctx.lineTo(cx - 10, cy + 50);
-  ctx.lineTo(cx, cy + 20);
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.moveTo(cx + 20, cy + 20);
-  ctx.lineTo(cx + 10, cy + 50);
-  ctx.lineTo(cx, cy + 20);
-  ctx.fill();
-}
-
-export function drawBossMachine(ctx: CanvasRenderingContext2D, boss: Boss, time: number): void {
-  const cx = boss.x + boss.width / 2;
-  const cy = boss.y + boss.height / 2;
-
-  // Corpo metálico quadrado com cantos cortados
-  ctx.fillStyle = '#555';
-  ctx.beginPath();
-  const s = boss.width;
-  ctx.moveTo(cx - s/2 + 10, cy - s/2);
-  ctx.lineTo(cx + s/2 - 10, cy - s/2);
-  ctx.lineTo(cx + s/2, cy - s/2 + 10);
-  ctx.lineTo(cx + s/2, cy + s/2 - 10);
-  ctx.lineTo(cx + s/2 - 10, cy + s/2);
-  ctx.lineTo(cx - s/2 + 10, cy + s/2);
-  ctx.lineTo(cx - s/2, cy + s/2 - 10);
-  ctx.lineTo(cx - s/2, cy - s/2 + 10);
-  ctx.closePath();
-  ctx.fill();
-
-  // Detalhes mecânicos (rivets)
-  ctx.fillStyle = '#888';
-  for(const dx of [-1, 1]) {
-    for(const dy of [-1, 1]) {
-      ctx.beginPath();
-      ctx.arc(cx + dx * (s/2 - 10), cy + dy * (s/2 - 10), 4, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
-
-  // Núcleo brilhante
-  const corePulse = Math.abs(Math.sin(time * 0.01));
-  ctx.fillStyle = `rgba(0, 255, 255, ${0.5 + corePulse * 0.5})`;
-  ctx.beginPath();
-  ctx.arc(cx, cy, 20, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Canhões laterais
-  ctx.fillStyle = '#333';
-  ctx.fillRect(cx - s/2 - 10, cy - 10, 15, 20);
-  ctx.fillRect(cx + s/2 - 5, cy - 10, 15, 20);
-}
-
-export function drawBossDemon(ctx: CanvasRenderingContext2D, boss: Boss, time: number): void {
-  const cx = boss.x + boss.width / 2;
-  const cy = boss.y + boss.height / 2;
-  const pulse = Math.sin(time * 0.008) * 5;
-
-  // Aura de fogo
-  const gradient = ctx.createRadialGradient(cx, cy, 30, cx, cy, 70 + pulse);
-  safeAddColorStop(gradient, 0, '#FFA500');
-  safeAddColorStop(gradient, 1, 'rgba(255, 0, 0, 0)');
-  ctx.fillStyle = gradient;
-  ctx.beginPath();
-  ctx.arc(cx, cy, 70 + pulse, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Cabeça demoníaca
-  ctx.fillStyle = '#800000';
-  ctx.beginPath();
-  ctx.arc(cx, cy, 40, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Chifres curvos grandes
-  ctx.fillStyle = '#000';
-  ctx.beginPath();
-  ctx.moveTo(cx - 20, cy - 20);
-  ctx.bezierCurveTo(cx - 50, cy - 50, cx - 60, cy - 10, cx - 80, cy - 40);
-  ctx.lineTo(cx - 30, cy - 10);
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.moveTo(cx + 20, cy - 20);
-  ctx.bezierCurveTo(cx + 50, cy - 50, cx + 60, cy - 10, cx + 80, cy - 40);
-  ctx.lineTo(cx + 30, cy - 10);
-  ctx.fill();
-
-  // Olhos vermelhos brilhantes
-  /* v8 ignore start */
-  ctx.fillStyle = '#FF0000';
-  /* v8 ignore next 4 */
-  if (QualityManager.getInstance().settings.enableShadows) {
-    ctx.shadowColor = '#FF0000';
-  /* v8 ignore stop */
-    ctx.shadowBlur = 10;
-  }
-  ctx.beginPath();
-  ctx.moveTo(cx - 15, cy - 5);
-  ctx.lineTo(cx - 5, cy + 5);
-  ctx.lineTo(cx - 25, cy + 5);
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.moveTo(cx + 15, cy - 5);
-  ctx.lineTo(cx + 5, cy + 5);
-  ctx.lineTo(cx + 25, cy + 5);
-  /* v8 ignore start */
-  ctx.fill();
-  /* v8 ignore next 4 */
-  if (QualityManager.getInstance().settings.enableShadows) {
-  /* v8 ignore stop */
-    ctx.shadowBlur = 0;
-  }
-}
-
-export function drawBossSlime(ctx: CanvasRenderingContext2D, boss: Boss, time: number): void {
-  const cx = boss.x + boss.width / 2;
-  const cy = boss.y + boss.height / 2;
-  const wobble = Math.sin(time * 0.005 + cx) * 5;
-
-  ctx.fillStyle = '#00FF00';
-  ctx.beginPath();
-  ctx.ellipse(cx, cy + 10, 45 + wobble, 35 - wobble, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Olhos
-  ctx.fillStyle = '#FFF';
-  ctx.beginPath();
-  ctx.arc(cx - 15, cy, 10, 0, Math.PI * 2);
-  ctx.arc(cx + 15, cy, 10, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = '#000';
-  ctx.beginPath();
-  ctx.arc(cx - 15, cy, 4, 0, Math.PI * 2);
-  ctx.arc(cx + 15, cy, 4, 0, Math.PI * 2);
-  ctx.fill();
-}
-
-export function drawBossEye(ctx: CanvasRenderingContext2D, boss: Boss): void {
-  const cx = boss.x + boss.width / 2;
-  const cy = boss.y + boss.height / 2;
-
-  // Globo ocular
-  ctx.fillStyle = '#FFF';
-  ctx.beginPath();
-  ctx.arc(cx, cy, 40, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Íris
-  ctx.fillStyle = '#FF0000';
-  ctx.beginPath();
-  ctx.arc(cx, cy, 20, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Pupila
-  ctx.fillStyle = '#000';
-  ctx.beginPath();
-  ctx.arc(cx, cy, 10, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Veias
-  ctx.strokeStyle = '#FFCCCC';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(cx - 40, cy);
-  ctx.lineTo(cx - 20, cy);
-  ctx.moveTo(cx + 40, cy);
-  ctx.lineTo(cx + 20, cy);
-  ctx.moveTo(cx, cy - 40);
-  ctx.lineTo(cx, cy - 20);
-  ctx.moveTo(cx, cy + 40);
-  ctx.lineTo(cx, cy + 20);
-  ctx.stroke();
-}
-
-export function drawBossSpider(ctx: CanvasRenderingContext2D, boss: Boss): void {
-  const cx = boss.x + boss.width / 2;
-  const cy = boss.y + boss.height / 2;
-
-  // Pernas
-  ctx.strokeStyle = '#000';
-  ctx.lineWidth = 4;
-  for(let i=0; i<8; i++) {
-    const angle = (i / 8) * Math.PI * 2;
-    const legX = cx + Math.cos(angle) * 60;
-    const legY = cy + Math.sin(angle) * 60;
-    ctx.beginPath();
-    ctx.moveTo(cx, cy);
-    ctx.lineTo(legX, legY);
-    ctx.stroke();
-  }
-
-  // Corpo
-  ctx.fillStyle = '#000';
-  ctx.beginPath();
-  ctx.arc(cx, cy, 30, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Olhos múltiplos
-  ctx.fillStyle = '#F0F0F0';
-  for(let i=0; i<4; i++) {
-    ctx.beginPath();
-    ctx.arc(cx - 10 + i * 6, cy - 5, 2, 0, Math.PI * 2);
-    ctx.fill();
-  }
-}
-
-export function drawBossSkull(ctx: CanvasRenderingContext2D, boss: Boss): void {
-  const cx = boss.x + boss.width / 2;
-  const cy = boss.y + boss.height / 2;
-
-  ctx.fillStyle = '#F0F0F0';
-  ctx.beginPath();
-  ctx.arc(cx, cy - 10, 30, 0, Math.PI * 2); // Crânio
-  ctx.fillRect(cx - 20, cy + 10, 40, 20); // Maxilar
-  ctx.fill();
-
-  // Órbitas
-  ctx.fillStyle = '#000';
-  ctx.beginPath();
-  ctx.arc(cx - 12, cy - 10, 8, 0, Math.PI * 2);
-  ctx.arc(cx + 12, cy - 10, 8, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Nariz
-  ctx.beginPath();
-  ctx.moveTo(cx, cy + 5);
-  ctx.lineTo(cx - 5, cy + 15);
-  ctx.lineTo(cx + 5, cy + 15);
-  ctx.fill();
-}
-
-export function drawBossGhost(ctx: CanvasRenderingContext2D, boss: Boss, time: number): void {
-  const cx = boss.x + boss.width / 2;
-  const cy = boss.y + boss.height / 2;
-  const float = Math.sin(time * 0.003) * 10;
+  const t = time * 0.003;
+  const floaty = boss.type === 'ghost' || boss.type === 'crystal' || boss.type === 'eye';
+  const bob = Math.sin(t) * (floaty ? 6 : 2.5);
+  const breathe = 1 + Math.sin(t * 1.3) * 0.02;
+  const size = BOSS_BOX * BOSS_VISUAL_SCALE;
+  const enraged = (boss.phase ?? 1) >= 3;
 
   ctx.save();
-  ctx.globalAlpha = 0.7;
-  ctx.fillStyle = '#ADD8E6';
-  ctx.beginPath();
-  ctx.arc(cx, cy + float - 10, 30, Math.PI, 0);
-  ctx.lineTo(cx + 30, cy + float + 30);
-  for(let i=0; i<3; i++) {
-    ctx.lineTo(cx + 20 - i * 20, cy + float + 20);
-    ctx.lineTo(cx + 10 - i * 20, cy + float + 30);
+  ctx.translate(cx, cy + bob);
+  if (enraged) ctx.rotate(Math.sin(time * 0.04) * 0.02); // trembling with rage
+  ctx.scale(breathe, 2 - breathe);
+  if (boss.type === 'ghost') ctx.globalAlpha = 0.82 + Math.sin(t * 2) * 0.12;
+  ctx.drawImage(sprite, -size / 2, -size / 2, size, size);
+  if (enraged) { // red rim glow overlay for the final phase
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = 0.12 + Math.sin(time * 0.01) * 0.06;
+    ctx.drawImage(sprite, -size / 2, -size / 2, size, size);
   }
-  ctx.lineTo(cx - 30, cy + float + 30);
-  ctx.fill();
   ctx.restore();
-
-  // Olhos
-  ctx.fillStyle = '#000';
-  ctx.beginPath();
-  ctx.arc(cx - 10, cy + float - 10, 4, 0, Math.PI * 2);
-  ctx.arc(cx + 10, cy + float - 10, 4, 0, Math.PI * 2);
-  ctx.fill();
+  return true;
 }
-
-export function drawBossCrystal(ctx: CanvasRenderingContext2D, boss: Boss, time: number): void {
-  const cx = boss.x + boss.width / 2;
-  const cy = boss.y + boss.height / 2;
-  const rot = time * 0.001;
-
-  ctx.save();
-  ctx.translate(cx, cy);
-  ctx.rotate(rot);
-
-  ctx.fillStyle = '#00FFFF';
-  ctx.beginPath();
-  ctx.moveTo(0, -40);
-  ctx.lineTo(30, 0);
-  ctx.lineTo(0, 40);
-  ctx.lineTo(-30, 0);
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-  ctx.beginPath();
-  ctx.moveTo(0, -40);
-  ctx.lineTo(15, -10);
-  ctx.lineTo(0, 0);
-  ctx.fill();
-
-  ctx.restore();
-}
+/* v8 ignore stop */
 
 export function drawBoss(ctx: CanvasRenderingContext2D, boss: Boss, time: number): void {
   // Sombra genérica base
@@ -548,19 +254,8 @@ export function drawBoss(ctx: CanvasRenderingContext2D, boss: Boss, time: number
   ctx.fill();
 
   // Dispatch para tipo específico
-  switch (boss.type) {
-    case 'mothership': drawMothershipBoss(ctx, boss, time); return;
-    case 'machine': drawBossMachine(ctx, boss, time); break;
-    case 'demon': drawBossDemon(ctx, boss, time); break;
-    case 'beast': drawBossBeast(ctx, boss, time); break;
-    case 'slime': drawBossSlime(ctx, boss, time); break;
-    case 'eye': drawBossEye(ctx, boss); break;
-    case 'spider': drawBossSpider(ctx, boss); break;
-    case 'skull': drawBossSkull(ctx, boss); break;
-    case 'ghost': drawBossGhost(ctx, boss, time); break;
-    case 'crystal': drawBossCrystal(ctx, boss, time); break;
-    default: drawBossBeast(ctx, boss, time); break;
-  }
+  if (boss.type === 'mothership') { drawMothershipBoss(ctx, boss, time); return; }
+  drawPaintedBoss(ctx, boss, time); // unknown types simply render nothing but the shadow + HP bar
 
   // Barra de vida comum para bosses não-mothership
   const barWidth = 180;

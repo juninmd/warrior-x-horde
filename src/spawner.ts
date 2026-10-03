@@ -240,9 +240,13 @@ export function checkBossSpawn(entities: Entities, canvasWidth: number, gameStat
 export function updateSpawns(entities: Entities, canvasWidth: number, gameState: GameState, dtFactor: number): void {
   if (gameState.isGameOver || gameState.isVictory) return;
 
-  spawnGates(entities, canvasWidth, gameState);
-  spawnEnemies(entities, canvasWidth, gameState, dtFactor);
-  spawnMiniBoss(entities, canvasWidth, gameState);
+  // During a boss fight the road is kept clear: only the boss (and its projectiles) matter
+  const bossFight = entities.boss !== null && entities.boss.isActive;
+  if (!bossFight) {
+    spawnGates(entities, canvasWidth, gameState);
+    spawnEnemies(entities, canvasWidth, gameState, dtFactor);
+    spawnMiniBoss(entities, canvasWidth, gameState);
+  }
   spawnMysteryBoxes(entities, canvasWidth, gameState, dtFactor);
   spawnCoins(entities, canvasWidth, gameState, dtFactor);
   checkBossSpawn(entities, canvasWidth, gameState);

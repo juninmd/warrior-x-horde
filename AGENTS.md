@@ -17,6 +17,9 @@ This file serves as the "Living Memory" for Jules and other agents working on th
 - **Enemy archetypes:** `entities.createEnemyUnit` (runner/tank/spitter by level) + `src/enemy-ai.ts` (spitters fire aimed acid, capped at 24 bullets in flight).
 - **Weather:** `src/weather.ts` – per-biome ambient particles + color grade, drawn in front of the action (`renderWeather`).
 - **Cinematic:** `src/cinematic.ts` – typewriter intro (auto once on first real visit; `#storyBtn` replays). Radio calls from Cmdt. Vega at 50% of each level (`story.ts`).
+- **Character art:** `src/soldier-art.ts` – procedural, supersampled (`SPRITE_SS`=2) soldiers (4 weapons, Super, 11 skin styles) and zombies (base/runner/tank/spitter), cached per key by `renderer.renderSoldierToCache`. Sprites are displayed at 1/SS (2D: `drawSoldier3D`, Pixi: `scale / SPRITE_SS`).
+- **Boss art:** `src/boss-art.ts` – 9 chapter bosses + 4 elite mini-bosses painted once into cached 2x sprites (+ white flash variant); idle bob/breath in `renderer-boss.drawPaintedBoss`. The final Mothership still uses the older vector art.
+- **Scenery:** `src/biome-art.ts` – sky, horizon landmarks, ground texture and road wear per biome, painted into a 2x background cache (`renderer.updateBackgroundCache`). Deterministic (seeded per biome).
 - **Dev hook:** `window.__wxh` (DEV only) exposes state/cheats for e2e (`goToLevel`, `forceBoss`, `killBoss`, `setCoins`...).
 - **Entities:** `src/entities.ts` contains factory functions for creating game objects (soldiers, hordes, gates).
 - **Skins:** `src/skins.ts` holds the hero skin catalog + persisted selection (`crowdHeroSkin`, unlock by high score); `src/ui-skins.ts` renders the start-screen picker. The chosen `primary` color drives `createPlayerArmy` and is pre-rendered into the sprite cache.
