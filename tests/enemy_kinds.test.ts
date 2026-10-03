@@ -79,3 +79,19 @@ describe('spitter ranged attacks', () => {
     expect(updateEnemyRanged(e, gameState, 1)).toBe(0);
   });
 });
+
+describe('spitter cooldown', () => {
+  it('counts down before firing and tolerates a missing cooldown', () => {
+    resetGameState();
+    const e = createInitialEntities(480, 800);
+    const horde = createEnemyHorde(480, 300, 4, 1);
+    horde.soldiers.forEach(s => { s.y = 300; });
+    horde.soldiers[1].kind = 'spitter';
+    horde.soldiers[1].cooldown = 5;
+    e.enemyHordes = [horde];
+    expect(updateEnemyRanged(e, gameState, 1)).toBe(0);
+    horde.soldiers[1].cooldown = undefined; // defaults to 120 and keeps counting
+    expect(updateEnemyRanged(e, gameState, 1)).toBe(0);
+    expect(horde.soldiers[1].cooldown).toBe(119);
+  });
+});

@@ -13,6 +13,10 @@ This file serves as the "Living Memory" for Jules and other agents working on th
 - **E2E:** `npm run e2e` (Playwright, `tests/e2e`); screenshots in `test-results/screenshots`, samples in `docs/screenshots`. Set `PW_CHROMIUM` to use a custom Chromium binary.
 - **Boss AI:** `src/boss-ai.ts` – 3 HP phases (66%/33%), telegraphed volleys (`aimed`/`fan`/`rain`), enemy bullets (`isEnemy`, `vx`) that kill soldiers (`resolveEnemyBullets`). Names/taunts in `src/boss-lore.ts`.
 - **Story:** `src/story.ts` – 10 chapters (one per level), chapter/boss banners (`#storyBanner`), victory/defeat epilogues.
+- **Perks:** `src/perks.ts` (8 stackable run upgrades: damage, fire rate, shield, coins, reinforcements, armor, super cooldown, combo) + `src/ui-perks.ts` (pick 1 of 3 after each boss; pauses the run). Hooks: `getMods()` in shooting/collisions/boss-ai.
+- **Enemy archetypes:** `entities.createEnemyUnit` (runner/tank/spitter by level) + `src/enemy-ai.ts` (spitters fire aimed acid, capped at 24 bullets in flight).
+- **Weather:** `src/weather.ts` – per-biome ambient particles + color grade, drawn in front of the action (`renderWeather`).
+- **Cinematic:** `src/cinematic.ts` – typewriter intro (auto once on first real visit; `#storyBtn` replays). Radio calls from Cmdt. Vega at 50% of each level (`story.ts`).
 - **Dev hook:** `window.__wxh` (DEV only) exposes state/cheats for e2e (`goToLevel`, `forceBoss`, `killBoss`, `setCoins`...).
 - **Entities:** `src/entities.ts` contains factory functions for creating game objects (soldiers, hordes, gates).
 - **Skins:** `src/skins.ts` holds the hero skin catalog + persisted selection (`crowdHeroSkin`, unlock by high score); `src/ui-skins.ts` renders the start-screen picker. The chosen `primary` color drives `createPlayerArmy` and is pre-rendered into the sprite cache.

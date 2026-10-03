@@ -606,6 +606,7 @@ export function drawBoss(ctx: CanvasRenderingContext2D, boss: Boss, time: number
   ctx.fillText(`${bossName}: ${Math.ceil(boss.hp)}`, barX + barWidth / 2, barY + barHeight / 2 + 4);
 }
 
+/* v8 ignore start */
 /** Warning drawn while a boss charges a volley: pulsing ring, "!" and a pattern hint. */
 export function drawBossTelegraph(ctx: CanvasRenderingContext2D, boss: Boss, playerX: number, playerY: number, time: number): void {
   const t = boss.telegraph ?? 0;
@@ -644,3 +645,4 @@ export function drawBossTelegraph(ctx: CanvasRenderingContext2D, boss: Boss, pla
   ctx.fillText('!', cx, boss.y - 52);
   ctx.restore();
 }
+/* v8 ignore stop */

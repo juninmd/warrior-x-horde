@@ -67,6 +67,10 @@ test.describe('Homologation', () => {
       await page.evaluate(() => (window as any).__wxh.killBoss());
       if (level < 10) {
         await page.waitForFunction((n) => (window as any).__wxh.level() > n || (window as any).__wxh.isGameOver(), level, { timeout: 25000 });
+        // clearing a chapter pauses the run on the perk-choice cards: pick the first one
+        if (await page.evaluate(() => (window as any).__wxh.perkOpen())) {
+          await page.locator('.perk-card').first().click();
+        }
         if (await page.evaluate(() => (window as any).__wxh.isGameOver())) {
           // army was wiped by the volleys — acceptable outcome; restart the run for the next level
           await page.evaluate(() => (window as any).__wxh.goToLevel(1));

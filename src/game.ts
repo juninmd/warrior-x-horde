@@ -6,7 +6,8 @@ import { setWorldLayer, render, shareOnX, shareOnWhatsApp, addFloatingText, upda
 import { checkCollisions } from './collisions';
 import { rollOffers, pickPerk, resetPerks, refillShield, getMods, getTakenPerks, BASE_SUPER_COOLDOWN } from './perks';
 import { showPerkChoice, isPerkChoiceOpen } from './ui-perks';
-import { showChapterBanner, showBossBanner, hideStoryBanner } from './story';
+import { playIntro, shouldAutoPlayIntro, isIntroPlaying } from './cinematic';
+import { showRadioBanner, showChapterBanner, showBossBanner, hideStoryBanner } from './story';
 import { updateBossAttacks, resolveEnemyBullets } from './boss-ai';
 import { updateEnemyRanged } from './enemy-ai';
 import { updateSpawns, resetSpawnerState } from './spawner';
@@ -311,6 +312,7 @@ setupSuperCannonUI(handleSuperCannon);
 
 // Game loop
 let wasInBossFight = false;
+let radioShownLevel = 0;
 let lastTime = 0;
 // Wall-clock timestamp when the game was paused, used to keep the Date.now()-based
 // Super Cannon cooldown from elapsing while paused (would otherwise recharge for free).
@@ -439,6 +441,10 @@ export function fixedUpdate(dt: number): void {
   updateBullets(entities, gameState, dtFactor);
   updateBossAttacks(entities, gameState, dtFactor);
   updateEnemyRanged(entities, gameState, dtFactor);
+  if (radioShownLevel !== gameState.currentLevel && gameState.distanceTraveled >= gameState.levelDistance * 0.5 && !entities.boss) {
+    radioShownLevel = gameState.currentLevel;
+    showRadioBanner(gameState.currentLevel);
+  }
   if (entities.boss && entities.boss.isActive && !entities.boss.introShown) {
     entities.boss.introShown = true;
     showBossBanner(entities.boss.type);
@@ -720,6 +726,7 @@ let startToken = 0;
 
 export function startGame(): void {
   const token = ++startToken;
+  radioShownLevel = 0;
   hideStoryBanner();
   resetPerks();
   gameState.superCannonCooldown = BASE_SUPER_COOLDOWN;
@@ -818,8 +825,26 @@ canvas.addEventListener('touchstart', (e) => {
 }, { passive: false });
 
 // Event listeners
+/** Starts a run; the very first visit watches the story intro first. */
+export function beginRun(): void {
+  if (isIntroPlaying()) return;
+  if (shouldAutoPlayIntro()) {
+    playIntro(() => startGame());
+    return;
+  }
+  startGame();
+}
+
 if (startScreen) {
-  startScreen.addEventListener('click', startGame);
+  startScreen.addEventListener('click', beginRun);
+}
+
+const storyBtn = document.getElementById('storyBtn');
+if (storyBtn) {
+  storyBtn.addEventListener('click', (e) => {
+    e.stopPropagation(); // do not start the run
+    playIntro(() => { /* back to the start screen */ });
+  });
 }
 // UI Event Listeners (Security Fix: Removed inline handlers)
 const pauseBtnTop = document.getElementById('pauseBtnTop');
@@ -860,6 +885,12 @@ if (import.meta.env.DEV) {
     isStarted: () => gameState.isStarted,
     perks: () => getTakenPerks().map(p => [p.perk.id, p.count]),
     perkOpen: () => isPerkChoiceOpen(),
+    distance: () => gameState.distanceTraveled,
+    enemyKinds: () => {
+      const out = { runner: 0, tank: 0, spitter: 0 };
+      for (const h of entities?.enemyHordes ?? []) for (const u of h.soldiers) if (u.isAlive && u.kind) out[u.kind]++;
+      return out;
+    },
     isPaused: () => gameState.isPaused,
     setCoins: (n: number) => { gameState.coins = n; },
     goToLevel: (n: number) => debugSetLevel(n),

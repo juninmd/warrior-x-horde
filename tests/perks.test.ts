@@ -73,3 +73,32 @@ describe('perk modal', () => {
     closePerkChoice();
   });
 });
+
+import { resolveEnemyBullets } from '../src/boss-ai';
+import { gameState, resetGameState } from '../src/gameState';
+import { createInitialEntities } from '../src/entities';
+import { pickPerk as pick, resetPerks as reset } from '../src/perks';
+
+describe('perks in combat', () => {
+  it('shield blocks a projectile; armor reduces boss damage but never below 1', () => {
+    vi.mock('../src/game', () => ({ triggerScreenShake: vi.fn(), triggerHitStop: vi.fn() }));
+    vi.mock('../src/renderer', () => ({ addExplosion: vi.fn(), addFloatingText: vi.fn(), addParticle: vi.fn() }));
+    reset(); resetGameState();
+    const e = createInitialEntities(480, 800);
+    const s = e.playerArmy.soldiers[0];
+    const mk = (dmg: number) => ({ x: s.x, y: s.y, targetX: 0, targetY: 0, speed: 3, damage: dmg, isEnemy: true, vx: 0 });
+    pick('shield', null);
+    e.bullets.push(mk(3));
+    const alive = e.playerArmy.aliveCount;
+    expect(resolveEnemyBullets(e, gameState)).toBe(0); // absorbed
+    expect(e.playerArmy.aliveCount).toBe(alive);
+    expect(e.bullets).toHaveLength(0);
+    pick('shield', null); // consume remaining charge then armor
+    resolveEnemyBullets(e, gameState);
+    reset(); pick('armor', null); pick('armor', null);
+    e.bullets.push(mk(1));
+    expect(resolveEnemyBullets(e, gameState)).toBe(1); // 1 - 2 -> clamped to 1
+    e.bullets.push(mk(3));
+    expect(resolveEnemyBullets(e, gameState)).toBe(1); // 3 - 2 = 1
+  });
+});

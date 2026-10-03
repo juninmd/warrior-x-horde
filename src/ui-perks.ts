@@ -10,6 +10,7 @@ export function isPerkChoiceOpen(): boolean {
 
 export function closePerkChoice(): void {
   document.getElementById('perkModal')?.remove();
+  document.body.classList.remove('perk-open');
   if (keyHandler) { document.removeEventListener('keydown', keyHandler); keyHandler = null; }
   open = false;
 }
@@ -18,6 +19,7 @@ export function closePerkChoice(): void {
 export function showPerkChoice(offers: Perk[], chapterCleared: number, onPick: (id: string) => void): void {
   closePerkChoice();
   open = true;
+  document.body.classList.add('perk-open');
 
   const modal = document.createElement('div');
   modal.id = 'perkModal';

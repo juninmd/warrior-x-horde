@@ -7,6 +7,7 @@ import { safeAddColorStop, drawGlassBadge, drawStar, drawJoystick, getComboColor
 import { drawBoss, drawBossTelegraph } from './renderer-boss';
 import { QualityManager } from './quality';
 import { HERO_SKINS, getActiveSkin } from './skins';
+import { WeatherState, createWeather, stepWeather, drawWeather } from './weather';
 
 const HERO_SKIN_COLORS = new Set(HERO_SKINS.map(s => s.primary));
 const isHeroSkinColor = (color: string): boolean => HERO_SKIN_COLORS.has(color);
@@ -1987,7 +1988,9 @@ function renderGateToCache(gate: Gate): void {
       case 'superwarrior': text = `⭐×${fmtGateValue(gate.value)}`; break;
     }
   }
-  ctx.fillText(text, x + width / 2, y + height / 2);
+  // The shop rail overlays the right edge of the playfield: keep right-gate text clear of it
+  const textShift = gate.side === 'right' ? -30 : 0;
+  ctx.fillText(text, x + width / 2 + textShift, y + height / 2);
 }
 
 function drawGate(ctx: CanvasRenderingContext2D, gate: Gate): void {
@@ -2936,6 +2939,26 @@ export function getParticles(): Particle[] { return particles; }
 export { collectEnemySoldiers };
 /* v8 ignore stop */
 
+// --- Biome weather (foreground ambience) ---
+let weather: WeatherState | null = null;
+let weatherLevel = -1;
+let weatherLast = 0;
+
+/* v8 ignore start */
+function renderWeather(ctx: CanvasRenderingContext2D, level: number, time: number): void {
+  if (weatherLevel !== level) {
+    const q = QualityManager.getInstance().settings;
+    weather = createWeather(getBiomeColors(level).name, q.simplifiedRendering ? 0.4 : 1);
+    weatherLevel = level;
+    weatherLast = time;
+  }
+  if (!weather) return;
+  stepWeather(weather, (time - weatherLast) / 1000);
+  weatherLast = time;
+  drawWeather(ctx, weather, time);
+}
+/* v8 ignore stop */
+
 export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameState: GameState): void {
   const width = BASE_WIDTH;
   const height = BASE_HEIGHT;
@@ -3019,6 +3042,7 @@ export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameSt
   }
   // All overlays below draw on `out` (HUD canvas in layered mode)
   ctx = out;
+  renderWeather(ctx, gameState.currentLevel, time);
 
   if (gameState.bossAtmosphereIntensity > 0) {
     drawBossAtmosphere(ctx, width, height, gameState.bossAtmosphereIntensity, time);
