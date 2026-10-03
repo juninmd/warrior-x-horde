@@ -1,8 +1,9 @@
 // ui-overlay.ts - Manages HTML/DOM overlays
-import { COLORS } from './constants';
 import { GameState, BeforeInstallPromptEvent } from './types';
 import { vibrate } from './input';
 import { VICTORY_TEXT, getDefeatLine } from './story';
+import { SHOP_ITEMS, getPrice, cooldownLeft, blockedReason } from './shop-catalog';
+import type { ShopItem, ShopType } from './shop-catalog';
 
 // Container elements (Declared at top to avoid TDZ)
 let shopContainer: HTMLElement | null = null;
@@ -160,27 +161,8 @@ export function setupStartScreenInstallBtn(deferredPrompt: BeforeInstallPromptEv
     }
 }
 
-// --- Shop catalog (single source of truth: rail buttons, help panel, prices) ---
-export type ShopType = 'bazooka' | 'rambo' | 'laser' | 'soldier' | 'nuke' | 'recharge_super';
-
-interface ShopItem {
-  id: string;
-  type: ShopType;
-  price: number;
-  color: string;
-  icon: string;
-  label: string;
-  desc: string;
-}
-
-const SHOP_ITEMS: ShopItem[] = [
-  { id: 'soldier', type: 'soldier', price: 50, color: COLORS.PLAYER.NORMAL, icon: '🛡️', label: '+10 TROPAS', desc: 'Adiciona 10 soldados ao seu exército.' },
-  { id: 'bazooka', type: 'bazooka', price: 50, color: COLORS.PLAYER.BAZOOKA, icon: '🚀', label: 'BAZUCA', desc: 'Recruta um soldado com bazuca: tiro explosivo.' },
-  { id: 'rambo', type: 'rambo', price: 100, color: COLORS.PLAYER.RAMBO, icon: '💪', label: 'RAMBO', desc: 'Recruta um Rambo: rajadas pesadas e muito dano.' },
-  { id: 'laser', type: 'laser', price: 150, color: COLORS.PLAYER.LASER, icon: '⚡', label: 'LASER', desc: 'Recruta um soldado laser: raio que atravessa inimigos.' },
-  { id: 'nuke', type: 'nuke', price: 500, color: COLORS.UI.GOLD, icon: '☢️', label: 'NUKE', desc: 'Ataque orbital: elimina todas as hordas e tiros inimigos da tela.' },
-  { id: 'recharge', type: 'recharge_super', price: 200, color: COLORS.UI.GOLD, icon: '🔋', label: 'RECARGA', desc: 'Recarrega na hora o Super Canhão (botão ⚡ à esquerda).' },
-];
+// Shop catalog, pricing and effects live in shop.ts (single source of truth)
+export type { ShopType } from './shop-catalog';
 
 const fmtPrice = (n: number): string => n.toLocaleString('pt-BR');
 
@@ -202,12 +184,12 @@ function createShopButton(item: ShopItem): HTMLButtonElement {
   btn.className = 'shop-btn';
   btn.dataset.shop = item.id;
   btn.style.setProperty('--accent', item.color);
-  btn.title = `${item.label} — 💰 ${fmtPrice(item.price)}: ${item.desc}`;
-  btn.setAttribute('aria-label', `${item.label}, custa ${fmtPrice(item.price)} moedas. ${item.desc}`);
+  btn.title = `${item.label} — a partir de 💰 ${fmtPrice(item.basePrice)}: ${item.desc}`;
+  btn.setAttribute('aria-label', `${item.label}, a partir de ${fmtPrice(item.basePrice)} moedas. ${item.desc}`);
   btn.append(
     makeSpan('shop-icon', item.icon),
     makeSpan('shop-label', item.label),
-    makeSpan('shop-price', `💰 ${fmtPrice(item.price)}`),
+    makeSpan('shop-price', `💰 ${fmtPrice(item.basePrice)}`),
   );
   return btn;
 }
@@ -254,7 +236,7 @@ function setupShopHelp(stage: HTMLElement): void {
     li.style.setProperty('--accent', item.color);
     const head = document.createElement('div');
     head.className = 'shop-help-head';
-    head.append(makeSpan('shop-help-name', `${item.icon} ${item.label}`), makeSpan('shop-help-price', `💰 ${fmtPrice(item.price)}`));
+    head.append(makeSpan('shop-help-name', `${item.icon} ${item.label}`), makeSpan('shop-help-price', `💰 ${fmtPrice(item.basePrice)}+`));
     const desc = document.createElement('div');
     desc.className = 'shop-help-desc';
     desc.textContent = item.desc;
@@ -263,7 +245,7 @@ function setupShopHelp(stage: HTMLElement): void {
   }
   const foot = document.createElement('p');
   foot.className = 'shop-help-foot';
-  foot.textContent = 'Botões apagados = moedas insuficientes.';
+  foot.textContent = 'Preços sobem a cada compra e a cada capítulo. Botões apagados = moedas insuficientes ou em recarga.';
   panel.append(title, intro, list, foot);
 
   const stop = (e: Event) => e.stopPropagation();
@@ -292,7 +274,7 @@ export function setupShopUI(onBuy: BuyAction): void {
     btn.addEventListener('click', (e: Event) => {
       e.stopPropagation();
       vibrate(15);
-      onBuy(item.type, item.price);
+      onBuy(item.type, getPrice(item, currentLevelForShop));
     });
     shopContainer!.appendChild(btn);
     buttons[item.id] = btn;
@@ -321,14 +303,26 @@ export function updateShopUI(gameState: GameState): void {
   if (shopContainer.style.display !== 'flex') shopContainer.style.display = 'flex';
   if (helpBtn && helpBtn.style.display !== 'flex') helpBtn.style.display = 'flex';
 
+  currentLevelForShop = gameState.currentLevel;
   Object.entries(buttons).forEach(([id, btn]) => {
       const item = SHOP_ITEMS.find(i => i.id === id);
       if (!item) return; // e.g. the super cannon button lives in this map too
-      const shouldDisable = gameState.coins < item.price;
-      // Skip redundant writes: only mutate .disabled when it changes
+      const price = getPrice(item, gameState.currentLevel);
+      const reason = blockedReason(item, gameState);
+      const shouldDisable = reason !== null;
+      // Skip redundant writes: only mutate when something changes
       if (btn.disabled !== shouldDisable) btn.disabled = shouldDisable;
+      const label = reason === 'cooldown' ? `⏳ ${Math.ceil(cooldownLeft(item) / 1000)}s`
+        : reason === 'max' ? 'MÁX'
+        : reason === 'ready' ? 'PRONTO'
+        : `💰 ${fmtPrice(price)}`;
+      const priceEl = btn.querySelector('.shop-price');
+      if (priceEl && priceEl.textContent !== label) priceEl.textContent = label;
+      if (btn.dataset.reason !== (reason ?? '')) btn.dataset.reason = reason ?? '';
   });
 }
+
+let currentLevelForShop = 1;
 
 // --- Super Cannon UI ---
 export type SuperCannonAction = () => void;

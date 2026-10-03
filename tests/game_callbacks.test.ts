@@ -1,5 +1,8 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { getItem as __item, getPrice as __price, resetShop as __resetShop } from '../src/shop-catalog';
+const P = (t: any, lvl = 1) => __price(__item(t)!, lvl);
+beforeEach(() => __resetShop());
 import { GameState } from '../src/types';
 
 // Global capture
@@ -69,20 +72,23 @@ describe('Game Logic Cleanup', () => {
       // Wait, if I want to buy recharge, I must have cooldown > 0.
       // My test setup: now - lastUsed = 0. Cooldown - 0 = 60000 > 0.
       // So it proceeds to buy.
-      expect(gameState.coins).toBe(900);
+      expect(gameState.coins).toBe(1000 - P('recharge_super'));
       expect(gameState.superCannonReady).toBe(true);
 
       // Nuke
+      const afterRecharge = gameState.coins;
       buyCallback('nuke', 100);
-      expect(gameState.coins).toBe(800);
+      expect(gameState.coins).toBe(afterRecharge - P('nuke'));
 
       // Soldier
+      const afterNuke = gameState.coins;
       buyCallback('soldier', 100);
-      expect(gameState.coins).toBe(700);
+      expect(gameState.coins).toBe(afterNuke - P('soldier'));
 
       // Special
+      const afterSoldier = gameState.coins;
       buyCallback('bazooka', 100);
-      expect(gameState.coins).toBe(600);
+      expect(gameState.coins).toBe(afterSoldier - P('bazooka'));
 
       // Insufficient Funds
       gameState.coins = 0;

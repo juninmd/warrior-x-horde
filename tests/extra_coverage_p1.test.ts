@@ -247,17 +247,17 @@ describe('Extra Coverage Part 1', () => {
 
              // Setup entities via _testing
              const boss: any = {
-                 type: 'normal', x: 100, y: 100, width: 50, height: 50, isActive: true, hp: 10000
+                 type: 'normal', x: 100, y: 100, width: 50, height: 50, isActive: true, hp: 10000, maxHp: 10000
              };
              const miniBoss: any = {
-                 isActive: true, x: 50, y: 50, width: 30, height: 30, hp: 6000
+                 isActive: true, x: 50, y: 50, width: 30, height: 30, hp: 6000, maxHp: 6000
              };
              const army: any = { centerX: 200, centerY: 600, soldiers: [] };
 
              (game as any)._testing.setEntities({
                  boss,
                  miniBosses: [miniBoss],
-                 enemyHordes: [{ isActive: true }],
+                 enemyHordes: [{ isActive: true, soldiers: [], count: 0 }],
                  bullets: [],
                  playerArmy: army,
                  gates: [], mysteryBoxes: [], coins: [], weapons: [], particles: [] // Add missing props
@@ -268,9 +268,8 @@ describe('Extra Coverage Part 1', () => {
              // Test Nuke
              handleBuy('nuke', 500);
 
-             expect(boss.hp).toBeLessThan(10000); // 5000 dmg
-             expect(miniBoss.hp).toBeLessThan(6000); // 5000 dmg
-             expect(renderer.addFloatingText).toHaveBeenCalledWith('-5000', expect.any(Number), expect.any(Number), '#FF0000', expect.any(Number));
+             expect(boss.hp).toBe(7500);     // nuke wounds bosses for 25% of max HP (capped at 6000)
+             expect(miniBoss.hp).toBe(2400); // and mini-bosses for 60% of max HP
 
              // Test Recharge when ready
              gameState.superCannonReady = true;
@@ -278,8 +277,10 @@ describe('Extra Coverage Part 1', () => {
              gameState.superCannonCooldown = 1000;
              vi.setSystemTime(2000);
 
+             const coinsBefore = gameState.coins;
              handleBuy('recharge_super', 100);
-             expect(renderer.addFloatingText).toHaveBeenCalledWith('READY!', expect.any(Number), expect.any(Number), '#FFD700');
+             expect(gameState.coins).toBe(coinsBefore); // already ready: nothing is charged
+             expect(renderer.addFloatingText).toHaveBeenCalledWith('Super já está pronto!', expect.any(Number), expect.any(Number), '#FF6B6B', expect.any(Number));
         });
 
         it('should trigger low army warning', () => {

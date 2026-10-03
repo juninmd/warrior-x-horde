@@ -29,14 +29,14 @@ describe('UI Overlay Extra Coverage', () => {
             const container = document.getElementById('shopContainer');
 
             // Set mixed coins
-            gameState.coins = 75; // Enough for soldier (50), not rambo (100)
+            gameState.coins = 75; // Enough for the 50-coin troops, not for the 120-coin bazooka squad
             updateShopUI(gameState);
 
             expect(container?.style.display).toBe('flex');
 
             const btns = container?.querySelectorAll('button');
             const soldierBtn = btns![0];
-            const ramboBtn = btns![2];
+            const ramboBtn = btns![1];
 
             expect(soldierBtn.disabled).toBe(false);
             expect(ramboBtn.disabled).toBe(true);

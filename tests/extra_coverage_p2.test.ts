@@ -197,7 +197,7 @@ describe('Extra Coverage Part 2', () => {
             uiOverlay.setupShopUI(onBuy);
 
             const soldierBtn = document.getElementById('shopContainer')?.querySelector('button') as HTMLButtonElement;
-            expect(soldierBtn.innerHTML).toContain('🛡️');
+            expect(soldierBtn.innerHTML).toContain('🪖');
 
              const btns = document.getElementById('shopContainer')?.querySelectorAll('button');
              const nukeBtn = btns?.[4];

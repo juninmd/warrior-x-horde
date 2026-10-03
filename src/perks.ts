@@ -27,6 +27,7 @@ export const BASE_SUPER_COOLDOWN = 63000;
 
 const taken: Record<string, number> = {};
 let shieldCharges = 0;
+export const MAX_SHIELD_CHARGES = 8;
 
 export function resetPerks(): void {
   for (const k of Object.keys(taken)) delete taken[k];
@@ -101,4 +102,9 @@ export function pickPerk(id: string, entities: Entities | null): boolean {
   if (id === 'reinforce' && entities) addSoldiersToArmy(entities.playerArmy, 10);
   if (id === 'shield') shieldCharges += 2;
   return true;
+}
+
+/** Adds shield charges (shop / pickups), clamped to MAX_SHIELD_CHARGES. */
+export function addShieldCharges(n: number): void {
+  shieldCharges = Math.min(MAX_SHIELD_CHARGES, shieldCharges + n);
 }

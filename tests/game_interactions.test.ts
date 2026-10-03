@@ -1,5 +1,8 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { getItem as __item, getPrice as __price, resetShop as __resetShop } from '../src/shop-catalog';
+const P = (t: any, lvl = 1) => __price(__item(t)!, lvl);
+beforeEach(() => __resetShop());
 import { GameState, Entities } from '../src/types';
 import * as audio from '../src/audio';
 import * as renderer from '../src/renderer';
@@ -114,10 +117,11 @@ describe('Game Interactions', () => {
   describe('Shop Interactions', () => {
     it('should handle "soldier" purchase', () => {
       gameState.coins = 1000;
+      const price = P('soldier');
       uiCallbacks.handleBuy('soldier', 100);
 
-      expect(gameState.coins).toBe(900);
-      expect(renderer.addFloatingText).toHaveBeenCalledWith(expect.stringContaining('+10'), expect.any(Number), expect.any(Number), expect.any(String));
+      expect(gameState.coins).toBe(1000 - price);
+      expect(renderer.addFloatingText).toHaveBeenCalledWith(expect.stringContaining('+10'), expect.any(Number), expect.any(Number), expect.any(String), expect.any(Number));
       expect(audio.playSound).toHaveBeenCalled();
     });
 
@@ -127,9 +131,10 @@ describe('Game Interactions', () => {
       const horde = createEnemyHorde(800, 100, 10, 1);
       _testing.getEntities().enemyHordes.push(horde);
 
+      const price = P('nuke');
       uiCallbacks.handleBuy('nuke', 500);
 
-      expect(gameState.coins).toBe(500);
+      expect(gameState.coins).toBe(1000 - price);
       expect(gameState.nukeTimer).toBe(60);
       expect(horde.isActive).toBe(false);
       expect(renderer.addFloatingText).toHaveBeenCalledWith(expect.stringContaining('ORBITAL STRIKE'), expect.any(Number), expect.any(Number), expect.any(String), expect.any(Number));
@@ -140,11 +145,12 @@ describe('Game Interactions', () => {
       gameState.superCannonReady = false;
       gameState.superCannonLastUsed = Date.now() - 1000; // Just used
 
+      const price = P('recharge_super');
       uiCallbacks.handleBuy('recharge_super', 200);
 
-      expect(gameState.coins).toBe(800);
+      expect(gameState.coins).toBe(1000 - price);
       expect(gameState.superCannonReady).toBe(true);
-      expect(renderer.addFloatingText).toHaveBeenCalledWith('SUPER READY!', expect.any(Number), expect.any(Number), expect.any(String));
+      expect(renderer.addFloatingText).toHaveBeenCalledWith(expect.stringContaining('RECARGA'), expect.any(Number), expect.any(Number), expect.any(String), expect.any(Number));
     });
 
     it('should fail purchase if not enough coins', () => {

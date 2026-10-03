@@ -5,6 +5,8 @@ import { createInitialEntities, createEnemyHorde, createSoldier, addSpecialSoldi
 import { setWorldLayer, render, shareOnX, shareOnWhatsApp, addFloatingText, updateFloatingTexts, addParticle } from './renderer';
 import { checkCollisions } from './collisions';
 import { resetHudAnim } from './hud';
+import { purchase } from './shop';
+import { resetShop, tickShop } from './shop-catalog';
 import { rollOffers, pickPerk, resetPerks, refillShield, getMods, getTakenPerks, BASE_SUPER_COOLDOWN } from './perks';
 import { showPerkChoice, isPerkChoiceOpen } from './ui-perks';
 import { playIntro, shouldAutoPlayIntro, isIntroPlaying } from './cinematic';
@@ -200,96 +202,40 @@ function releaseWakeLock() {
 /* v8 ignore stop */
 
 // --- Shop Logic ---
-const handleBuy: BuyAction = (type, cost) => {
-    if (gameState.coins >= cost) {
-        if (type === 'recharge_super') {
-           const now = Date.now();
-           const cooldownRemaining = Math.max(0, gameState.superCannonCooldown - (now - gameState.superCannonLastUsed));
-           if (cooldownRemaining <= 0) {
-              /* v8 ignore next 2 */
-              addFloatingText('READY!', entities.playerArmy.centerX, entities.playerArmy.centerY, '#FFD700');
-              return;
-           }
-           /* v8 ignore start */
-           if (gameState.superCannonReady && !gameState.superCannonActive) {
-               // Already ready
-               return;
-           }
-           /* v8 ignore stop */
-        }
+const handleBuy: BuyAction = (type) => {
+    const res = purchase(type, entities, gameState);
+    const army = entities.playerArmy;
 
-        gameState.coins -= cost;
-
-        if (type === 'nuke') {
-          // 1. Trigger Visuals
-          gameState.nukeTimer = 60; // 1 second visual
-          /* v8 ignore start */
-          triggerScreenShake(20, 800);
-          triggerHitStop(10); // Freeze frame impact
-          playSound(audioManager.superCannon);
-          addFloatingText('⚠️ ORBITAL STRIKE ⚠️', entities.playerArmy.centerX, entities.playerArmy.centerY - 150, '#FF0000', 1.5);
-          /* v8 ignore stop */
-
-          // 2. Kill all normal hordes
-          /* v8 ignore start */
-          for (let i = 0; i < entities.enemyHordes.length; i++) {
-            const h = entities.enemyHordes[i];
-            if (h.isActive) {
-              h.isActive = false;
-            }
-          }
-          /* v8 ignore stop */
-
-          // 3. Clear Bullets
-          entities.bullets = [];
-          /* v8 ignore next */
-
-          // 4. Massive Damage to Bosses
-          if (entities.boss && entities.boss.isActive) {
-            /* v8 ignore start */
-            entities.boss.hp -= 5000;
-            addFloatingText('-5000', entities.boss.x + entities.boss.width/2, entities.boss.y, '#FF0000', 2);
-            /* v8 ignore stop */
-          }
-
-          // 5. Massive Damage to MiniBosses
-          /* v8 ignore start */
-          for (let i = 0; i < entities.miniBosses.length; i++) {
-            const mb = entities.miniBosses[i];
-            if (mb.isActive) {
-              mb.hp -= 5000;
-              addFloatingText('-5000', mb.x + mb.width/2, mb.y, '#FF0000', 1.5);
-            }
-          }
-          /* v8 ignore stop */
-
-        } else if (type === 'soldier') {
-          addSoldiersToArmy(entities.playerArmy, 10);
-          /* v8 ignore next 2 */
-          addFloatingText('+10 Soldiers', entities.playerArmy.centerX, entities.playerArmy.centerY, '#4A90D9');
-          playSound(audioManager.powerUp);
-          triggerHaptic('success');
-        } else if (type === 'recharge_super') {
-          gameState.superCannonLastUsed = 0;
-          gameState.superCannonReady = true;
-          /* v8 ignore next 2 */
-          addFloatingText('SUPER READY!', entities.playerArmy.centerX, entities.playerArmy.centerY, '#FFD700');
-          playSound(audioManager.powerUp);
-          triggerHaptic('success');
-        } else {
-          addSpecialSoldiersToArmy(entities.playerArmy, type, 1);
-          /* v8 ignore next 2 */
-          addFloatingText(`+1 ${type.toUpperCase()}`, entities.playerArmy.centerX, entities.playerArmy.centerY, '#00FF00');
-          playSound(audioManager.powerUp);
-          triggerHaptic('success');
-        }
-
-        // Salvar moedas após compra
-        saveGameProgress();
-      } else {
+    if (!res.ok) {
         playSound(audioManager.nerf);
         triggerHaptic('warning');
-      }
+        /* v8 ignore start */
+        const why: Record<string, string> = { coins: 'Moedas insuficientes', cooldown: 'Em recarga...', ready: 'Super já está pronto!', max: 'Escudo no máximo', unknown: '' };
+        if (res.reason && why[res.reason]) addFloatingText(why[res.reason], army.centerX, army.centerY - 60, '#FF6B6B', 0.9);
+        /* v8 ignore stop */
+        return;
+    }
+
+    /* v8 ignore start */
+    const label = res.item?.label ?? type;
+    addFloatingText(`${res.item?.icon ?? ''} ${label}`, army.centerX, army.centerY - 40, res.item?.color ?? '#FFFFFF', 1.1);
+    /* v8 ignore stop */
+
+    if (type === 'nuke') {
+      gameState.nukeTimer = 60; // 1 second visual
+      /* v8 ignore start */
+      triggerScreenShake(20, 800);
+      triggerHitStop(10); // Freeze frame impact
+      playSound(audioManager.superCannon);
+      addFloatingText(`⚠️ ORBITAL STRIKE: ${res.kills ?? 0} abates ⚠️`, army.centerX, army.centerY - 150, '#FF0000', 1.5);
+      /* v8 ignore stop */
+    } else {
+      playSound(audioManager.powerUp);
+      triggerHaptic('success');
+    }
+
+    // Salvar moedas após compra
+    saveGameProgress();
 };
 
 setupShopUI(handleBuy);
@@ -452,6 +398,7 @@ export function fixedUpdate(dt: number): void {
   }
   resolveEnemyBullets(entities, gameState);
   updateSuperCannon(entities, gameState, dt);
+  tickShop(dt);
   updateFloatingTexts(); // Visual updates (damage numbers)
 
   // Spawnar elementos
@@ -729,6 +676,7 @@ export function startGame(): void {
   const token = ++startToken;
   radioShownLevel = 0;
   resetHudAnim();
+  resetShop();
   hideStoryBanner();
   resetPerks();
   gameState.superCannonCooldown = BASE_SUPER_COOLDOWN;
