@@ -6,10 +6,14 @@ import { COLORS, MAX_PARTICLES, MAX_RENDERED_SOLDIERS, ThemeConfig, BASE_WIDTH, 
 import { safeAddColorStop, drawGlassBadge, drawStar, drawJoystick, getComboColor } from './renderer-utils';
 import { drawBoss, drawBossTelegraph } from './renderer-boss';
 import { QualityManager } from './quality';
-import { HERO_SKINS, getActiveSkin } from './skins';
-
-const HERO_SKIN_COLORS = new Set(HERO_SKINS.map(s => s.primary));
-const isHeroSkinColor = (color: string): boolean => HERO_SKIN_COLORS.has(color);
+import { getActiveSkin } from './skins';
+import { paintCharacter, SPRITE_SS } from './soldier-art';
+import { paintBiomeScene, paintRoadDetail } from './biome-art';
+import { paintGate, GATE_SS, GATE_PADDING } from './gate-art';
+import { HORIZON_RATIO, HORIZON_Y, perspScale, projectX, roadHalfWidthAt } from './perspective';
+import { drawHud } from './hud';
+import { getMiniBossSprite, MINI_BOX, MINI_VISUAL_SCALE, MINI_NAMES } from './boss-art';
+import { WeatherState, createWeather, stepWeather, drawWeather } from './weather';
 
 // --- Sprite Caching System ---
 interface SpriteCache {
@@ -37,36 +41,36 @@ let lastCachedWidth = 0;
 let lastCachedHeight = 0;
 
 /* v8 ignore start */
+/** Backgrounds are painted at 2x so the detailed scenery stays crisp on hi-dpi screens. */
+const BG_SS = 2;
+
 function updateBackgroundCache(theme: ThemeConfig, width: number, height: number): void {
+  const pw = width * BG_SS;
+  const ph = height * BG_SS;
   if (!backgroundCache) {
     if (typeof OffscreenCanvas !== 'undefined') {
-      backgroundCache = new OffscreenCanvas(width, height);
+      backgroundCache = new OffscreenCanvas(pw, ph);
     } else {
       backgroundCache = document.createElement('canvas');
-      backgroundCache.width = width;
-      backgroundCache.height = height;
+      backgroundCache.width = pw;
+      backgroundCache.height = ph;
     }
   }
 
   // Ensure size match
-  if (backgroundCache.width !== width || backgroundCache.height !== height) {
-    backgroundCache.width = width;
-    backgroundCache.height = height;
+  if (backgroundCache.width !== pw || backgroundCache.height !== ph) {
+    backgroundCache.width = pw;
+    backgroundCache.height = ph;
   }
 
   const ctx = backgroundCache.getContext('2d') as CanvasRenderingContext2D;
-
-  // Clear
+  ctx.setTransform(BG_SS, 0, 0, BG_SS, 0, 0);
   ctx.clearRect(0, 0, width, height);
 
-  // Draw static layers
-  drawSky(ctx, width, height, theme);
-  drawCelestialBody(ctx, width, height, theme);
-  drawMountains(ctx, width, height, theme);
-  drawGround(ctx, width, height, theme);
-
-  // Cache road surface as well since it is static (lines don't scroll currently)
+  const horizonY = height * HORIZON_RATIO;
+  paintBiomeScene(ctx, width, height, horizonY, theme);
   drawRoadSurface(ctx, width, height, theme);
+  paintRoadDetail(ctx, width, height, horizonY, theme);
 }
 
 // Helper to generate a key
@@ -78,35 +82,20 @@ const getSpriteKey = (type: string, color: string, size: number, isSuper: boolea
 export function preRenderSprites(): void {
   if (spriteCache.initialized) return;
 
-  // Types of soldiers to cache
-  const types: Soldier['type'][] = ['normal', 'bazooka', 'rambo', 'laser'];
-  // Common colors
-  const colors = [
-    COLORS.PLAYER.NORMAL,
-    getActiveSkin().primary, // skin escolhida (duplicatas são ignoradas pelo cache)
-    COLORS.ENEMY.BASE,
-    COLORS.PLAYER.SUPER,
-    COLORS.PLAYER.BAZOOKA,
-    COLORS.PLAYER.RAMBO,
-    COLORS.PLAYER.LASER,
+  // Eagerly cache the hot set (the rest renders lazily on first use; sprites are supersampled so keep this small)
+  const skin = getActiveSkin().primary;
+  const hot: [Soldier['type'], string, number, boolean][] = [
+    ['normal', skin, 16, false],
+    ['normal', COLORS.PLAYER.NORMAL, 16, false],
+    ['normal', COLORS.ENEMY.BASE, 16, false],
+    ['normal', COLORS.PLAYER.SUPER, 22, true],
+    ['bazooka', COLORS.PLAYER.BAZOOKA, 16, false],
+    ['rambo', COLORS.PLAYER.RAMBO, 16, false],
+    ['laser', COLORS.PLAYER.LASER, 16, false],
   ];
-  const sizes = [16, 18, 19, 20]; // Sizes from entities.ts
-
-  // Render Soldier Sprites
-  for (const type of types) {
-    for (const color of colors) {
-      for (const size of sizes) {
-        // Normal version
-        renderSoldierToCache(type, color, size, false, false);
-        // Flash version (white silhouette)
-        renderSoldierToCache(type, color, size, false, true);
-
-        // Super version
-        renderSoldierToCache(type, color, size, true, false);
-        // Super Flash version
-        renderSoldierToCache(type, color, size, true, true);
-      }
-    }
+  for (const [type, color, size, isSuper] of hot) {
+    renderSoldierToCache(type, color, size, isSuper, false);
+    renderSoldierToCache(type, color, size, isSuper, true); // damage-flash silhouette
   }
 
   // Render Particle Sprites
@@ -127,10 +116,7 @@ export function preRenderSprites(): void {
   console.log('Sprites pre-rendered. Cache size:', spriteCache.images.size);
 }
 
-/** Gate numbers come from float math (1.02 + 7 * 0.015 = 1.1700000000000002); show at most 2 decimals. */
-export function fmtGateValue(v: number): string {
-  return Number.isInteger(v) ? String(v) : String(parseFloat(v.toFixed(2)));
-}
+export { fmtGateValue } from './gate-art';
 
 /** Cache key of the bullet sprite; the player bullet is tinted by the active skin. */
 export function bulletKey(isEnemy: boolean, tint: string = '#FFD700'): string {
@@ -185,405 +171,37 @@ function renderSoldierToCache(type: Soldier['type'], color: string, size: number
   const key = getSpriteKey(type, color, size, isSuper, isFlash);
   if (spriteCache.images.has(key)) return;
 
-  // Padding for drawing (shadows, accessories sticking out)
-  const padding = size * 1.5;
-  const canvasSize = size * 2 + padding * 2;
-  const center = canvasSize / 2;
+  // Logical sprite box (units): tight padding for weapons, helmet crests and the ground shadow.
+  const logical = Math.ceil(size * 4);
+  const px = logical * SPRITE_SS;
 
-  // Use OffscreenCanvas if available, otherwise regular canvas
   let canvas: HTMLCanvasElement | OffscreenCanvas;
   let ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null;
 
   /* v8 ignore start */
   if (typeof OffscreenCanvas !== 'undefined') {
-    canvas = new OffscreenCanvas(canvasSize, canvasSize);
+    canvas = new OffscreenCanvas(px, px);
     ctx = canvas.getContext('2d');
   } else {
     canvas = document.createElement('canvas');
-    canvas.width = canvasSize;
-    canvas.height = canvasSize;
+    canvas.width = px;
+    canvas.height = px;
     ctx = canvas.getContext('2d');
   }
   /* v8 ignore stop */
 
   if (!ctx) return;
 
-  const actualSize = size; // No scaling here, 1:1 sprite
-  const x = center;
-  const y = center;
-
-  if (isFlash) {
-      // Draw a pure white silhouette for damage flash
-      renderSoldierShape(ctx, type, '#FFFFFF', x, y, actualSize, isSuper, true);
-  } else {
-      renderSoldierShape(ctx, type, color, x, y, actualSize, isSuper, false);
-  }
+  ctx.scale(SPRITE_SS, SPRITE_SS);
+  paintCharacter(ctx, logical / 2, logical / 2, size, {
+    type,
+    color,
+    isSuper,
+    flash: isFlash,
+    simple: QualityManager.getInstance().settings.simplifiedRendering,
+  });
 
   spriteCache.images.set(key, canvas);
-}
-
-/** Per-skin gear drawn on top of the standard soldier (keyed by the skin's primary color). */
-function drawSkinFlair(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, color: string, x: number, y: number, s: number): void {
-  const skin = HERO_SKINS.find(k => k.primary === color);
-  if (!skin || skin.style === 'plain') return;
-  const a = skin.accent;
-  const topY = y - s * 0.98; // top of the helmet
-  ctx.save();
-  ctx.fillStyle = a;
-  ctx.strokeStyle = a;
-  ctx.lineWidth = Math.max(1, s * 0.09);
-  ctx.lineCap = 'round';
-  switch (skin.style) {
-    case 'scarf':
-      ctx.beginPath(); ctx.roundRect(x - s * 0.34, y - s * 0.28, s * 0.68, s * 0.14, s * 0.05); ctx.fill();
-      ctx.beginPath(); ctx.moveTo(x - s * 0.3, y - s * 0.2); ctx.lineTo(x - s * 0.62, y - s * 0.02); ctx.stroke();
-      break;
-    case 'flame':
-      for (const [dx, h] of [[-0.18, 0.5], [0, 0.72], [0.18, 0.45]] as const) {
-        ctx.beginPath();
-        ctx.moveTo(x + s * (dx - 0.1), topY + s * 0.1);
-        ctx.quadraticCurveTo(x + s * dx, topY - s * h, x + s * (dx + 0.1), topY + s * 0.1);
-        ctx.fill();
-      }
-      break;
-    case 'crest':
-      for (const dx of [-0.2, 0, 0.2]) {
-        ctx.beginPath(); ctx.moveTo(x + s * dx, topY + s * 0.12); ctx.lineTo(x + s * dx, topY - s * (0.35 - Math.abs(dx))); ctx.stroke();
-      }
-      break;
-    case 'visor':
-      ctx.shadowColor = a; ctx.shadowBlur = 4;
-      ctx.beginPath(); ctx.roundRect(x - s * 0.32, y - s * 0.7, s * 0.64, s * 0.14, s * 0.05); ctx.fill();
-      break;
-    case 'mohawk':
-      ctx.beginPath();
-      ctx.moveTo(x - s * 0.3, topY + s * 0.18);
-      for (let i = 0; i < 4; i++) {
-        ctx.lineTo(x - s * 0.3 + s * 0.2 * i + s * 0.1, topY - s * 0.38);
-        ctx.lineTo(x - s * 0.3 + s * 0.2 * (i + 1), topY + s * 0.14);
-      }
-      ctx.closePath(); ctx.fill();
-      break;
-    case 'halo':
-      ctx.beginPath(); ctx.ellipse(x, topY - s * 0.22, s * 0.34, s * 0.1, 0, 0, Math.PI * 2); ctx.stroke();
-      break;
-    case 'band':
-      ctx.beginPath(); ctx.roundRect(x - s * 0.4, y - s * 0.72, s * 0.8, s * 0.1, s * 0.03); ctx.fill();
-      ctx.beginPath(); ctx.moveTo(x + s * 0.38, y - s * 0.68); ctx.lineTo(x + s * 0.72, y - s * 0.5); ctx.stroke();
-      break;
-    case 'crown':
-      ctx.beginPath();
-      ctx.moveTo(x - s * 0.3, topY + s * 0.1);
-      ctx.lineTo(x - s * 0.3, topY - s * 0.22); ctx.lineTo(x - s * 0.15, topY - s * 0.05);
-      ctx.lineTo(x, topY - s * 0.3); ctx.lineTo(x + s * 0.15, topY - s * 0.05);
-      ctx.lineTo(x + s * 0.3, topY - s * 0.22); ctx.lineTo(x + s * 0.3, topY + s * 0.1);
-      ctx.closePath(); ctx.fill();
-      break;
-    case 'rays':
-      for (let i = -2; i <= 2; i++) {
-        const ang = -Math.PI / 2 + i * 0.5;
-        ctx.beginPath();
-        ctx.moveTo(x + Math.cos(ang) * s * 0.45, topY + s * 0.3 + Math.sin(ang) * s * 0.45);
-        ctx.lineTo(x + Math.cos(ang) * s * 0.75, topY + s * 0.3 + Math.sin(ang) * s * 0.75);
-        ctx.stroke();
-      }
-      break;
-    case 'stars':
-      for (const [dx, dy] of [[-0.3, -0.18], [0.3, -0.3], [0, -0.48]] as const) {
-        ctx.beginPath(); ctx.arc(x + s * dx, topY + s * dy, s * 0.07, 0, Math.PI * 2); ctx.fill();
-      }
-      break;
-  }
-  ctx.restore();
-}
-
-function renderSoldierShape(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, type: Soldier['type'], color: string, x: number, y: number, actualSize: number, isSuper: boolean, isFlash: boolean) {
-  const isPlayer = color === COLORS.PLAYER.NORMAL || color === COLORS.PLAYER.SUPER || color === COLORS.PLAYER.BAZOOKA || color === COLORS.PLAYER.LASER || isHeroSkinColor(color) || type !== 'normal';
-  const quality = QualityManager.getInstance().settings;
-  const detailed = !isFlash && !quality.simplifiedRendering;
-  const s = actualSize;
-
-  // Ground shadow (static relative to body)
-  if (!isFlash && quality.enableShadows) {
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-    ctx.beginPath();
-    ctx.ellipse(x, y + s * 0.95, s * 0.62, s * 0.2, 0, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  // --- Legs (two boots/limbs below the torso) ---
-  const legColor = isFlash ? '#FFF' : (isPlayer ? shadeColor(color, -55) : shadeColor(color, -35));
-  ctx.fillStyle = legColor;
-  ctx.beginPath();
-  ctx.roundRect(x - s * 0.42, y + s * 0.35, s * 0.32, s * 0.6, s * 0.14);
-  ctx.roundRect(x + s * 0.1, y + s * 0.35, s * 0.32, s * 0.6, s * 0.14);
-  ctx.fill();
-
-  // --- Torso (tactical vest) ---
-  let torsoFill: string | CanvasGradient = isFlash ? '#FFF' : color;
-  if (detailed) {
-    const g = ctx.createLinearGradient(x - s * 0.5, y - s * 0.3, x + s * 0.5, y + s * 0.4);
-    safeAddColorStop(g, 0, shadeColor(color, 18));
-    safeAddColorStop(g, 0.5, color);
-    safeAddColorStop(g, 1, shadeColor(color, -35));
-    torsoFill = g;
-  }
-  ctx.fillStyle = torsoFill;
-  ctx.beginPath();
-  ctx.roundRect(x - s * 0.5, y - s * 0.28, s, s * 0.85, s * 0.24);
-  ctx.fill();
-
-  // Torso details differ for player (military kit) vs enemy (rotting flesh)
-  if (detailed && isPlayer) {
-    // Vest straps + chest pouch
-    ctx.strokeStyle = shadeColor(color, -45);
-    ctx.lineWidth = Math.max(1, s * 0.09);
-    ctx.beginPath();
-    ctx.moveTo(x - s * 0.22, y - s * 0.24);
-    ctx.lineTo(x - s * 0.22, y + s * 0.5);
-    ctx.moveTo(x + s * 0.22, y - s * 0.24);
-    ctx.lineTo(x + s * 0.22, y + s * 0.5);
-    ctx.stroke();
-    ctx.fillStyle = shadeColor(color, -30);
-    ctx.beginPath();
-    ctx.roundRect(x - s * 0.18, y + s * 0.02, s * 0.36, s * 0.26, s * 0.06);
-    ctx.fill();
-    // Rim light on left shoulder edge
-    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
-    ctx.lineWidth = Math.max(1, s * 0.07);
-    ctx.beginPath();
-    ctx.arc(x - s * 0.5, y - s * 0.04, s * 0.24, Math.PI * 0.9, Math.PI * 1.5);
-    ctx.stroke();
-  } else if (detailed) {
-    // Enemy: torn ribcage wound + tattered clothing
-    ctx.fillStyle = shadeColor(color, -55);
-    ctx.beginPath();
-    ctx.ellipse(x + s * 0.08, y + s * 0.12, s * 0.24, s * 0.3, 0.2, 0, Math.PI * 2);
-    ctx.fill();
-    // Exposed rib bones over the wound
-    ctx.strokeStyle = '#e8e0c8';
-    ctx.lineWidth = Math.max(1, s * 0.06);
-    ctx.beginPath();
-    ctx.moveTo(x - s * 0.12, y - s * 0.02); ctx.lineTo(x + s * 0.26, y + s * 0.02);
-    ctx.moveTo(x - s * 0.12, y + s * 0.14); ctx.lineTo(x + s * 0.26, y + s * 0.18);
-    ctx.moveTo(x - s * 0.12, y + s * 0.3); ctx.lineTo(x + s * 0.22, y + s * 0.32);
-    ctx.stroke();
-    // Dark blood splatter on the chest
-    ctx.fillStyle = 'rgba(80, 0, 0, 0.55)';
-    ctx.beginPath();
-    ctx.arc(x - s * 0.28, y - s * 0.05, s * 0.12, 0, Math.PI * 2);
-    ctx.fill();
-    // Sickly green rim light (bioluminescent rot)
-    ctx.strokeStyle = 'rgba(120, 220, 90, 0.4)';
-    ctx.lineWidth = Math.max(1, s * 0.07);
-    ctx.beginPath();
-    ctx.arc(x - s * 0.5, y - s * 0.04, s * 0.24, Math.PI * 0.9, Math.PI * 1.5);
-    ctx.stroke();
-  }
-
-  // --- Shoulder pads ---
-  ctx.fillStyle = isFlash ? '#FFF' : shadeColor(color, -20);
-  ctx.beginPath();
-  ctx.arc(x - s * 0.5, y - s * 0.12, s * 0.22, 0, Math.PI * 2);
-  ctx.arc(x + s * 0.5, y - s * 0.12, s * 0.22, 0, Math.PI * 2);
-  ctx.fill();
-
-  // --- Arms + weapon (right arm holds the gun forward/up) ---
-  const armColor = isFlash ? '#FFF' : shadeColor(color, -40);
-  ctx.strokeStyle = armColor;
-  ctx.lineCap = 'round';
-  ctx.lineWidth = Math.max(2, s * 0.2);
-  ctx.beginPath();
-  ctx.moveTo(x + s * 0.5, y - s * 0.1);
-  ctx.lineTo(x + s * 0.35, y - s * 0.45);
-  ctx.stroke();
-
-  // Weapon per type
-  if (isPlayer) {
-    if (type === 'bazooka') {
-      ctx.fillStyle = isFlash ? '#FFF' : '#2c3e50';
-      ctx.beginPath();
-      ctx.roundRect(x + s * 0.05, y - s * 0.62, s * 0.85, s * 0.26, s * 0.08);
-      ctx.fill();
-      if (!isFlash) {
-        ctx.fillStyle = '#e67e22';
-        ctx.beginPath();
-        ctx.arc(x + s * 0.9, y - s * 0.49, s * 0.13, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    } else if (type === 'rambo') {
-      ctx.fillStyle = isFlash ? '#FFF' : '#111';
-      ctx.beginPath();
-      ctx.roundRect(x + s * 0.1, y - s * 0.5, s * 0.85, s * 0.16, s * 0.04);
-      ctx.fill();
-      if (!isFlash) {
-        ctx.fillStyle = '#333';
-        ctx.fillRect(x + s * 0.28, y - s * 0.36, s * 0.14, s * 0.22); // magazine
-      }
-    } else if (type === 'laser') {
-      ctx.fillStyle = isFlash ? '#FFF' : '#2c3e50';
-      ctx.beginPath();
-      ctx.roundRect(x + s * 0.1, y - s * 0.5, s * 0.8, s * 0.16, s * 0.05);
-      ctx.fill();
-      if (!isFlash) {
-        ctx.fillStyle = '#00ffff';
-        ctx.shadowColor = '#00ffff';
-        ctx.shadowBlur = detailed ? 6 : 0;
-        ctx.fillRect(x + s * 0.7, y - s * 0.47, s * 0.3, s * 0.1);
-        ctx.shadowBlur = 0;
-      }
-    } else {
-      // Standard rifle
-      ctx.fillStyle = isFlash ? '#FFF' : '#2b2b2b';
-      ctx.beginPath();
-      ctx.roundRect(x + s * 0.15, y - s * 0.48, s * 0.72, s * 0.14, s * 0.04);
-      ctx.fill();
-    }
-  } else {
-    // Enemy: reaching claw arms instead of a weapon
-    ctx.strokeStyle = armColor;
-    ctx.beginPath();
-    ctx.moveTo(x - s * 0.5, y - s * 0.1);
-    ctx.lineTo(x - s * 0.75, y - s * 0.5);
-    ctx.stroke();
-    if (!isFlash) {
-      ctx.fillStyle = shadeColor(color, -55);
-      ctx.beginPath();
-      ctx.arc(x - s * 0.75, y - s * 0.5, s * 0.1, 0, Math.PI * 2);
-      ctx.arc(x + s * 0.35, y - s * 0.45, s * 0.1, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
-
-  // --- Head ---
-  let headFill: string | CanvasGradient;
-  if (isFlash) {
-    headFill = '#FFF';
-  } else {
-    const headGradient = ctx.createRadialGradient(x - s * 0.1, y - s * 0.72, 0, x, y - s * 0.6, s * 0.4);
-    if (isPlayer) {
-      safeAddColorStop(headGradient, 0, '#FFE4C4');
-      safeAddColorStop(headGradient, 1, '#C99A6E');
-    } else {
-      safeAddColorStop(headGradient, 0, '#9ACD32');
-      safeAddColorStop(headGradient, 1, '#2E6B2E');
-    }
-    headFill = headGradient;
-  }
-  ctx.fillStyle = headFill;
-  ctx.beginPath();
-  ctx.arc(x, y - s * 0.62, s * 0.38, 0, Math.PI * 2);
-  ctx.fill();
-
-  // --- Headgear: military helmet (player) vs rotting scalp (enemy) ---
-  if (isPlayer) {
-    ctx.fillStyle = isFlash ? '#FFF' : shadeColor(color, -42);
-    ctx.beginPath();
-    ctx.arc(x, y - s * 0.7, s * 0.4, Math.PI * 1.02, Math.PI * 1.98);
-    ctx.fill();
-    // Helmet brim
-    ctx.fillStyle = isFlash ? '#FFF' : shadeColor(color, -55);
-    ctx.beginPath();
-    ctx.roundRect(x - s * 0.42, y - s * 0.74, s * 0.84, s * 0.16, s * 0.06);
-    ctx.fill();
-    if (detailed) {
-      // Helmet rim highlight
-      ctx.strokeStyle = 'rgba(255,255,255,0.4)';
-      ctx.lineWidth = Math.max(1, s * 0.06);
-      ctx.beginPath();
-      ctx.arc(x - s * 0.08, y - s * 0.78, s * 0.32, Math.PI * 1.15, Math.PI * 1.55);
-      ctx.stroke();
-    }
-  } else {
-    // Enemy: matted, rotting scalp with a bald patch (exposed skull)
-    ctx.fillStyle = isFlash ? '#FFF' : '#243d18';
-    ctx.beginPath();
-    ctx.arc(x, y - s * 0.72, s * 0.4, Math.PI * 1.05, Math.PI * 1.95);
-    ctx.fill();
-    if (detailed) {
-      // Exposed skull patch
-      ctx.fillStyle = '#c8bfa0';
-      ctx.beginPath();
-      ctx.arc(x + s * 0.16, y - s * 0.82, s * 0.13, 0, Math.PI * 2);
-      ctx.fill();
-      // Jagged hair tufts
-      ctx.strokeStyle = '#1c2f12';
-      ctx.lineWidth = Math.max(1, s * 0.05);
-      ctx.beginPath();
-      ctx.moveTo(x - s * 0.3, y - s * 0.82); ctx.lineTo(x - s * 0.4, y - s * 1.0);
-      ctx.moveTo(x - s * 0.05, y - s * 0.92); ctx.lineTo(x - s * 0.02, y - s * 1.08);
-      ctx.stroke();
-    }
-  }
-
-  // Head extras per type
-  if (type === 'rambo') {
-    ctx.strokeStyle = isFlash ? '#FFF' : '#c0392b';
-    ctx.lineWidth = Math.max(2, s * 0.14);
-    ctx.beginPath();
-    ctx.moveTo(x - s * 0.36, y - s * 0.82);
-    ctx.lineTo(x + s * 0.38, y - s * 0.9);
-    ctx.stroke();
-  } else if (type === 'laser') {
-    // Visor
-    ctx.fillStyle = isFlash ? '#FFF' : '#00ffff';
-    ctx.beginPath();
-    ctx.roundRect(x - s * 0.28, y - s * 0.68, s * 0.56, s * 0.16, s * 0.06);
-    ctx.fill();
-  }
-
-  if (isPlayer && detailed && type === 'normal') drawSkinFlair(ctx, color, x, y, s);
-
-  // Face: eyes
-  if (!isFlash) {
-    if (isPlayer) {
-      ctx.fillStyle = '#3a2a1a';
-      ctx.beginPath();
-      ctx.arc(x - s * 0.14, y - s * 0.58, s * 0.06, 0, Math.PI * 2);
-      ctx.arc(x + s * 0.14, y - s * 0.58, s * 0.06, 0, Math.PI * 2);
-      ctx.fill();
-    } else {
-      // Glowing enemy eyes (asymmetric: one wide, one sunken)
-      ctx.fillStyle = '#FFD700';
-      ctx.shadowColor = '#FF4500';
-      ctx.shadowBlur = detailed ? 5 : 0;
-      ctx.beginPath();
-      ctx.arc(x - s * 0.16, y - s * 0.62, s * 0.11, 0, Math.PI * 2);
-      ctx.arc(x + s * 0.15, y - s * 0.58, s * 0.07, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.shadowBlur = 0;
-      if (detailed) {
-        // Slack, gaping jaw
-        ctx.fillStyle = '#1a0a0a';
-        ctx.beginPath();
-        ctx.ellipse(x, y - s * 0.4, s * 0.14, s * 0.12, 0, 0, Math.PI * 2);
-        ctx.fill();
-        // Broken teeth
-        ctx.fillStyle = '#d8cfa8';
-        ctx.fillRect(x - s * 0.1, y - s * 0.5, s * 0.05, s * 0.07);
-        ctx.fillRect(x + s * 0.03, y - s * 0.5, s * 0.05, s * 0.07);
-        // Dripping drool
-        ctx.strokeStyle = 'rgba(150, 220, 120, 0.5)';
-        ctx.lineWidth = Math.max(1, s * 0.05);
-        ctx.beginPath();
-        ctx.moveTo(x + s * 0.02, y - s * 0.3);
-        ctx.lineTo(x + s * 0.02, y - s * 0.12);
-        ctx.stroke();
-      }
-    }
-  }
-
-  // Super aura (baked in)
-  if (isSuper && !isFlash) {
-    ctx.strokeStyle = '#FFD700';
-    ctx.lineWidth = Math.max(2, s * 0.12);
-    ctx.shadowColor = '#FFD700';
-    ctx.shadowBlur = detailed ? 8 : 0;
-    ctx.beginPath();
-    ctx.arc(x, y, s * 1.15, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.shadowBlur = 0;
-  }
 }
 
 function renderParticleToCache(type: Particle['type'], color: string) {
@@ -992,7 +610,7 @@ export function updateFloatingTexts(): void {
 
 // --- Map / Background Rendering ---
 /* v8 ignore start */
-const HORIZON_RATIO = 0.22;
+// HORIZON_RATIO comes from perspective.ts
 
 function drawSky(ctx: CanvasRenderingContext2D, width: number, height: number, theme: ThemeConfig): void {
   const horizonY = height * HORIZON_RATIO;
@@ -1224,33 +842,7 @@ function drawRoadSurface(ctx: CanvasRenderingContext2D, width: number, height: n
       ctx.stroke();
   }
 
-  // Center Lines
-  if (theme.roadType !== 'dirt' && theme.roadType !== 'ice' && theme.roadType !== 'alien') {
-      ctx.strokeStyle = theme.roadType === 'holographic' ? '#00FFFF' : '#FFD700';
-      ctx.lineWidth = 4;
-      ctx.setLineDash([30, 40]);
-      ctx.beginPath();
-      ctx.moveTo(width / 2, roadStartY + 10);
-      ctx.lineTo(width / 2, height);
-      ctx.stroke();
-      ctx.setLineDash([]);
-  }
-
-  // Side Lines
-  if (theme.roadType === 'asphalt' || theme.roadType === 'brick') {
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([20, 30]);
-      ctx.beginPath();
-      ctx.moveTo(width / 2 - roadHorizonWidth / 2 + 5, roadStartY + 10);
-      ctx.lineTo(width / 2 - roadBottomWidth / 2 + 30, height);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(width / 2 + roadHorizonWidth / 2 - 5, roadStartY + 10);
-      ctx.lineTo(width / 2 + roadBottomWidth / 2 - 30, height);
-      ctx.stroke();
-      ctx.setLineDash([]);
-  }
+  // Lane markings scroll with the player's progress: see drawLaneMotion
 }
 
 function drawDecorations(ctx: CanvasRenderingContext2D, width: number, height: number, theme: ThemeConfig): void {
@@ -1497,6 +1089,45 @@ function drawTree(ctx: CanvasRenderingContext2D, x: number, y: number, size: num
   ctx.fill();
 }
 
+/** Perspective-correct scrolling lane dashes (center + side lines). Depth d runs 1 (horizon) .. 0 (bottom). */
+function drawLaneMotion(ctx: CanvasRenderingContext2D, theme: ThemeConfig, distance: number): void {
+  const center = theme.roadType !== 'dirt' && theme.roadType !== 'ice' && theme.roadType !== 'alien';
+  const sides = theme.roadType === 'asphalt' || theme.roadType === 'brick';
+  if (!center && !sides) return;
+  const scroll = (distance / 515) % 1;
+  const period = 0.14; // in "1/depth" units: dash cycle
+  const startRow = HORIZON_Y + 10;
+  const colour = theme.roadType === 'holographic' ? '#00FFFF' : '#FFD700';
+  const rows = 18;
+  for (let i = 0; i < rows; i++) {
+    const k0 = (i + scroll) * period, k1 = k0 + period * 0.45;
+    // screen row from depth: y = H + (B - H) * k^2 (denser near the horizon)
+    const y0 = startRow + (BASE_HEIGHT - startRow) * Math.min(1, (k0 * 0.9) ** 2 * 6.2);
+    const y1 = startRow + (BASE_HEIGHT - startRow) * Math.min(1, (k1 * 0.9) ** 2 * 6.2);
+    if (y0 >= BASE_HEIGHT || y1 - y0 < 0.5) continue;
+    const t = (y0 - HORIZON_Y) / (BASE_HEIGHT - HORIZON_Y);
+    if (center) {
+      ctx.fillStyle = colour;
+      const w0 = 1 + 4 * t, w1 = 1 + 4 * ((y1 - HORIZON_Y) / (BASE_HEIGHT - HORIZON_Y));
+      ctx.beginPath();
+      ctx.moveTo(240 - w0 / 2, y0); ctx.lineTo(240 + w0 / 2, y0);
+      ctx.lineTo(240 + w1 / 2, y1); ctx.lineTo(240 - w1 / 2, y1);
+      ctx.fill();
+    }
+    if (sides) {
+      ctx.fillStyle = 'rgba(255,255,255,0.65)';
+      const h0 = roadHalfWidthAt(y0) - 8 - 22 * t, h1 = roadHalfWidthAt(y1) - 8 - 22 * ((y1 - HORIZON_Y) / (BASE_HEIGHT - HORIZON_Y));
+      const sw0 = 1 + 2 * t, sw1 = 1 + 2 * ((y1 - HORIZON_Y) / (BASE_HEIGHT - HORIZON_Y));
+      for (const sgn of [-1, 1]) {
+        ctx.beginPath();
+        ctx.moveTo(240 + sgn * h0 - sw0 / 2, y0); ctx.lineTo(240 + sgn * h0 + sw0 / 2, y0);
+        ctx.lineTo(240 + sgn * h1 + sw1 / 2, y1); ctx.lineTo(240 + sgn * h1 - sw1 / 2, y1);
+        ctx.fill();
+      }
+    }
+  }
+}
+
 function drawRoad(ctx: CanvasRenderingContext2D, gameState: GameState): void {
   const width = BASE_WIDTH;
   const height = BASE_HEIGHT;
@@ -1513,7 +1144,7 @@ function drawRoad(ctx: CanvasRenderingContext2D, gameState: GameState): void {
 
   // Draw cached static background
   if (backgroundCache) {
-    ctx.drawImage(backgroundCache, 0, 0);
+    ctx.drawImage(backgroundCache, 0, 0, width, height);
   } else {
     // Fallback should normally not happen if updateBackgroundCache works
     drawSky(ctx, width, height, theme);
@@ -1521,6 +1152,8 @@ function drawRoad(ctx: CanvasRenderingContext2D, gameState: GameState): void {
     drawMountains(ctx, width, height, theme);
     drawGround(ctx, width, height, theme);
   }
+
+  drawLaneMotion(ctx, theme, gameState.distanceTraveled || 0);
 
   // Draw dynamic elements on top
   drawClouds(ctx, width, time, theme);
@@ -1623,14 +1256,14 @@ function drawSoldier3D(ctx: CanvasRenderingContext2D, x: number, y: number, size
   const scale = Math.max(0.5, 1 - (800 - y) / 1500);
 
   if (cachedCanvas) {
-    const canvasSize = cachedCanvas.width;
+    const canvasSize = cachedCanvas.width / SPRITE_SS; // sprites are supersampled
 
     // Optimization: Manual Transform instead of save/restore
     const finalY = y + bounce;
 
     ctx.translate(x, finalY);
     ctx.scale(scale, scale);
-    ctx.drawImage(cachedCanvas, -canvasSize / 2, -canvasSize / 2);
+    ctx.drawImage(cachedCanvas, -canvasSize / 2, -canvasSize / 2, canvasSize, canvasSize);
 
     // Reset transform
     ctx.scale(1/scale, 1/scale);
@@ -1766,7 +1399,7 @@ function drawHordeBadges(ctx: CanvasRenderingContext2D, hordes: EnemyHorde[]): v
   for (const horde of hordes) {
     if (!horde.isActive || horde.count <= 0) continue;
     if (getHordeAlpha(horde) <= 0.5) continue;
-    drawGlassBadge(ctx, horde.x - 25, horde.y - 60, 50, 30, horde.count.toString(), '#E74C3C');
+    drawGlassBadge(ctx, projectX(horde.x, horde.y) - 25, horde.y - 60, 50, 30, horde.count.toString(), '#E74C3C');
   }
 }
 /* v8 ignore stop */
@@ -1832,7 +1465,7 @@ function drawEnemyHorde(ctx: CanvasRenderingContext2D, horde: EnemyHorde, time: 
 
   for (const soldier of tempEnemySoldiers) {
     const isFlash = (soldier.hitTimer || 0) > 0;
-    drawSoldier3D(ctx, soldier.x, soldier.y, soldier.size, soldier.color, soldier.animOffset, time, soldier.type, false, isFlash);
+    drawSoldier3D(ctx, projectX(soldier.x, soldier.y), soldier.y, soldier.size * perspScale(soldier.y, 0.7), soldier.color, soldier.animOffset, time, soldier.type, false, isFlash);
   }
 
   const count = horde.count;
@@ -1880,11 +1513,11 @@ function drawMysteryBox(ctx: CanvasRenderingContext2D, box: MysteryBox, time: nu
 }
 
 function renderGateToCache(gate: Gate): void {
-  const padding = 40;
-  const width = gate.width;
-  const height = gate.height;
-  const canvasWidth = width + padding * 2;
-  const canvasHeight = height + padding * 2;
+  const padding = GATE_PADDING;
+  const logicalW = gate.width + padding * 2;
+  const logicalH = gate.height + padding * 2;
+  const canvasWidth = logicalW * GATE_SS;
+  const canvasHeight = logicalH * GATE_SS;
 
   let canvas: HTMLCanvasElement | OffscreenCanvas;
   let ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null;
@@ -1904,90 +1537,8 @@ function renderGateToCache(gate: Gate): void {
   if (!ctx) return;
 
   gate.cachedCanvas = canvas;
-
-  const x = padding;
-  const y = padding;
-
-  const barrelGradient = ctx.createLinearGradient(x, y, x + width, y);
-  if (gate.cachedColors) {
-    barrelGradient.addColorStop(0, gate.cachedColors.light);
-    barrelGradient.addColorStop(0.5, gate.color);
-    barrelGradient.addColorStop(1, gate.cachedColors.dark);
-  } else {
-    barrelGradient.addColorStop(0, shadeColor(gate.color, 20));
-    barrelGradient.addColorStop(0.5, gate.color);
-    barrelGradient.addColorStop(1, shadeColor(gate.color, -20));
-  }
-
-  // Shadow/Glow
-  if (QualityManager.getInstance().settings.enableShadows) {
-      const glowX = x + width / 2;
-      const glowY = y + height / 2;
-      const glowRadius = width * 0.8;
-      const glow = ctx.createRadialGradient(glowX, glowY, 0, glowX, glowY, glowRadius);
-      const glowColor = gate.color.startsWith('#') ? gate.color : '#FFFFFF';
-      safeAddColorStop(glow, 0, `${glowColor}66`); // 40% opacity
-      safeAddColorStop(glow, 1, `${glowColor}00`); // 0% opacity
-
-      ctx.fillStyle = glow;
-      ctx.fillRect(x - 20, y - 20, width + 40, height + 40);
-  }
-
-  // Ground Shadow
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-  ctx.beginPath();
-  ctx.ellipse(x + width / 2 + 5, y + height + 10, width / 2, 15, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = '#8B4513'; // Post color
-  ctx.beginPath();
-  ctx.roundRect(x + width * 0.05, y + height, width * 0.1, 15, 2);
-  ctx.roundRect(x + width * 0.85, y + height, width * 0.1, 15, 2);
-  ctx.fill();
-
-  // Main Body
-  ctx.fillStyle = barrelGradient;
-  ctx.beginPath();
-  ctx.roundRect(x, y, width, height, 12);
-  ctx.fill();
-
-  // Border
-  ctx.strokeStyle = '#FFFFFF';
-  ctx.lineWidth = 3;
-  ctx.stroke();
-
-  // Inner Panel
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-  ctx.beginPath();
-  ctx.roundRect(x + 5, y + 5, width - 10, height - 10, 8);
-  ctx.fill();
-
-  ctx.fillStyle = '#FFFFFF';
-
-  if (QualityManager.getInstance().settings.enableShadows) {
-    ctx.shadowColor = 'rgba(0,0,0,0.5)';
-    ctx.shadowBlur = 4;
-  }
-
-  ctx.font = `900 36px ${FONT_FAMILY}`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  let text = '';
-  if (gate.customText) {
-    text = gate.customText;
-    ctx.font = `bold 22px ${FONT_FAMILY}`;
-  } else {
-    switch (gate.type) {
-      case 'add': text = `+${fmtGateValue(gate.value)}`; break;
-      case 'multiply': text = `×${fmtGateValue(gate.value)}`; break;
-      case 'subtract': text = `-${fmtGateValue(gate.value)}`; break;
-      case 'divide': text = `÷${fmtGateValue(gate.value)}`; break;
-      case 'firerate': text = `🔥×${fmtGateValue(gate.value)}`; break;
-      case 'damage': text = `⚔️×${fmtGateValue(gate.value)}`; break;
-      case 'superwarrior': text = `⭐×${fmtGateValue(gate.value)}`; break;
-    }
-  }
-  ctx.fillText(text, x + width / 2, y + height / 2);
+  ctx.scale(GATE_SS, GATE_SS);
+  paintGate(ctx, padding, padding, gate.width, gate.height, gate, QualityManager.getInstance().settings.simplifiedRendering, QualityManager.getInstance().settings.enableShadows);
 }
 
 function drawGate(ctx: CanvasRenderingContext2D, gate: Gate): void {
@@ -1999,70 +1550,76 @@ function drawGate(ctx: CanvasRenderingContext2D, gate: Gate): void {
   }
 
   if (gate.cachedCanvas) {
-    const padding = 40;
-    const cachedWidth = gate.cachedCanvas.width;
-    const cachedHeight = gate.cachedCanvas.height;
+    const padding = GATE_PADDING;
+    const cachedWidth = gate.cachedCanvas.width / GATE_SS;
+    const cachedHeight = gate.cachedCanvas.height / GATE_SS;
     const scaledWidth = cachedWidth * scale;
     const scaledHeight = cachedHeight * scale;
 
-    const centerX = gate.x + gate.width / 2;
+    const centerX = projectX(gate.x + gate.width / 2, gate.y, 0.6);
     const drawX = centerX - scaledWidth / 2;
     const drawY = gate.y - padding * scale;
 
     ctx.drawImage(gate.cachedCanvas, drawX, drawY, scaledWidth, scaledHeight);
+
+    /* v8 ignore start */
+    // animated light sweep across the energy field
+    const sweep = ((Date.now() * 0.0006 + gate.id * 0.37) % 1.4) - 0.2;
+    const fx = gate.x + gate.width * sweep;
+    ctx.save();
+    ctx.beginPath(); ctx.roundRect(gate.x, gate.y, gate.width, gate.height * scale, 10 * scale); ctx.clip();
+    ctx.globalCompositeOperation = 'lighter';
+    const band = ctx.createLinearGradient(fx - 26, 0, fx + 26, 0);
+    safeAddColorStop(band, 0, 'rgba(255,255,255,0)');
+    safeAddColorStop(band, 0.5, 'rgba(255,255,255,0.28)');
+    safeAddColorStop(band, 1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = band;
+    ctx.fillRect(fx - 26, gate.y, 52, gate.height * scale);
+    ctx.restore();
+    /* v8 ignore stop */
   }
 }
 
 function drawMiniBoss(ctx: CanvasRenderingContext2D, miniBoss: MiniBoss, time: number): void {
   if (!miniBoss.isActive) return;
-  const pulse = Math.sin(time * 0.008) * 5;
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-  ctx.beginPath();
-  ctx.ellipse(miniBoss.x + miniBoss.width / 2, miniBoss.y + miniBoss.height + 10, miniBoss.width / 2, 12, 0, 0, Math.PI * 2);
-  ctx.fill();
   const cx = miniBoss.x + miniBoss.width / 2;
   const cy = miniBoss.y + miniBoss.height / 2;
-  const r = (miniBoss.width / 2) + pulse;
-  ctx.fillStyle = miniBoss.color;
-  if (miniBoss.type === 'armored') {
-    ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
-    ctx.strokeStyle = '#CCC';
-    ctx.lineWidth = 3;
-    ctx.strokeRect(cx - r, cy - r, r * 2, r * 2);
-  } else if (miniBoss.type === 'speed') {
-    ctx.beginPath();
-    ctx.moveTo(cx, cy - r);
-    ctx.lineTo(cx + r, cy + r);
-    ctx.lineTo(cx - r, cy + r);
-    ctx.fill();
-  } else if (miniBoss.type === 'spiky') {
-    drawStar(ctx, cx, cy, 6, r, r * 0.5);
-    ctx.fill();
-  } else {
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.fillStyle = '#FFFFFF';
+
+  // ground shadow
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.32)';
   ctx.beginPath();
-  ctx.arc(miniBoss.x + miniBoss.width * 0.35, miniBoss.y + miniBoss.height * 0.4, 8, 0, Math.PI * 2);
-  ctx.arc(miniBoss.x + miniBoss.width * 0.65, miniBoss.y + miniBoss.height * 0.4, 8, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#000000';
-  ctx.beginPath();
-  ctx.arc(miniBoss.x + miniBoss.width * 0.35, miniBoss.y + miniBoss.height * 0.4, 3, 0, Math.PI * 2);
-  ctx.arc(miniBoss.x + miniBoss.width * 0.65, miniBoss.y + miniBoss.height * 0.4, 3, 0, Math.PI * 2);
+  ctx.ellipse(cx, miniBoss.y + miniBoss.height + 10, miniBoss.width * 0.55, 12, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Mini Bar
-  const barWidth = 100;
-  const barHeight = 15;
-  const barX = miniBoss.x + miniBoss.width / 2 - barWidth / 2;
-  const barY = miniBoss.y - 25;
-  ctx.fillStyle = '#333';
-  ctx.fillRect(barX, barY, barWidth, barHeight);
-  ctx.fillStyle = '#FF6347';
-  ctx.fillRect(barX + 2, barY + 2, (barWidth - 4) * (miniBoss.hp / miniBoss.maxHp), barHeight - 4);
+  const sprite = getMiniBossSprite(miniBoss.type, (miniBoss.hitTimer ?? 0) > 0);
+  if (sprite) {
+    const t = time * 0.006 + miniBoss.id;
+    const size = MINI_BOX * MINI_VISUAL_SCALE * (miniBoss.width / 80);
+    const bob = Math.sin(t) * (miniBoss.type === 'speed' ? 4 : 2.5);
+    const squash = 1 + Math.sin(t * 1.4) * 0.03;
+    ctx.save();
+    ctx.translate(cx, cy + bob);
+    ctx.scale(squash, 2 - squash);
+    ctx.drawImage(sprite, -size / 2, -size / 2, size, size);
+    ctx.restore();
+  }
+
+  // Name + HP bar
+  const barWidth = 96;
+  const barHeight = 12;
+  const barX = cx - barWidth / 2;
+  const barY = miniBoss.y - 30;
+  const pct = Math.max(0, Math.min(1, miniBoss.hp / miniBoss.maxHp));
+  ctx.fillStyle = 'rgba(8,10,20,0.8)';
+  ctx.beginPath(); ctx.roundRect(barX - 2, barY - 2, barWidth + 4, barHeight + 4, 6); ctx.fill();
+  const g = ctx.createLinearGradient(barX, 0, barX + barWidth, 0);
+  safeAddColorStop(g, 0, '#FF8A3D'); safeAddColorStop(g, 1, '#E8452C');
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.roundRect(barX, barY, barWidth * pct, barHeight, 4); ctx.fill();
+  ctx.fillStyle = '#FFF';
+  ctx.font = `bold 9px ${FONT_FAMILY}`;
+  ctx.textAlign = 'center';
+  ctx.fillText(MINI_NAMES[miniBoss.type] ?? 'ELITE', cx, barY + 9);
 }
 
 function drawBossAtmosphere(ctx: CanvasRenderingContext2D, width: number, height: number, intensity: number, time: number): void {
@@ -2160,7 +1717,7 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
   const width = BASE_WIDTH;
   const height = BASE_HEIGHT;
 
-  // Calcular "Poder do Exército" (Soma dos pesos das unidades)
+  // Army power: weighted sum of unit types (same weights as before)
   let armyPower = 0;
   for (const s of army.soldiers) {
     if (!s.isAlive) continue;
@@ -2171,332 +1728,20 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
     else armyPower += 1;
   }
 
-  // Layout inferior unificado (Linha única)
-  // Ajustado para Safe Area (Home Bar no iOS ocupa ~34px)
-  const bottomY = height - 45;
-  const badgeHeight = 32;
-  const gap = 5;
+  const stats = {
+    count: armyCount,
+    power: Math.floor(armyPower * damage),
+    shotsPerSec: fireRate > 0 ? 1000 / fireRate : 0,
+  };
+  const rank = drawHud(ctx, gameState, stats, Date.now());
 
-  // Calculate Total Attack Power (Actual DPS proxy)
-  const totalAttack = Math.floor(armyPower * damage);
-
-  ctx.save();
-
-  // Pre-calculate widths to center
-  const isRecord = gameState.score > gameState.highScore && gameState.highScore > 0;
-  const scoreColor = isRecord
-      ? (Math.floor(Date.now() / 200) % 2 === 0 ? '#FFD700' : '#FF4500') // Pulse Gold/Orange
-      : '#FFD700';
-
-  // Add Combo Multiplier Text to Score Badge if Combo > 1
-  const scoreText = `🏆 ${gameState.score}`;
-  // Removed inline multiplier to show it distinctly above
-
-  interface Badge {
-      text: string;
-      color: string;
-      width: number;
-      id?: string;
-  }
-
-  const badges: Badge[] = [
-      { text: scoreText, color: scoreColor, width: 0, id: 'score' },
-      { text: `💰 ${gameState.coins}`, color: '#F1C40F', width: 0 },
-      { text: `Lv.${gameState.currentLevel}`, color: '#4A90D9', width: 0 },
-      { text: `🪖 ${armyCount}`, color: '#2ECC71', width: 0 }, // Show count, power is implied in Attack
-      { text: `⚔️ ${totalAttack}`, color: '#E91E63', width: 0 } // Show Total Attack
-  ];
-
-  let totalWidth = 0;
-  for (const b of badges) {
-      // Estimate width (roughly 9px per char at 14px bold) + padding
-      b.width = Math.max(50, 20 + b.text.length * 9);
-      totalWidth += b.width;
-  }
-  totalWidth += (badges.length - 1) * gap;
-
-  // Start X to center
-  let currentX = (width - totalWidth) / 2;
-
-  // Draw
-  for (const b of badges) {
-      drawGlassBadge(ctx, currentX, bottomY - badgeHeight/2, b.width, badgeHeight, b.text, b.color, 14);
-
-      // Draw Flashy Multiplier above Score
-      if (b.id === 'score' && gameState.combo > 1) {
-          const mult = (1 + gameState.combo * 0.05).toFixed(2);
-          ctx.save();
-          const pulse = 1 + Math.sin(Date.now() * 0.01) * 0.1;
-          ctx.translate(currentX + b.width/2, bottomY - badgeHeight - 10);
-          ctx.scale(pulse, pulse);
-
-          if (QualityManager.getInstance().settings.enableShadows) {
-             ctx.shadowColor = '#FFD700';
-             ctx.shadowBlur = 10;
-          }
-
-          ctx.fillStyle = '#FFD700';
-          ctx.font = `900 18px ${FONT_FAMILY}`;
-          ctx.textAlign = 'center';
-          ctx.strokeStyle = '#000';
-          ctx.lineWidth = 3;
-          ctx.strokeText(`x${mult}`, 0, 0);
-          ctx.fillText(`x${mult}`, 0, 0);
-          ctx.restore();
-      }
-
-      currentX += b.width + gap;
-  }
-
-  // Coins removido do topo pois foi movido para baixo
-  // drawGlassBadge(ctx, width - 90, 30, 80, 28, `💰 ${gameState.coins}`, '#FFD700', 14);
-
-  // High Score (Topo Esquerda, pequeno)
-  if (gameState.highScore > 0) {
-    const isBeaten = gameState.score > gameState.highScore;
-    const isClose = !isBeaten && gameState.score > gameState.highScore * 0.9;
-
-    let color = '#CCCCCC';
-    let scale = 1;
-    let shakeX = 0;
-    let shakeY = 0;
-
-    if (isBeaten) {
-        color = '#FFD700'; // Gold
-        scale = 1 + Math.sin(Date.now() * 0.01) * 0.1; // Gentle pulse
-    } else if (isClose) {
-        // Urgent Pulse
-        const pulse = Math.sin(Date.now() * 0.015);
-        color = pulse > 0 ? '#FF4500' : '#CCCCCC'; // Flash Red/Gray
-        scale = 1 + Math.abs(pulse) * 0.15; // Aggressive pulse
-        shakeX = (Math.random() - 0.5) * 2;
-        shakeY = (Math.random() - 0.5) * 2;
+  // Rank-up celebration
+  if (rank.rank !== gameState.currentRank) {
+    if (gameState.currentRank !== 'D' || gameState.score > 0) {
+      addFloatingText(`RANK ${rank.rank}!`, width / 2, height / 2 - 100, rank.color, 2.0, 'critical');
     }
-
-    ctx.save();
-    // Center of badge roughly (10 + 100/2, 30 + 24/2) = (60, 42)
-    ctx.translate(60 + shakeX, 42 + shakeY);
-    ctx.scale(scale, scale);
-    ctx.translate(-60, -42);
-
-    drawGlassBadge(ctx, 10, 30, 100, 24, `👑 HI: ${Math.max(gameState.score, gameState.highScore)}`, color, 12);
-    ctx.restore();
+    gameState.currentRank = rank.rank;
   }
-
-  // Live Rank (Topo Esquerda, abaixo do High Score)
-  const rankScore = gameState.score;
-  let rank = 'D';
-  let rankColor = '#7f8c8d'; // Gray
-  if (rankScore >= 5000) { rank = 'S'; rankColor = '#FFD700'; }
-  else if (rankScore >= 3000) { rank = 'A'; rankColor = '#9B59B6'; }
-  else if (rankScore >= 1000) { rank = 'B'; rankColor = '#3498DB'; }
-  else if (rankScore >= 500) { rank = 'C'; rankColor = '#2ECC71'; }
-
-  // Check for Rank Up
-  if (rank !== gameState.currentRank) {
-      // Trigger Rank Up Effect
-      if (gameState.currentRank !== 'D' || rankScore > 0) { // Don't trigger on init
-          addFloatingText(`RANK ${rank}!`, width/2, height/2 - 100, rankColor, 2.0, 'critical');
-          // We could add sound here if we imported audioManager, but visual is fine for now
-      }
-      gameState.currentRank = rank;
-  }
-
-  ctx.save();
-  ctx.translate(35, 85);
-
-  // Pulse animation for high ranks
-  if (rank === 'S' || rank === 'A') {
-      const pulse = 1 + Math.sin(Date.now() * 0.005) * 0.1;
-      ctx.scale(pulse, pulse);
-  }
-
-  // Glow
-  if (QualityManager.getInstance().settings.enableShadows) {
-    ctx.shadowColor = rankColor;
-    ctx.shadowBlur = 15;
-  }
-
-  // Circle bg
-  ctx.fillStyle = 'rgba(0,0,0,0.6)';
-  ctx.beginPath();
-  ctx.arc(0, 0, 22, 0, Math.PI * 2); // Slightly larger
-  ctx.fill();
-
-  // Ring
-  ctx.strokeStyle = rankColor;
-  ctx.lineWidth = 3;
-  ctx.stroke();
-  ctx.shadowBlur = 0;
-
-  // Rank Text
-  ctx.fillStyle = rankColor;
-  ctx.font = `900 24px ${FONT_FAMILY}`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(rank, 0, 2);
-
-  // Label
-  ctx.fillStyle = '#AAA';
-  ctx.font = `bold 10px ${FONT_FAMILY}`;
-  ctx.fillText('RANK', 0, 32);
-  ctx.restore();
-
-  // Super Cannon Indicator (Below Score/Badges)
-  const scReady = gameState.superCannonReady;
-  const scActive = gameState.superCannonActive;
-  const now = Date.now();
-  const scElapsed = now - gameState.superCannonLastUsed;
-  const scRemaining = Math.max(0, gameState.superCannonCooldown - scElapsed);
-
-  ctx.save();
-  const scX = width - 80;
-  const scY = 30; // Closer to the top right
-  const scRadius = 15;
-
-  ctx.translate(scX, scY);
-
-  if (scActive) {
-      const p = 1 + Math.sin(now * 0.02) * 0.2;
-      ctx.scale(p, p);
-      ctx.fillStyle = '#FFD700';
-      if (QualityManager.getInstance().settings.enableShadows) {
-          ctx.shadowColor = '#FFD700';
-          ctx.shadowBlur = 15;
-      }
-      ctx.beginPath();
-      ctx.arc(0, 0, scRadius, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.shadowBlur = 0;
-      ctx.fillStyle = '#000';
-      ctx.font = `bold 10px ${FONT_FAMILY}`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('⚡', 0, 1);
-  } else if (scReady || scRemaining <= 0) {
-      const p = 1 + Math.sin(now * 0.01) * 0.1;
-      ctx.scale(p, p);
-      ctx.fillStyle = '#00C9FF';
-      if (QualityManager.getInstance().settings.enableShadows) {
-          ctx.shadowColor = '#00C9FF';
-          ctx.shadowBlur = 10;
-      }
-      ctx.beginPath();
-      ctx.arc(0, 0, scRadius, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.shadowBlur = 0;
-      ctx.fillStyle = '#FFF';
-      ctx.font = `bold 10px ${FONT_FAMILY}`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('RDY', 0, 1);
-  } else {
-      ctx.fillStyle = 'rgba(0,0,0,0.5)';
-      ctx.beginPath();
-      ctx.arc(0, 0, scRadius, 0, Math.PI * 2);
-      ctx.fill();
-
-      const scProgress = Math.max(0, 1 - (scRemaining / gameState.superCannonCooldown));
-      ctx.fillStyle = '#555';
-      ctx.beginPath();
-      ctx.moveTo(0,0);
-      ctx.arc(0, 0, scRadius, -Math.PI/2, -Math.PI/2 + (Math.PI * 2 * scProgress));
-      ctx.fill();
-
-      ctx.strokeStyle = '#FFF';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(0, 0, scRadius, 0, Math.PI * 2);
-      ctx.stroke();
-  }
-  ctx.restore();
-
-  // Progress Bar (Topo, mais visível)
-  const progressWidth = width - 120; // Reduced to make room for super cannon indicator
-  const progressX = 20;
-  const progressY = 10;
-  const progressHeight = 8;
-  const progress = Math.min(gameState.distanceTraveled / gameState.levelDistance, 1);
-
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-  ctx.beginPath();
-  ctx.roundRect(progressX, progressY, progressWidth, progressHeight, 4);
-  ctx.fill();
-
-  // Progress Gradient
-  const progGrad = ctx.createLinearGradient(progressX, 0, progressX + progressWidth, 0);
-  progGrad.addColorStop(0, '#00C9FF');
-  progGrad.addColorStop(1, '#92FE9D');
-
-  ctx.fillStyle = progGrad;
-  ctx.beginPath();
-  ctx.roundRect(progressX, progressY, progressWidth * progress, progressHeight, 4);
-  ctx.fill();
-
-  // Progress Glow
-  if (QualityManager.getInstance().settings.enableShadows) {
-    ctx.shadowColor = '#00C9FF';
-    ctx.shadowBlur = 10;
-  }
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-  ctx.beginPath();
-  ctx.roundRect(progressX, progressY, progressWidth * progress, progressHeight / 2, 4);
-  ctx.fill();
-  ctx.shadowBlur = 0;
-
-  // Boss/Goal Icon at the end
-  const endX = progressX + progressWidth;
-  const endY = progressY + progressHeight / 2;
-
-  // Outer ring
-  ctx.fillStyle = '#333';
-  ctx.beginPath();
-  ctx.arc(endX, endY, 12, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Inner circle
-  ctx.fillStyle = '#E74C3C';
-  ctx.beginPath();
-  ctx.arc(endX, endY, 10, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Skull icon text
-  ctx.fillStyle = '#FFF';
-  ctx.font = `12px ${FONT_FAMILY}`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('💀', endX, endY + 1);
-
-  ctx.restore();
-
-  // Combo
-  if (gameState.combo > 1) {
-    const comboX = width / 2;
-    const comboY = 120; // Movido mais para baixo
-    const pulse = Math.min(2.5, 1.2 + gameState.combo / 40) + Math.sin(Date.now() * 0.015) * 0.1;
-    const shake = gameState.combo > 20 ? (Math.random() - 0.5) * 5 : 0;
-
-    ctx.save();
-    ctx.translate(comboX + shake, comboY + shake);
-    ctx.rotate(Math.sin(Date.now() * 0.01) * 0.1);
-    ctx.scale(pulse, pulse);
-
-    if (QualityManager.getInstance().settings.enableShadows) {
-      ctx.shadowColor = getComboColor(gameState.combo);
-      ctx.shadowBlur = 20;
-    }
-
-    ctx.fillStyle = getComboColor(gameState.combo);
-    ctx.font = `900 ${Math.min(48, 28 + gameState.combo)}px ${FONT_FAMILY}`; // Grow with combo
-    ctx.textAlign = 'center';
-    ctx.strokeStyle = '#FFFFFF';
-    ctx.lineWidth = 2;
-    ctx.strokeText(`${gameState.combo}x COMBO!`, 0, 0);
-    ctx.fillText(`${gameState.combo}x COMBO!`, 0, 0);
-    ctx.restore();
-  }
-
-  // Confetti/Sparks logic for Record would be handled by particle system updates in game loop
 }
 
 function drawFloatingTexts(ctx: CanvasRenderingContext2D): void {
@@ -2713,7 +1958,7 @@ function drawComboTier(ctx: CanvasRenderingContext2D, width: number, height: num
     }
 
     const centerX = width / 2;
-    const centerY = height * 0.25; // Top quarter
+    const centerY = height * 0.31; // below the HUD blocks
 
     ctx.save();
 
@@ -2757,7 +2002,7 @@ function drawComboBar(ctx: CanvasRenderingContext2D, gameState: GameState): void
   const barWidth = 220;
   const barHeight = 12;
   const x = (width - barWidth) / 2;
-  const y = 150; // Stable position below the shaking text area
+  const y = 204; // combo timer bar, between the HUD (perk row) and the tier text
 
   const maxTimer = 4000;
   const progress = Math.max(0, Math.min(1, gameState.comboTimer / maxTimer));
@@ -2936,6 +2181,26 @@ export function getParticles(): Particle[] { return particles; }
 export { collectEnemySoldiers };
 /* v8 ignore stop */
 
+// --- Biome weather (foreground ambience) ---
+let weather: WeatherState | null = null;
+let weatherLevel = -1;
+let weatherLast = 0;
+
+/* v8 ignore start */
+function renderWeather(ctx: CanvasRenderingContext2D, level: number, time: number): void {
+  if (weatherLevel !== level) {
+    const q = QualityManager.getInstance().settings;
+    weather = createWeather(getBiomeColors(level).name, q.simplifiedRendering ? 0.4 : 1);
+    weatherLevel = level;
+    weatherLast = time;
+  }
+  if (!weather) return;
+  stepWeather(weather, (time - weatherLast) / 1000);
+  weatherLast = time;
+  drawWeather(ctx, weather, time);
+}
+/* v8 ignore stop */
+
 export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameState: GameState): void {
   const width = BASE_WIDTH;
   const height = BASE_HEIGHT;
@@ -3019,6 +2284,7 @@ export function render(ctx: CanvasRenderingContext2D, entities: Entities, gameSt
   }
   // All overlays below draw on `out` (HUD canvas in layered mode)
   ctx = out;
+  renderWeather(ctx, gameState.currentLevel, time);
 
   if (gameState.bossAtmosphereIntensity > 0) {
     drawBossAtmosphere(ctx, width, height, gameState.bossAtmosphereIntensity, time);

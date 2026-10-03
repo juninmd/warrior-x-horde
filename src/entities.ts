@@ -1,4 +1,5 @@
 // entities.ts - Criação de entidades
+import { roadWorldBounds } from './perspective';
 import { Army, Soldier, EnemyHorde, Gate, Boss, Entities, MiniBoss, MysteryBox, Coin } from './types';
 import { MAX_HEROES } from './constants';
 import { shadeColor } from './utils';
@@ -189,7 +190,9 @@ export function addSpecialSoldiersToArmy(army: Army, type: Soldier['type'], coun
 export function multiplySoldiersInArmy(army: Army, multiplier: number): void {
   const currentCount = army.soldiers.length;
   // Limitar multiplicador para evitar explosão de entidades
-  const targetCount = Math.min(MAX_HEROES, Math.floor(currentCount * multiplier));
+  let targetCount = Math.min(MAX_HEROES, Math.floor(currentCount * multiplier));
+  // A "×1.17" portal must always recruit at least one soldier (floor(5 × 1.17) = 5 used to be a no-op)
+  if (multiplier > 1 && currentCount > 0 && targetCount <= currentCount) targetCount = Math.min(MAX_HEROES, currentCount + 1);
   const newCount = targetCount - currentCount;
   addSoldiersToArmy(army, Math.max(0, newCount));
 }
@@ -232,19 +235,42 @@ export function addSuperSoldiersToArmy(army: Army, count: number): void {
   army.aliveCount += actualCount;
 }
 
+/** Enemy archetype colors/sizes (distinct sprite-cache keys). */
+export const ENEMY_KINDS = {
+  runner: { color: '#FF9A3D', size: 13, hpMult: 0.5 },
+  tank: { color: '#8E2A2A', size: 22, hpMult: 4 },
+  spitter: { color: '#8BD02A', size: 16, hpMult: 1.5 },
+} as const;
+
+export function enemyKindChances(level: number): { runner: number; tank: number; spitter: number } {
+  return {
+    runner: level >= 2 ? Math.min(0.15, 0.04 * (level - 1)) : 0,
+    tank: level >= 3 ? Math.min(0.1, 0.02 * (level - 2)) : 0,
+    spitter: level >= 2 ? Math.min(0.12, 0.03 * (level - 1)) : 0,
+  };
+}
+
+/** Rolls an archetype for one horde member. The horde center (allowChange=false) stays a plain zombie. */
+export function createEnemyUnit(x: number, y: number, hp: number, level: number, allowChange: boolean, rng: () => number = Math.random): Soldier {
+  const ch = enemyKindChances(level);
+  const r = allowChange ? rng() : 1;
+  let kind: Soldier['kind'];
+  if (r < ch.spitter) kind = 'spitter';
+  else if (r < ch.spitter + ch.tank) kind = 'tank';
+  else if (r < ch.spitter + ch.tank + ch.runner) kind = 'runner';
+  if (!kind) return createSoldier(x, y, '#E74C3C', hp);
+  const def = ENEMY_KINDS[kind];
+  const s = createSoldier(x, y, def.color, Math.max(1, Math.round(hp * def.hpMult)));
+  s.size = def.size;
+  s.kind = kind;
+  if (kind === 'spitter') s.cooldown = 90 + Math.random() * 120;
+  return s;
+}
+
 export function createEnemyHorde(canvasWidth: number, y: number, count: number, level: number = 1): EnemyHorde {
-  // Calcular limites da estrada com perspectiva
-  // A estrada é mais estreita no topo e mais larga embaixo
-  const roadTopWidth = canvasWidth * 0.3;
-  const roadBottomWidth = canvasWidth;
-
-  // Calcular a largura da estrada nesta posição Y (interpolação linear)
-  // Como Y é negativo (acima da tela), usar um valor base
-  const normalizedY = Math.max(0, Math.min(1, (y + 200) / 800)); // Normalizar para 0-1
-  const roadWidthAtY = roadTopWidth + (roadBottomWidth - roadTopWidth) * normalizedY;
-
-  // Centralizar na estrada com pequena variação
-  const maxOffset = roadWidthAtY * 0.2; // 20% de variação máxima
+  // Shared road geometry (perspective.ts): keep the horde inside the asphalt
+  const roadBounds = roadWorldBounds(y, 40);
+  const maxOffset = (roadBounds.maxX - roadBounds.minX) * 0.2; // 20% de variação máxima
   const x = canvasWidth / 2 + (Math.random() - 0.5) * maxOffset;
 
   const soldiers: Soldier[] = [];
@@ -267,11 +293,15 @@ export function createEnemyHorde(canvasWidth: number, y: number, count: number, 
       const soldierX = x + Math.cos(angle) * ringRadius;
       const soldierY = y + Math.sin(angle) * ringRadius * 0.5; // Achatar em Y para efeito 3D
 
-      soldiers.push(createSoldier(soldierX, soldierY, '#E74C3C', enemyHp));
+      soldiers.push(createEnemyUnit(soldierX, soldierY, enemyHp, level, soldierIndex > 0));
       soldierIndex++;
     }
     ring++;
   }
+
+  // Pooled HP is the sum of the members' HP, so tanks (4x) and runners (0.5x) count properly
+  let totalHp = 0;
+  for (const s of soldiers) totalHp += s.hp;
 
   return {
     id: hordeIdCounter++,
@@ -284,8 +314,8 @@ export function createEnemyHorde(canvasWidth: number, y: number, count: number, 
     color: '#E74C3C',
     speed: 0,
     isActive: true,
-    hp: count * enemyHp,
-    maxHp: count * enemyHp,
+    hp: totalHp,
+    maxHp: totalHp,
     perfectClearEligible: true,
   };
 }
@@ -538,7 +568,7 @@ export function createBoss(canvasWidth: number, level: number): Boss {
     const bossHp = 5000 + (level - 10) * 2000; // 5000 HP base + 2000 por level acima de 10
     return {
       x: canvasWidth / 2,
-      y: 25, // Posição fixa da nave no topo (não se move!)
+      y: 95, // Nave no topo da pista (visível por inteiro); só oscila levemente
       width: 90,
       height: 30,
       hp: bossHp,

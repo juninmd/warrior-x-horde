@@ -110,6 +110,10 @@ export interface Soldier {
   personalFireRate?: number; // Fire rate individual (para super guerreiros)
   type: 'normal' | 'bazooka' | 'rambo' | 'laser';
   hitTimer?: number;
+  /** Enemy archetype (horde soldiers only): runner = fast fodder, tank = armored, spitter = ranged. */
+  kind?: 'runner' | 'tank' | 'spitter';
+  /** Frames until a spitter fires again. */
+  cooldown?: number;
 }
 
 export interface Army {

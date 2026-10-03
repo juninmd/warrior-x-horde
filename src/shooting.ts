@@ -1,7 +1,8 @@
 // shooting.ts - Sistema de tiro automatico e Super Cannon
+import { getMods } from './perks';
+import { registerKill, awardHordeClear, defeatBoss, defeatMiniBoss } from './rewards';
 import { Entities, GameState, Bullet, EnemyHorde, Boss, Soldier, MiniBoss } from './types';
 import { addFloatingText, addExplosion, addParticle } from './renderer';
-import { triggerScreenShake } from './game';
 import { ObjectPool } from './pool';
 import { SpatialHashGrid, SpatialItem } from './spatial';
 import { fastRemove } from './utils';
@@ -131,7 +132,7 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
   const army = entities.playerArmy;
   const now = Date.now();
 
-  if (now - army.lastShotTime < army.fireRate) return;
+  if (now - army.lastShotTime < army.fireRate / getMods().fireRateMult) return;
 
   // PERFORMANCE OPTIMIZATION: Use bucket sort instead of full sort
   /* v8 ignore start */
@@ -215,6 +216,13 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
   /* v8 ignore stop */
   /* v8 ignore stop */
 
+  // Firepower must grow with army size even though a volley is capped (15 bullets, 200-soldier slice):
+  // when more soldiers *could* have fired than we simulate, each bullet carries sqrt(potential / fired) extra damage.
+  const potentialShooters = Math.ceil(army.aliveCount / 3);
+  const volleyScale = tempShooters.length > 0 && potentialShooters > tempShooters.length
+    ? Math.sqrt(potentialShooters / tempShooters.length)
+    : 1;
+
   for (let i = 0; i < tempShooters.length; i++) { const shooter = tempShooters[i];
     // Cada atirador procura seu alvo mais próximo
     const target = findNearestTarget(shooter, entities.enemyHordes, entities.boss, entities.miniBosses);
@@ -225,7 +233,7 @@ export function updateShooting(entities: Entities, gameState: GameState): void {
     const dispersion = (shooter.isSuper || shooter.type !== 'normal') ? 0 : (Math.random() - 0.5) * 3;
 
     // Customizar tiro baseada na classe
-    let damage = army.damage;
+    let damage = army.damage * getMods().damageMult * volleyScale;
     let speed = 0; // Se 0, usa padrão do createBullet (-12)
 
     if (shooter.isSuper) damage *= 2;
@@ -325,7 +333,7 @@ function applySuperCannonDamage(entities: Entities, gameState: GameState): void 
 
   const beamX = army.centerX;
   const beamWidth = 40;
-  const damage = army.damage * gameState.superCannonDamageMultiplier;
+  const damage = army.damage * getMods().damageMult * gameState.superCannonDamageMultiplier;
 
   for (const horde of entities.enemyHordes) {
     if (!horde.isActive) continue;
@@ -352,17 +360,12 @@ function applySuperCannonDamage(entities: Entities, gameState: GameState): void 
   /* v8 ignore start */
   if (entities.boss && entities.boss.isActive) {
     const boss = entities.boss;
-    const bossCenter = boss.x + boss.width / 2;
+    // The mothership's x is already its center; regular bosses use top-left + width
+    const bossCenter = boss.type === 'mothership' ? boss.x : boss.x + boss.width / 2;
     if (bossCenter > beamX - beamWidth / 2 && bossCenter < beamX + beamWidth / 2) {
       /* v8 ignore next */
       boss.hp -= damage * 0.1;
-      if (boss.hp <= 0) {
-        boss.isActive = false;
-        gameState.isVictory = true;
-        gameState.score += 1000;
-        addFloatingText('BOSS DESTROYED!', boss.x + boss.width / 2, boss.y, '#FFD700');
-        triggerScreenShake(20, 1000);
-      }
+      if (boss.hp <= 0) defeatBoss(boss, gameState, gameState.currentLevel);
     }
   }
   /* v8 ignore stop */
@@ -502,6 +505,7 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
                   gameState.score += 10;
                   // Ensure coin is awarded only once per unique soldier death
                   gameState.coins += 1; // Coin per enemy kill
+                  registerKill(gameState, soldier.x, soldier.y);
               }
 
               // Kill nearest other soldiers if we need to kill more
@@ -515,6 +519,7 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
                           gameState.score += 10;
                           // Fix: Prevent infinite coin exploit by ensuring one coin per kill
                           gameState.coins += 1;
+                          registerKill(gameState, s.x, s.y);
                           addExplosion(s.x, s.y, '#E74C3C');
                       }
                   }
@@ -531,10 +536,8 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
               horde.count = horde.soldiers.length;
 
               if (horde.soldiers.length === 0 || horde.hp <= 0) {
-                  horde.isActive = false;
-                  gameState.score += 50;
-                  addFloatingText('HORDE DESTROYED!', horde.x, horde.y, '#FFD700');
-                  addParticle(horde.x, horde.y, 'star', '#FFD700', 8);
+                  // Same rewards as a melee clear (combo, coins, fanfare)
+                  awardHordeClear(horde, gameState, gameState.currentLevel);
               }
           }
 
@@ -563,16 +566,7 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
           addFloatingText(Math.floor(bullet.damage).toString(), bullet.x, bullet.y - 20, '#FFF', 0.8);
           addParticle(bullet.x, bullet.y, 'hitmarker', '#FFF');
 
-          if (miniBoss.hp <= 0) {
-            miniBoss.isActive = false;
-            gameState.score += 200;
-            addFloatingText('MINI-BOSS!', miniBoss.x + miniBoss.width / 2, miniBoss.y, '#FF4500');
-            for (let k = 0; k < 3; k++) {
-              setTimeout(() => {
-                addExplosion(miniBoss.x + Math.random() * miniBoss.width, miniBoss.y + Math.random() * miniBoss.height, '#FF4500');
-              }, k * 50);
-            }
-          }
+          if (miniBoss.hp <= 0) defeatMiniBoss(miniBoss, gameState, gameState.currentLevel);
 
           bulletPool.release(bullet);
           fastRemove(entities.bullets, i);
@@ -628,41 +622,7 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
         );
         addParticle(bullet.x, bullet.y, 'hitmarker', '#FFF');
 
-        if (boss.hp <= 0) {
-          boss.isActive = false;
-          triggerScreenShake(20, 1000); // Shake forte na morte do boss
-
-          /* v8 ignore start */
-          if (boss.type === 'mothership') {
-            // Vitória final do jogo - derrotou a nave mãe!
-            gameState.isVictory = true;
-            gameState.score += 5000; // Bônus maior
-            addFloatingText('🎉 VITÓRIA FINAL! 🎉', boss.x, boss.y + 100, '#FFD700');
-            addFloatingText('NAVE MÃE DESTRUÍDA!', boss.x, boss.y + 140, '#00FF88');
-            // Explosão ÉPICA da nave mãe
-            for (let k = 0; k < 15; k++) {
-              setTimeout(() => {
-                const explosionX = boss.x + (Math.random() - 0.5) * 150;
-                const explosionY = boss.y + (Math.random() - 0.5) * 80;
-                addExplosion(explosionX, explosionY, k % 2 === 0 ? '#00FF88' : '#FFD700');
-                addParticle(boss.x, boss.y, 'star', '#00FFAA', 15);
-              }, k * 150);
-            }
-          } else {
-          /* v8 ignore stop */
-            // Boss normal derrotado - próximo level
-            gameState.isVictory = true;
-            gameState.score += 500;
-            addFloatingText('BOSS DEFEATED!', boss.x + boss.width / 2, boss.y, '#FFD700');
-            // Explosão épica do boss
-            for (let k = 0; k < 5; k++) {
-              setTimeout(() => {
-                addExplosion(boss.x + Math.random() * boss.width, boss.y + Math.random() * boss.height, '#FFD700');
-                addParticle(boss.x + boss.width / 2, boss.y + boss.height / 2, 'star', '#FF6B6B', 10);
-              }, k * 100);
-            }
-          }
-        }
+        if (boss.hp <= 0) defeatBoss(boss, gameState, gameState.currentLevel);
       }
     }
   }

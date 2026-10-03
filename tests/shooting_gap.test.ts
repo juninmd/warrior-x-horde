@@ -14,6 +14,7 @@ vi.mock('../src/renderer', () => ({
 
 vi.mock('../src/game', () => ({
     triggerScreenShake: vi.fn(),
+    triggerHitStop: vi.fn(),
 }));
 
 describe('Shooting Gap Coverage', () => {

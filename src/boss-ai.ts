@@ -10,6 +10,8 @@ import { cleanupDeadSoldiers } from './collisions';
 import { addExplosion, addFloatingText } from './renderer';
 import { triggerScreenShake } from './game';
 import { fastRemove } from './utils';
+import { armyRadius } from './army-geometry';
+import { consumeShield, getMods } from './perks';
 
 export { BOSS_LORE, getBossLore };
 export type { BossLore };
@@ -40,7 +42,7 @@ function pickPattern(phase: 1 | 2 | 3): NonNullable<Boss['pattern']> {
 function fire(boss: Boss, entities: Entities, level: number): void {
   const phase = getBossPhase(boss);
   const cx = boss.type === 'mothership' ? boss.x : boss.x + boss.width / 2;
-  const cy = boss.y + (boss.type === 'mothership' ? 20 : boss.height);
+  const cy = boss.y + (boss.type === 'mothership' ? 56 : boss.height); // mothership: cannon muzzles
   const army = entities.playerArmy;
   const dmg = bossBulletDamage(level);
   const speed = 3.2 + phase * 0.5 + Math.min(1.5, level * 0.1);
@@ -118,11 +120,15 @@ export function updateBossAttacks(entities: Entities, gameState: GameState, dtFa
 export function resolveEnemyBullets(entities: Entities, gameState: GameState): number {
   if (gameState.isGameOver || gameState.isDying) return 0;
   const army = entities.playerArmy;
+  const reach = armyRadius(army.aliveCount) + 40;
   let totalKilled = 0;
 
   for (let i = entities.bullets.length - 1; i >= 0; i--) {
     const bullet = entities.bullets[i];
     if (!bullet.isEnemy) continue;
+
+    // quick reject: far from the formation
+    if (Math.abs(bullet.x - army.centerX) > reach || Math.abs(bullet.y - army.centerY) > reach) continue;
 
     let hit = false;
     for (const s of army.soldiers) {
@@ -134,7 +140,14 @@ export function resolveEnemyBullets(entities: Entities, gameState: GameState): n
     }
     if (!hit) continue;
 
-    let toKill = bullet.damage;
+    if (consumeShield()) {
+      addExplosion(bullet.x, bullet.y, '#4AD0FF');
+      addFloatingText('BLOQUEADO', bullet.x, bullet.y - 12, '#4AD0FF', 0.8);
+      releaseBullet(bullet);
+      fastRemove(entities.bullets, i);
+      continue;
+    }
+    let toKill = Math.max(1, bullet.damage - getMods().bossDamageReduction);
     addExplosion(bullet.x, bullet.y, '#FF4040');
     for (let j = army.soldiers.length - 1; j >= 0 && toKill > 0; j--) {
       const s = army.soldiers[j];

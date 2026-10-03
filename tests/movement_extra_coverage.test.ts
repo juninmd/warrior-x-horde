@@ -40,13 +40,13 @@ describe('Movement Extra Coverage', () => {
         } as any;
 
         moveEntitiesDown(entities, gameState, 1);
-        expect(entities.boss.y).toBe(20);
+        expect(entities.boss.y).toBe(75);
         expect(entities.boss.vy).toBeGreaterThan(0);
 
-        entities.boss.y = 100;
+        entities.boss.y = 135;
         entities.boss.vy = 1;
         moveEntitiesDown(entities, gameState, 1);
-        expect(entities.boss.y).toBe(80);
+        expect(entities.boss.y).toBe(130);
         expect(entities.boss.vy).toBeLessThan(0);
     });
 

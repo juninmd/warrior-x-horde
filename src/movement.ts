@@ -1,5 +1,8 @@
 // movement.ts - Sistema de movimento
+import { roadWorldBounds } from './perspective';
 import { Entities, GameState, Army } from './types';
+import { armyRadius } from './army-geometry';
+export { armyRadius };
 
 // Frame-rate independent smoothing factor.
 // Exponential decay keeps the follow "feel" identical across framerates and
@@ -11,8 +14,10 @@ function smoothFactor(rate: number, dtFactor: number): number {
 
 export function updateArmyPosition(army: Army, targetX: number, canvasWidth: number, dtFactor: number): void {
   // Limitar movimento horizontal
-  const minX = 50;
-  const maxX = canvasWidth - 50;
+  // Keep big formations on screen: margin grows with the army radius (capped so steering room remains)
+  const margin = Math.max(50, Math.min(110, 30 + armyRadius(army.aliveCount) * 0.8));
+  const minX = margin;
+  const maxX = canvasWidth - margin;
   army.targetX = Math.max(minX, Math.min(maxX, targetX));
 
   // Mover centro do exército suavemente para o target (independente de framerate)
@@ -102,13 +107,7 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
   for (let i = 0; i < entities.enemyHordes.length; i++) { const horde = entities.enemyHordes[i];
     horde.y += enemySpeed;
 
-    // Calcular limites da estrada nesta posição Y
-    const roadTopWidth = 0.3; // 30% da largura no topo
-    const normalizedY = Math.max(0, Math.min(1, horde.y / canvasHeight));
-    const canvasWidth = 480; // Largura padrão do canvas
-    const roadWidthAtY = canvasWidth * (roadTopWidth + (1 - roadTopWidth) * normalizedY);
-    const roadMinX = (canvasWidth - roadWidthAtY) / 2 + 30; // Margem de 30px
-    const roadMaxX = (canvasWidth + roadWidthAtY) / 2 - 30;
+    const { minX: roadMinX, maxX: roadMaxX } = roadWorldBounds(horde.y, 30);
 
     // Se a horda passou do threshold, perseguir o jogador horizontalmente
     if (horde.y > pursuitThreshold && horde.isActive) {
@@ -150,9 +149,9 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
         boss.vx = -Math.abs(boss.vx) * (0.8 + Math.random() * 0.4);
       }
 
-      // Limites verticais (entre y=20 e y=80)
-      const minY = 20;
-      const maxY = 80;
+      // Limites verticais (entre y=75 e y=130)
+      const minY = 75;
+      const maxY = 130;
       if (boss.y < minY) {
         boss.y = minY;
         boss.vy = Math.abs(boss.vy) * (0.8 + Math.random() * 0.4);

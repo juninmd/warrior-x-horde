@@ -25,6 +25,8 @@ const soldierReset = (soldier: Soldier): void => {
   soldier.isSuper = false;
   soldier.personalFireRate = undefined;
   soldier.type = 'normal';
+  soldier.kind = undefined;
+  soldier.cooldown = undefined;
   soldier.animOffset = Math.random() * Math.PI * 2;
   // x, y, hp, color, id will be overwritten by creation logic
 };

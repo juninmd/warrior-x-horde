@@ -188,7 +188,7 @@ describe('Movement Coverage', () => {
         updateMovement(entities, gameState, 800, 400, 1);
 
         expect(boss.x).toBeGreaterThanOrEqual(20);
-        expect(boss.y).toBeGreaterThanOrEqual(20);
+        expect(boss.y).toBeGreaterThanOrEqual(75);
 
         boss.x = 800;
         boss.y = 100;
@@ -196,7 +196,7 @@ describe('Movement Coverage', () => {
         updateMovement(entities, gameState, 800, 400, 1);
 
         expect(boss.x).toBeLessThanOrEqual(480 - 100 - 20);
-        expect(boss.y).toBeLessThanOrEqual(80);
+        expect(boss.y).toBeLessThanOrEqual(130);
     });
 
     it('horde pursuit logic', () => {

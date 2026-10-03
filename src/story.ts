@@ -38,6 +38,24 @@ export function getDefeatLine(level: number): string {
   return `O pelotão caiu em "${ch.place}". Outros virão para terminar o que vocês começaram.`;
 }
 
+/** Mid-chapter radio calls from Commander Vega (shown at 50% of each level). */
+export const RADIO: string[] = [
+  'Vega: Bom trabalho, soldado. A Fera guarda o portão — mire na cabeça!',
+  'Vega: O pântano é instável. Não deixe a gosma encostar em vocês.',
+  'Vega: O Olho observa tudo. Mantenham-se em movimento!',
+  'Vega: Máquinas de guerra à frente. Concentrem fogo!',
+  'Vega: Teias por toda parte... cuidado com o que cai do teto.',
+  'Vega: Os mortos estão levantando. Não parem de atirar.',
+  'Vega: O calor é insuportável, mas estamos perto da cratera.',
+  'Vega: Não confio nessa névoa. Fiquem juntos!',
+  'Vega: O reator está logo ali. Última parada antes da Nave-Mãe.',
+  'Vega: É isso, Comandante. Derrube a Nave-Mãe e liberte a humanidade!',
+];
+
+export function getRadio(level: number): string {
+  return level >= 1 && level <= RADIO.length ? RADIO[level - 1] : 'Vega: A horda não acaba... resista, Comandante!';
+}
+
 let bannerTimer: ReturnType<typeof setTimeout> | null = null;
 
 function getBanner(): HTMLElement {
@@ -54,7 +72,7 @@ function getBanner(): HTMLElement {
   return el;
 }
 
-function showBanner(kicker: string, title: string, text: string, variant: 'chapter' | 'boss', ms: number): void {
+function showBanner(kicker: string, title: string, text: string, variant: 'chapter' | 'boss' | 'radio', ms: number): void {
   const el = getBanner();
   /* v8 ignore next */
   if (typeof el.replaceChildren !== 'function') return; // minimal DOM stubs
@@ -89,4 +107,8 @@ export function showBossBanner(type: Parameters<typeof getBossLore>[0]): BossLor
   const lore = getBossLore(type);
   showBanner('⚠ CHEFE', lore.name, `${lore.title} — “${lore.taunt}”`, 'boss', 3600);
   return lore;
+}
+
+export function showRadioBanner(level: number): void {
+  showBanner('📻 RÁDIO', 'Comandante Vega', getRadio(level).replace(/^Vega:\s*/, ''), 'radio', 3400);
 }

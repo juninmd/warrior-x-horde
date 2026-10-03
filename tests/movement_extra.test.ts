@@ -65,7 +65,7 @@ describe('Movement Extra Coverage', () => {
 
             // Should be clamped to minX/minY (20)
             expect(boss.x).toBe(20);
-            expect(boss.y).toBe(20);
+            expect(boss.y).toBe(75);
             // Velocity flipped?
             expect(boss.vx).toBeGreaterThan(0);
             expect(boss.vy).toBeGreaterThan(0);

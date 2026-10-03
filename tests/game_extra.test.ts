@@ -1,4 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { getItem as __item, getPrice as __price, resetShop as __resetShop } from '../src/shop-catalog';
+const P = (t: any, lvl = 1) => __price(__item(t)!, lvl);
+beforeEach(() => __resetShop());
 import * as audio from '../src/audio';
 import * as shooting from '../src/shooting';
 // import * as input from '../src/input'; // We will use input-state for setInputScale
@@ -167,14 +170,14 @@ describe('Game Extra Coverage', () => {
         gameState.superCannonCooldown = 10000;
 
        shopCallback('recharge_super', 200);
-       expect(gameState.coins).toBe(800);
+       expect(gameState.coins).toBe(1000 - P('recharge_super'));
        expect(gameState.superCannonReady).toBe(true);
        expect(gameState.superCannonLastUsed).toBe(0);
 
        // Case 3: Nuke
        gameState.coins = 1000;
        shopCallback('nuke', 500);
-       expect(gameState.coins).toBe(500);
+       expect(gameState.coins).toBe(1000 - P('nuke'));
        expect(audio.playSound).toHaveBeenCalledWith('boom');
 
        // Case 4: Not enough coins

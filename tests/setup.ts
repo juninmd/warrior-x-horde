@@ -50,6 +50,16 @@ class CanvasRenderingContext2DMock {
   shadowOffsetX = 0;
   shadowOffsetY = 0;
   setLineDash = vi.fn();
+  rect = vi.fn();
+  lineCap = 'butt';
+  lineJoin = 'miter';
+  globalCompositeOperation = 'source-over';
+  setTransform2 = vi.fn();
+  resetTransform = vi.fn();
+  transform = vi.fn();
+  arcTo = vi.fn();
+  isPointInPath = vi.fn(() => false);
+  createPattern = vi.fn(() => ({}));
 }
 
 // Mock HTMLCanvasElement.getContext

@@ -1,5 +1,8 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { getItem as __item, getPrice as __price, resetShop as __resetShop } from '../src/shop-catalog';
+const P = (t: any, lvl = 1) => __price(__item(t)!, lvl);
+beforeEach(() => __resetShop());
 // Do not import game statically to avoid early execution
 // import * as game from '../src/game';
 import * as renderer from '../src/renderer';
@@ -240,12 +243,12 @@ describe('Game Loop - Full Coverage', () => {
         // Buy Soldier
         gameState.coins = 1000;
         shopCallback('soldier', 50);
-        expect(gameState.coins).toBe(950);
+        expect(gameState.coins).toBe(1000 - P('soldier'));
         expect(audio.playSound).toHaveBeenCalledWith('up');
 
         // Buy Nuke
         shopCallback('nuke', 500);
-        expect(gameState.coins).toBe(450); // 950 - 500
+        expect(gameState.coins).toBe(1000 - P('soldier') - 400); // nuke base price at chapter 1
 
         // Buy too expensive
         gameState.coins = 0;
