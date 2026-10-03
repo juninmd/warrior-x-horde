@@ -150,9 +150,9 @@ export function moveEntitiesDown(entities: Entities, gameState: GameState, dtFac
         boss.vx = -Math.abs(boss.vx) * (0.8 + Math.random() * 0.4);
       }
 
-      // Limites verticais (entre y=20 e y=80)
-      const minY = 20;
-      const maxY = 80;
+      // Limites verticais (entre y=75 e y=130)
+      const minY = 75;
+      const maxY = 130;
       if (boss.y < minY) {
         boss.y = minY;
         boss.vy = Math.abs(boss.vy) * (0.8 + Math.random() * 0.4);

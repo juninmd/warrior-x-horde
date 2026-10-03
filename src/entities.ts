@@ -570,7 +570,7 @@ export function createBoss(canvasWidth: number, level: number): Boss {
     const bossHp = 5000 + (level - 10) * 2000; // 5000 HP base + 2000 por level acima de 10
     return {
       x: canvasWidth / 2,
-      y: 25, // Posição fixa da nave no topo (não se move!)
+      y: 95, // Nave no topo da pista (visível por inteiro); só oscila levemente
       width: 90,
       height: 30,
       hp: bossHp,

@@ -166,7 +166,7 @@ describe('Entities - Full Coverage', () => {
 
             const bossL10 = createBoss(480, 10);
             expect(bossL10.type).toBe('mothership');
-            expect(bossL10.y).toBe(25); // Fixed position
+            expect(bossL10.y).toBe(95); // Fixed position
         });
 
         it('should create mini boss', () => {

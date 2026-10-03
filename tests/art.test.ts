@@ -88,3 +88,49 @@ describe('mini-boss art', () => {
     expect(() => paintMiniBoss(c, '???' as never)).not.toThrow(); // falls back to the brute
   });
 });
+
+import { paintGate, gateValueText, gateCaption, gateIcon, isHarmful, fmtGateValue, GATE_PADDING } from '../src/gate-art';
+import { paintMothership, getMothershipSprite, MOTHER_W, MOTHER_LIGHTS, MOTHER_CANNONS } from '../src/boss-art';
+describe('gate art', () => {
+  const kinds = ['add', 'multiply', 'subtract', 'divide', 'firerate', 'damage', 'superwarrior'] as const;
+  it('formats values clearly (percentages for buffs, no float noise)', () => {
+    expect(gateValueText({ type: 'add', value: 20, color: '#0f0', side: 'left' })).toBe('+20');
+    expect(gateValueText({ type: 'multiply', value: 1.1700000000000002, color: '#0f0', side: 'left' })).toBe('×1.17');
+    expect(gateValueText({ type: 'subtract', value: 3, color: '#f00', side: 'left' })).toBe('-3');
+    expect(gateValueText({ type: 'divide', value: 1.5, color: '#f00', side: 'left' })).toBe('÷1.5');
+    expect(gateValueText({ type: 'firerate', value: 0.92, color: '#fa0', side: 'left' })).toBe('+9%');
+    expect(gateValueText({ type: 'firerate', value: 1.1, color: '#fa0', side: 'left' })).toBe('-10%');
+    expect(gateValueText({ type: 'damage', value: 1.12, color: '#90f', side: 'left' })).toBe('+12%');
+    expect(gateValueText({ type: 'superwarrior', value: 2, color: '#fd0', side: 'left' })).toBe('+2');
+    expect(gateValueText({ type: 'add', value: 72, color: '#0f0', side: 'right', customText: '8 × 9 = 72' })).toBe('8 × 9 = 72');
+    expect(fmtGateValue(7)).toBe('7');
+  });
+  it('has captions/icons and flags harmful gates', () => {
+    for (const k of kinds) { expect(gateCaption(k, false).length).toBeGreaterThan(3); expect(gateIcon(k)).toBeTruthy(); }
+    expect(gateCaption('add', true)).toContain('ESCOLHA');
+    expect(gateIcon('add', '1 × 1 = 1')).toBe('🧮');
+    expect(isHarmful('subtract')).toBe(true);
+    expect(isHarmful('divide')).toBe(true);
+    expect(isHarmful('add', '2 × 2 = 5', '#E74C3C')).toBe(true);
+    expect(isHarmful('add')).toBe(false);
+  });
+  it('paints every gate kind, both sides, simple and full', () => {
+    const c = ctx();
+    for (const k of kinds) for (const side of ['left', 'right'] as const) for (const simple of [false, true]) {
+      expect(() => paintGate(c, GATE_PADDING, GATE_PADDING, 210, 80, { type: k, value: 1.5, color: k === 'subtract' ? '#E74C3C' : '#2ECC71', side }, simple)).not.toThrow();
+    }
+    expect(() => paintGate(c, 40, 40, 210, 80, { type: 'add', value: 6, color: '#E74C3C', side: 'right', customText: '2 × 3 = 7' }, false)).not.toThrow();
+  });
+});
+describe('mothership art', () => {
+  it('paints and caches the hull (normal + flash) and exposes light/cannon anchors', () => {
+    clearBossArtCache();
+    expect(() => paintMothership(ctx())).not.toThrow();
+    const a = getMothershipSprite(false)!;
+    expect(a.width).toBe(MOTHER_W * BOSS_SS);
+    expect(getMothershipSprite(false)).toBe(a);
+    expect(getMothershipSprite(true)).not.toBe(a);
+    expect(MOTHER_LIGHTS.length).toBe(14);
+    expect(MOTHER_CANNONS.length).toBe(3);
+  });
+});

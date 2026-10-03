@@ -9,6 +9,8 @@ import { QualityManager } from './quality';
 import { getActiveSkin } from './skins';
 import { paintCharacter, SPRITE_SS } from './soldier-art';
 import { paintBiomeScene, paintRoadDetail } from './biome-art';
+import { paintGate, GATE_SS, GATE_PADDING } from './gate-art';
+import { drawHud } from './hud';
 import { getMiniBossSprite, MINI_BOX, MINI_VISUAL_SCALE, MINI_NAMES } from './boss-art';
 import { WeatherState, createWeather, stepWeather, drawWeather } from './weather';
 
@@ -113,10 +115,7 @@ export function preRenderSprites(): void {
   console.log('Sprites pre-rendered. Cache size:', spriteCache.images.size);
 }
 
-/** Gate numbers come from float math (1.02 + 7 * 0.015 = 1.1700000000000002); show at most 2 decimals. */
-export function fmtGateValue(v: number): string {
-  return Number.isInteger(v) ? String(v) : String(parseFloat(v.toFixed(2)));
-}
+export { fmtGateValue } from './gate-art';
 
 /** Cache key of the bullet sprite; the player bullet is tinted by the active skin. */
 export function bulletKey(isEnemy: boolean, tint: string = '#FFD700'): string {
@@ -1498,11 +1497,11 @@ function drawMysteryBox(ctx: CanvasRenderingContext2D, box: MysteryBox, time: nu
 }
 
 function renderGateToCache(gate: Gate): void {
-  const padding = 40;
-  const width = gate.width;
-  const height = gate.height;
-  const canvasWidth = width + padding * 2;
-  const canvasHeight = height + padding * 2;
+  const padding = GATE_PADDING;
+  const logicalW = gate.width + padding * 2;
+  const logicalH = gate.height + padding * 2;
+  const canvasWidth = logicalW * GATE_SS;
+  const canvasHeight = logicalH * GATE_SS;
 
   let canvas: HTMLCanvasElement | OffscreenCanvas;
   let ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null;
@@ -1522,92 +1521,8 @@ function renderGateToCache(gate: Gate): void {
   if (!ctx) return;
 
   gate.cachedCanvas = canvas;
-
-  const x = padding;
-  const y = padding;
-
-  const barrelGradient = ctx.createLinearGradient(x, y, x + width, y);
-  if (gate.cachedColors) {
-    barrelGradient.addColorStop(0, gate.cachedColors.light);
-    barrelGradient.addColorStop(0.5, gate.color);
-    barrelGradient.addColorStop(1, gate.cachedColors.dark);
-  } else {
-    barrelGradient.addColorStop(0, shadeColor(gate.color, 20));
-    barrelGradient.addColorStop(0.5, gate.color);
-    barrelGradient.addColorStop(1, shadeColor(gate.color, -20));
-  }
-
-  // Shadow/Glow
-  if (QualityManager.getInstance().settings.enableShadows) {
-      const glowX = x + width / 2;
-      const glowY = y + height / 2;
-      const glowRadius = width * 0.8;
-      const glow = ctx.createRadialGradient(glowX, glowY, 0, glowX, glowY, glowRadius);
-      const glowColor = gate.color.startsWith('#') ? gate.color : '#FFFFFF';
-      safeAddColorStop(glow, 0, `${glowColor}66`); // 40% opacity
-      safeAddColorStop(glow, 1, `${glowColor}00`); // 0% opacity
-
-      ctx.fillStyle = glow;
-      ctx.fillRect(x - 20, y - 20, width + 40, height + 40);
-  }
-
-  // Ground Shadow
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-  ctx.beginPath();
-  ctx.ellipse(x + width / 2 + 5, y + height + 10, width / 2, 15, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = '#8B4513'; // Post color
-  ctx.beginPath();
-  ctx.roundRect(x + width * 0.05, y + height, width * 0.1, 15, 2);
-  ctx.roundRect(x + width * 0.85, y + height, width * 0.1, 15, 2);
-  ctx.fill();
-
-  // Main Body
-  ctx.fillStyle = barrelGradient;
-  ctx.beginPath();
-  ctx.roundRect(x, y, width, height, 12);
-  ctx.fill();
-
-  // Border
-  ctx.strokeStyle = '#FFFFFF';
-  ctx.lineWidth = 3;
-  ctx.stroke();
-
-  // Inner Panel
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-  ctx.beginPath();
-  ctx.roundRect(x + 5, y + 5, width - 10, height - 10, 8);
-  ctx.fill();
-
-  ctx.fillStyle = '#FFFFFF';
-
-  if (QualityManager.getInstance().settings.enableShadows) {
-    ctx.shadowColor = 'rgba(0,0,0,0.5)';
-    ctx.shadowBlur = 4;
-  }
-
-  ctx.font = `900 36px ${FONT_FAMILY}`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  let text = '';
-  if (gate.customText) {
-    text = gate.customText;
-    ctx.font = `bold 22px ${FONT_FAMILY}`;
-  } else {
-    switch (gate.type) {
-      case 'add': text = `+${fmtGateValue(gate.value)}`; break;
-      case 'multiply': text = `×${fmtGateValue(gate.value)}`; break;
-      case 'subtract': text = `-${fmtGateValue(gate.value)}`; break;
-      case 'divide': text = `÷${fmtGateValue(gate.value)}`; break;
-      case 'firerate': text = `🔥×${fmtGateValue(gate.value)}`; break;
-      case 'damage': text = `⚔️×${fmtGateValue(gate.value)}`; break;
-      case 'superwarrior': text = `⭐×${fmtGateValue(gate.value)}`; break;
-    }
-  }
-  // The shop rail overlays the right edge of the playfield: keep right-gate text clear of it
-  const textShift = gate.side === 'right' ? -30 : 0;
-  ctx.fillText(text, x + width / 2 + textShift, y + height / 2);
+  ctx.scale(GATE_SS, GATE_SS);
+  paintGate(ctx, padding, padding, gate.width, gate.height, gate, QualityManager.getInstance().settings.simplifiedRendering, QualityManager.getInstance().settings.enableShadows);
 }
 
 function drawGate(ctx: CanvasRenderingContext2D, gate: Gate): void {
@@ -1619,9 +1534,9 @@ function drawGate(ctx: CanvasRenderingContext2D, gate: Gate): void {
   }
 
   if (gate.cachedCanvas) {
-    const padding = 40;
-    const cachedWidth = gate.cachedCanvas.width;
-    const cachedHeight = gate.cachedCanvas.height;
+    const padding = GATE_PADDING;
+    const cachedWidth = gate.cachedCanvas.width / GATE_SS;
+    const cachedHeight = gate.cachedCanvas.height / GATE_SS;
     const scaledWidth = cachedWidth * scale;
     const scaledHeight = cachedHeight * scale;
 
@@ -1630,6 +1545,22 @@ function drawGate(ctx: CanvasRenderingContext2D, gate: Gate): void {
     const drawY = gate.y - padding * scale;
 
     ctx.drawImage(gate.cachedCanvas, drawX, drawY, scaledWidth, scaledHeight);
+
+    /* v8 ignore start */
+    // animated light sweep across the energy field
+    const sweep = ((Date.now() * 0.0006 + gate.id * 0.37) % 1.4) - 0.2;
+    const fx = gate.x + gate.width * sweep;
+    ctx.save();
+    ctx.beginPath(); ctx.roundRect(gate.x, gate.y, gate.width, gate.height * scale, 10 * scale); ctx.clip();
+    ctx.globalCompositeOperation = 'lighter';
+    const band = ctx.createLinearGradient(fx - 26, 0, fx + 26, 0);
+    safeAddColorStop(band, 0, 'rgba(255,255,255,0)');
+    safeAddColorStop(band, 0.5, 'rgba(255,255,255,0.28)');
+    safeAddColorStop(band, 1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = band;
+    ctx.fillRect(fx - 26, gate.y, 52, gate.height * scale);
+    ctx.restore();
+    /* v8 ignore stop */
   }
 }
 
@@ -1770,7 +1701,7 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
   const width = BASE_WIDTH;
   const height = BASE_HEIGHT;
 
-  // Calcular "Poder do Exército" (Soma dos pesos das unidades)
+  // Army power: weighted sum of unit types (same weights as before)
   let armyPower = 0;
   for (const s of army.soldiers) {
     if (!s.isAlive) continue;
@@ -1781,332 +1712,20 @@ function drawUI(ctx: CanvasRenderingContext2D, gameState: GameState, armyCount: 
     else armyPower += 1;
   }
 
-  // Layout inferior unificado (Linha única)
-  // Ajustado para Safe Area (Home Bar no iOS ocupa ~34px)
-  const bottomY = height - 45;
-  const badgeHeight = 32;
-  const gap = 5;
+  const stats = {
+    count: armyCount,
+    power: Math.floor(armyPower * damage),
+    shotsPerSec: fireRate > 0 ? 1000 / fireRate : 0,
+  };
+  const rank = drawHud(ctx, gameState, stats, Date.now());
 
-  // Calculate Total Attack Power (Actual DPS proxy)
-  const totalAttack = Math.floor(armyPower * damage);
-
-  ctx.save();
-
-  // Pre-calculate widths to center
-  const isRecord = gameState.score > gameState.highScore && gameState.highScore > 0;
-  const scoreColor = isRecord
-      ? (Math.floor(Date.now() / 200) % 2 === 0 ? '#FFD700' : '#FF4500') // Pulse Gold/Orange
-      : '#FFD700';
-
-  // Add Combo Multiplier Text to Score Badge if Combo > 1
-  const scoreText = `🏆 ${gameState.score}`;
-  // Removed inline multiplier to show it distinctly above
-
-  interface Badge {
-      text: string;
-      color: string;
-      width: number;
-      id?: string;
-  }
-
-  const badges: Badge[] = [
-      { text: scoreText, color: scoreColor, width: 0, id: 'score' },
-      { text: `💰 ${gameState.coins}`, color: '#F1C40F', width: 0 },
-      { text: `Lv.${gameState.currentLevel}`, color: '#4A90D9', width: 0 },
-      { text: `🪖 ${armyCount}`, color: '#2ECC71', width: 0 }, // Show count, power is implied in Attack
-      { text: `⚔️ ${totalAttack}`, color: '#E91E63', width: 0 } // Show Total Attack
-  ];
-
-  let totalWidth = 0;
-  for (const b of badges) {
-      // Estimate width (roughly 9px per char at 14px bold) + padding
-      b.width = Math.max(50, 20 + b.text.length * 9);
-      totalWidth += b.width;
-  }
-  totalWidth += (badges.length - 1) * gap;
-
-  // Start X to center
-  let currentX = (width - totalWidth) / 2;
-
-  // Draw
-  for (const b of badges) {
-      drawGlassBadge(ctx, currentX, bottomY - badgeHeight/2, b.width, badgeHeight, b.text, b.color, 14);
-
-      // Draw Flashy Multiplier above Score
-      if (b.id === 'score' && gameState.combo > 1) {
-          const mult = (1 + gameState.combo * 0.05).toFixed(2);
-          ctx.save();
-          const pulse = 1 + Math.sin(Date.now() * 0.01) * 0.1;
-          ctx.translate(currentX + b.width/2, bottomY - badgeHeight - 10);
-          ctx.scale(pulse, pulse);
-
-          if (QualityManager.getInstance().settings.enableShadows) {
-             ctx.shadowColor = '#FFD700';
-             ctx.shadowBlur = 10;
-          }
-
-          ctx.fillStyle = '#FFD700';
-          ctx.font = `900 18px ${FONT_FAMILY}`;
-          ctx.textAlign = 'center';
-          ctx.strokeStyle = '#000';
-          ctx.lineWidth = 3;
-          ctx.strokeText(`x${mult}`, 0, 0);
-          ctx.fillText(`x${mult}`, 0, 0);
-          ctx.restore();
-      }
-
-      currentX += b.width + gap;
-  }
-
-  // Coins removido do topo pois foi movido para baixo
-  // drawGlassBadge(ctx, width - 90, 30, 80, 28, `💰 ${gameState.coins}`, '#FFD700', 14);
-
-  // High Score (Topo Esquerda, pequeno)
-  if (gameState.highScore > 0) {
-    const isBeaten = gameState.score > gameState.highScore;
-    const isClose = !isBeaten && gameState.score > gameState.highScore * 0.9;
-
-    let color = '#CCCCCC';
-    let scale = 1;
-    let shakeX = 0;
-    let shakeY = 0;
-
-    if (isBeaten) {
-        color = '#FFD700'; // Gold
-        scale = 1 + Math.sin(Date.now() * 0.01) * 0.1; // Gentle pulse
-    } else if (isClose) {
-        // Urgent Pulse
-        const pulse = Math.sin(Date.now() * 0.015);
-        color = pulse > 0 ? '#FF4500' : '#CCCCCC'; // Flash Red/Gray
-        scale = 1 + Math.abs(pulse) * 0.15; // Aggressive pulse
-        shakeX = (Math.random() - 0.5) * 2;
-        shakeY = (Math.random() - 0.5) * 2;
+  // Rank-up celebration
+  if (rank.rank !== gameState.currentRank) {
+    if (gameState.currentRank !== 'D' || gameState.score > 0) {
+      addFloatingText(`RANK ${rank.rank}!`, width / 2, height / 2 - 100, rank.color, 2.0, 'critical');
     }
-
-    ctx.save();
-    // Center of badge roughly (10 + 100/2, 30 + 24/2) = (60, 42)
-    ctx.translate(60 + shakeX, 42 + shakeY);
-    ctx.scale(scale, scale);
-    ctx.translate(-60, -42);
-
-    drawGlassBadge(ctx, 10, 30, 100, 24, `👑 HI: ${Math.max(gameState.score, gameState.highScore)}`, color, 12);
-    ctx.restore();
+    gameState.currentRank = rank.rank;
   }
-
-  // Live Rank (Topo Esquerda, abaixo do High Score)
-  const rankScore = gameState.score;
-  let rank = 'D';
-  let rankColor = '#7f8c8d'; // Gray
-  if (rankScore >= 5000) { rank = 'S'; rankColor = '#FFD700'; }
-  else if (rankScore >= 3000) { rank = 'A'; rankColor = '#9B59B6'; }
-  else if (rankScore >= 1000) { rank = 'B'; rankColor = '#3498DB'; }
-  else if (rankScore >= 500) { rank = 'C'; rankColor = '#2ECC71'; }
-
-  // Check for Rank Up
-  if (rank !== gameState.currentRank) {
-      // Trigger Rank Up Effect
-      if (gameState.currentRank !== 'D' || rankScore > 0) { // Don't trigger on init
-          addFloatingText(`RANK ${rank}!`, width/2, height/2 - 100, rankColor, 2.0, 'critical');
-          // We could add sound here if we imported audioManager, but visual is fine for now
-      }
-      gameState.currentRank = rank;
-  }
-
-  ctx.save();
-  ctx.translate(35, 85);
-
-  // Pulse animation for high ranks
-  if (rank === 'S' || rank === 'A') {
-      const pulse = 1 + Math.sin(Date.now() * 0.005) * 0.1;
-      ctx.scale(pulse, pulse);
-  }
-
-  // Glow
-  if (QualityManager.getInstance().settings.enableShadows) {
-    ctx.shadowColor = rankColor;
-    ctx.shadowBlur = 15;
-  }
-
-  // Circle bg
-  ctx.fillStyle = 'rgba(0,0,0,0.6)';
-  ctx.beginPath();
-  ctx.arc(0, 0, 22, 0, Math.PI * 2); // Slightly larger
-  ctx.fill();
-
-  // Ring
-  ctx.strokeStyle = rankColor;
-  ctx.lineWidth = 3;
-  ctx.stroke();
-  ctx.shadowBlur = 0;
-
-  // Rank Text
-  ctx.fillStyle = rankColor;
-  ctx.font = `900 24px ${FONT_FAMILY}`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(rank, 0, 2);
-
-  // Label
-  ctx.fillStyle = '#AAA';
-  ctx.font = `bold 10px ${FONT_FAMILY}`;
-  ctx.fillText('RANK', 0, 32);
-  ctx.restore();
-
-  // Super Cannon Indicator (Below Score/Badges)
-  const scReady = gameState.superCannonReady;
-  const scActive = gameState.superCannonActive;
-  const now = Date.now();
-  const scElapsed = now - gameState.superCannonLastUsed;
-  const scRemaining = Math.max(0, gameState.superCannonCooldown - scElapsed);
-
-  ctx.save();
-  const scX = width - 80;
-  const scY = 30; // Closer to the top right
-  const scRadius = 15;
-
-  ctx.translate(scX, scY);
-
-  if (scActive) {
-      const p = 1 + Math.sin(now * 0.02) * 0.2;
-      ctx.scale(p, p);
-      ctx.fillStyle = '#FFD700';
-      if (QualityManager.getInstance().settings.enableShadows) {
-          ctx.shadowColor = '#FFD700';
-          ctx.shadowBlur = 15;
-      }
-      ctx.beginPath();
-      ctx.arc(0, 0, scRadius, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.shadowBlur = 0;
-      ctx.fillStyle = '#000';
-      ctx.font = `bold 10px ${FONT_FAMILY}`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('⚡', 0, 1);
-  } else if (scReady || scRemaining <= 0) {
-      const p = 1 + Math.sin(now * 0.01) * 0.1;
-      ctx.scale(p, p);
-      ctx.fillStyle = '#00C9FF';
-      if (QualityManager.getInstance().settings.enableShadows) {
-          ctx.shadowColor = '#00C9FF';
-          ctx.shadowBlur = 10;
-      }
-      ctx.beginPath();
-      ctx.arc(0, 0, scRadius, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.shadowBlur = 0;
-      ctx.fillStyle = '#FFF';
-      ctx.font = `bold 10px ${FONT_FAMILY}`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('RDY', 0, 1);
-  } else {
-      ctx.fillStyle = 'rgba(0,0,0,0.5)';
-      ctx.beginPath();
-      ctx.arc(0, 0, scRadius, 0, Math.PI * 2);
-      ctx.fill();
-
-      const scProgress = Math.max(0, 1 - (scRemaining / gameState.superCannonCooldown));
-      ctx.fillStyle = '#555';
-      ctx.beginPath();
-      ctx.moveTo(0,0);
-      ctx.arc(0, 0, scRadius, -Math.PI/2, -Math.PI/2 + (Math.PI * 2 * scProgress));
-      ctx.fill();
-
-      ctx.strokeStyle = '#FFF';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(0, 0, scRadius, 0, Math.PI * 2);
-      ctx.stroke();
-  }
-  ctx.restore();
-
-  // Progress Bar (Topo, mais visível)
-  const progressWidth = width - 120; // Reduced to make room for super cannon indicator
-  const progressX = 20;
-  const progressY = 10;
-  const progressHeight = 8;
-  const progress = Math.min(gameState.distanceTraveled / gameState.levelDistance, 1);
-
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-  ctx.beginPath();
-  ctx.roundRect(progressX, progressY, progressWidth, progressHeight, 4);
-  ctx.fill();
-
-  // Progress Gradient
-  const progGrad = ctx.createLinearGradient(progressX, 0, progressX + progressWidth, 0);
-  progGrad.addColorStop(0, '#00C9FF');
-  progGrad.addColorStop(1, '#92FE9D');
-
-  ctx.fillStyle = progGrad;
-  ctx.beginPath();
-  ctx.roundRect(progressX, progressY, progressWidth * progress, progressHeight, 4);
-  ctx.fill();
-
-  // Progress Glow
-  if (QualityManager.getInstance().settings.enableShadows) {
-    ctx.shadowColor = '#00C9FF';
-    ctx.shadowBlur = 10;
-  }
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-  ctx.beginPath();
-  ctx.roundRect(progressX, progressY, progressWidth * progress, progressHeight / 2, 4);
-  ctx.fill();
-  ctx.shadowBlur = 0;
-
-  // Boss/Goal Icon at the end
-  const endX = progressX + progressWidth;
-  const endY = progressY + progressHeight / 2;
-
-  // Outer ring
-  ctx.fillStyle = '#333';
-  ctx.beginPath();
-  ctx.arc(endX, endY, 12, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Inner circle
-  ctx.fillStyle = '#E74C3C';
-  ctx.beginPath();
-  ctx.arc(endX, endY, 10, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Skull icon text
-  ctx.fillStyle = '#FFF';
-  ctx.font = `12px ${FONT_FAMILY}`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('💀', endX, endY + 1);
-
-  ctx.restore();
-
-  // Combo
-  if (gameState.combo > 1) {
-    const comboX = width / 2;
-    const comboY = 120; // Movido mais para baixo
-    const pulse = Math.min(2.5, 1.2 + gameState.combo / 40) + Math.sin(Date.now() * 0.015) * 0.1;
-    const shake = gameState.combo > 20 ? (Math.random() - 0.5) * 5 : 0;
-
-    ctx.save();
-    ctx.translate(comboX + shake, comboY + shake);
-    ctx.rotate(Math.sin(Date.now() * 0.01) * 0.1);
-    ctx.scale(pulse, pulse);
-
-    if (QualityManager.getInstance().settings.enableShadows) {
-      ctx.shadowColor = getComboColor(gameState.combo);
-      ctx.shadowBlur = 20;
-    }
-
-    ctx.fillStyle = getComboColor(gameState.combo);
-    ctx.font = `900 ${Math.min(48, 28 + gameState.combo)}px ${FONT_FAMILY}`; // Grow with combo
-    ctx.textAlign = 'center';
-    ctx.strokeStyle = '#FFFFFF';
-    ctx.lineWidth = 2;
-    ctx.strokeText(`${gameState.combo}x COMBO!`, 0, 0);
-    ctx.fillText(`${gameState.combo}x COMBO!`, 0, 0);
-    ctx.restore();
-  }
-
-  // Confetti/Sparks logic for Record would be handled by particle system updates in game loop
 }
 
 function drawFloatingTexts(ctx: CanvasRenderingContext2D): void {
@@ -2323,7 +1942,7 @@ function drawComboTier(ctx: CanvasRenderingContext2D, width: number, height: num
     }
 
     const centerX = width / 2;
-    const centerY = height * 0.25; // Top quarter
+    const centerY = height * 0.31; // below the HUD blocks
 
     ctx.save();
 
@@ -2367,7 +1986,7 @@ function drawComboBar(ctx: CanvasRenderingContext2D, gameState: GameState): void
   const barWidth = 220;
   const barHeight = 12;
   const x = (width - barWidth) / 2;
-  const y = 150; // Stable position below the shaking text area
+  const y = 204; // combo timer bar, between the HUD (perk row) and the tier text
 
   const maxTimer = 4000;
   const progress = Math.max(0, Math.min(1, gameState.comboTimer / maxTimer));

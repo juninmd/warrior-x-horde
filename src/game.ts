@@ -4,6 +4,7 @@ import { gameState, resetGameState, saveGameProgress } from './gameState';
 import { createInitialEntities, createEnemyHorde, createSoldier, addSpecialSoldiersToArmy, addSoldiersToArmy } from './entities';
 import { setWorldLayer, render, shareOnX, shareOnWhatsApp, addFloatingText, updateFloatingTexts, addParticle } from './renderer';
 import { checkCollisions } from './collisions';
+import { resetHudAnim } from './hud';
 import { rollOffers, pickPerk, resetPerks, refillShield, getMods, getTakenPerks, BASE_SUPER_COOLDOWN } from './perks';
 import { showPerkChoice, isPerkChoiceOpen } from './ui-perks';
 import { playIntro, shouldAutoPlayIntro, isIntroPlaying } from './cinematic';
@@ -727,6 +728,7 @@ let startToken = 0;
 export function startGame(): void {
   const token = ++startToken;
   radioShownLevel = 0;
+  resetHudAnim();
   hideStoryBanner();
   resetPerks();
   gameState.superCannonCooldown = BASE_SUPER_COOLDOWN;
@@ -885,6 +887,9 @@ if (import.meta.env.DEV) {
     isStarted: () => gameState.isStarted,
     perks: () => getTakenPerks().map(p => [p.perk.id, p.count]),
     perkOpen: () => isPerkChoiceOpen(),
+    givePerk: (id: string) => pickPerk(id, entities),
+    setCombo: (n: number) => { gameState.combo = n; gameState.comboTimer = 5000; },
+    addScore: (n: number) => { gameState.score += n; },
     distance: () => gameState.distanceTraveled,
     enemyKinds: () => {
       const out = { runner: 0, tank: 0, spitter: 0 };

@@ -41,7 +41,7 @@ function pickPattern(phase: 1 | 2 | 3): NonNullable<Boss['pattern']> {
 function fire(boss: Boss, entities: Entities, level: number): void {
   const phase = getBossPhase(boss);
   const cx = boss.type === 'mothership' ? boss.x : boss.x + boss.width / 2;
-  const cy = boss.y + (boss.type === 'mothership' ? 20 : boss.height);
+  const cy = boss.y + (boss.type === 'mothership' ? 56 : boss.height); // mothership: cannon muzzles
   const army = entities.playerArmy;
   const dmg = bossBulletDamage(level);
   const speed = 3.2 + phase * 0.5 + Math.min(1.5, level * 0.1);

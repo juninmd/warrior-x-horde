@@ -49,7 +49,7 @@ describe('Entities Coverage', () => {
     it('should create Mothership boss for level 10+', () => {
       const boss = createBoss(800, 10);
       expect(boss.type).toBe('mothership');
-      expect(boss.y).toBe(25); // Fixed position
+      expect(boss.y).toBe(95); // Fixed position
       expect(boss.hp).toBe(5000);
     });
 

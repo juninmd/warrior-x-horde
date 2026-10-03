@@ -393,3 +393,103 @@ export function getMiniBossSprite(kind: MiniKind, flash: boolean): HTMLCanvasEle
   cache.set(key, canvas);
   return canvas;
 }
+
+// ---------------------------------------------------------------------------
+// MOTHERSHIP (final boss)
+// ---------------------------------------------------------------------------
+
+export const MOTHER_W = 380;
+export const MOTHER_H = 250;
+/** Art spans about ±150 units; the hitbox radius is 70 so we draw it at ~0.7. */
+export const MOTHER_VISUAL_SCALE = 0.7;
+/** Cannon muzzles in art units (x, y) - used for charge glow and projectile origin. */
+export const MOTHER_CANNONS: [number, number][] = [[-78, 74], [0, 84], [78, 74]];
+/** Rim window lights (art units) animated by the renderer. */
+export const MOTHER_LIGHTS: [number, number][] = Array.from({ length: 14 }, (_, i) => {
+  const a = (i / 14) * Math.PI * 2;
+  return [Math.cos(a) * 118, Math.sin(a) * 24 + 4] as [number, number];
+});
+
+function paintMothership(ctx: Ctx): void {
+  // under-hull + cannons + engines
+  ctx.fillStyle = lin(ctx, 0, 10, 0, 60, [[0, '#2a2038'], [1, '#0f0a18']]);
+  ctx.beginPath(); ctx.ellipse(0, 22, 126, 40, 0, 0, Math.PI); ctx.closePath(); ctx.fill(); outline(ctx, 3);
+  for (const [cx, cy] of MOTHER_CANNONS) {
+    ctx.fillStyle = lin(ctx, cx - 10, 0, cx + 10, 0, [[0, '#4a3f66'], [0.5, '#9486b8'], [1, '#2c2540']]);
+    ctx.beginPath(); ctx.roundRect(cx - 9, 36, 18, cy - 30, 5); ctx.fill(); outline(ctx, 2.5);
+    ctx.fillStyle = '#12091d'; ctx.beginPath(); ctx.ellipse(cx, cy, 11, 5, 0, 0, 7); ctx.fill(); outline(ctx, 2);
+    ctx.fillStyle = '#6fffb2'; ctx.beginPath(); ctx.ellipse(cx, cy, 5, 2.4, 0, 0, 7); ctx.fill();
+  }
+  // under panel seams
+  ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 1.6;
+  for (let i = -5; i <= 5; i++) { ctx.beginPath(); ctx.moveTo(i * 22, 20); ctx.lineTo(i * 14, 56 - Math.abs(i) * 2); ctx.stroke(); }
+  // engine ring
+  for (let i = -3; i <= 3; i++) { const x = i * 34; ctx.fillStyle = '#12091d'; ctx.beginPath(); ctx.ellipse(x, 44 - Math.abs(i) * 4, 8, 4, 0, 0, 7); ctx.fill(); outline(ctx, 1.5); }
+
+  // main disc
+  ctx.fillStyle = lin(ctx, 0, -34, 0, 34, [[0, '#8d83ad'], [0.35, '#5a4f7a'], [0.7, '#2f2745'], [1, '#17102a']]);
+  ctx.beginPath(); ctx.ellipse(0, 0, 150, 38, 0, 0, Math.PI * 2); ctx.fill(); outline(ctx, 3.5);
+  // top rim highlight
+  ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(0, -2, 146, 34, 0, Math.PI * 1.06, Math.PI * 1.94); ctx.stroke();
+  // panel lines + rivets + glyphs
+  ctx.strokeStyle = 'rgba(0,0,0,0.45)'; ctx.lineWidth = 1.6;
+  for (let i = -7; i <= 7; i++) { ctx.beginPath(); ctx.moveTo(i * 20, -34 * Math.sqrt(Math.max(0, 1 - (i * 20 / 150) ** 2))); ctx.lineTo(i * 20, 38 * Math.sqrt(Math.max(0, 1 - (i * 20 / 150) ** 2))); ctx.stroke(); }
+  ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.beginPath(); ctx.ellipse(0, 0, 118, 24, 0, 0, Math.PI * 2); ctx.stroke();
+  ctx.fillStyle = '#c9c1e0'; for (let i = 0; i < 40; i++) { const a = (i / 40) * Math.PI * 2; ctx.beginPath(); ctx.arc(Math.cos(a) * 136, Math.sin(a) * 31, 1.6, 0, 7); ctx.fill(); }
+  ctx.strokeStyle = 'rgba(111,255,178,0.7)'; ctx.lineWidth = 1.8; ctx.lineCap = 'round';
+  for (const gx of [-96, 96]) { ctx.beginPath(); ctx.moveTo(gx - 10, 4); ctx.lineTo(gx - 3, -4); ctx.lineTo(gx + 4, 4); ctx.lineTo(gx + 10, -4); ctx.stroke(); }
+  // glowing conduits
+  ctx.save(); ctx.shadowColor = '#4dff9a'; ctx.shadowBlur = 8; ctx.strokeStyle = '#4dff9a'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.ellipse(0, 6, 128, 26, 0, Math.PI * 0.08, Math.PI * 0.92); ctx.stroke(); ctx.restore();
+
+  // upper hull
+  ctx.fillStyle = lin(ctx, 0, -62, 0, -18, [[0, '#a79ccc'], [1, '#4a3f6a']]);
+  ctx.beginPath(); ctx.ellipse(0, -22, 96, 24, 0, Math.PI, Math.PI * 2); ctx.lineTo(96, -18); ctx.ellipse(0, -18, 96, 14, 0, 0, Math.PI); ctx.closePath(); ctx.fill(); outline(ctx, 3);
+  // side pods
+  for (const s of [-1, 1]) {
+    ctx.fillStyle = lin(ctx, s * 120, -30, s * 160, 30, [[0, '#6c6190'], [1, '#231a38']]);
+    ctx.beginPath(); ctx.ellipse(s * 144, 2, 18, 12, 0, 0, 7); ctx.fill(); outline(ctx, 2.5);
+    ctx.fillStyle = '#7dffb8'; ctx.beginPath(); ctx.ellipse(s * 150, 2, 6, 4, 0, 0, 7); ctx.fill();
+  }
+
+  // dome
+  ctx.fillStyle = lin(ctx, 0, -100, 0, -30, [[0, 'rgba(190,255,230,0.55)'], [1, 'rgba(60,200,140,0.35)']]);
+  ctx.beginPath(); ctx.ellipse(0, -36, 52, 52, 0, Math.PI, Math.PI * 2); ctx.closePath(); ctx.fill();
+  // pilot (silhouette inside)
+  ctx.fillStyle = 'rgba(20,50,40,0.75)'; ctx.beginPath(); ctx.ellipse(0, -52, 17, 22, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = 'rgba(15,40,30,0.8)'; ctx.beginPath(); ctx.ellipse(0, -66, 20, 17, 0, 0, 7); ctx.fill();
+  ctx.strokeStyle = 'rgba(15,40,30,0.8)'; ctx.lineWidth = 3; for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo(s * 10, -40); ctx.quadraticCurveTo(s * 28, -34, s * 24, -22); ctx.stroke(); }
+  // dome frame + reflections
+  ctx.strokeStyle = 'rgba(210,255,235,0.9)'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.ellipse(0, -36, 52, 52, 0, Math.PI, Math.PI * 2); ctx.stroke();
+  ctx.strokeStyle = 'rgba(210,255,235,0.45)'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(0, -88); ctx.lineTo(0, -34); ctx.moveTo(-26, -78); ctx.quadraticCurveTo(-34, -56, -34, -34); ctx.moveTo(26, -78); ctx.quadraticCurveTo(34, -56, 34, -34); ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.beginPath(); ctx.ellipse(-26, -76, 14, 6, -0.7, 0, 7); ctx.fill();
+  // antennas
+  ctx.strokeStyle = '#2a2140'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+  for (const [x, h] of [[-36, 30], [0, 44], [36, 30]]) { ctx.beginPath(); ctx.moveTo(x, -80 + Math.abs(x) * 0.5); ctx.lineTo(x * 1.1, -80 - h); ctx.stroke(); }
+}
+
+export function getMothershipSprite(flash: boolean): HTMLCanvasElement | OffscreenCanvas | null {
+  const key = `mothership${flash ? '_f' : ''}`;
+  const hit = cache.get(key);
+  if (hit) return hit;
+  const w = MOTHER_W * BOSS_SS, h = MOTHER_H * BOSS_SS;
+  /* v8 ignore next 5 */
+  const canvas: HTMLCanvasElement | OffscreenCanvas = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(w, h) : Object.assign(document.createElement('canvas'), { width: w, height: h });
+  const ctx = canvas.getContext('2d') as Ctx | null;
+  if (!ctx) return null;
+  ctx.scale(BOSS_SS, BOSS_SS);
+  ctx.translate(MOTHER_W / 2, MOTHER_H / 2 + 20);
+  paintMothership(ctx);
+  if (flash) {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalCompositeOperation = 'source-atop';
+    ctx.fillStyle = 'rgba(255,255,255,0.88)';
+    ctx.fillRect(0, 0, w, h);
+  }
+  cache.set(key, canvas);
+  return canvas;
+}
+
+/** Offset of the art origin inside the sprite (the sprite is shifted down by 20 units). */
+export const MOTHER_ORIGIN_Y = 20;
+export { paintMothership };
