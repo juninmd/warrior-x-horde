@@ -3,7 +3,7 @@ import type { Entities, GameState } from './types';
 import { addSoldiersToArmy, addSpecialSoldiersToArmy } from './entities';
 import { addShieldCharges } from './perks';
 import { registerKill, defeatBoss, defeatMiniBoss } from './rewards';
-import { getItem, getPrice, blockedReason, timesBought, markPurchased } from './shop-catalog';
+import { getItem, getPrice, blockedReason, markPurchased } from './shop-catalog';
 import type { ShopType, BlockReason, ShopItem } from './shop-catalog';
 export * from './shop-catalog';
 

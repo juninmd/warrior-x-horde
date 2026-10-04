@@ -195,7 +195,10 @@ describe('collision logic', () => {
     for (let i = 0; i < 6; i++) { const h = createEnemyHorde(480, -50 - i * 90, 20, 3); e.enemyHordes.push(h); }
     for (let f = 0; f < 3000; f++) {
       updateMovement(e, gameState, 480, 240 + Math.sin(f / 50) * 150, 1);
-      for (const h of e.enemyHordes) expect(h.x).toBeGreaterThan(-10), expect(h.x).toBeLessThan(490);
+      for (const h of e.enemyHordes) {
+          expect(h.x).toBeGreaterThan(-10);
+          expect(h.x).toBeLessThan(490);
+      }
     }
-  });
+  }, 10000);
 });
