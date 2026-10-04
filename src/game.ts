@@ -1,7 +1,7 @@
 // game.ts - Loop principal do jogo Crowd Runner
 import { Entities, BeforeInstallPromptEvent } from './types';
 import { gameState, resetGameState, saveGameProgress } from './gameState';
-import { createInitialEntities, createEnemyHorde, createSoldier, addSpecialSoldiersToArmy, addSoldiersToArmy } from './entities';
+import { createInitialEntities, createEnemyHorde, createSoldier } from './entities';
 import { setWorldLayer, render, shareOnX, shareOnWhatsApp, addFloatingText, updateFloatingTexts, addParticle } from './renderer';
 import { checkCollisions } from './collisions';
 import { resetHudAnim } from './hud';
