@@ -135,7 +135,7 @@ function createSettingsModal(): void {
 export function setupSettingsUI(onLevelChange?: (level: number) => void): void {
     if (onLevelChange) onLevelChangeCallback = onLevelChange;
     // Consume callback to clear warning
-    if (onLevelChangeCallback) { }
+
     // Always recreate if not exists
     if (!document.getElementById('settingsModal')) {
         createSettingsModal();
