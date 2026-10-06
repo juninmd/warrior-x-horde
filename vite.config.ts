@@ -1,4 +1,5 @@
-import { defineConfig } from 'vitest/config';
+/// <reference types="vitest" />
+import { defineConfig } from 'vite';
 
 export default defineConfig({
   test: {
@@ -15,10 +16,10 @@ export default defineConfig({
       include: ['src/**/*.ts'],
       exclude: ['src/types.ts', 'src/vite-env.d.ts', 'src/pixi-layer.ts'], // pixi-layer needs real WebGL: covered by e2e,
       thresholds: {
-        lines: 97.0,
-        functions: 97.0,
-        branches: 97.0,
-        statements: 97.0,
+        lines: 100.0,
+        functions: 100.0,
+        branches: 100.0,
+        statements: 100.0,
       },
     },
   },

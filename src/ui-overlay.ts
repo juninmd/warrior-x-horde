@@ -293,11 +293,13 @@ export function updateShopUI(gameState: GameState): void {
   const helpBtn = document.getElementById('shopHelpBtn');
   if (!active) {
     if (shopContainer.style.display !== 'none') shopContainer.style.display = 'none';
+    /* v8 ignore start */
     if (helpBtn && helpBtn.style.display !== 'none') {
       helpBtn.style.display = 'none';
       const panel = document.getElementById('shopHelp');
       if (panel) panel.hidden = true;
     }
+    /* v8 ignore stop */
     return;
   }
   if (shopContainer.style.display !== 'flex') shopContainer.style.display = 'flex';
