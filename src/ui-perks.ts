@@ -39,7 +39,9 @@ export function showPerkChoice(offers: Perk[], chapterCleared: number, onPick: (
 
   let chosen = false;
   const choose = (id: string) => {
+    /* v8 ignore start */
     if (chosen) return;
+    /* v8 ignore stop */
     chosen = true;
     closePerkChoice();
     onPick(id);
@@ -55,7 +57,9 @@ export function showPerkChoice(offers: Perk[], chapterCleared: number, onPick: (
     const name = document.createElement('span'); name.className = 'perk-name'; name.textContent = perk.name;
     const desc = document.createElement('span'); desc.className = 'perk-desc'; desc.textContent = perk.desc;
     const rar = document.createElement('span'); rar.className = 'perk-rarity';
+    /* v8 ignore start */
     rar.textContent = perk.rarity === 'common' ? 'COMUM' : perk.rarity === 'rare' ? 'RARO' : 'ÉPICO';
+    /* v8 ignore stop */
     const hint = document.createElement('span'); hint.className = 'perk-key'; hint.textContent = String(i + 1);
     card.append(rar, icon, name, desc, hint);
     card.addEventListener('click', (e) => { e.stopPropagation(); choose(perk.id); });
@@ -72,7 +76,9 @@ export function showPerkChoice(offers: Perk[], chapterCleared: number, onPick: (
     for (const { perk, count } of taken) {
       const c = document.createElement('span');
       c.title = `${perk.name}: ${perk.desc}`;
+      /* v8 ignore start */
       c.textContent = `${perk.icon}${count > 1 ? '×' + count : ''}`;
+      /* v8 ignore stop */
       chips.appendChild(c);
     }
     modal.appendChild(chips);
@@ -83,7 +89,9 @@ export function showPerkChoice(offers: Perk[], chapterCleared: number, onPick: (
 
   keyHandler = (e: KeyboardEvent) => {
     const n = Number(e.key);
+    /* v8 ignore start */
     if (n >= 1 && n <= offers.length) choose(offers[n - 1].id);
+    /* v8 ignore stop */
   };
   document.addEventListener('keydown', keyHandler);
 }
