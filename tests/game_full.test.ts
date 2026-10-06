@@ -190,6 +190,27 @@ describe('Game Loop - Full Coverage', () => {
         expect(window.requestAnimationFrame).toHaveBeenCalled();
     });
 
+    it('hides the pause modal while the resume countdown is still running', () => {
+        vi.useFakeTimers();
+        (window as any).debugSetLevel(1);
+        // ui-overlay is mocked here, so provide the modal the real createPauseModal would build
+        const modal = document.createElement('div');
+        modal.id = 'pauseModal';
+        modal.style.display = 'none';
+        document.body.appendChild(modal);
+        (window as any).togglePause();
+        expect(modal.style.display).toBe('flex');
+
+        // countdown never finishes -> isPaused stays true, like the real 3-2-1
+        vi.mocked(uiOverlay.startCountdown).mockImplementationOnce(() => {});
+        (window as any).togglePause();
+        expect(gameState.isPaused).toBe(true);
+        vi.advanceTimersByTime(250);
+        expect(modal.style.display).toBe('none');
+        modal.remove();
+        vi.useRealTimers();
+    });
+
     it('should handle visibility change (auto-pause)', () => {
         (window as any).debugSetLevel(1);
         expect(gameState.isPaused).toBe(false);
