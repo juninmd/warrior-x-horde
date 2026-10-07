@@ -145,6 +145,7 @@ export interface EnemyHorde {
   isMini?: boolean; // Mini-boss horde
   hp: number; // Shared HP for the horde
   maxHp: number;
+  initialCount?: number; // soldiers at spawn (HP per soldier = maxHp / initialCount)
   perfectClearEligible?: boolean;
 }
 

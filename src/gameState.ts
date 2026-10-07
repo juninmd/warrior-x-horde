@@ -94,6 +94,12 @@ export function resetGameState(): void {
   gameState.runStartTime = Date.now();
   gameState.whiteFlash = 0;
   gameState.activeHitEntities = [];
+  gameState.hitStop = 0;
+  gameState.warpEffectTimer = 0;
+  gameState.comboTier = 0;
+  gameState.screenShakeActive = false;
+  gameState.screenShakeIntensity = 0;
+  gameState.screenShakeTimer = 0;
   // Do not reset deferredInstallPrompt as it persists across games
 
   // Update DOM elements if they exist (runs in browser only)

@@ -2,6 +2,7 @@
 
 export class ObjectPool<T> {
   private items: T[] = [];
+  private inPool = new Set<T>();
   private factory: () => T;
   private reset: (item: T) => void;
 
@@ -13,6 +14,7 @@ export class ObjectPool<T> {
   public get(): T {
     if (this.items.length > 0) {
       const item = this.items.pop()!;
+      this.inPool.delete(item);
       this.reset(item);
       return item;
     }
@@ -20,11 +22,12 @@ export class ObjectPool<T> {
   }
 
   public release(item: T): void {
-    if (this.items.includes(item)) {
+    if (this.inPool.has(item)) {
       console.warn('ObjectPool: Attempted to release item already in pool', item);
       return;
     }
     this.items.push(item);
+    this.inPool.add(item);
   }
 
   public size(): number {

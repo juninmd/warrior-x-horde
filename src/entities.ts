@@ -316,6 +316,7 @@ export function createEnemyHorde(canvasWidth: number, y: number, count: number, 
     isActive: true,
     hp: totalHp,
     maxHp: totalHp,
+    initialCount: count,
     perfectClearEligible: true,
   };
 }
