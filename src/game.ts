@@ -984,7 +984,8 @@ export function togglePause(): void {
 
     if (modal) {
         modal.classList.remove('active');
-        setTimeout(() => { if (!gameState.isPaused) modal.style.display = 'none'; }, 200);
+        // isPaused stays true during the resume countdown, so key off the 'active' class instead
+        setTimeout(() => { if (!modal.classList.contains('active')) modal.style.display = 'none'; }, 200);
     }
 
     startCountdown(() => {
