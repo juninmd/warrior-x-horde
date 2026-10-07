@@ -64,7 +64,7 @@ export function getMods(): PerkMods {
 
 /** Shield charges refill at every chapter start. */
 export function refillShield(): void {
-  shieldCharges = perkCount('shield') * 2;
+  shieldCharges = Math.min(MAX_SHIELD_CHARGES, Math.max(shieldCharges, perkCount('shield') * 2));
 }
 export function getShieldCharges(): number {
   return shieldCharges;

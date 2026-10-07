@@ -461,7 +461,8 @@ export function createGatePair(canvasWidth: number, y: number, level: number = 1
     const a = Math.floor(Math.random() * 9) + 1;
     const b = Math.floor(Math.random() * 9) + 1;
     const result = a * b;
-    const wrongResult = Math.max(1, result + (Math.random() > 0.5 ? 1 : -1) * (Math.floor(Math.random() * 5) + 1));
+    let wrongResult = Math.max(1, result + (Math.random() > 0.5 ? 1 : -1) * (Math.floor(Math.random() * 5) + 1));
+    if (wrongResult === result) wrongResult = result + 1; // clamp to 1 can collide with the right answer
 
     const isLeftCorrect = Math.random() > 0.5;
 

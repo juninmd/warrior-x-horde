@@ -107,11 +107,16 @@ export function resetGameState(): void {
 
 export function saveGameProgress(stateOverride?: GameState): void {
   const state = stateOverride || gameState;
-  localStorage.setItem('crowdCoins', state.coins.toString());
-  if (state.highScore > 0) {
-      localStorage.setItem('crowdHighScore', state.highScore.toString());
-  }
-  if (state.highScoreDistance > 0) {
-      localStorage.setItem('crowdHighScoreDist', state.highScoreDistance.toString());
+  try {
+    localStorage.setItem('crowdCoins', state.coins.toString());
+    if (state.highScore > 0) {
+        localStorage.setItem('crowdHighScore', state.highScore.toString());
+    }
+    if (state.highScoreDistance > 0) {
+        localStorage.setItem('crowdHighScoreDist', state.highScoreDistance.toString());
+    }
+  } catch {
+    /* v8 ignore next */
+    // storage unavailable (quota/private mode): progress just isn't persisted
   }
 }

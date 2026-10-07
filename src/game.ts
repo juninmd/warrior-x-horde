@@ -264,6 +264,7 @@ let lastTime = 0;
 // Wall-clock timestamp when the game was paused, used to keep the Date.now()-based
 // Super Cannon cooldown from elapsing while paused (would otherwise recharge for free).
 let pauseStartTime = 0;
+let resuming = false;
 
 // Exported for testing/logic separation
 export function fixedUpdate(dt: number): void {
@@ -967,6 +968,7 @@ export function togglePause(): void {
     () => {
         // Force unpause explicitly to avoid resume countdown
         gameState.isPaused = false;
+        resuming = false;
         const m = document.getElementById('pauseModal');
         if (m) m.style.display = 'none';
         startGame();
@@ -977,6 +979,8 @@ export function togglePause(): void {
   const modal = document.getElementById('pauseModal');
 
   if (gameState.isPaused) {
+    if (resuming) return; // countdown already running: avoid a second game loop
+    resuming = true;
     // Resume with countdown.
     // Shift the wall-clock cooldown stamp forward by the paused duration so the
     // Super Cannon does not recharge while the game is frozen.
@@ -989,6 +993,7 @@ export function togglePause(): void {
     }
 
     startCountdown(() => {
+      resuming = false;
       gameState.isPaused = false;
       requestWakeLock();
       const pauseBtn = document.getElementById('pauseBtnTop');
