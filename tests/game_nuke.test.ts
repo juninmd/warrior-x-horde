@@ -130,7 +130,7 @@ describe('Nuke Logic', () => {
         const entitiesModule = await import('../src/entities');
 
         // Reset state
-        gameState.coins = 10000;
+        gameState.coins = 30000;
         gameState.nukeTimer = 0;
         gameState.hitStop = 0;
 
@@ -158,7 +158,7 @@ describe('Nuke Logic', () => {
 
         capturedBuyCallback('nuke', 500);
 
-        expect(gameState.coins).toBe(10000 - 400); // nuke base price at chapter 1
+        expect(gameState.coins).toBe(30000 - 400); // nuke base price at chapter 1
         expect(gameState.nukeTimer).toBe(60);
         expect(gameState.hitStop).toBe(10);
         expect(audioModule.playSound).toHaveBeenCalledWith('superCannon');
