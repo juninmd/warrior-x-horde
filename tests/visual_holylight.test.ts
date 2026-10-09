@@ -100,7 +100,7 @@ describe('Holy Light VFX', () => {
         fireRate: 100,
         lastShotTime: 0,
         damage: 1,
-        trail: { points: [], color: '#000', width: 1, maxLength: 10 }
+        trail: { points: [{x:0, y:0, width:1, alpha:0},{x:0, y:0, width:1, alpha:0},{x:0, y:0, width:1, alpha:0},{x:0, y:0, width:1, alpha:0},{x:0, y:0, width:1, alpha:0},{x:0, y:0, width:1, alpha:0},{x:0, y:0, width:1, alpha:0},{x:0, y:0, width:1, alpha:0},{x:0, y:0, width:1, alpha:0},{x:0, y:0, width:1, alpha:0}], color: '#000', width: 1, maxLength: 10, head: 0, count: 0 }
       } as unknown as Army,
       enemyHordes: [],
       gates: [],

@@ -54,7 +54,7 @@ describe('Mobile Optimization', () => {
          playerArmy: {
              soldiers: [],
              centerX: 100, centerY: 100,
-             trail: { points: [{x:0,y:0, width:10, alpha:1}, {x:10,y:10, width:10, alpha:1}], width: 10, color: '#F00', maxLength: 10 },
+             trail: { points: [{x:0,y:0, width:10, alpha:1}, {x:10,y:10, width:10, alpha:1}, {x:0,y:0, width:0, alpha:0}, {x:0,y:0, width:0, alpha:0}, {x:0,y:0, width:0, alpha:0}, {x:0,y:0, width:0, alpha:0}, {x:0,y:0, width:0, alpha:0}, {x:0,y:0, width:0, alpha:0}, {x:0,y:0, width:0, alpha:0}, {x:0,y:0, width:0, alpha:0}], width: 10, color: '#F00', maxLength: 10, head: 1, count: 2 },
              aliveCount: 0,
              damage: 1, fireRate: 100, lastShotTime: 0, color: '#F00', isPlayer: true, targetX: 0
          },

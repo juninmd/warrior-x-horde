@@ -1161,7 +1161,7 @@ function drawRoad(ctx: CanvasRenderingContext2D, gameState: GameState): void {
 }
 
 function drawTrail(ctx: CanvasRenderingContext2D, trail: Trail): void {
-  if (trail.points.length < 2) return;
+  if (trail.count < 2) return;
   if (!QualityManager.getInstance().settings.enableTrails) return;
 
   ctx.save();
@@ -1178,9 +1178,17 @@ function drawTrail(ctx: CanvasRenderingContext2D, trail: Trail): void {
   ctx.globalAlpha = 0.4;
 
   ctx.beginPath();
-  ctx.moveTo(trail.points[0].x, trail.points[0].y);
-  for (let i = 1; i < trail.points.length; i++) {
-      ctx.lineTo(trail.points[i].x, trail.points[i].y);
+  const startIdx = (trail.head - trail.count + 1 + trail.maxLength) % trail.maxLength;
+  const startPt = trail.points[startIdx];
+  if (startPt) {
+    ctx.moveTo(startPt.x, startPt.y);
+    for (let i = 1; i < trail.count; i++) {
+        const idx = (startIdx + i) % trail.maxLength;
+        const pt = trail.points[idx];
+        if (pt) {
+            ctx.lineTo(pt.x, pt.y);
+        }
+    }
   }
   ctx.stroke();
   ctx.restore();
