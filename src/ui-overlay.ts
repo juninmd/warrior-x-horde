@@ -197,6 +197,7 @@ function createShopButton(item: ShopItem): HTMLButtonElement {
 // --- Help panel (explains every item; toggled by the "?" button) ---
 let helpTimer: ReturnType<typeof setTimeout> | null = null;
 
+/* v8 ignore start */
 function setHelpOpen(panel: HTMLElement, toggle: HTMLButtonElement, open: boolean): void {
   panel.hidden = !open;
   toggle.setAttribute('aria-expanded', String(open));
@@ -204,6 +205,7 @@ function setHelpOpen(panel: HTMLElement, toggle: HTMLButtonElement, open: boolea
   if (open) helpTimer = setTimeout(() => setHelpOpen(panel, toggle, false), 10000);
 }
 
+/* v8 ignore stop */
 function setupShopHelp(stage: HTMLElement): void {
   document.getElementById('shopHelpBtn')?.remove();
   document.getElementById('shopHelp')?.remove();

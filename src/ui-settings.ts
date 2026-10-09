@@ -10,7 +10,7 @@ let onLevelChangeCallback: ((level: number) => void) | null = null;
 
 export const _testing = {
   reset: () => { settingsModal = null; onLevelChangeCallback = null; },
-  getCallback: () => onLevelChangeCallback
+getCallback: () => onLevelChangeCallback
 };
 
 function createSettingsModal(): void {

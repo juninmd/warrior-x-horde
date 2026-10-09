@@ -1003,8 +1003,8 @@ button {
   box-shadow: var(--sh-1);
   cursor: pointer;
   transition: transform 0.12s var(--ease-pop), opacity 0.2s, filter 0.2s;
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
 }
 
 .shop-icon { font-size: 20px; line-height: 1; filter: drop-shadow(0 0 4px var(--accent)); }
@@ -1060,8 +1060,8 @@ button {
   border: 1px solid var(--border-strong);
   border-radius: var(--r-md);
   box-shadow: var(--sh-2);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
   animation: fadeIn 0.18s var(--ease-out);
 }
 .shop-help[hidden] { display: none; }
@@ -1226,7 +1226,7 @@ body:not(.playing) .top-controls { display: none; }
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
   padding: 16px 12px; text-align: center;
   background: radial-gradient(120% 80% at 50% 0%, rgba(74, 158, 255, 0.18), rgba(6, 9, 18, 0.94) 60%);
-  backdrop-filter: blur(3px);
+  backdrop-filter: blur(2px);
   animation: fadeIn 0.3s var(--ease-out);
   overflow-y: auto;
 }
