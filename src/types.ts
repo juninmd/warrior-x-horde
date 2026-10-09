@@ -26,6 +26,8 @@ export interface Trail {
   color: string;
   width: number;
   maxLength: number;
+  head: number;
+  count: number;
 }
 
 export interface GameState {

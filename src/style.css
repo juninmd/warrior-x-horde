@@ -239,8 +239,8 @@ body {
 }
 
 .super-cannon-btn:active {
-  transform: scale(0.88) !important;
-  background: linear-gradient(135deg, var(--red-1) 0%, var(--red-2) 100%);
+  transform: scale(0.92) !important;
+  background: linear-gradient(135deg, var(--red-2) 0%, var(--red-1) 100%);
   box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.4);
 }
 
@@ -283,7 +283,7 @@ body {
 
 .start-btn:active {
   transform: translateY(2px) scale(0.92) !important;
-  background: linear-gradient(135deg, var(--red-1) 0%, var(--red-2) 100%);
+  background: linear-gradient(135deg, var(--red-2) 0%, var(--red-1) 100%);
   box-shadow: inset 0 6px 15px rgba(0, 0, 0, 0.55);
 }
 
@@ -295,6 +295,7 @@ body {
   border-radius: 20px;
   padding: 30px 20px;
   text-align: center;
+  overflow: visible;
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
@@ -584,6 +585,11 @@ body {
 .pause-btn:active {
   transform: scale(0.92) !important;
 }
+.pause-btn.resume:active {
+  transform: scale(0.92) !important;
+  background: linear-gradient(135deg, var(--red-2) 0%, var(--red-1) 100%);
+  box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.4);
+}
 .pause-btn.resume {
   background: var(--grad-action);
   border-color: transparent;
@@ -649,7 +655,7 @@ body {
 .story-close-btn:hover { transform: scale(1.04); }
 .story-close-btn:active {
   transform: scale(0.92) !important;
-  background: linear-gradient(135deg, var(--red-1) 0%, var(--red-2) 100%);
+  background: linear-gradient(135deg, var(--red-2) 0%, var(--red-1) 100%);
   box-shadow: inset 0 6px 15px rgba(0, 0, 0, 0.55);
 }
 
@@ -858,7 +864,6 @@ button {
 /* --- Responsive ------------------------------------------------------ */
 
 @media (max-width: 768px) {
-  .game-controls { display: none !important; }
   /* Mobile: o canvas ocupa a tela toda; título só aparece na tela inicial (logo) */
   .game-subtitle,
   .game-title,
@@ -945,7 +950,7 @@ button {
 .top-controls { gap: 8px; }
 .top-controls .icon-btn {
   --tap: 42px;
-  min-height: 0;
+  min-height: 54px;
   width: 42px;
   height: 42px;
   font-size: 18px;
@@ -955,7 +960,7 @@ button {
 /* ⚡ SUPER: left thumb, bottom */
 .super-cannon-container { z-index: 60; }
 .super-cannon-btn {
-  min-height: 0;
+  min-height: 54px;
   width: 68px;
   height: 68px;
   font-size: 13px;
@@ -991,7 +996,7 @@ button {
   justify-content: center;
   gap: 1px;
   width: 58px;
-  min-height: 0;
+  min-height: 54px;
   height: 58px;
   padding: 3px 2px;
   font-family: inherit;
@@ -1012,7 +1017,7 @@ button {
 .shop-price { font-size: 11px; font-weight: 800; line-height: 1; color: var(--gold); white-space: nowrap; }
 
 .shop-btn:not(:disabled) { animation: shop-ready 2.4s ease-in-out infinite; }
-.shop-btn:not(:disabled):active { transform: scale(0.9); }
+.shop-btn:not(:disabled):active { transform: scale(0.92) !important; box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.4); }
 .shop-btn:disabled {
   opacity: 0.55;
   filter: grayscale(0.7);

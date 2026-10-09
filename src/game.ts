@@ -359,14 +359,15 @@ export function fixedUpdate(dt: number): void {
 
   // Update Trail
   if (entities.playerArmy.trail) {
-    entities.playerArmy.trail.points.push({
-        x: entities.playerArmy.centerX,
-        y: entities.playerArmy.centerY,
-        width: entities.playerArmy.trail.width,
-        alpha: 1
-    });
-    if (entities.playerArmy.trail.points.length > entities.playerArmy.trail.maxLength) {
-        entities.playerArmy.trail.points.shift();
+    const trail = entities.playerArmy.trail;
+    trail.head = (trail.head + 1) % trail.maxLength;
+    const pt = trail.points[trail.head];
+    pt.x = entities.playerArmy.centerX;
+    pt.y = entities.playerArmy.centerY;
+    pt.width = trail.width;
+    pt.alpha = 1;
+    if (trail.count < trail.maxLength) {
+        trail.count++;
     }
   }
 

@@ -131,10 +131,12 @@ export function createPlayerArmy(canvasWidth: number, canvasHeight: number): Arm
     damage: 3, // Dano base reduzido para 3
     aliveCount: soldiers.length,
     trail: {
-      points: [],
+      points: Array.from({ length: 20 }, () => ({ x: 0, y: 0, width: 40, alpha: 0 })),
       color: skinColor, // Matches player color
       width: 40,
-      maxLength: 20
+      maxLength: 20,
+      head: 0,
+      count: 0
     },
     scanIndex: 0
   };
