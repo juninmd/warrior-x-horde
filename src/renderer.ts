@@ -1508,7 +1508,10 @@ function drawMysteryBox(ctx: CanvasRenderingContext2D, box: MysteryBox, time: nu
   ctx.fillStyle = gradient;
   ctx.beginPath();
   ctx.roundRect(-width / 2, -height / 2, width, height, 8);
+  ctx.shadowBlur = 15;
+  ctx.shadowColor = '#E056FD';
   ctx.fill();
+  ctx.shadowBlur = 0;
   ctx.strokeStyle = '#E056FD';
   ctx.lineWidth = 3;
   ctx.stroke();
