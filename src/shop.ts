@@ -1,6 +1,6 @@
 // shop.ts - In-run shop: catalog, dynamic pricing, cooldowns and purchase effects (UI-agnostic, unit-tested).
 import type { Entities, GameState } from './types';
-import { addSoldiersToArmy, addSpecialSoldiersToArmy } from './entities';
+import { addSoldiersToArmy, addSpecialSoldiersToArmy, releaseHorde } from './entities';
 import { addShieldCharges } from './perks';
 import { registerKill, defeatBoss, defeatMiniBoss } from './rewards';
 import { getItem, getPrice, blockedReason, markPurchased } from './shop-catalog';
@@ -28,7 +28,7 @@ export function applyNuke(entities: Entities, gs: GameState): number {
       gs.score += 10;
       registerKill(gs, s.x, s.y);
     }
-    h.soldiers.length = 0;
+    releaseHorde(h); // returns soldiers to the pool and empties the array
     h.count = 0;
     h.hp = 0;
     h.isActive = false; // spawner releases it on the next pass

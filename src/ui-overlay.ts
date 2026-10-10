@@ -449,8 +449,11 @@ function makeEpilogue(text: string): HTMLElement {
     return p;
 }
 
+let restarting = false;
+
 export function showGameOverScreen(gameState: GameState): void {
     if (!gameOverContainer) return;
+    restarting = false;
 
     const onRestart = (gameOverContainer as GameOverContainer)._onRestart;
     const onShare = (gameOverContainer as GameOverContainer)._onShare;
@@ -609,6 +612,8 @@ export function showGameOverScreen(gameState: GameState): void {
 
     const restartBtn = document.getElementById('goRestartBtn');
     restartBtn?.addEventListener('click', () => {
+        if (restarting) return;
+        restarting = true;
         vibrate(20);
         gameOverContainer!.style.opacity = '0';
         setTimeout(() => {

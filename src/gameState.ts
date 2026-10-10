@@ -94,6 +94,12 @@ export function resetGameState(): void {
   gameState.runStartTime = Date.now();
   gameState.whiteFlash = 0;
   gameState.activeHitEntities = [];
+  gameState.hitStop = 0;
+  gameState.warpEffectTimer = 0;
+  gameState.comboTier = 0;
+  gameState.screenShakeActive = false;
+  gameState.screenShakeIntensity = 0;
+  gameState.screenShakeTimer = 0;
   // Do not reset deferredInstallPrompt as it persists across games
 
   // Update DOM elements if they exist (runs in browser only)
@@ -107,11 +113,16 @@ export function resetGameState(): void {
 
 export function saveGameProgress(stateOverride?: GameState): void {
   const state = stateOverride || gameState;
-  localStorage.setItem('crowdCoins', state.coins.toString());
-  if (state.highScore > 0) {
-      localStorage.setItem('crowdHighScore', state.highScore.toString());
-  }
-  if (state.highScoreDistance > 0) {
-      localStorage.setItem('crowdHighScoreDist', state.highScoreDistance.toString());
+  try {
+    localStorage.setItem('crowdCoins', state.coins.toString());
+    if (state.highScore > 0) {
+        localStorage.setItem('crowdHighScore', state.highScore.toString());
+    }
+    if (state.highScoreDistance > 0) {
+        localStorage.setItem('crowdHighScoreDist', state.highScoreDistance.toString());
+    }
+  } catch {
+    /* v8 ignore next */
+    // storage unavailable (quota/private mode): progress just isn't persisted
   }
 }

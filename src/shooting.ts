@@ -320,13 +320,13 @@ export function updateSuperCannon(entities: Entities, gameState: GameState, delt
       gameState.superCannonActive = false;
       gameState.superCannonTimer = 0;
     } else {
-      applySuperCannonDamage(entities, gameState);
+      applySuperCannonDamage(entities, gameState, deltaTime);
     }
     /* v8 ignore stop */
   }
 }
 
-function applySuperCannonDamage(entities: Entities, gameState: GameState): void {
+function applySuperCannonDamage(entities: Entities, gameState: GameState, deltaTime: number): void {
   const army = entities.playerArmy;
   /* v8 ignore next */
   if (army.soldiers.length === 0) return;
@@ -337,6 +337,7 @@ function applySuperCannonDamage(entities: Entities, gameState: GameState): void 
 
   for (const horde of entities.enemyHordes) {
     if (!horde.isActive) continue;
+    let beamKills = 0;
 
     for (let i = horde.soldiers.length - 1; i >= 0; i--) {
       const soldier = horde.soldiers[i];
@@ -345,15 +346,18 @@ function applySuperCannonDamage(entities: Entities, gameState: GameState): void 
         addExplosion(soldier.x, soldier.y, '#FFD700');
         addParticle(soldier.x, soldier.y, 'spark', '#FFF', 3);
         fastRemove(horde.soldiers, i);
+        soldierPool.release(soldier);
         gameState.score += 15;
+        gameState.coins += 1;
+        registerKill(gameState, soldier.x, soldier.y);
+        beamKills++;
       }
     }
 
     horde.count = horde.soldiers.length;
+    if (beamKills > 0) horde.hp = Math.max(0, horde.hp - beamKills * (horde.maxHp / (horde.initialCount || beamKills + horde.count)));
     if (horde.soldiers.length === 0) {
-      horde.isActive = false;
-      gameState.score += 100;
-      addParticle(horde.x, horde.y, 'star', '#FFD700', 10);
+      awardHordeClear(horde, gameState, gameState.currentLevel);
     }
   }
 
@@ -364,7 +368,7 @@ function applySuperCannonDamage(entities: Entities, gameState: GameState): void 
     const bossCenter = boss.type === 'mothership' ? boss.x : boss.x + boss.width / 2;
     if (bossCenter > beamX - beamWidth / 2 && bossCenter < beamX + beamWidth / 2) {
       /* v8 ignore next */
-      boss.hp -= damage * 0.1;
+      boss.hp -= damage * 0.1 * (deltaTime / 16.67);
       if (boss.hp <= 0) defeatBoss(boss, gameState, gameState.currentLevel);
     }
   }
@@ -485,7 +489,7 @@ export function updateBullets(entities: Entities, gameState: GameState, dtFactor
           addExplosion(soldier.x, soldier.y, '#E74C3C');
 
           // Determine how many soldiers should be alive based on % of Horde HP left
-          const count = horde.count > 0 ? horde.count : horde.soldiers.length;
+          const count = horde.initialCount || (horde.count > 0 ? horde.count : horde.soldiers.length);
           const avgHp = horde.maxHp / count;
           const safeAvgHp = avgHp > 0 ? avgHp : 1;
 

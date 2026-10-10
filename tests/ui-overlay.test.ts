@@ -185,12 +185,12 @@ describe('UI Overlay', () => {
 
             // Test buttons
             const restartBtn = document.getElementById('goRestartBtn');
-            restartBtn?.click();
-            // It has a timeout
+            // It has a timeout; a double tap must restart only once
             vi.useFakeTimers();
             restartBtn?.click();
+            restartBtn?.click();
             vi.advanceTimersByTime(300);
-            expect(onRestart).toHaveBeenCalled();
+            expect(onRestart).toHaveBeenCalledTimes(1);
             vi.useRealTimers();
 
             const shareBtn = document.getElementById('goShareX');

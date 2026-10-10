@@ -85,7 +85,7 @@ describe('Shooting Coverage', () => {
             y: 100,
             width: 40,
             height: 40,
-            hp: 0.1, // Low HP to die instantly
+            hp: 0.05, // Low HP to die instantly
             type: 'beast'
         };
         entities.boss = boss as any;

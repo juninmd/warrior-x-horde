@@ -151,7 +151,7 @@ export function setupInput(canvas: HTMLCanvasElement, onTouchEffect?: (x: number
           let newX = armyStartX + delta * SENSITIVITY;
 
           // Clamp to screen bounds
-          newX = Math.max(0, Math.min(canvas.width, newX));
+          newX = Math.max(0, Math.min(BASE_WIDTH, newX));
 
           mouseX = newX;
 

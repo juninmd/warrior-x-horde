@@ -264,6 +264,7 @@ let lastTime = 0;
 // Wall-clock timestamp when the game was paused, used to keep the Date.now()-based
 // Super Cannon cooldown from elapsing while paused (would otherwise recharge for free).
 let pauseStartTime = 0;
+let resuming = false;
 
 // Exported for testing/logic separation
 export function fixedUpdate(dt: number): void {
@@ -536,6 +537,7 @@ function gameLoop(currentTime: number = 0): void {
   while (accumulator >= FIXED_TIMESTEP) {
       fixedUpdate(FIXED_TIMESTEP);
       accumulator -= FIXED_TIMESTEP;
+      if (gameState.isPaused) { accumulator = 0; break; } // e.g. perk modal opened mid-step
   }
 
   // UI Updates (Run once per frame)
@@ -622,6 +624,7 @@ function offerPerks(clearedLevel: number): void {
     pickPerk(id, entities);
     gameState.superCannonCooldown = BASE_SUPER_COOLDOWN * getMods().superCooldownMult;
     gameState.superCannonLastUsed += Date.now() - pausedAt; // cooldown must not tick while choosing
+    if (entities.boss) entities.boss.spawnTime += Date.now() - pausedAt;
     refillShield();
     gameState.isPaused = false;
     lastTime = 0;
@@ -684,6 +687,8 @@ export function startGame(): void {
   resetGameState();
   resetSpawnerState(); // Clear carried-over mini-boss spawn counter from prior run
   entities = createInitialEntities(BASE_WIDTH, BASE_HEIGHT);
+  lastTime = 0;
+  accumulator = 0;
   initializeMousePosition(BASE_WIDTH);
   setGameStateRef(gameState); // Configurar referência para input de Super Cannon
   wasInBossFight = false; // Resetar flag de boss
@@ -968,6 +973,9 @@ export function togglePause(): void {
     () => {
         // Force unpause explicitly to avoid resume countdown
         gameState.isPaused = false;
+        resuming = false;
+        if (gameState.score > gameState.highScore) gameState.highScore = gameState.score;
+        saveGameProgress();
         const m = document.getElementById('pauseModal');
         if (m) m.style.display = 'none';
         startGame();
@@ -978,10 +986,13 @@ export function togglePause(): void {
   const modal = document.getElementById('pauseModal');
 
   if (gameState.isPaused) {
+    if (resuming) return; // countdown already running: avoid a second game loop
+    resuming = true;
     // Resume with countdown.
     // Shift the wall-clock cooldown stamp forward by the paused duration so the
     // Super Cannon does not recharge while the game is frozen.
     gameState.superCannonLastUsed += Date.now() - pauseStartTime;
+    if (entities.boss) entities.boss.spawnTime += Date.now() - pauseStartTime;
 
     if (modal) {
         modal.classList.remove('active');
@@ -990,6 +1001,7 @@ export function togglePause(): void {
     }
 
     startCountdown(() => {
+      resuming = false;
       gameState.isPaused = false;
       requestWakeLock();
       const pauseBtn = document.getElementById('pauseBtnTop');
