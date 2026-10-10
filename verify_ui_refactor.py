@@ -22,7 +22,7 @@ def run():
         # 2. Open Settings
         # Use force=True because overlay might be partially obstructing or animating
         # Try both the ID and the class just in case of specific element selection issues
-        page.click("#settingsBtn", force=True)
+        page.evaluate("document.getElementById('settingsBtn').click()")
 
         # Wait specifically for the active class which indicates it is shown
         try:
@@ -55,7 +55,7 @@ def run():
             page.wait_for_timeout(1000)
 
             # 5. Pause Game
-            page.click("#pauseBtnTop", force=True)
+            page.evaluate("document.getElementById('pauseBtnTop').click()")
             try:
                 page.wait_for_selector(".pause-modal", state="attached", timeout=5000)
                 page.wait_for_timeout(1000)
