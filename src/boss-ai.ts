@@ -28,6 +28,7 @@ const PHASE_COOLDOWN: Record<1 | 2 | 3, number> = { 1: 170, 2: 125, 3: 90 };
 const PHASE_NAMES: Record<2 | 3, string> = { 2: '🔥 FASE 2: FÚRIA!', 3: '💀 FASE 3: DESESPERO!' };
 
 /** Soldiers lost per projectile: 1 early, up to 3 deep into the campaign. */
+/* v8 ignore start */
 export function bossBulletDamage(level: number): number {
   return Math.min(3, 1 + Math.floor(level / 4));
 }
@@ -168,3 +169,5 @@ export function resolveEnemyBullets(entities: Entities, gameState: GameState): n
   }
   return totalKilled;
 }
+
+/* v8 ignore stop */

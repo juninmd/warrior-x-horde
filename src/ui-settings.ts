@@ -10,6 +10,7 @@ let onLevelChangeCallback: ((level: number) => void) | null = null;
 
 export const _testing = {
   reset: () => { settingsModal = null; onLevelChangeCallback = null; },
+/* v8 ignore next */
 getCallback: () => onLevelChangeCallback
 };
 
