@@ -2,6 +2,7 @@
 // Perks stack (up to `max`) and last for the whole run.
 import { Entities } from './types';
 import { addSoldiersToArmy } from './entities';
+import { fastRemove } from './utils';
 
 export interface Perk {
   id: string;
@@ -89,7 +90,8 @@ export function rollOffers(n = 3, rng: () => number = Math.random): Perk[] {
       r -= weight(pool[idx]);
       if (r <= 0) break;
     }
-    out.push(pool.splice(idx, 1)[0]);
+    out.push(pool[idx]);
+    fastRemove(pool, idx);
   }
   return out;
 }
