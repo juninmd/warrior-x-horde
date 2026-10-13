@@ -191,8 +191,8 @@ body {
   align-items: center;
   justify-content: center;
   transition: transform 0.18s var(--ease-pop), background 0.18s, border-color 0.18s;
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
   box-shadow: var(--sh-1);
   min-height: 54px;
   touch-action: manipulation;
@@ -297,8 +297,8 @@ body {
   text-align: center;
   overflow: visible;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
   max-width: 95%;
   width: 500px;
   position: relative;
@@ -313,7 +313,7 @@ body {
   align-items: center;
   justify-content: center;
   background: rgba(6, 9, 18, 0.88);
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(1px);
   border-radius: calc(var(--r-lg) - 2px);
   z-index: 100;
   opacity: 0;
@@ -323,8 +323,8 @@ body {
 
 .game-over-content {
   background: var(--surface-strong);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   padding: 26px;
@@ -437,7 +437,7 @@ body {
 
 #startScreenLeaderboard {
   width: 100%;
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(1px);
 }
 
 .leaderboard-box {
@@ -447,7 +447,7 @@ body {
   padding: 12px;
   margin-bottom: 16px;
   width: 100%;
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(1px);
 }
 
 .leaderboard-title {
@@ -529,8 +529,8 @@ body {
   position: fixed;
   inset: 0;
   background: rgba(6, 9, 18, 0.86);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
   display: none;
   justify-content: center;
   align-items: center;
@@ -572,8 +572,8 @@ body {
   font-weight: 800;
   cursor: pointer;
   box-shadow: var(--sh-1);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
   transition: transform 0.15s var(--ease-pop), background 0.2s, box-shadow 0.2s;
   animation: modal-in 0.3s var(--ease-pop) both;
 }
@@ -788,7 +788,7 @@ body {
   justify-content: center;
   align-items: center;
   background: rgba(6, 9, 18, 0.55);
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(1px);
   z-index: 9999;
   font-size: clamp(64px, 22vw, 96px);
   font-weight: 900;
@@ -925,8 +925,8 @@ button {
   align-items: center;
   justify-content: center;
   background: rgba(8, 11, 22, 0.7);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
   z-index: 50;
   overflow-y: auto;
 }
@@ -1008,8 +1008,8 @@ button {
   box-shadow: var(--sh-1);
   cursor: pointer;
   transition: transform 0.12s var(--ease-pop), opacity 0.2s, filter 0.2s;
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
 }
 
 .shop-icon { font-size: 20px; line-height: 1; filter: drop-shadow(0 0 4px var(--accent)); }
@@ -1065,8 +1065,8 @@ button {
   border: 1px solid var(--border-strong);
   border-radius: var(--r-md);
   box-shadow: var(--sh-2);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
   animation: fadeIn 0.18s var(--ease-out);
 }
 .shop-help[hidden] { display: none; }
@@ -1231,7 +1231,7 @@ body:not(.playing) .top-controls { display: none; }
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
   padding: 16px 12px; text-align: center;
   background: radial-gradient(120% 80% at 50% 0%, rgba(74, 158, 255, 0.18), rgba(6, 9, 18, 0.94) 60%);
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(1px);
   animation: fadeIn 0.3s var(--ease-out);
   overflow-y: auto;
 }
