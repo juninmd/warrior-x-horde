@@ -55,7 +55,6 @@ function applyGateEffect(army: Army, gate: Gate, gameState: GameState): void {
         const pop = document.createElement("div");
         pop.className = "multiplier-pop";
         pop.style.position = "absolute";
-        // @ts-ignore
         pop.style.left = `${(gate.x / BASE_WIDTH) * 100}%`;
         pop.style.top = `${(gate.y / 800) * 100}%`;
         pop.style.width = "40px";
