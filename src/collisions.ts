@@ -6,7 +6,7 @@ import { playSound, audioManager } from './audio';
 import { triggerHaptic } from './input';
 import { triggerScreenShake, triggerHitStop } from './game';
 import { getArmyBounds, checkBounds, getEntityBounds, Rect } from './utils';
-import { COLORS } from './constants';
+import { COLORS, BASE_WIDTH } from './constants';
 import { getMods } from './perks';
 import { comboMultiplier, registerKill, awardHordeClear, defeatBoss, defeatMiniBoss } from './rewards';
 import { soldierPool } from './soldierPool';
@@ -50,6 +50,21 @@ function applyGateEffect(army: Army, gate: Gate, gameState: GameState): void {
       multiplySoldiersInArmy(army, gate.value);
       afterCount = army.soldiers.length;
       addFloatingText(`×${gate.value}`, gate.x + gate.width / 2, gate.y, COLORS.UI.INFO, 1.3);
+      const domWrapper = document.querySelector(".game-container");
+      if (domWrapper) {
+        const pop = document.createElement("div");
+        pop.className = "multiplier-pop";
+        pop.style.position = "absolute";
+        pop.style.left = `${(gate.x / BASE_WIDTH) * 100}%`;
+        pop.style.top = `${(gate.y / 800) * 100}%`;
+        pop.style.width = "40px";
+        pop.style.height = "40px";
+        pop.style.background = "rgba(0, 255, 255, 0.4)";
+        pop.style.borderRadius = "50%";
+        pop.style.pointerEvents = "none";
+        domWrapper.appendChild(pop);
+        setTimeout(() => pop.remove(), 300);
+      }
       break;
     }
     case 'subtract':
