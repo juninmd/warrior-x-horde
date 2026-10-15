@@ -6,7 +6,7 @@ import { playSound, audioManager } from './audio';
 import { triggerHaptic } from './input';
 import { triggerScreenShake, triggerHitStop } from './game';
 import { getArmyBounds, checkBounds, getEntityBounds, Rect } from './utils';
-import { COLORS } from './constants';
+import { COLORS, BASE_WIDTH } from './constants';
 import { getMods } from './perks';
 import { comboMultiplier, registerKill, awardHordeClear, defeatBoss, defeatMiniBoss } from './rewards';
 import { soldierPool } from './soldierPool';
