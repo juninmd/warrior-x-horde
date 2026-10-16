@@ -1158,7 +1158,7 @@ body:not(.playing) .shop-help { display: none !important; }
 .skin-name { font-size: 11px; font-weight: 700; line-height: 1.1; }
 .skin-card.selected { border-color: var(--skin-accent); box-shadow: 0 0 0 2px var(--skin-primary), 0 0 14px color-mix(in srgb, var(--skin-primary) 60%, transparent); }
 .skin-card.locked { opacity: 0.5; cursor: not-allowed; }
-.skin-card:not(:disabled):active { transform: scale(0.94); }
+.skin-card:not(:disabled):active { transform: scale(0.92) !important; }
 
 @media (max-width: 768px) {
   .game-container { padding: 0; }
@@ -1270,7 +1270,7 @@ body:not(.playing) .top-controls { display: none; }
 .perk-card.rare { border-left-color: var(--violet); }
 .perk-card.epic { border-left-color: var(--gold); box-shadow: 0 0 22px rgba(255, 210, 90, 0.25), var(--sh-1); }
 .perk-card:hover, .perk-card:focus-visible { transform: translateY(-3px) scale(1.02); box-shadow: var(--sh-glow-cyan); }
-.perk-card:active { transform: scale(0.96); }
+.perk-card:active { transform: scale(0.92) !important; }
 .perk-icon { grid-area: icon; font-size: 38px; text-align: center; }
 .perk-name { grid-area: name; font-size: 17px; font-weight: 800; }
 .perk-desc { grid-area: desc; font-size: 13px; color: var(--text-dim); line-height: 1.25; }
