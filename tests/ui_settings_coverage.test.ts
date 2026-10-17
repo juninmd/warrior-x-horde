@@ -77,7 +77,7 @@ describe('UI Settings Coverage', () => {
 
     (toggleMute as any).mockReturnValue(true); // Now muted
 
-    if (btn) btn.onclick?.({} as any);
+    if (btn) btn.dispatchEvent(new Event('click'));
 
     expect(vibrate).toHaveBeenCalled();
     expect(SettingsManager.getInstance().soundEnabled).toBe(false);
@@ -98,11 +98,11 @@ describe('UI Settings Coverage', () => {
     toggleSettingsMenu();
     const btn = document.getElementById('hapticsBtn');
 
-    if (btn) btn.onclick?.({} as any);
+    if (btn) btn.dispatchEvent(new Event('click'));
     expect(SettingsManager.getInstance().hapticsEnabled).toBe(false);
     expect(btn?.innerText).toBe('OFF');
 
-    if (btn) btn.onclick?.({} as any);
+    if (btn) btn.dispatchEvent(new Event('click'));
     expect(SettingsManager.getInstance().hapticsEnabled).toBe(true);
     expect(vibrate).toHaveBeenCalled();
   });
@@ -111,14 +111,14 @@ describe('UI Settings Coverage', () => {
     toggleSettingsMenu();
     const btn = document.getElementById('qualityBtn');
 
-    if (btn) btn.onclick?.({} as any); // HIGH
+    if (btn) btn.dispatchEvent(new Event('click')); // HIGH
     expect(SettingsManager.getInstance().quality).toBe('high');
     expect(btn?.innerText).toBe('HIGH');
 
-    if (btn) btn.onclick?.({} as any); // LOW
+    if (btn) btn.dispatchEvent(new Event('click')); // LOW
     expect(SettingsManager.getInstance().quality).toBe('low');
 
-    if (btn) btn.onclick?.({} as any); // AUTO
+    if (btn) btn.dispatchEvent(new Event('click')); // AUTO
     expect(SettingsManager.getInstance().quality).toBe('auto');
   });
 
@@ -128,7 +128,7 @@ describe('UI Settings Coverage', () => {
     const buttons = modal?.getElementsByTagName('button');
     const closeBtn = buttons ? buttons[buttons.length - 1] : null;
 
-    if (closeBtn) closeBtn.onclick?.({} as any);
+    if (closeBtn) closeBtn.dispatchEvent(new Event('click'));
 
     expect(vibrate).toHaveBeenCalled();
     expect(modal?.style.display).toBe('none');

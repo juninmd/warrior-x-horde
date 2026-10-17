@@ -64,7 +64,11 @@ describe('UI Overlay Extra Coverage', () => {
 
         const e = new Event('click');
         vi.spyOn(e, 'stopPropagation');
-        await installBtn!.onclick!(e as any);
+        await installBtn!.dispatchEvent(e);
+
+        // We can't await a dispatched event easily if the listener is async and we don't have a ref to it,
+        // so we can use a slight delay to allow the async listener to run.
+        await new Promise(r => setTimeout(r, 10));
 
         expect(promptCalled).toBe(true);
         expect(document.getElementById('startInstallBtn')).toBeNull();

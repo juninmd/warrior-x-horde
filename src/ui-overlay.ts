@@ -144,14 +144,14 @@ export function setupStartScreenInstallBtn(deferredPrompt: BeforeInstallPromptEv
     // Keeping classes for consistent styling
     installBtn.className = 'start-btn install-btn';
 
-    installBtn.onclick = async (e) => {
+    installBtn.addEventListener('click', async (e) => {
         e.stopPropagation();
         vibrate(20);
         deferredPrompt.prompt();
         const { outcome } = await deferredPrompt.userChoice;
         console.log(`User response to install prompt: ${outcome}`);
         installBtn.remove();
-    };
+    });
 
     const startBtn = startScreenContent.querySelector('.start-btn');
     if (startBtn && startBtn.nextSibling) {
@@ -728,10 +728,10 @@ export function createPauseModal(
         const btn = document.createElement('button');
         btn.innerText = text;
         btn.className = `pause-btn ${className}`;
-        btn.onclick = () => {
+        btn.addEventListener('click', () => {
             vibrate(20);
             onClick();
-        };
+        });
         return btn;
     };
 
