@@ -1239,7 +1239,7 @@ body:not(.playing) .shop-help { display: none !important; }
 .epilogue { font-size: 13px; line-height: 1.35; font-style: italic; color: var(--text-dim); margin: 0 6px 16px; }
 
 /* Game over: use the whole viewport on phones; pause/settings only exist while playing */
-body:not(.playing) .top-controls { display: none; }
+body:not(.playing) .top-controls { display: none; visibility: hidden; }
 @media (max-width: 768px) {
   .game-over-container { position: fixed; border-radius: 0; z-index: 100; padding: 8px; }
   .game-over-content { padding: 16px; width: 94%; }

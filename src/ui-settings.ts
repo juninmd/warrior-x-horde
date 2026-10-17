@@ -60,10 +60,10 @@ function createSettingsModal(): void {
     };
     updateStyle(initialValue);
 
-    btn.onclick = () => {
+    btn.addEventListener('click', () => {
         vibrate(10);
         onClick(btn);
-    };
+    });
 
     container.appendChild(lbl);
     container.appendChild(btn);
@@ -123,10 +123,10 @@ function createSettingsModal(): void {
   const closeBtn = document.createElement('button');
   closeBtn.innerText = 'CLOSE';
   closeBtn.className = 'settings-close-btn'; // Ensure class is correct
-  closeBtn.onclick = () => {
+  closeBtn.addEventListener('click', () => {
       vibrate(20);
       toggleSettingsMenu();
-  };
+  });
   content.appendChild(closeBtn);
 
   settingsModal.appendChild(content);
