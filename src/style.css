@@ -31,7 +31,7 @@
   --text-mute: #6b7796;
 
   /* Gradients */
-  --grad-action: linear-gradient(135deg, var(--red-1) 0%, var(--red-2) 100%);
+  --grad-action: linear-gradient(135deg, #FF416C 0%, #FF4B2B 100%);
   --grad-cool: linear-gradient(135deg, var(--cyan-1) 0%, var(--cyan-2) 100%);
   --grad-surface: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
 
@@ -242,7 +242,7 @@ body {
 
 .super-cannon-btn:active {
   transform: scale(0.92) !important;
-  background: linear-gradient(135deg, var(--red-2) 0%, var(--red-1) 100%);
+  background: linear-gradient(135deg, #FF4B2B 0%, #FF416C 100%);
   box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.4);
 }
 
@@ -285,7 +285,7 @@ body {
 
 .start-btn:active {
   transform: translateY(2px) scale(0.92) !important;
-  background: linear-gradient(135deg, var(--red-2) 0%, var(--red-1) 100%);
+  background: linear-gradient(135deg, #FF4B2B 0%, #FF416C 100%);
   box-shadow: inset 0 6px 15px rgba(0, 0, 0, 0.55);
 }
 
@@ -401,6 +401,7 @@ body {
 
 .game-over-btn:active {
   transform: scale(0.92) !important;
+  background: linear-gradient(135deg, #FF4B2B 0%, #FF416C 100%);
   box-shadow: inset 0 6px 15px rgba(0, 0, 0, 0.55);
 }
 
@@ -590,7 +591,7 @@ body {
 }
 .pause-btn.resume:active {
   transform: scale(0.92) !important;
-  background: linear-gradient(135deg, var(--red-2) 0%, var(--red-1) 100%);
+  background: linear-gradient(135deg, #FF4B2B 0%, #FF416C 100%);
   box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.4);
 }
 .pause-btn.resume {
@@ -659,7 +660,7 @@ body {
 .story-close-btn:hover { transform: scale(1.04); }
 .story-close-btn:active {
   transform: scale(0.92) !important;
-  background: linear-gradient(135deg, var(--red-2) 0%, var(--red-1) 100%);
+  background: linear-gradient(135deg, #FF4B2B 0%, #FF416C 100%);
   box-shadow: inset 0 6px 15px rgba(0, 0, 0, 0.55);
 }
 
@@ -1296,11 +1297,12 @@ body:not(.playing) .top-controls { display: none; visibility: hidden; }
 .intro-dots { display: flex; gap: 8px; }
 .intro-dots span { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.25); transition: background 0.3s, transform 0.3s; }
 .intro-dots span.on { background: #fff; transform: scale(1.25); }
-.intro-next { min-height: 48px; padding: 0 26px; font-family: inherit; font-size: 17px; font-weight: 800; color: #fff; background: var(--grad-action); border: 1px solid rgba(255,255,255,0.35); border-radius: var(--r-pill); box-shadow: var(--sh-glow-red); cursor: pointer; }
-.intro-skip { position: absolute !important; top: calc(14px + env(safe-area-inset-top)); right: 14px; min-height: 40px; padding: 0 14px; font-family: inherit; font-size: 14px; font-weight: 700; color: var(--text); background: rgba(0,0,0,0.45); border: 1px solid var(--border-strong); border-radius: var(--r-pill); cursor: pointer; }
+.intro-next { min-height: 54px; padding: 0 26px; font-family: inherit; font-size: 17px; font-weight: 800; color: #fff; background: var(--grad-action); border: 1px solid rgba(255,255,255,0.35); border-radius: var(--r-pill); box-shadow: var(--sh-glow-red); cursor: pointer; }
+.intro-next:active { transform: scale(0.92) !important; background: linear-gradient(135deg, #FF4B2B 0%, #FF416C 100%); box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.4); }
+.intro-skip { position: absolute !important; top: calc(14px + env(safe-area-inset-top)); right: 14px; min-height: 54px; padding: 0 14px; font-family: inherit; font-size: 14px; font-weight: 700; color: var(--text); background: rgba(0,0,0,0.45); border: 1px solid var(--border-strong); border-radius: var(--r-pill); cursor: pointer; }
 @keyframes intro-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
 @keyframes intro-pop { from { transform: scale(0.3) rotate(-12deg); opacity: 0; } to { transform: scale(1) rotate(0); opacity: 1; } }
-.story-link-btn { display: block; margin: 10px auto 2px; min-height: 40px; padding: 0 16px; font-family: inherit; font-size: 14px; font-weight: 700; color: var(--text-dim); background: transparent; border: 1px solid var(--border); border-radius: var(--r-pill); cursor: pointer; }
+.story-link-btn { display: block; margin: 10px auto 2px; min-height: 54px; padding: 0 16px; font-family: inherit; font-size: 14px; font-weight: 700; color: var(--text-dim); background: transparent; border: 1px solid var(--border); border-radius: var(--r-pill); cursor: pointer; }
 .story-link-btn:hover { color: var(--text); border-color: var(--border-strong); }
 .story-banner[data-variant='radio'] { border-top-color: var(--green); }
 .story-banner[data-variant='radio'] .story-kicker { color: var(--green); }
