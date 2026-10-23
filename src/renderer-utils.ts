@@ -15,15 +15,15 @@ export function safeAddColorStop(gradient: CanvasGradient, offset: number, color
       return;
     /* v8 ignore stop */
     }
-    try {
-      gradient.addColorStop(offset, color);
-    } catch (e) {
-      // ignore invalid colors
-    }
+    gradient.addColorStop(offset, color);
   /* v8 ignore start */
   } catch (e) {
-    console.warn(`[Canvas] Invalid color stop: ${color}`, e);
-    gradient.addColorStop(offset, 'rgba(0,0,0,0)');
+    console.warn(`[Canvas] Invalid color stop: ${color}`);
+    try {
+      gradient.addColorStop(offset, 'rgba(0,0,0,0)');
+    } catch {
+      // Fallback failed
+    }
   /* v8 ignore stop */
   }
 }
