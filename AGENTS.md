@@ -9,8 +9,8 @@ This file serves as the "Living Memory" for Jules and other agents working on th
 - **Rendering:** `src/renderer.ts` handles all canvas drawing. It uses a `spriteCache` for soldiers and particles to optimize performance.
 - **State Management:** `src/gameState.ts` holds the singleton `gameState` object. `src/types.ts` defines all interfaces.
 - **Pixi Layer:** `src/pixi-layer.ts` (PixiJS v8, WebGL) draws soldiers, hordes, bullets, particles and trail as sprites using the `spriteCache` canvases as textures. Layers are stacked in `.game-canvas-wrapper`: `#gameCanvas` (2D world) < `#pixiCanvas` < `#hudCanvas` (HUD/effects). `renderer.setWorldLayer()` enables it; without WebGL the pure Canvas2D path is used. Imports `pixi.js/unsafe-eval` because of the CSP.
-- **Mobile (Capacitor):** `capacitor.config.ts`, `android/`. Run `npm run cap:android` (build + sync + open Android Studio).
-- **E2E:** `npm run e2e` (Playwright, `tests/e2e`); screenshots in `test-results/screenshots`, samples in `docs/screenshots`. Set `PW_CHROMIUM` to use a custom Chromium binary.
+- **Mobile (Capacitor):** `capacitor.config.ts`, `android/`. Run `pnpm run cap:android` (build + sync + open Android Studio).
+- **E2E:** `pnpm run e2e` (Playwright, `tests/e2e`); screenshots in `test-results/screenshots`, samples in `docs/screenshots`. Set `PW_CHROMIUM` to use a custom Chromium binary.
 - **Boss AI:** `src/boss-ai.ts` – 3 HP phases (66%/33%), telegraphed volleys (`aimed`/`fan`/`rain`), enemy bullets (`isEnemy`, `vx`) that kill soldiers (`resolveEnemyBullets`). Names/taunts in `src/boss-lore.ts`.
 - **Story:** `src/story.ts` – 10 chapters (one per level), chapter/boss banners (`#storyBanner`), victory/defeat epilogues.
 - **Perks:** `src/perks.ts` (8 stackable run upgrades: damage, fire rate, shield, coins, reinforcements, armor, super cooldown, combo) + `src/ui-perks.ts` (pick 1 of 3 after each boss; pauses the run). Hooks: `getMods()` in shooting/collisions/boss-ai.
@@ -72,8 +72,17 @@ This file serves as the "Living Memory" for Jules and other agents working on th
 ---
 
 ## 🛠️ Tooling & Commands
-- **Install:** `npm install`
-- **Dev:** `npm run dev`
-- **Build:** `npm run build`
-- **Lint:** `npm run lint`
-- **Test:** `npm test` (or `npm run coverage`)
+Package manager: pnpm 10.33.2 (`packageManager`), Node 22 in CI.
+- **Install:** `pnpm install` (CI: `--frozen-lockfile`)
+- **Dev:** `pnpm run dev`
+- **Build:** `pnpm run build` (`tsc --noEmit && vite build`)
+- **Lint:** `pnpm run lint`
+- **Typecheck:** `pnpm run typecheck`
+- **Test:** `pnpm test` (watch) or `pnpm run coverage` (single run, 100% thresholds)
+- **E2E:** `pnpm run e2e`
+
+### CI gates
+- `ci.yml`: lint, typecheck, coverage, build, E2E (all must pass).
+- `validate.yml` and `security.yml`: reusable workflows from `juninmd/base-actions` (tracked secret files, security scan).
+- `docker.yml`: image build and push via reusable workflow.
+- Do not commit `.env`, keys or `.pem` files.
