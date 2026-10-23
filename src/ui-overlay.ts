@@ -141,6 +141,7 @@ export function setupStartScreenInstallBtn(deferredPrompt: BeforeInstallPromptEv
     const installBtn = document.createElement('button');
     installBtn.id = 'startInstallBtn';
     installBtn.innerText = '📲 INSTALL APP';
+    installBtn.setAttribute('aria-label', 'Instalar aplicativo');
     // Keeping classes for consistent styling
     installBtn.className = 'start-btn install-btn';
 
@@ -584,6 +585,7 @@ export function showGameOverScreen(gameState: GameState): void {
         installBtn.className = 'game-over-btn';
         installBtn.style.color = '#333';
         installBtn.textContent = '📲 INSTALL APP';
+        installBtn.setAttribute('aria-label', 'Instalar aplicativo');
         content.appendChild(installBtn);
     }
 
@@ -591,6 +593,7 @@ export function showGameOverScreen(gameState: GameState): void {
     restartBtnHtml.id = 'goRestartBtn';
     restartBtnHtml.className = 'game-over-btn';
     restartBtnHtml.textContent = isVictory ? 'CONTINUE LEVEL 11 ➡️' : '🔄 TRY AGAIN';
+    restartBtnHtml.setAttribute('aria-label', isVictory ? 'Continuar para o próximo nível' : 'Tentar novamente');
     content.appendChild(restartBtnHtml);
 
     const shareGroup = document.createElement('div');
@@ -600,11 +603,13 @@ export function showGameOverScreen(gameState: GameState): void {
     shareX.id = 'goShareX';
     shareX.className = 'share-btn x';
     shareX.textContent = '𝕏 SHARE';
+    shareX.setAttribute('aria-label', 'Compartilhar no X');
 
     const shareWa = document.createElement('button');
     shareWa.id = 'goShareWa';
     shareWa.className = 'share-btn wa';
     shareWa.textContent = '📱 WHATSAPP';
+    shareWa.setAttribute('aria-label', 'Compartilhar no WhatsApp');
 
     shareGroup.appendChild(shareX);
     shareGroup.appendChild(shareWa);
@@ -724,10 +729,13 @@ export function createPauseModal(
     title.innerText = 'PAUSED';
     title.className = 'pause-title';
 
-    const createBtn = (text: string, onClick: () => void, className: string = '') => {
+    const createBtn = (text: string, onClick: () => void, className: string = '', ariaLabel?: string) => {
         const btn = document.createElement('button');
         btn.innerText = text;
         btn.className = `pause-btn ${className}`;
+        if (ariaLabel) {
+            btn.setAttribute('aria-label', ariaLabel);
+        }
         btn.addEventListener('click', () => {
             vibrate(20);
             onClick();
@@ -735,10 +743,10 @@ export function createPauseModal(
         return btn;
     };
 
-    const resumeBtn = createBtn('RESUME', onResume, 'resume');
-    const restartBtn = createBtn('RESTART', onRestart);
-    const settingsBtn = createBtn('SETTINGS', onSettings);
-    const quitBtn = createBtn('QUIT', () => window.location.reload(), 'quit');
+    const resumeBtn = createBtn('RESUME', onResume, 'resume', 'Continuar jogo');
+    const restartBtn = createBtn('RESTART', onRestart, '', 'Reiniciar jogo');
+    const settingsBtn = createBtn('SETTINGS', onSettings, '', 'Configurações');
+    const quitBtn = createBtn('QUIT', () => window.location.reload(), 'quit', 'Sair do jogo');
 
     modal.appendChild(title);
     modal.appendChild(resumeBtn);

@@ -65,4 +65,23 @@ describe('UI Settings Coverage', () => {
     // Since game is started and not paused, playMusic should be called
     expect(audioModule.playMusic).toHaveBeenCalledWith(false);
   });
+
+  it('should toggle high contrast mode from UI', () => {
+    setupSettingsUI();
+    const contrastBtn = document.getElementById('contrastBtn') as HTMLButtonElement;
+    expect(contrastBtn).toBeTruthy();
+
+    const sm = SettingsManager.getInstance();
+    expect(sm.highContrastEnabled).toBe(false); // Initially false
+
+    // Click to turn ON
+    contrastBtn.click();
+    expect(sm.highContrastEnabled).toBe(true);
+    expect(contrastBtn.innerText).toBe('ON');
+
+    // Click to turn OFF
+    contrastBtn.click();
+    expect(sm.highContrastEnabled).toBe(false);
+    expect(contrastBtn.innerText).toBe('OFF');
+  });
 });
