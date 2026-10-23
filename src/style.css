@@ -1312,3 +1312,36 @@ body.perk-open .shop-container,
 body.perk-open .shop-help-btn,
 body.perk-open .shop-help,
 body.perk-open .super-cannon-container { display: none !important; }
+
+/* High Contrast Mode Overrides */
+body.high-contrast {
+  --bg-0: #000000;
+  --bg-1: #000000;
+  --bg-2: #0a0a0a;
+  --surface: rgba(0, 0, 0, 0.95);
+  --surface-strong: rgba(0, 0, 0, 1);
+  --border: rgba(255, 255, 255, 0.5);
+  --border-strong: rgba(255, 255, 255, 0.8);
+  --text: #ffffff;
+  --text-dim: #cccccc;
+}
+
+body.high-contrast .glass-overlay {
+  background: rgba(0, 0, 0, 0.95);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+body.high-contrast .start-btn,
+body.high-contrast .buy-btn,
+body.high-contrast .action-btn {
+  background: var(--red-1);
+  color: #fff;
+  border: 2px solid #fff;
+}
+
+body.high-contrast .settings-modal,
+body.high-contrast .pause-modal {
+  background: #000;
+  border: 2px solid #fff;
+}
