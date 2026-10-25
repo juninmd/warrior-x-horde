@@ -1,7 +1,9 @@
 # Build stage
-FROM node:26-slim AS builder
+# Node 25+ não distribui mais o corepack; instalamos o pnpm direto via npm
+# (versão igual à de packageManager no package.json).
+FROM node:22-slim AS builder
 WORKDIR /app
-RUN corepack enable
+RUN npm install -g pnpm@10.33.2
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY . .
