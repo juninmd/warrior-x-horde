@@ -86,3 +86,15 @@ Package manager: pnpm 10.33.2 (`packageManager`), Node 22 in CI.
 - `validate.yml` and `security.yml`: reusable workflows from `juninmd/base-actions` (tracked secret files, security scan).
 - `docker.yml`: image build and push via reusable workflow.
 - Do not commit `.env`, keys or `.pem` files.
+
+<!-- base-actions-main-policy -->
+## GitHub Actions — padrão obrigatório (@main)
+
+- Referencie as actions internas sempre pelo branch, nunca por SHA:
+  - `uses: juninmd/base-actions/<action>@main`
+  - `uses: juninmd/base-actions/.github/workflows/<arquivo>.yml@main`
+- Não fixe `@<sha>` em `juninmd/base-actions`: a atualização é centralizada no
+  `main` e passa a valer no próximo run.
+- PRs cujos checks não iniciam por billing/spending limit são mesclados pelo bot central
+  `juninmd/base-actions/.github/workflows/auto-merge-billing-blocked.yml`.
+  Para impedir o merge automático de um PR, aplique a label `do-not-merge`.
