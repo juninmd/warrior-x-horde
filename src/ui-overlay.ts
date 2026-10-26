@@ -271,7 +271,8 @@ export function setupShopUI(onBuy: BuyAction): void {
   shopContainer.setAttribute('aria-label', 'Loja de reforços');
   stage.appendChild(shopContainer);
 
-  SHOP_ITEMS.forEach(item => {
+  for (let i = 0; i < SHOP_ITEMS.length; i++) {
+    const item = SHOP_ITEMS[i];
     const btn = createShopButton(item);
     btn.addEventListener('click', (e: Event) => {
       e.stopPropagation();
@@ -280,7 +281,7 @@ export function setupShopUI(onBuy: BuyAction): void {
     });
     shopContainer!.appendChild(btn);
     buttons[item.id] = btn;
-  });
+  }
 
   setupShopHelp(stage);
 }
@@ -308,9 +309,11 @@ export function updateShopUI(gameState: GameState): void {
   if (helpBtn && helpBtn.style.display !== 'flex') helpBtn.style.display = 'flex';
 
   currentLevelForShop = gameState.currentLevel;
-  Object.entries(buttons).forEach(([id, btn]) => {
+  for (const id in buttons) {
+      if (!Object.prototype.hasOwnProperty.call(buttons, id)) continue;
+      const btn = buttons[id];
       const item = SHOP_ITEMS.find(i => i.id === id);
-      if (!item) return; // e.g. the super cannon button lives in this map too
+      if (!item) continue; // e.g. the super cannon button lives in this map too
       const price = getPrice(item, gameState.currentLevel);
       const reason = blockedReason(item, gameState);
       const shouldDisable = reason !== null;
@@ -323,7 +326,7 @@ export function updateShopUI(gameState: GameState): void {
       const priceEl = btn.querySelector('.shop-price');
       if (priceEl && priceEl.textContent !== label) priceEl.textContent = label;
       if (btn.dataset.reason !== (reason ?? '')) btn.dataset.reason = reason ?? '';
-  });
+  }
 }
 
 let currentLevelForShop = 1;

@@ -136,7 +136,10 @@ async function setupPixi(): Promise<void> {
   hudCtx = hudCanvas.getContext('2d')!;
   wrapper.appendChild(hudCanvas);
   // Overlays (start screen, modais) devem ficar acima das camadas
-  wrapper.querySelectorAll<HTMLElement>('.glass-overlay').forEach(el => wrapper.appendChild(el));
+  const overlays = wrapper.querySelectorAll<HTMLElement>('.glass-overlay');
+  for (let i = 0; i < overlays.length; i++) {
+    wrapper.appendChild(overlays[i]);
+  }
   syncLayers();
   setWorldLayer(layer, hudCtx);
   // O layout pode mudar depois do resize (max-width, fontes, safe-area): mantém camadas alinhadas

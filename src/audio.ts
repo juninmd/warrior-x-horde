@@ -59,11 +59,13 @@ export function initAudio(): void {
   // Pré-carregar apenas o que ainda não começou a carregar: `preload = 'auto'`
   // já dispara o download, e chamar load() de novo aborta a requisição em voo
   // (net::ERR_ABORTED) e recomeça do zero.
-  Object.values(audioManager).forEach(audio => {
+  const audios = Object.values(audioManager);
+  for (let i = 0; i < audios.length; i++) {
+    const audio = audios[i];
     if (audio.networkState !== HTMLMediaElement.NETWORK_LOADING && audio.readyState === HTMLMediaElement.HAVE_NOTHING) {
       audio.load();
     }
-  });
+  }
 
   audioInitialized = true;
 }

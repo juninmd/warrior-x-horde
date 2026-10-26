@@ -47,7 +47,8 @@ export function showPerkChoice(offers: Perk[], chapterCleared: number, onPick: (
     onPick(id);
   };
 
-  offers.forEach((perk, i) => {
+  for (let i = 0; i < offers.length; i++) {
+    const perk = offers[i];
     const card = document.createElement('button');
     card.type = 'button';
     card.className = `perk-card ${perk.rarity}`;
@@ -64,7 +65,7 @@ export function showPerkChoice(offers: Perk[], chapterCleared: number, onPick: (
     card.append(rar, icon, name, desc, hint);
     card.addEventListener('click', (e) => { e.stopPropagation(); choose(perk.id); });
     row.appendChild(card);
-  });
+  }
 
   modal.append(title, sub, row);
 

@@ -53,7 +53,7 @@ export function playIntro(onDone: () => void): void {
   const title = document.createElement('h2'); title.className = 'intro-title';
   const text = document.createElement('p'); text.className = 'intro-text';
   const dots = document.createElement('div'); dots.className = 'intro-dots';
-  INTRO_SCENES.forEach(() => dots.appendChild(document.createElement('span')));
+  for (let i = 0; i < INTRO_SCENES.length; i++) { dots.appendChild(document.createElement('span')); }
   const next = document.createElement('button'); next.type = 'button'; next.className = 'intro-next'; next.textContent = 'Continuar ▶';
   const skip = document.createElement('button'); skip.type = 'button'; skip.className = 'intro-skip'; skip.textContent = 'Pular ⏭';
   root.append(skip, art, kicker, title, text, dots, next);
@@ -79,7 +79,7 @@ export function playIntro(onDone: () => void): void {
     full = sc.text;
     text.textContent = '';
     next.textContent = i === INTRO_SCENES.length - 1 ? 'Começar ⚔️' : 'Continuar ▶';
-    Array.from(dots.children).forEach((d, k) => d.classList.toggle('on', k <= i));
+    for (let k = 0; k < dots.children.length; k++) { dots.children[k].classList.toggle('on', k <= i); }
     let n = 0;
     if (typing) clearInterval(typing);
     typing = setInterval(() => {

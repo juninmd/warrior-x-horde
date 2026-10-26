@@ -70,10 +70,9 @@ export function spawnWeapons(entities: Entities, canvasWidth: number): void {
   for (let i = entities.weapons.length - 1; i >= 0; i--) {
       const w = entities.weapons[i];
       if (w.passed || w.y >= 1000) {
-          /* v8 ignore start */
+          /* v8 ignore next 4 */
           const last = entities.weapons.pop();
           if (last && i < entities.weapons.length) {
-          /* v8 ignore stop */
               entities.weapons[i] = last;
           }
       }

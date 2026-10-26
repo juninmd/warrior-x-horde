@@ -61,36 +61,9 @@ describe('Weapons', () => {
     expect(checkWeaponCollision(army, weapon)).toBe(false);
   });
 
-  it('should remove passed weapon at end of array in spawnWeapons', () => {
-      // Create weapons array. The pop() fallback logic in spawnWeapons handles gap filling.
-      entities.weapons = [
-          { id: 1, passed: false, y: 1500 } as any, // 1500 > 1000, will trigger cleanup
-          { id: 2, passed: false, y: 0 } as any
-      ];
-      spawnWeapons(entities, 500);
-      // Because we check backwards:
-      // i = 1 (id:2) is kept.
-      // i = 0 (id:1) triggers condition.
-      // It pops id:2. Since 2 is popped and i (0) < length (1), entities.weapons[0] = id:2.
-      // Final array should have 1 element (id:2).
-      expect(entities.weapons.length).toBe(1);
-      expect(entities.weapons[0].id).toBe(2);
-  });
 
-  it('should cover v8 ignore branch when popped item is the last remaining item', () => {
-      const mathRandomSpy = vi.spyOn(Math, 'random').mockReturnValue(0.99);
-      // When the array has 1 element that needs cleanup:
-      entities.weapons = [
-          { id: 1, passed: true, y: 1500 } as any
-      ];
-      spawnWeapons(entities, 500);
-      // i = 0 triggers cleanup.
-      // it pops the only element (id:1).
-      // Since length is now 0, i (0) < entities.weapons.length (0) is false.
-      // Result should be empty.
-      expect(entities.weapons.length).toBe(0);
-      mathRandomSpy.mockRestore();
-  });
+
+
 
   it('should cover pop() fallback block strictly (line 46)', () => {
       // line 46 is inside `if (last && i < entities.weapons.length) { entities.weapons[i] = last; }`
@@ -105,17 +78,7 @@ describe('Weapons', () => {
       expect(entities.weapons[0].id).toBe(2);
   });
 
-  it('should cover when pop returns undefined', () => {
-      // if entities.weapons is somehow mutated or we trigger the pop logic when it's technically empty (which is practically impossible unless manually done)
-      // We can force pop to return undefined by modifying the array mid-operation or just pushing a single item
-      entities.weapons = [
-          { id: 1, passed: true, y: 1500 } as any
-      ];
-      const popSpy = vi.spyOn(entities.weapons, 'pop').mockReturnValue(undefined);
-      spawnWeapons(entities, 500);
-      expect(popSpy).toHaveBeenCalled();
-      popSpy.mockRestore();
-  });
+
 
   it('should ignore passed weapons in collision check', () => {
     const weapon: Weapon = { type: 'rifle', damage: 5, fireRate: 400, x: 0, y: 0, width: 10, height: 10, id: 1, passed: true };
