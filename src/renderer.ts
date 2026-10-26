@@ -1795,7 +1795,7 @@ export function shareOnX(gameState: GameState): void {
 
 export function shareOnWhatsApp(gameState: GameState): void {
   const text = `🎮 Crowd Runner!\n🏆 Score: ${gameState.score}\nLevel: ${gameState.currentLevel}`;
-  window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+  window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
 }
 
 function drawSuperCannonBeam(ctx: CanvasRenderingContext2D, centerX: number, centerY: number, gameState: GameState): void {
