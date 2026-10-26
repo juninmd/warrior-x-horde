@@ -1,10 +1,11 @@
 [build]
-  command = "npm run build"
+  command = "npm install -g pnpm@10.33.2 && pnpm install --frozen-lockfile && pnpm run build"
   publish = "dist"
 
 [build.environment]
   NODE_VERSION = "20"
   CI = "false"
+  PNPM_VERSION = "10.33.2"
   NPM_FLAGS = "--include=dev"
 
 [[redirects]]
