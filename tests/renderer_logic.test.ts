@@ -183,13 +183,13 @@ describe('Renderer Coverage', () => {
       const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
       const gameState = { score: 100, currentLevel: 2 } as GameState;
       shareOnX(gameState);
-      expect(openSpy).toHaveBeenCalledWith(expect.stringContaining('twitter.com'), '_blank');
+      expect(openSpy).toHaveBeenCalledWith(expect.stringContaining('twitter.com'), '_blank', 'noopener,noreferrer');
   });
 
   it('should share on WhatsApp', () => {
       const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
       const gameState = { score: 100, currentLevel: 2 } as GameState;
       shareOnWhatsApp(gameState);
-      expect(openSpy).toHaveBeenCalledWith(expect.stringContaining('whatsapp.com'), '_blank');
+      expect(openSpy).toHaveBeenCalledWith(expect.stringContaining('whatsapp.com'), '_blank', 'noopener,noreferrer');
   });
 });

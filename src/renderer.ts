@@ -1790,7 +1790,7 @@ function drawFloatingTexts(ctx: CanvasRenderingContext2D): void {
 export function shareOnX(gameState: GameState): void {
   const text = `🎮 Crowd Runner!\n🏆 Score: ${gameState.score}\nLevel: ${gameState.currentLevel}`;
   const url = window.location.href;
-  window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
+  window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank', 'noopener,noreferrer');
 }
 
 export function shareOnWhatsApp(gameState: GameState): void {
