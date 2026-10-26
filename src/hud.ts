@@ -214,14 +214,15 @@ export function drawArmyPanel(ctx: Ctx, s: ArmyStats): void {
     { icon: '🔥', value: `${s.shotsPerSec.toFixed(1)}/s`, label: 'CADÊNCIA', color: '#FFB84A' },
   ];
   const cw = w / cells.length;
-  cells.forEach((c, i) => {
+  for (let i = 0; i < cells.length; i++) {
+    const c = cells[i];
     const cx = x + cw * i + cw / 2;
     if (i > 0) { ctx.fillStyle = 'rgba(255,255,255,0.12)'; ctx.fillRect(x + cw * i - 0.5, y + 8, 1, h - 16); }
     ctx.font = `15px ${FONT_FAMILY}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#fff';
     ctx.fillText(c.icon, cx - 24, y + 17);
     text(ctx, c.value, cx + 6, y + 17, 17, c.color, 'center', 900);
     text(ctx, c.label, cx, y + 34, 9, '#9fb0cc', 'center', 800, false);
-  });
+  }
   // army delta pop (+N / -N)
   if (hudAnim.armyDeltaAge < 1 && hudAnim.armyDelta !== 0) {
     const a = 1 - hudAnim.armyDeltaAge;
