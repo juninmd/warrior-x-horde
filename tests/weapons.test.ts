@@ -106,15 +106,7 @@ describe('Weapons', () => {
   });
 
   it('should cover when pop returns undefined', () => {
-      // if entities.weapons is somehow mutated or we trigger the pop logic when it's technically empty (which is practically impossible unless manually done)
-      // We can force pop to return undefined by modifying the array mid-operation or just pushing a single item
-      entities.weapons = [
-          { id: 1, passed: true, y: 1500 } as any
-      ];
-      const popSpy = vi.spyOn(entities.weapons, 'pop').mockReturnValue(undefined);
-      spawnWeapons(entities, 500);
-      expect(popSpy).toHaveBeenCalled();
-      popSpy.mockRestore();
+      // Obsolete due to fastRemove replacing pop
   });
 
   it('should ignore passed weapons in collision check', () => {
