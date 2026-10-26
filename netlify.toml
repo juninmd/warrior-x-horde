@@ -1,5 +1,5 @@
 [build]
-  command = "corepack enable && corepack pnpm run build"
+  command = "npm install -g pnpm && pnpm install && pnpm run build"
   publish = "dist"
 
 [build.environment]
