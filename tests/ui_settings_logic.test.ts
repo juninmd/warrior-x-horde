@@ -84,4 +84,15 @@ describe('UI Settings Coverage', () => {
     expect(sm.highContrastEnabled).toBe(false);
     expect(contrastBtn.innerText).toBe('OFF');
   });
+
+  it('should show high contrast as ON when it is already enabled at setup', () => {
+    const sm = SettingsManager.getInstance();
+    sm.highContrastEnabled = true;
+
+    setupSettingsUI();
+    const contrastBtn = document.getElementById('contrastBtn') as HTMLButtonElement;
+    expect(contrastBtn.innerText).toBe('ON');
+
+    sm.highContrastEnabled = false;
+  });
 });
