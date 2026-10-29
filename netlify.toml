@@ -1,9 +1,9 @@
 [build]
-  command = "npm run build"
+  command = "npm install -g pnpm && pnpm install && pnpm run build"
   publish = "dist"
 
 [build.environment]
-  NODE_VERSION = "20"
+  NODE_VERSION = "22"
   CI = "false"
   NPM_FLAGS = "--include=dev"
 
