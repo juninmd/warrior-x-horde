@@ -46,6 +46,14 @@ describe('SettingsManager Coverage', () => {
     expect(setQualitySpy).toHaveBeenCalledWith('high');
   });
 
+  it('should fall back to auto when stored quality is invalid', () => {
+    localStorage.setItem('crowdRunnerSettings', JSON.stringify({ quality: 'ultra' }));
+
+    const sm = SettingsManager.getInstance();
+
+    expect(sm.quality).toBe('auto');
+  });
+
   it('should handle corrupt localStorage data', () => {
     localStorage.setItem('crowdRunnerSettings', '{ corrupt json');
 

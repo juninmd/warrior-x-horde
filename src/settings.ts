@@ -28,7 +28,10 @@ export class SettingsManager {
     try {
       const stored = localStorage.getItem('crowdRunnerSettings');
       if (stored) {
-        return { ...this.defaultSettings(), ...JSON.parse(stored) };
+        const parsed = JSON.parse(stored) as Partial<GameSettings>;
+        const merged = { ...this.defaultSettings(), ...parsed };
+        if (!['auto', 'low', 'high'].includes(merged.quality)) merged.quality = 'auto';
+        return merged;
       }
     } catch (e) {
       console.warn('Failed to load settings', e);
