@@ -113,6 +113,14 @@ function createSettingsModal(): void {
      powerToggle.updateStyle(newState);
   });
 
+  // High Contrast
+  const contrastToggle = createToggle('👁️ CONTRAST', 'contrastBtn', sm.highContrastEnabled ? 'ON' : 'OFF', (btn) => {
+     sm.highContrastEnabled = !sm.highContrastEnabled;
+     const newState = sm.highContrastEnabled ? 'ON' : 'OFF';
+     btn.innerText = newState;
+     contrastToggle.updateStyle(newState);
+  });
+
   // Fullscreen
   createToggle('⛶ SCREEN', 'fullscreenBtn', 'FULL', () => {
       /* v8 ignore next */

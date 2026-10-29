@@ -5,6 +5,7 @@ interface GameSettings {
   masterVolume: number;
   quality: 'auto' | 'low' | 'high';
   soundEnabled: boolean;
+  highContrastEnabled: boolean;
 }
 
 export class SettingsManager {
@@ -15,6 +16,9 @@ export class SettingsManager {
     this.settings = this.loadSettings();
     // Apply quality immediately on load
     QualityManager.getInstance().setQuality(this.settings.quality);
+    if (this.settings.highContrastEnabled) {
+      document.body.classList.add('high-contrast');
+    }
   }
 
   public static getInstance(): SettingsManager {
@@ -44,7 +48,8 @@ export class SettingsManager {
       hapticsEnabled: true,
       masterVolume: 1.0,
       quality: 'auto',
-      soundEnabled: true
+      soundEnabled: true,
+      highContrastEnabled: false
     };
   }
 
@@ -68,4 +73,15 @@ export class SettingsManager {
 
   get soundEnabled(): boolean { return this.settings.soundEnabled; }
   set soundEnabled(v: boolean) { this.settings.soundEnabled = v; this.saveSettings(); }
+
+  get highContrastEnabled(): boolean { return this.settings.highContrastEnabled; }
+  set highContrastEnabled(v: boolean) {
+    this.settings.highContrastEnabled = v;
+    if (v) {
+      document.body.classList.add('high-contrast');
+    } else {
+      document.body.classList.remove('high-contrast');
+    }
+    this.saveSettings();
+  }
 }

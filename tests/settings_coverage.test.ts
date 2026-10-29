@@ -27,6 +27,7 @@ describe('SettingsManager Coverage', () => {
     expect(sm.hapticsEnabled).toBe(true);
     expect(sm.soundEnabled).toBe(true);
     expect(sm.quality).toBe('auto');
+    expect(sm.highContrastEnabled).toBe(false);
   });
 
   it('should load settings from localStorage', () => {
@@ -69,6 +70,37 @@ describe('SettingsManager Coverage', () => {
 
     const stored = JSON.parse(localStorage.getItem('crowdRunnerSettings') || '{}');
     expect(stored.hapticsEnabled).toBe(false);
+  });
+
+  it('should update high contrast mode and toggle class on body', () => {
+    const sm = SettingsManager.getInstance();
+
+    // Test setting to true
+    sm.highContrastEnabled = true;
+    expect(sm.highContrastEnabled).toBe(true);
+    expect(document.body.classList.contains('high-contrast')).toBe(true);
+
+    let stored = JSON.parse(localStorage.getItem('crowdRunnerSettings') || '{}');
+    expect(stored.highContrastEnabled).toBe(true);
+
+    // Test setting to false
+    sm.highContrastEnabled = false;
+    expect(sm.highContrastEnabled).toBe(false);
+    expect(document.body.classList.contains('high-contrast')).toBe(false);
+
+    stored = JSON.parse(localStorage.getItem('crowdRunnerSettings') || '{}');
+    expect(stored.highContrastEnabled).toBe(false);
+  });
+
+  it('should apply high contrast mode on initialization if stored in settings', () => {
+    localStorage.setItem('crowdRunnerSettings', JSON.stringify({
+      highContrastEnabled: true
+    }));
+
+    const sm = SettingsManager.getInstance();
+    expect(sm.highContrastEnabled).toBe(true);
+    expect(document.body.classList.contains('high-contrast')).toBe(true);
+    document.body.classList.remove('high-contrast'); // cleanup
   });
 
   it('should update quality and notify QualityManager', () => {

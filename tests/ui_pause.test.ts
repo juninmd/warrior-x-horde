@@ -21,16 +21,21 @@ describe('Pause Modal', () => {
         const buttons = modal?.querySelectorAll('button');
         expect(buttons?.length).toBe(4); // Resume, Restart, Settings, Quit
 
-        // Test Clicks
+        // Test Clicks and Accessibility Labels
         if (buttons) {
+            expect(buttons[0].getAttribute('aria-label')).toBe('Continuar jogo');
             buttons[0].click(); // Resume
             expect(onResume).toHaveBeenCalled();
 
+            expect(buttons[1].getAttribute('aria-label')).toBe('Reiniciar jogo');
             buttons[1].click(); // Restart
             expect(onRestart).toHaveBeenCalled();
 
+            expect(buttons[2].getAttribute('aria-label')).toBe('Configurações');
             buttons[2].click(); // Settings
             expect(onSettings).toHaveBeenCalled();
+
+            expect(buttons[3].getAttribute('aria-label')).toBe('Sair do jogo');
         }
     });
 

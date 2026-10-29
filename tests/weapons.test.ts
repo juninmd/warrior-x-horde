@@ -96,6 +96,8 @@ describe('Weapons', () => {
       // line 46 is inside `if (last && i < entities.weapons.length) { entities.weapons[i] = last; }`
       // To strictly ensure that happens, let's create a situation where a pop happens,
       // last is defined, and `i` is strictly less than length (already tested above but let's make it very clear)
+      // Force random to NOT spawn a new weapon to predictably assert array length
+      const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0.99);
       entities.weapons = [
           { id: 1, passed: true, y: 1500 } as any, // 1500 > 1000, will trigger cleanup, i = 0
           { id: 2, passed: false, y: 0 } as any  // i = 1
@@ -103,6 +105,7 @@ describe('Weapons', () => {
       spawnWeapons(entities, 500);
       expect(entities.weapons.length).toBe(1);
       expect(entities.weapons[0].id).toBe(2);
+      randomSpy.mockRestore();
   });
 
   it('should cover when pop returns undefined', () => {
