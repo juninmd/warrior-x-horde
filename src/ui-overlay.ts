@@ -252,7 +252,7 @@ function setupShopHelp(stage: HTMLElement): void {
   panel.append(title, intro, list, foot);
 
   const stop = (e: Event) => e.stopPropagation();
-  toggle.addEventListener('click', (e) => { stop(e); setHelpOpen(panel, toggle, panel.hidden); });
+  toggle.addEventListener('click', (e) => { stop(e); setHelpOpen(panel, toggle, !!panel.hidden); });
   panel.addEventListener('click', (e) => { stop(e); setHelpOpen(panel, toggle, false); });
   stage.append(toggle, panel);
 }
