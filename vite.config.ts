@@ -2,6 +2,8 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
+  // Public base path. Defaults to '/'; the GitHub Pages build sets VITE_BASE=/warrior-x-horde/.
+  base: process.env.VITE_BASE ?? '/',
   test: {
     globals: true,
     environment: 'jsdom',

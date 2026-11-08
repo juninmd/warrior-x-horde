@@ -17,6 +17,9 @@ let audioInitialized = false;
 const lastPlayedMap = new Map<string, number>();
 const THROTTLE_MS = 80; // Minimum time between same sound instances
 
+// Assets live under the Vite base ("/" in dev, "/<repo>/" on GitHub Pages).
+const AUDIO_BASE = `${import.meta.env.BASE_URL}audio/`;
+
 function createAudio(src: string, loop = false, volume = 0.5): HTMLAudioElement {
   const audio = new Audio(src);
   audio.loop = loop;
@@ -32,14 +35,14 @@ function createAudio(src: string, loop = false, volume = 0.5): HTMLAudioElement 
 }
 
 export const audioManager: AudioManager = {
-  gameMusic: createAudio('/audio/music.mp3', true, 0.3),
-  bossMusic: createAudio('/audio/music_boss.mp3', true, 0.4),
-  gameStart: createAudio('/audio/game_start.mp3', false, 0.5),
-  gameOver: createAudio('/audio/game_over.wav', false, 0.5),
-  powerUp: createAudio('/audio/power_up.wav', false, 0.4),
-  nerf: createAudio('/audio/nerf.wav', false, 0.4),
-  superCannon: createAudio('/audio/boss_death.mp3', false, 0.5),
-  victory: createAudio('/audio/wave_complete.wav', false, 0.5),
+  gameMusic: createAudio(`${AUDIO_BASE}music.mp3`, true, 0.3),
+  bossMusic: createAudio(`${AUDIO_BASE}music_boss.mp3`, true, 0.4),
+  gameStart: createAudio(`${AUDIO_BASE}game_start.mp3`, false, 0.5),
+  gameOver: createAudio(`${AUDIO_BASE}game_over.wav`, false, 0.5),
+  powerUp: createAudio(`${AUDIO_BASE}power_up.wav`, false, 0.4),
+  nerf: createAudio(`${AUDIO_BASE}nerf.wav`, false, 0.4),
+  superCannon: createAudio(`${AUDIO_BASE}boss_death.mp3`, false, 0.5),
+  victory: createAudio(`${AUDIO_BASE}wave_complete.wav`, false, 0.5),
 };
 
 export function initAudio(): void {
