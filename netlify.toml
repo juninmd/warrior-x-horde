@@ -8,8 +8,8 @@
   NPM_FLAGS = "--include=dev"
 
 [[redirects]]
-  from = "/*"
-  to = "/index.html"
+  from = "/warrior-x-horde/*"
+  to = "/warrior-x-horde/index.html"
   status = 200
 
 [[headers]]
