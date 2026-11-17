@@ -67,6 +67,8 @@ describe('Weapons', () => {
           { id: 1, passed: false, y: 1500 } as any, // 1500 > 1000, will trigger cleanup
           { id: 2, passed: false, y: 0 } as any
       ];
+      // Math.random < 0.01 spawns a weapon; pin it so the test is deterministic.
+      vi.spyOn(Math, 'random').mockReturnValue(0.5);
       spawnWeapons(entities, 500);
       // Because we check backwards:
       // i = 1 (id:2) is kept.
@@ -75,6 +77,7 @@ describe('Weapons', () => {
       // Final array should have 1 element (id:2).
       expect(entities.weapons.length).toBe(1);
       expect(entities.weapons[0].id).toBe(2);
+      vi.mocked(Math.random).mockRestore();
   });
 
   it('should cover v8 ignore branch when popped item is the last remaining item', () => {
