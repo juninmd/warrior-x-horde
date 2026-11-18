@@ -76,7 +76,6 @@ describe('perk modal', () => {
 
 import { resolveEnemyBullets } from '../src/boss-ai';
 import { gameState, resetGameState } from '../src/gameState';
-import { createInitialEntities } from '../src/entities';
 import { pickPerk as pick, resetPerks as reset } from '../src/perks';
 
 describe('perks in combat', () => {

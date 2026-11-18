@@ -14,7 +14,7 @@ vi.mock('../src/input-state', () => ({
     }
 }));
 
-import { drawJoystick, safeAddColorStop } from '../src/renderer-utils';
+import { drawJoystick } from '../src/renderer-utils';
 import { virtualJoystick } from '../src/input-state';
 
 describe('Renderer Utils Coverage', () => {
