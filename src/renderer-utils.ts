@@ -17,7 +17,7 @@ export function safeAddColorStop(gradient: CanvasGradient, offset: number, color
     }
     gradient.addColorStop(offset, color);
   /* v8 ignore start */
-  } catch (e) {
+  } catch {
     console.warn(`[Canvas] Invalid color stop: ${color}`);
     try {
       gradient.addColorStop(offset, 'rgba(0,0,0,0)');
