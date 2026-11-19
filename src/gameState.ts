@@ -1,6 +1,15 @@
 // gameState.ts - Estado global do jogo
 import { GameState } from './types';
 
+/** Storage can throw (blocked cookies, private mode); a module-level read must never abort game startup. */
+function readStoredNumber(key: string): number {
+  try {
+    return Number(localStorage.getItem(key)) || 0;
+  } catch {
+    return 0;
+  }
+}
+
 export const gameState: GameState = {
   isStarted: false,
   isGameOver: false,
@@ -8,9 +17,9 @@ export const gameState: GameState = {
   isPaused: false,
   currentLevel: 1,
   score: 0,
-  highScore: Number(localStorage.getItem('crowdHighScore')) || 0,
-  highScoreDistance: Number(localStorage.getItem('crowdHighScoreDist')) || 0,
-  coins: Number(localStorage.getItem('crowdCoins')) || 0,
+  highScore: readStoredNumber('crowdHighScore'),
+  highScoreDistance: readStoredNumber('crowdHighScoreDist'),
+  coins: readStoredNumber('crowdCoins'),
   gameSpeed: 0.5,
   baseGameSpeed: 0.5,
   distanceTraveled: 0,
@@ -66,7 +75,7 @@ export function resetGameState(): void {
   gameState.levelDistance = 5000; // Reset da distância do level
   gameState.score = 0;
   // Coins persist, do not reset to 0
-  gameState.coins = Number(localStorage.getItem('crowdCoins')) || 0;
+  gameState.coins = readStoredNumber('crowdCoins');
   gameState.gameSpeed = gameState.baseGameSpeed;
   gameState.distanceTraveled = 0;
   gameState.isBattling = false;

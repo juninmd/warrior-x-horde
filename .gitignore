@@ -194,3 +194,6 @@ dist
 coverage
 test-results
 playwright-report
+# Local scratch/coverage outputs
+coverage.json
+changes.patch
