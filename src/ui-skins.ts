@@ -73,7 +73,10 @@ export function renderSkinSelector(onChange?: (skinId: string) => void): void {
       e.stopPropagation(); // start screen click starts the game
       if (!selectSkin(skin.id)) return;
       vibrate(10);
+      const hadFocus = document.activeElement === card;
       renderSkinSelector(onChange);
+      // The grid is rebuilt: put keyboard focus back on the new card instead of dropping it on <body>.
+      if (hadFocus) document.querySelector<HTMLButtonElement>(`.skin-card[data-skin-id="${skin.id}"]`)?.focus();
       if (onChange) onChange(skin.id);
     });
 
