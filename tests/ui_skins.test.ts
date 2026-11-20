@@ -16,6 +16,18 @@ describe('ui-skins', () => {
     vi.restoreAllMocks();
   });
 
+  it('keeps keyboard focus on the chosen card after re-rendering the picker', () => {
+    mountStartScreen();
+    renderSkinSelector();
+    const ranger = document.querySelector('[data-skin-id="ranger"]') as HTMLButtonElement;
+    ranger.focus();
+    ranger.click(); // Enter/Space on a focused button fires click
+    const active = document.activeElement as HTMLElement;
+    // The grid is rebuilt on every pick; without restoring focus it fell back to <body>.
+    expect(active.dataset.skinId).toBe('ranger');
+    expect(active.getAttribute('aria-pressed')).toBe('true');
+  });
+
   it('does nothing without a start screen', () => {
     renderSkinSelector();
     expect(document.getElementById('skinSelector')).toBeNull();
