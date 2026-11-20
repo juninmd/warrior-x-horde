@@ -79,3 +79,18 @@ jobs:
           name: playwright-report-${{ matrix.shard }}
           path: playwright-report/
           retention-days: 7
+
+  # Stable required-check name (branch protection requires "build-and-test"); aggregates the real jobs.
+  build-and-test:
+    name: build-and-test
+    if: ${{ always() }}
+    needs: [check, e2e]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require all CI jobs to succeed
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "needs results: $RESULTS"
+          for r in $RESULTS; do [ "$r" = "success" ] || exit 1; done
