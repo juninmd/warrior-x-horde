@@ -1,11 +1,11 @@
 # Warrior X Horde
 
 [![CI](https://github.com/juninmd/warrior-x-horde/actions/workflows/ci.yml/badge.svg)](https://github.com/juninmd/warrior-x-horde/actions/workflows/ci.yml)
-[![Netlify](https://img.shields.io/badge/Netlify-Deployed-00C7B7?logo=netlify)](https://warrior-x-horde.netlify.app/)
+[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Deployed-222?logo=github)](https://juninmd.github.io/warrior-x-horde/)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-646CFF?logo=vite&logoColor=white)
 
-> **[Jogue agora!](https://warrior-x-horde.netlify.app/)** - Jogo de ação estilo Survivor-like onde você controla um exército de soldados contra hordas de zumbis.
+> **[Jogue agora!](https://juninmd.github.io/warrior-x-horde/)** - Jogo de ação estilo Survivor-like onde você controla um exército de soldados contra hordas de zumbis.
 
 ## Sobre
 
