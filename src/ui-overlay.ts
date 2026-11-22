@@ -35,7 +35,7 @@ function getLeaderboardElement(currentScore: number = -1): HTMLElement {
         leaderboard = [];
     }
 
-    // Initialize fake leaderboard for new players
+    // Placeholder board for new players: display-only, so it never competes with real scores.
     if (leaderboard.length === 0) {
         leaderboard = [
             { score: 8500, date: Date.now() }, // "CPU-Alpha" equivalent
@@ -44,11 +44,6 @@ function getLeaderboardElement(currentScore: number = -1): HTMLElement {
             { score: 1500, date: Date.now() },
             { score: 800, date: Date.now() }
         ];
-        try {
-            localStorage.setItem('crowdLeaderboard', JSON.stringify(leaderboard));
-        } catch (e) {
-            console.warn('Failed to save default leaderboard', e);
-        }
     }
 
     const box = document.createElement('div');
