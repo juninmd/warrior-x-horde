@@ -1,6 +1,7 @@
 // ui-overlay.ts - Manages HTML/DOM overlays
 import { GameState, BeforeInstallPromptEvent } from './types';
 import { vibrate } from './input';
+import { formatRunTime } from './utils';
 import { VICTORY_TEXT, getDefeatLine } from './story';
 import { SHOP_ITEMS, getPrice, cooldownLeft, blockedReason } from './shop-catalog';
 import type { ShopItem, ShopType } from './shop-catalog';
@@ -479,7 +480,7 @@ export function showGameOverScreen(gameState: GameState): void {
     content.style.boxShadow = `0 0 30px ${isVictory ? 'rgba(46, 204, 113, 0.3)' : 'rgba(231, 76, 60, 0.3)'}`;
 
     const leaderboardEl = getLeaderboardElement(gameState.score);
-    const timeStr = new Date(Date.now() - gameState.runStartTime).toISOString().substr(14, 5);
+    const timeStr = formatRunTime(Date.now() - gameState.runStartTime);
 
     content.replaceChildren();
 

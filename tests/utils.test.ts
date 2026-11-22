@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getArmyBounds, checkBounds, getEntityBounds, shadeColor, getBiomeColors, fastRemove } from '../src/utils';
+import { getArmyBounds, checkBounds, getEntityBounds, shadeColor, getBiomeColors, fastRemove, formatRunTime } from '../src/utils';
 import { Army } from '../src/types';
 import { THEMES } from '../src/constants';
 
@@ -143,5 +143,14 @@ describe('utils', () => {
           fastRemove(arr, 0);
           expect(arr).toEqual([]);
       });
+  });
+});
+
+describe('formatRunTime', () => {
+  it('keeps counting minutes past one hour', () => {
+    expect(formatRunTime(65 * 60_000)).toBe('65:00');
+    expect(formatRunTime(61_500)).toBe('01:01');
+    expect(formatRunTime(0)).toBe('00:00');
+    expect(formatRunTime(-5)).toBe('00:00');
   });
 });
