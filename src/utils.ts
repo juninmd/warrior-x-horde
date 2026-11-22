@@ -103,3 +103,9 @@ export function fastRemove<T>(array: T[], index: number): void {
   }
   array.pop();
 }
+
+/** Run duration as MM:SS; minutes keep counting past 60 (an ISO clock would wrap to 00). */
+export function formatRunTime(ms: number): string {
+    const total = Math.max(0, Math.floor(ms / 1000));
+    return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+}
