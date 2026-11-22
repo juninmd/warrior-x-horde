@@ -6,12 +6,14 @@ describe('UI Overlay Error Handling', () => {
         vi.clearAllMocks();
     });
 
-    it('should handle localStorage error when saving default leaderboard', () => {
-        const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    it('shows placeholder scores to new players without persisting them', () => {
+        // Persisted placeholders would evict a real first score below 800 from the top 5.
         vi.spyOn(window.localStorage, 'getItem').mockReturnValue(null);
-        vi.spyOn(window.localStorage, 'setItem').mockImplementation(() => { throw new Error('QuotaExceededError'); });
-        _testing.getLeaderboardElement();
-        expect(consoleSpy).toHaveBeenCalledWith('Failed to save default leaderboard', expect.any(Error));
+        const setItem = vi.spyOn(window.localStorage, 'setItem');
+        const el = _testing.getLeaderboardElement();
+        expect(el.querySelectorAll('.leaderboard-item')).toHaveLength(5);
+        expect(setItem).not.toHaveBeenCalledWith('crowdLeaderboard', expect.anything());
+        vi.restoreAllMocks();
     });
 
     it('should filter out invalid entries from localStorage array', () => {
